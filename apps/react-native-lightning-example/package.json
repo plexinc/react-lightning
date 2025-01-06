@@ -1,0 +1,53 @@
+{
+  "name": "@plex/react-native-lightning-example",
+  "version": "0.4.45",
+  "packageManager": "pnpm@8.10.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "react-native build-lightning",
+    "clean": "del ./dist",
+    "dev": "react-native run-lightning",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@lightningjs/renderer": "2.8.0",
+    "@plex/react-lightning": "workspace:*",
+    "@plex/react-lightning-components": "workspace:*",
+    "@plex/react-lightning-plugin-devtools": "workspace:*",
+    "@plex/react-lightning-plugin-flexbox": "workspace:*",
+    "@plex/react-lightning-plugin-reanimated": "workspace:*",
+    "@plex/react-native-lightning": "workspace:*",
+    "@react-navigation/native": "7.0.13",
+    "@react-navigation/stack": "7.0.18",
+    "@shopify/flash-list": "1.7.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-native": "0.76.3",
+    "react-native-reanimated": "3.16.3",
+    "react-native-safe-area-context": "4.14.0"
+  },
+  "devDependencies": {
+    "@babel/core": "7.26.0",
+    "@babel/runtime": "7.26.0",
+    "@plex/vite-plugin-msdf-fontgen": "workspace:*",
+    "@plex/vite-plugin-react-native-lightning": "workspace:*",
+    "@plex/vite-plugin-react-reanimated-lightning": "workspace:*",
+    "@react-native-community/cli": "15.1.2",
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "18.3.14",
+    "typescript": "5.7.2",
+    "vite": "6.0.2"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "//": "unsure why react-dom needed to be ignored...",
+  "depcheck": {
+    "ignoreMatches": [
+      "@react-native-community/cli",
+      "typescript",
+      "react-dom"
+    ]
+  }
+}

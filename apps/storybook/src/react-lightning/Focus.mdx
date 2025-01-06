@@ -1,0 +1,27 @@
+import { Canvas, Meta, Source } from '@storybook/blocks';
+import { SimpleFocusTree } from './examples/focus/FocusTree.stories'
+
+<Meta title="@plex∕react-lightning/Focus Management" />
+
+# How focus works
+
+All focusable elements are added to a tree, based on their position in the
+render tree. Navigation between elements is calculated based on direction of
+navigation and proximity to the next element.
+
+The `FocusGroup` component is used to manage focus for a group of elements. It
+ensures that only one element in the group can have focus at a time. It is also
+used for calculating the next and previous focusable elements, based on the
+direction you press when navigating.
+
+FocusGroups can be nested. If a focusable element is not found within a
+FocusGroup, the parent FocusGroup will attempt to find the next or previous
+element to focus.
+
+### Example
+
+<Canvas
+  of={SimpleFocusTree}
+  layout="centered"
+  withToolbar
+/>

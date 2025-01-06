@@ -1,0 +1,54 @@
+{
+  "name": "@plex/react-lightning-plugin-devtools",
+  "version": "0.1.12",
+  "description": "React-Lightning DevTools",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm run clean && vite build --config vite.plugin.config.ts && vite build --config vite.ext.config.ts",
+    "dev": "pnpm run clean && vite build --config vite.plugin.config.ts && vite build --watch --config vite.ext.config.ts",
+    "clean": "del ./dist",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "exports": {
+    "./plugin": "./src/plugin/index.tsx"
+  },
+  "publishConfig": {
+    "exports": {
+      "./plugin": "./dist/assets/plugin.js"
+    }
+  },
+  "author": "Plex",
+  "devDependencies": {
+    "@catppuccin/palette": "1.7.1",
+    "@crxjs/vite-plugin": "2.0.0-beta.26",
+    "@lightningjs/renderer": "2.8.0",
+    "@plex/react-lightning": "workspace:*",
+    "@plex/react-lightning-plugin-flexbox": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/chrome": "0.0.287",
+    "@types/node": "22.10.1",
+    "@types/react": "18.3.14",
+    "@uiw/react-json-view": "2.0.0-alpha.30",
+    "@vitejs/plugin-react": "4.3.4",
+    "flatted": "3.3.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-arborist": "3.4.0",
+    "react-is": "18.3.1",
+    "react-reconciler": "0.29.2",
+    "tsx": "4.19.2",
+    "use-resize-observer": "9.1.0",
+    "vite": "6.0.2",
+    "webext-bridge": "6.0.1"
+  },
+  "peerDependencies": {
+    "@plex/react-lightning": "^0.7.19",
+    "react": "^18.3.1",
+    "react-dom": "18.3.1",
+    "react-reconciler": "^0.29.2",
+    "vite": "5.4.10"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  }
+}

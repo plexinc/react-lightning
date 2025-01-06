@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+
+  "name": "React-Lightning DevTools",
+  "version": "0.1.0",
+  "description": "DevTools for React-Lightning",
+
+  "permissions": ["scripting", "storage", "tabs"],
+  "host_permissions": ["<all_urls>"],
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/web-extension/content-script.ts"]
+    }
+  ],
+
+  "background": {
+    "service_worker": "src/web-extension/background.ts",
+    "type": "module"
+  },
+
+  "devtools_page": "src/web-extension/devtools.html",
+
+  "action": {
+    "default_popup": "src/web-extension/popup.html",
+    "default_icon": {
+      "16": "lng.svg",
+      "24": "lng.svg",
+      "32": "lng.svg"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "name": "@plex/react-lightning-components",
+  "version": "0.3.6",
+  "description": "",
+  "type": "module",
+  "main": "dist/cjs/index.js",
+  "types": "dist/types/index.d.ts",
+  "source": "src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/esm/index.mjs",
+        "require": "./dist/cjs/index.js",
+        "default": "./dist/cjs/index.js",
+        "types": "./dist/types/index.d.ts"
+      }
+    }
+  },
+  "scripts": {
+    "build": "pnpm run build:types && pnpm run build:bundle",
+    "build:bundle": "rollup -c --failAfterWarnings",
+    "build:types": "tsc --outDir dist/lib --declarationDir dist/types --declaration true --emitDeclarationOnly true",
+    "clean": "del ./dist",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "author": "Plex",
+  "devDependencies": {
+    "@plex/react-lightning": "workspace:*",
+    "@plex/react-lightning-plugin-flexbox": "workspace:*",
+    "@repo/rollup-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "18.3.14",
+    "react": "18.3.1"
+  },
+  "peerDependencies": {
+    "@plex/react-lightning": "workspace:*",
+    "@plex/react-lightning-plugin-flexbox": "workspace:*",
+    "react": "^18.3.1"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  }
+}

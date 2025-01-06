@@ -1,0 +1,34 @@
+{
+  "name": "@plex/vite-plugin-react-native-lightning",
+  "version": "0.0.5",
+  "description": "",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "source": "src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "pnpm run build",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "keywords": [
+    "vite-plugin",
+    "react-native",
+    "lightning-js"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@vitejs/plugin-react": "4.3.4"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "vite": "6.0.2"
+  },
+  "peerDependencies": {
+    "@plex/react-native-lightning": "workspace:*"
+  }
+}

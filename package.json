@@ -1,0 +1,55 @@
+{
+  "name": "react-lightning",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "turbo build --filter=!@repo/plugin-template --filter=!react-lightning-sample-app",
+    "build:types": "turbo build:types --filter=!@repo/plugin-template --filter=!react-lightning-sample-app",
+    "clean": "turbo clean --filter=!@repo/plugin-template --filter=!react-lightning-sample-app",
+    "ci:publish": "pnpm run build && pnpm exec changeset publish",
+    "ci:version": "pnpm exec changeset version && pnpm install --no-frozen-lockfile",
+    "dev": "turbo dev --filter=!@repo/plugin-template --filter=!react-lightning-sample-app",
+    "lint": "biome check",
+    "lint:format": "biome check --write",
+    "nuke": "pnpm run clean && pnpx npkill -x -y -D && pnpm install",
+    "test": "pnpm run test:unit",
+    "test:unit": "turbo test:unit --filter=!@repo/plugin-template --filter=!react-lightning-sample-app",
+    "unused": "tsx ./scripts/depcheck.ts",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@changesets/cli": "2.27.10",
+    "@repo/typescript-config": "workspace:*",
+    "@rollup/wasm-node": "4.27.4",
+    "@swc/core": "1.9.3",
+    "del-cli": "6.0.0",
+    "depcheck": "1.4.7",
+    "glob": "11.0.0",
+    "husky": "9.1.7",
+    "listr2": "8.2.5",
+    "rollup": "npm:@rollup/wasm-node@4.28.1",
+    "tsx": "4.19.2",
+    "turbo": "2.3.3",
+    "type-fest": "4.30.0",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8",
+    "yaml": "2.6.1"
+  },
+  "packageManager": "pnpm@9.12.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "volta": {
+    "node": "20.11.1",
+    "pnpm": "9.12.1"
+  },
+  "depcheck": {
+    "ignoreMatches": [
+      "@rollup/wasm-node",
+      "del-cli",
+      "rollup",
+      "typescript"
+    ]
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "name": "@plex/react-lightning-plugin-reanimated",
+  "version": "0.3.11",
+  "description": "Adds a lightning implementation for react-native-reanimated",
+  "type": "module",
+  "main": "dist/cjs/index.js",
+  "types": "dist/types/index.d.ts",
+  "source": "src/index.ts",
+  "files": [
+    "config",
+    "dist"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./config/vite": "./config/vite.config.mjs"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/esm/index.mjs",
+        "require": "./dist/cjs/index.js",
+        "default": "./dist/cjs/index.js",
+        "types": "./dist/types/index.d.ts"
+      },
+      "./config/vite": "./config/vite.config.mjs"
+    }
+  },
+  "scripts": {
+    "build": "pnpm run build:types && pnpm run build:bundle",
+    "build:bundle": "rollup -c --failAfterWarnings",
+    "build:types": "tsc --outDir dist/lib --declarationDir dist/types --declaration true --emitDeclarationOnly true",
+    "clean": "del ./dist",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "author": "Plex",
+  "devDependencies": {
+    "@babel/core": "7.26.0",
+    "@lightningjs/renderer": "2.8.0",
+    "@plex/react-lightning": "workspace:*",
+    "@plex/react-lightning-plugin-css-transform": "workspace:*",
+    "@plex/react-lightning-plugin-flexbox": "workspace:*",
+    "@repo/rollup-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "18.3.14",
+    "react": "18.3.1",
+    "react-native": "0.76.3",
+    "react-native-reanimated": "3.16.3"
+  },
+  "peerDependencies": {
+    "@lightningjs/renderer": "^2.5.1",
+    "@plex/react-lightning": "workspace:*",
+    "@plex/react-lightning-plugin-css-transform": "workspace:*",
+    "@plex/react-lightning-plugin-flexbox": "workspace:*",
+    "react": "^18.3.1",
+    "react-native": "^0.76.1",
+    "react-native-reanimated": "^3.16.1"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "depcheck": {
+    "ignoreMatches": [
+      "react-native-reanimated-original"
+    ]
+  }
+}

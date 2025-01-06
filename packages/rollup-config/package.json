@@ -1,0 +1,26 @@
+{
+  "name": "@repo/rollup-config",
+  "version": "0.3.7",
+  "private": true,
+  "license": "UNLICENSED",
+  "repository": "git@github.com:plexinc/react-lightning.git",
+  "type": "module",
+  "main": "index.js",
+  "module": "index.js",
+  "scripts": {
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@rollup/plugin-commonjs": "28.0.1",
+    "@rollup/plugin-image": "3.0.3",
+    "@rollup/plugin-json": "6.1.0",
+    "@rollup/plugin-node-resolve": "15.3.0",
+    "@rollup/plugin-replace": "6.0.1",
+    "@swc/core": "1.9.3",
+    "rollup-plugin-banner2": "1.3.0",
+    "rollup-plugin-swc3": "0.12.1"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  }
+}

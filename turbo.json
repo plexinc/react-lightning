@@ -1,0 +1,22 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "clean": {},
+    "build:types": {
+      "dependsOn": ["^build:types"]
+    },
+    "test:unit": {
+      "dependsOn": ["^@plex/vite-plugin-msdf-fontgen#build"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  },
+  "globalEnv": ["BASE_URL", "NODE_ENV"]
+}

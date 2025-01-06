@@ -1,0 +1,42 @@
+{
+  "name": "@plex/react-lightning-storybook",
+  "version": "0.0.14",
+  "packageManager": "pnpm@8.10.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "storybook build --output-dir ./dist",
+    "clean": "del ./dist",
+    "dev": "storybook dev -p 6006 --no-open"
+  },
+  "dependencies": {
+    "@lightningjs/renderer": "2.8.0",
+    "@plex/react-lightning": "workspace:*",
+    "@plex/react-lightning-components": "workspace:*",
+    "@plex/react-lightning-plugin-flexbox": "workspace:*",
+    "@plex/react-lightning-plugin-flexbox-lite": "workspace:*",
+    "@storybook/addon-essentials": "8.4.6",
+    "@storybook/addon-interactions": "8.4.6",
+    "@storybook/addon-links": "8.4.6",
+    "@storybook/manager-api": "8.4.7",
+    "@storybook/react": "8.4.6",
+    "@storybook/react-vite": "8.4.6",
+    "@storybook/theming": "8.4.7",
+    "react": "18.3.1",
+    "storybook": "8.4.6"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "18.3.14",
+    "vite": "6.0.2"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "depcheck": {
+    "ignoreMatches": [
+      "@storybook/**",
+      "**/storybook"
+    ]
+  }
+}

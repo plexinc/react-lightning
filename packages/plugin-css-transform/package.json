@@ -1,0 +1,56 @@
+{
+  "name": "@plex/react-lightning-plugin-css-transform",
+  "version": "0.3.10",
+  "description": "Transforms CSS properties to lightning properties. Requires flexbox",
+  "type": "module",
+  "main": "dist/cjs/index.js",
+  "types": "dist/types/index.d.ts",
+  "source": "src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./jsx": "./src/types/jsx.d.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/esm/index.mjs",
+        "require": "./dist/cjs/index.js",
+        "default": "./dist/cjs/index.js",
+        "types": "./dist/types/index.d.ts"
+      },
+      "./jsx": "./dist/types/types/jsx.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "pnpm run build:types && pnpm run build:bundle",
+    "build:bundle": "rollup -c --failAfterWarnings",
+    "build:types": "tsc --outDir dist/lib --declarationDir dist/types --declaration true --emitDeclarationOnly true && pnpm run build:copy-dts",
+    "build:copy-dts": "copyfiles -f src/types/jsx.d.ts dist/types/types",
+    "clean": "del ./dist",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "author": "Plex",
+  "devDependencies": {
+    "@lightningjs/renderer": "2.8.0",
+    "@plex/react-lightning": "workspace:*",
+    "@plex/react-lightning-plugin-flexbox": "workspace:*",
+    "@repo/rollup-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "18.3.14",
+    "copyfiles": "2.4.1",
+    "csstype": "3.1.3",
+    "react-native": "0.76.3"
+  },
+  "peerDependencies": {
+    "@lightningjs/renderer": "^2.5.1",
+    "@plex/react-lightning": "^0.7.19",
+    "@plex/react-lightning-plugin-flexbox": "^0.4.5",
+    "react-native": "^0.76.1"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  }
+}

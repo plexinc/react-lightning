@@ -1,0 +1,118 @@
+import { Meta, Source } from '@storybook/blocks';
+
+<Meta title="Getting Started/Quick Start" />
+
+# Quick Start
+
+## Via Template
+
+The quickest way to get up and running is to use the template app.
+
+<Source
+  dark
+  language="bash"
+  code={`
+    npx degit plexinc/react-lightning/apps/template
+  `}
+/>
+
+## Manual Installation
+
+If you prefer a manual installation, you will need to install the required dependencies.
+
+<Source
+  dark
+  language="bash"
+  code={`
+  npm install react @lightningjs/renderer @plex/react-lightning
+  `}
+/>
+
+You will then need to create an html file if you haven't already, or create an
+element for the Lightning canvas to be rendered inside:
+
+`index.html`
+
+<Source
+  dark
+  language="html"
+  code={`
+<!doctype html>
+<html>
+  <head>
+    <title>React-Lightning Sample App</title>
+    <meta charset="UTF-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
+  `}
+/>
+
+A key map will be required for adding keyboard and remote support.
+
+`keyMap.ts`
+
+<Source
+  dark
+  language="ts"
+  code={`
+import { Keys } from '@plex/react-lightning';
+
+const keyMap = {
+  37: Keys.Left,
+  38: Keys.Up,
+  39: Keys.Right,
+  40: Keys.Down,
+
+  8: Keys.Back, // Backspace
+  27: Keys.Back, // Esc
+  13: Keys.Enter, // Enter
+};
+
+export { keyMap };
+  `}
+/>
+
+Finally, you'll need to create a lightning root, and render a canvas.
+`index.tsx`
+
+<Source
+  dark
+  language="tsx"
+  code={`
+import { Canvas, createRoot, type RenderOptions } from '@plex/react-lightning';
+import { keyMap } from './keyMap';
+
+const appElement = document.getElementById('app');
+
+const options: RenderOptions = {
+  // ...
+};
+
+const App = () => (
+  <Canvas keyMap={keyMap} options={options}>
+    {/* Your app here */}
+  </Canvas>
+);
+
+const root = await createRoot(appElement, options);
+
+root.render(<App />);
+`}
+/>
+
+See the [App Template](https://github.com/plexinc/react-lightning/tree/main/apps/template) for a
+working example.

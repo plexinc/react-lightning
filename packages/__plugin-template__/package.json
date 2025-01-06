@@ -1,0 +1,40 @@
+{
+  "name": "@repo/plugin-template",
+  "version": "0.1.4",
+  "description": "A template for creating react-lightning plugins",
+  "type": "module",
+  "main": "dist/cjs/index.js",
+  "types": "dist/types/index.d.ts",
+  "source": "src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/esm/index.mjs",
+        "require": "./dist/cjs/index.js",
+        "default": "./dist/cjs/index.js",
+        "types": "./dist/types/index.d.ts"
+      }
+    }
+  },
+  "scripts": {
+    "build": "pnpm run build:types && pnpm run build:bundle",
+    "build:bundle": "rollup -c --failAfterWarnings",
+    "build:types": "tsc --outDir dist/lib --declarationDir dist/types --declaration true --emitDeclarationOnly true",
+    "clean": "del ./dist",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "author": "Plex",
+  "devDependencies": {
+    "@repo/rollup-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  }
+}

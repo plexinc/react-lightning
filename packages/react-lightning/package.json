@@ -1,0 +1,56 @@
+{
+  "name": "@plex/react-lightning",
+  "version": "0.7.19",
+  "description": "",
+  "type": "module",
+  "main": "dist/cjs/index.js",
+  "types": "dist/types/index.d.ts",
+  "source": "src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./jsx": "./src/types/jsx.d.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/esm/index.mjs",
+        "require": "./dist/cjs/index.js",
+        "default": "./dist/cjs/index.js",
+        "types": "./dist/types/index.d.ts"
+      },
+      "./jsx": "./dist/types/types/jsx.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "pnpm run build:types && pnpm run build:bundle",
+    "build:bundle": "rollup -c --failAfterWarnings",
+    "build:types": "tsc --outDir dist/lib --declarationDir dist/types --declaration true --emitDeclarationOnly true && pnpm run build:copy-dts",
+    "build:copy-dts": "copyfiles -f src/types/jsx.d.ts dist/types/types",
+    "watch": "pnpm run build:types && rollup -c -w",
+    "clean": "del ./dist",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "author": "Plex",
+  "dependencies": {
+    "react-reconciler": "0.29.2"
+  },
+  "devDependencies": {
+    "@lightningjs/renderer": "2.8.0",
+    "@repo/rollup-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "18.3.14",
+    "@types/react-reconciler": "0.28.8",
+    "copyfiles": "2.4.1",
+    "react": "18.3.1"
+  },
+  "peerDependencies": {
+    "@lightningjs/renderer": "^2.5.1",
+    "react": "^18.3.1"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  }
+}

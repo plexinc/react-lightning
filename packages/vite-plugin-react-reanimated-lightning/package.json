@@ -1,0 +1,33 @@
+{
+  "name": "@plex/vite-plugin-react-reanimated-lightning",
+  "version": "0.0.4",
+  "description": "",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "source": "src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "pnpm run build",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "keywords": [
+    "vite-plugin",
+    "react-native",
+    "react-reanimated",
+    "lightning-js"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "vite": "6.0.2"
+  },
+  "peerDependencies": {
+    "@plex/react-lightning-plugin-reanimated": "workspace:*",
+    "react-native-reanimated": "^3.16.3"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "extends": "@repo/typescript-config/react-library.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": false,
+    "declarationMap": false,
+    "types": ["node", "@plex/react-lightning-plugin-css-transform/jsx"]
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

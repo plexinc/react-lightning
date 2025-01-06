@@ -1,0 +1,29 @@
+{
+  "name": "react-lightning-sample-app",
+  "version": "0.0.2",
+  "packageManager": "pnpm@8.10.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "clean": "del ./dist",
+    "dev": "vite --host",
+    "preview": "vite preview --host",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@lightningjs/renderer": "2.8.0",
+    "@plex/react-lightning": "workspace:*",
+    "react": "18.3.1",
+    "react-router-dom": "7.0.2"
+  },
+  "devDependencies": {
+    "@plex/vite-plugin-msdf-fontgen": "workspace:*",
+    "@tsconfig/vite-react": "3.4.0",
+    "@types/react": "18.3.14",
+    "@vitejs/plugin-react": "4.3.4",
+    "del-cli": "6.0.0",
+    "react-dom": "18",
+    "vite": "6.0.2"
+  }
+}

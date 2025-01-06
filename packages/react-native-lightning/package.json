@@ -1,0 +1,67 @@
+{
+  "name": "@plex/react-native-lightning",
+  "version": "0.4.12",
+  "description": "",
+  "type": "commonjs",
+  "main": "dist/cjs/index.js",
+  "types": "dist/types/index.d.ts",
+  "source": "src/index.ts",
+  "files": [
+    "config",
+    "dist",
+    "react-native.config.js"
+  ],
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/esm/index.mjs",
+        "require": "./dist/cjs/index.js",
+        "default": "./dist/cjs/index.js",
+        "types": "./dist/types/index.d.ts"
+      }
+    }
+  },
+  "scripts": {
+    "build": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
+    "build:bundle": "rollup -c --failAfterWarnings",
+    "build:types": "tsc --outDir dist/lib --declarationDir dist/types --declaration true --emitDeclarationOnly true",
+    "clean": "del ./dist",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "author": "Plex",
+  "dependencies": {
+    "@plex/react-lightning-plugin-css-transform": "workspace:*",
+    "@plex/react-lightning-plugin-flexbox": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightningjs/renderer": "2.8.0",
+    "@plex/react-lightning": "workspace:*",
+    "@repo/rollup-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "22.10.1",
+    "@types/react": "18.3.14",
+    "react": "18.3.1",
+    "react-native": "0.76.3",
+    "react-native-web": "0.19.13",
+    "vite": "6.0.2"
+  },
+  "peerDependencies": {
+    "@lightningjs/renderer": "^2.5.1",
+    "@plex/react-lightning": "workspace:*",
+    "@react-native-community/cli": "^15.1.2",
+    "react": "^18.3.1",
+    "react-native": "^0.76.1",
+    "react-native-web": "^0.19.13"
+  },
+  "peerDependencyRules": {
+    "allowedVersions": {
+      "react": "^18"
+    }
+  },
+  "volta": {
+    "extends": "../../package.json"
+  }
+}

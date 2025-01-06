@@ -1,0 +1,53 @@
+{
+  "name": "@plex/react-lightning-plugin-flexbox",
+  "version": "0.4.5",
+  "description": "Adds FlexBox layout support to @plex/react-lightning",
+  "type": "module",
+  "main": "dist/cjs/index.js",
+  "types": "dist/types/index.d.ts",
+  "source": "src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./jsx": "./src/types/jsx.d.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": "./dist/esm/index.mjs",
+        "require": "./dist/cjs/index.js",
+        "default": "./dist/cjs/index.js",
+        "types": "./dist/types/index.d.ts"
+      },
+      "./jsx": "./dist/types/types/jsx.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "pnpm run build:types && pnpm run build:bundle",
+    "build:bundle": "rollup -c --failAfterWarnings",
+    "build:types": "tsc --outDir dist/lib --declarationDir dist/types --declaration true --emitDeclarationOnly true && pnpm run build:copy-dts",
+    "build:copy-dts": "copyfiles -f src/types/jsx.d.ts dist/types/types",
+    "clean": "del ./dist",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "author": "Plex",
+  "dependencies": {
+    "yoga-layout": "3.2.0"
+  },
+  "devDependencies": {
+    "@plex/react-lightning": "workspace:*",
+    "@repo/rollup-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "copyfiles": "2.4.1",
+    "react": "18.3.1"
+  },
+  "peerDependencies": {
+    "@plex/react-lightning": "workspace:*",
+    "react": "^18.3.1"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "@plex/vite-plugin-msdf-fontgen",
+  "version": "1.0.4",
+  "description": "",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "source": "src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "pnpm run build",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "keywords": [
+    "vite-plugin"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lightningjs/msdf-generator": "1.1.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "vite": "6.0.2"
+  }
+}

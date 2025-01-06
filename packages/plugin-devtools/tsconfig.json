@@ -1,0 +1,18 @@
+{
+  "extends": "@repo/typescript-config/react-library.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist",
+    "target": "ES6",
+    "declaration": false,
+    "declarationMap": false,
+    "types": [
+      "node",
+      "@types/chrome",
+      "@plex/react-lightning/jsx",
+      "@plex/react-lightning-plugin-flexbox/jsx"
+    ]
+  },
+  "include": ["src", "*.config.ts"],
+  "exclude": ["node_modules", "dist"]
+}

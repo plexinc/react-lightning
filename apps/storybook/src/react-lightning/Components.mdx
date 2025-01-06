@@ -1,0 +1,48 @@
+import { Canvas, Meta, Source, Story, Controls } from '@storybook/blocks';
+import * as ComponentsStories from './Components.stories'
+
+<Meta title="@plex∕react-lightning/Lightning Components" of={ComponentsStories} />
+
+# Lightning Components
+
+Components in react-lightning are written differently from the ways they're done
+in [Blits](https://lightningjs.io/v3-docs/blits/essentials/components.html). As
+you may suspect, react-lightning components are written in React.
+
+## Primitives
+
+Similar to React, components in react-lightning are built using primitives.
+There are three primitive components in react-lightning, all prefixed with
+`lng-`. React primitives like `div`, `span`, and `img` are not used in react-lightning.
+
+- *lng-view*
+  - `lng-view` is a container component that can hold other components, similar to
+    a `div` element in HTML.
+- lng-text
+  - `lng-text` is a text component for rendering text content.
+- lng-image
+  - `lng-image` is an image component that will render an image.
+
+<Canvas
+  of={ComponentsStories.Primitives}
+  source={{ language: 'tsx' }}
+  layout="centered"
+  sourceState="shown"
+  withToolbar
+/>
+
+
+## Styling
+
+Styling in react-lightning is done using the `style` prop. The `style` prop is
+almost a 1:1 mapping of the props you would set on a Lightning component. You
+can see a full list of the supported props from the [Lightning.js
+source](https://github.com/lightning-js/renderer/blob/6f8e057b4928d40b7433382267b3133ebdcbb8a0/src/core/CoreNode.ts#L214),
+with a few exceptions. 
+
+<Canvas
+  of={ComponentsStories.Styling}
+  layout="centered"
+  sourceState="shown"
+  withToolbar
+/>
