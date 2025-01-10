@@ -52,7 +52,7 @@
     "@repo/rollup-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/react": "18.3.14",
-    "@types/react-reconciler": "0.28.8",
+    "@types/react-reconciler": "0.28.9",
     "copyfiles": "2.4.1",
     "react": "18.3.1"
   },
