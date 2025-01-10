@@ -334,8 +334,8 @@ importers:
         specifier: workspace:*
         version: link:../typescript-config
       '@types/chrome':
-        specifier: 0.0.287
-        version: 0.0.287
+        specifier: 0.0.293
+        version: 0.0.293
       '@types/node':
         specifier: 22.10.1
         version: 22.10.1
@@ -2764,8 +2764,8 @@ packages:
   '@types/babel__traverse@7.20.6':
     resolution: {integrity: sha512-r1bzfrm0tomOI8g1SzvCaQHo6Lcv6zu0EA+W2kHrt8dyrHQxGzBBL4kdkzIS+jBMV+EYcMAEAqXqYaLJq5rOZg==}
 
-  '@types/chrome@0.0.287':
-    resolution: {integrity: sha512-wWhBNPNXZHwycHKNYnexUcpSbrihVZu++0rdp6GEk5ZgAglenLx+RwdEouh6FrHS0XQiOxSd62yaujM1OoQlZQ==}
+  '@types/chrome@0.0.293':
+    resolution: {integrity: sha512-pghCOLVHsnePWcMEHCxkAfMRx8qJWmj4lUoyF3ZpANniKz8AucIGLSld7smsrTdLUkk/p5JjOCGVDRdUDHx+uA==}
 
   '@types/cookie@0.6.0':
     resolution: {integrity: sha512-4Kh9a6B2bQciAhf7FSuMRRkUWecJgJu9nPnx3yzpsfXX/c50REIqpHY4C82bXP90qrLtXtkDxTZosYO3UpOwlA==}
@@ -8832,7 +8832,7 @@ snapshots:
     dependencies:
       '@babel/types': 7.26.5
 
-  '@types/chrome@0.0.287':
+  '@types/chrome@0.0.293':
     dependencies:
       '@types/filesystem': 0.0.36
       '@types/har-format': 1.2.16

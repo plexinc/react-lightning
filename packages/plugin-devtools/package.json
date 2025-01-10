@@ -35,7 +35,7 @@
     "@plexinc/react-lightning": "workspace:*",
     "@plexinc/react-lightning-plugin-flexbox": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/chrome": "0.0.287",
+    "@types/chrome": "0.0.293",
     "@types/node": "22.10.1",
     "@types/react": "18.3.14",
     "@uiw/react-json-view": "2.0.0-alpha.30",
