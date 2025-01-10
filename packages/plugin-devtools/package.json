@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@catppuccin/palette": "1.7.1",
-    "@crxjs/vite-plugin": "2.0.0-beta.26",
+    "@crxjs/vite-plugin": "2.0.0-beta.30",
     "@lightningjs/renderer": "2.8.0",
     "@plexinc/react-lightning": "workspace:*",
     "@plexinc/react-lightning-plugin-flexbox": "workspace:*",
