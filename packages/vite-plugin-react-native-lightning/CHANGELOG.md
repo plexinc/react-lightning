@@ -1,5 +1,13 @@
 # @plexinc/vite-plugin-react-native-lightning
 
+## 0.1.3
+
+### Patch Changes
+
+- c7589f6: Fixing cjs builds pt.2
+- Updated dependencies [c7589f6]
+  - @plexinc/react-native-lightning@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes

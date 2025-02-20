@@ -1,5 +1,11 @@
 # @plexinc/vite-plugin-msdf-fontgen
 
+## 1.0.3
+
+### Patch Changes
+
+- c7589f6: Fixing cjs builds pt.2
+
 ## 1.0.2
 
 ### Patch Changes
