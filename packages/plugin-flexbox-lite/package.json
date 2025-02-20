@@ -1,7 +1,7 @@
 {
   "name": "@plexinc/react-lightning-plugin-flexbox-lite",
   "description": "A less featured but more efficient flex layout support to @plexinc/react-lightning",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {
