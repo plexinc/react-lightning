@@ -1,5 +1,14 @@
 # @plexinc/react-lightning-plugin-devtools
 
+## 0.1.4
+
+### Patch Changes
+
+- cac433b: Update biome config
+- Updated dependencies [3ef955a]
+- Updated dependencies [6bececd]
+  - @plexinc/react-lightning@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes

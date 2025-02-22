@@ -1,5 +1,16 @@
 # @plexinc/react-lightning-components
 
+## 0.1.4
+
+### Patch Changes
+
+- 3ef955a: Remove focusedStyle from FocusGroup
+- b276845: Changed font name from Ubuntu to `sans-serif`
+- Updated dependencies [3ef955a]
+- Updated dependencies [6bececd]
+  - @plexinc/react-lightning@0.1.4
+  - @plexinc/react-lightning-plugin-flexbox@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes

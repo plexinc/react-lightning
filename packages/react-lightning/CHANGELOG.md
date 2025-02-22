@@ -1,5 +1,12 @@
 # @plexinc/react-lightning
 
+## 0.1.4
+
+### Patch Changes
+
+- 3ef955a: Remove focusedStyle from FocusGroup
+- 6bececd: Don't flatten array styles from LightningViewElement, moved to react-native
+
 ## 0.1.3
 
 ### Patch Changes

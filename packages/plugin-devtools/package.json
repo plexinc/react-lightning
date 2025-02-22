@@ -1,7 +1,7 @@
 {
   "name": "@plexinc/react-lightning-plugin-devtools",
   "description": "React-Lightning DevTools for Chromium-based browsers",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {

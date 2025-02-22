@@ -1,5 +1,19 @@
 # @plexinc/react-lightning-storybook
 
+## 0.1.4
+
+### Patch Changes
+
+- b276845: Changed font name from Ubuntu to `sans-serif`
+- cac433b: Update biome config
+- Updated dependencies [3ef955a]
+- Updated dependencies [b276845]
+- Updated dependencies [6bececd]
+  - @plexinc/react-lightning-components@0.1.4
+  - @plexinc/react-lightning@0.1.4
+  - @plexinc/react-lightning-plugin-flexbox@0.1.4
+  - @plexinc/react-lightning-plugin-flexbox-lite@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes
