@@ -1,5 +1,7 @@
 {
-  "pages": ["Ubuntu-Regular.png"],
+  "pages": [
+    "Ubuntu-Regular.png"
+  ],
   "chars": [
     {
       "id": 92,
@@ -1483,8 +1485,16 @@
     "stretchH": 100,
     "smooth": 1,
     "aa": 1,
-    "padding": [2, 2, 2, 2],
-    "spacing": [0, 0],
+    "padding": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "spacing": [
+      0,
+      0
+    ],
     "outline": 0
   },
   "common": {

@@ -12,6 +12,7 @@ import { keyMap } from './keyMap';
 import { AnimationPage } from './pages/AnimationPage';
 import { BrowsePage } from './pages/BrowsePage';
 import { EffectsPage } from './pages/EffectsPage';
+import { IconsPage } from './pages/IconsPage';
 import { LayoutPage } from './pages/LayoutPage';
 import { Page60 } from './pages/Page60';
 import { PosterPage } from './pages/PosterPage';
@@ -45,6 +46,10 @@ const router = createBrowserRouter([
     element: <EffectsPage />,
   },
   {
+    path: '/icons',
+    element: <IconsPage />,
+  },
+  {
     path: '/shader',
     element: <ShaderPage />,
   },
@@ -63,8 +68,8 @@ const options: RenderOptions = {
     new SdfTrFontFace('msdf', {
       fontFamily: 'sans-serif',
       descriptors: {},
-      atlasUrl: '/fonts/Ubuntu-Regular.msdf.png',
-      atlasDataUrl: '/fonts/Ubuntu-Regular.msdf.json',
+      atlasUrl: '/fonts/ubuntu/Ubuntu-Regular.msdf.png',
+      atlasDataUrl: '/fonts/ubuntu/Ubuntu-Regular.msdf.json',
       stage,
     }),
     new SdfTrFontFace('msdf', {
@@ -72,8 +77,17 @@ const options: RenderOptions = {
       descriptors: {
         weight: 'bold',
       },
-      atlasUrl: '/fonts/Ubuntu-Bold.msdf.png',
-      atlasDataUrl: '/fonts/Ubuntu-Bold.msdf.json',
+      atlasUrl: '/fonts/ubuntu/Ubuntu-Bold.msdf.png',
+      atlasDataUrl: '/fonts/ubuntu/Ubuntu-Bold.msdf.json',
+      stage,
+    }),
+    new SdfTrFontFace('msdf', {
+      fontFamily: 'fa-regular-400',
+      descriptors: {
+        weight: 'bold',
+      },
+      atlasUrl: '/fonts/icons/fa-regular-400.msdf.png',
+      atlasDataUrl: '/fonts/icons/fa-regular-400.msdf.json',
       stage,
     }),
   ],
