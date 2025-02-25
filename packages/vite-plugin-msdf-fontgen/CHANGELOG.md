@@ -1,5 +1,11 @@
 # @plexinc/vite-plugin-msdf-fontgen
 
+## 1.1.0
+
+### Minor Changes
+
+- 203e2a0: Add support for multiple input folders
+
 ## 1.0.3
 
 ### Patch Changes
