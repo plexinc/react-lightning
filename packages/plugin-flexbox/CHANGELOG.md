@@ -1,5 +1,11 @@
 # @plexinc/react-lightning-plugin-flexbox
 
+## 0.1.7
+
+### Patch Changes
+
+- e0cd671: Fix maxWidth when parent is unmeasurable
+
 ## 0.1.6
 
 ### Patch Changes

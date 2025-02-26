@@ -1,5 +1,16 @@
 # @plexinc/react-native-lightning-example
 
+## 0.1.7
+
+### Patch Changes
+
+- Updated dependencies [e0cd671]
+  - @plexinc/react-lightning-plugin-flexbox@0.1.7
+  - @plexinc/react-lightning-plugin-devtools@0.1.4
+  - @plexinc/react-lightning-plugin-reanimated@0.1.7
+  - @plexinc/react-lightning-components@0.1.7
+  - @plexinc/react-native-lightning@0.1.7
+
 ## 0.1.6
 
 ### Patch Changes
