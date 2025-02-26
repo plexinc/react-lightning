@@ -1,5 +1,12 @@
 # @plexinc/vite-plugin-react-reanimated-lightning
 
+## 0.1.5
+
+### Patch Changes
+
+- 1d5259a: Add "cwd" option
+  - @plexinc/react-lightning-plugin-reanimated@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes

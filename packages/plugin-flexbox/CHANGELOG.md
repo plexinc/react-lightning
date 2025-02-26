@@ -1,5 +1,11 @@
 # @plexinc/react-lightning-plugin-flexbox
 
+## 0.1.5
+
+### Patch Changes
+
+- 81e885f: Fixed maxWidth being applied incorrectly on unmeasured elements
+
 ## 0.1.4
 
 ### Patch Changes

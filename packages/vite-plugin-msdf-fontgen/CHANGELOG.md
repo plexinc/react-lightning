@@ -1,5 +1,14 @@
 # @plexinc/vite-plugin-msdf-fontgen
 
+## 1.1.1
+
+### Patch Changes
+
+- 4ca0894: Change charset.txt to charset.config.json to match MSDF plugin API
+- 1d5259a: Add support for multiple configs, and add charsetFile option
+- c249215: Fix plugin not finding files when only one extension is specified
+- c249215: Add support for multiple extensions of the same font file
+
 ## 1.1.0
 
 ### Minor Changes

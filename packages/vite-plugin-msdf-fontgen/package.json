@@ -1,7 +1,7 @@
 {
   "name": "@plexinc/vite-plugin-msdf-fontgen",
   "description": "Vite plugin for generating MSDF fonts for use in Lightningjs",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {
