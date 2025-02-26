@@ -1,5 +1,14 @@
 # @plexinc/react-lightning-example
 
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [a42e9d6]
+  - @plexinc/react-lightning-plugin-flexbox@0.1.6
+  - @plexinc/react-lightning-plugin-devtools@0.1.4
+  - @plexinc/react-lightning-components@0.1.6
+
 ## 0.1.5
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @plexinc/react-lightning-plugin-css-transform
 
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [a42e9d6]
+  - @plexinc/react-lightning-plugin-flexbox@0.1.6
+
 ## 0.1.5
 
 ### Patch Changes

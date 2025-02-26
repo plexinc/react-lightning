@@ -1,5 +1,11 @@
 # @plexinc/react-lightning-plugin-flexbox
 
+## 0.1.6
+
+### Patch Changes
+
+- a42e9d6: Fix bug with maxWidth not setting contain property on text nodes
+
 ## 0.1.5
 
 ### Patch Changes
