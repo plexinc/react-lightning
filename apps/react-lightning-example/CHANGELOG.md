@@ -1,5 +1,11 @@
 # @plexinc/react-lightning-example
 
+## 0.1.8
+
+### Patch Changes
+
+- 65bbb38: Update vite config forupdated msdf plugin
+
 ## 0.1.7
 
 ### Patch Changes

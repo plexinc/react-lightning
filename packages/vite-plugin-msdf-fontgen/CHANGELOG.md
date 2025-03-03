@@ -1,5 +1,11 @@
 # @plexinc/vite-plugin-msdf-fontgen
 
+## 1.2.0
+
+### Minor Changes
+
+- 65bbb38: BREAKING: changed plugin options structure and added support for checking hashes to know when files have changed and need to re-run the plugin
+
 ## 1.1.1
 
 ### Patch Changes
