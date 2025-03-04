@@ -1,5 +1,12 @@
 # @plexinc/react-lightning-plugin-devtools
 
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [a2d64f0]
+  - @plexinc/react-lightning@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes

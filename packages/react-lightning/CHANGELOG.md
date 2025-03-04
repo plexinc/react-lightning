@@ -1,5 +1,11 @@
 # @plexinc/react-lightning
 
+## 0.1.5
+
+### Patch Changes
+
+- a2d64f0: Fixed a bug where shaders can fail to update
+
 ## 0.1.4
 
 ### Patch Changes
