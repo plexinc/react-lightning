@@ -1,5 +1,14 @@
 # @plexinc/react-lightning-plugin-reanimated
 
+## 0.1.9
+
+### Patch Changes
+
+- Updated dependencies [a4a409c]
+  - @plexinc/react-lightning@0.1.6
+  - @plexinc/react-lightning-plugin-css-transform@0.1.9
+  - @plexinc/react-lightning-plugin-flexbox@0.1.9
+
 ## 0.1.8
 
 ### Patch Changes

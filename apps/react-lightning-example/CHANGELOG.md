@@ -1,5 +1,15 @@
 # @plexinc/react-lightning-example
 
+## 0.1.10
+
+### Patch Changes
+
+- a4a409c: Added instrumentation for new lightning devtools
+- Updated dependencies [a4a409c]
+  - @plexinc/react-lightning@0.1.6
+  - @plexinc/react-lightning-plugin-flexbox@0.1.9
+  - @plexinc/react-lightning-components@0.1.9
+
 ## 0.1.9
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @repo/rollup-config
 
+## 0.1.4
+
+### Patch Changes
+
+- a4a409c: Added instrumentation for new lightning devtools
+
 ## 0.1.3
 
 ### Patch Changes

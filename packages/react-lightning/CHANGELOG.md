@@ -1,5 +1,11 @@
 # @plexinc/react-lightning
 
+## 0.1.6
+
+### Patch Changes
+
+- a4a409c: Added instrumentation for new lightning devtools
+
 ## 0.1.5
 
 ### Patch Changes
