@@ -1,5 +1,11 @@
 # @plexinc/react-lightning-storybook
 
+## 0.1.10
+
+### Patch Changes
+
+- 507d364: Fix storybook build error
+
 ## 0.1.9
 
 ### Patch Changes
