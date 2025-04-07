@@ -1,5 +1,15 @@
 # @plexinc/react-lightning
 
+## 0.2.0
+
+### Minor Changes
+
+- a793b9b: Clean up build configs for better support
+
+### Patch Changes
+
+- c86498e: Added onFocusCapture event for better react native support
+
 ## 0.1.6
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @repo/rollup-config
 
+## 0.2.0
+
+### Minor Changes
+
+- a793b9b: Clean up build configs for better support
+
 ## 0.1.4
 
 ### Patch Changes

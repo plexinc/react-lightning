@@ -1,7 +1,7 @@
 {
   "name": "@plexinc/react-lightning-storybook",
   "description": "Documentation for react-lightning",
-  "version": "0.1.10",
+  "version": "0.2.0",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {

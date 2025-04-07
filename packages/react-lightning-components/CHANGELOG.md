@@ -1,5 +1,19 @@
 # @plexinc/react-lightning-components
 
+## 0.2.0
+
+### Minor Changes
+
+- a793b9b: Clean up build configs for better support
+
+### Patch Changes
+
+- e74ac2e: Updated imports for better tree shaking
+- Updated dependencies [a793b9b]
+- Updated dependencies [c86498e]
+  - @plexinc/react-lightning@0.2.0
+  - @plexinc/react-lightning-plugin-flexbox@0.2.0
+
 ## 0.1.9
 
 ### Patch Changes

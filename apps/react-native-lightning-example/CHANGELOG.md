@@ -1,5 +1,26 @@
 # @plexinc/react-native-lightning-example
 
+## 0.2.0
+
+### Minor Changes
+
+- a793b9b: Clean up build configs for better support
+
+### Patch Changes
+
+- d87a081: Updated ScrollView and VirtualizedListView packages, and added a new FlashList implementation for RN
+- Updated dependencies [e74ac2e]
+- Updated dependencies [5f26ca9]
+- Updated dependencies [a793b9b]
+- Updated dependencies [d87a081]
+- Updated dependencies [c86498e]
+  - @plexinc/react-lightning-components@0.2.0
+  - @plexinc/react-native-lightning@0.2.0
+  - @plexinc/react-native-lightning-components@0.1.0
+  - @plexinc/react-lightning-plugin-reanimated@0.2.0
+  - @plexinc/react-lightning@0.2.0
+  - @plexinc/react-lightning-plugin-flexbox@0.2.0
+
 ## 0.1.10
 
 ### Patch Changes
