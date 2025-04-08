@@ -1,5 +1,12 @@
 # @plexinc/react-lightning-example
 
+## 0.2.3
+
+### Patch Changes
+
+- Updated dependencies [a997f70]
+  - @plexinc/react-lightning-components@0.2.3
+
 ## 0.2.2
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @plexinc/react-native-lightning-components
 
+## 0.1.3
+
+### Patch Changes
+
+- a997f70: Fix typings export path
+
 ## 0.1.2
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @plexinc/react-lightning-components
 
+## 0.2.3
+
+### Patch Changes
+
+- a997f70: Fix typings export path
+
 ## 0.2.2
 
 ### Patch Changes
