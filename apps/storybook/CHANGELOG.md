@@ -1,5 +1,17 @@
 # @plexinc/react-lightning-storybook
 
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [2c7be90]
+  - @plexinc/react-native-lightning-components@0.1.2
+  - @plexinc/react-lightning-components@0.2.2
+  - @plexinc/react-native-lightning@0.2.2
+  - @plexinc/react-lightning-plugin-flexbox-lite@0.2.2
+  - @plexinc/react-lightning@0.2.2
+  - @plexinc/react-lightning-plugin-flexbox@0.2.2
+
 ## 0.2.1
 
 ### Patch Changes

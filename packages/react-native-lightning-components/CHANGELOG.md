@@ -1,5 +1,15 @@
 # @plexinc/react-native-lightning-components
 
+## 0.1.2
+
+### Patch Changes
+
+- 2c7be90: Fix packages not importing properly in some cases
+- Updated dependencies [2c7be90]
+  - @plexinc/react-native-lightning@0.2.2
+  - @plexinc/react-lightning@0.2.2
+  - @plexinc/react-lightning-plugin-flexbox@0.2.2
+
 ## 0.1.1
 
 ### Patch Changes

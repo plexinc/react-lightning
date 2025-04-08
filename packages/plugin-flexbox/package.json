@@ -1,7 +1,7 @@
 {
   "name": "@plexinc/react-lightning-plugin-flexbox",
   "description": "Adds FlexBox layout support to @plexinc/react-lightning using yoga",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {

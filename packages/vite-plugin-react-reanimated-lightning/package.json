@@ -1,7 +1,7 @@
 {
   "name": "@plexinc/vite-plugin-react-reanimated-lightning",
   "description": "Vite plugin for @plexinc/react-lightning-plugin-reanimated",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {

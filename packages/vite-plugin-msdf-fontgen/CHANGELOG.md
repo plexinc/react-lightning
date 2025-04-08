@@ -1,5 +1,11 @@
 # @plexinc/vite-plugin-msdf-fontgen
 
+## 1.2.1
+
+### Patch Changes
+
+- 2c7be90: Fix packages not importing properly in some cases
+
 ## 1.2.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @repo/rollup-config
 
+## 0.2.2
+
+### Patch Changes
+
+- 2c7be90: Fix packages not importing properly in some cases
+
 ## 0.2.1
 
 ### Patch Changes
