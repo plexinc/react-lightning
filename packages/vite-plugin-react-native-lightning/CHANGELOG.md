@@ -1,5 +1,13 @@
 # @plexinc/vite-plugin-react-native-lightning
 
+## 0.2.1
+
+### Patch Changes
+
+- 8406624: Fix rollup not building proper index files for absolute imports
+- Updated dependencies [8406624]
+  - @plexinc/react-native-lightning@0.2.1
+
 ## 0.2.0
 
 ### Patch Changes
