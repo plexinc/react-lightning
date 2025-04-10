@@ -1,5 +1,14 @@
 # @plexinc/react-native-lightning-example
 
+## 0.2.4
+
+### Patch Changes
+
+- 27eec53: Alternate fix for FlashLists so item sizes get updated properly
+- Updated dependencies [27eec53]
+  - @plexinc/react-native-lightning-components@0.1.4
+  - @plexinc/react-native-lightning@0.2.3
+
 ## 0.2.3
 
 ### Patch Changes
