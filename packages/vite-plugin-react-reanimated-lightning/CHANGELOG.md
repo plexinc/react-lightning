@@ -1,5 +1,11 @@
 # @plexinc/vite-plugin-react-reanimated-lightning
 
+## 0.2.3
+
+### Patch Changes
+
+- @plexinc/react-lightning-plugin-reanimated@0.2.3
+
 ## 0.2.2
 
 ### Patch Changes

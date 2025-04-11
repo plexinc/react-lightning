@@ -1,5 +1,15 @@
 # @plexinc/react-native-lightning-components
 
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [eb5907d]
+  - @plexinc/react-native-lightning@0.2.4
+  - @plexinc/react-lightning@0.2.3
+  - @plexinc/react-lightning-plugin-css-transform@0.2.3
+  - @plexinc/react-lightning-plugin-flexbox@0.2.3
+
 ## 0.1.4
 
 ### Patch Changes

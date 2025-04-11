@@ -1,5 +1,12 @@
 # @plexinc/react-lightning
 
+## 0.2.3
+
+### Patch Changes
+
+- eb5907d: Fix issue with a prop name overriding an internal Lightning prop.
+  Added some debug logging to prevent it from happening again.
+
 ## 0.2.2
 
 ### Patch Changes

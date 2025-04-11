@@ -1,5 +1,15 @@
 # @plexinc/react-lightning-components
 
+## 0.2.4
+
+### Patch Changes
+
+- eb5907d: Fix issue with a prop name overriding an internal Lightning prop.
+  Added some debug logging to prevent it from happening again.
+- Updated dependencies [eb5907d]
+  - @plexinc/react-lightning@0.2.3
+  - @plexinc/react-lightning-plugin-flexbox@0.2.3
+
 ## 0.2.3
 
 ### Patch Changes

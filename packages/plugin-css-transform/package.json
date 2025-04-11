@@ -1,7 +1,7 @@
 {
   "name": "@plexinc/react-lightning-plugin-css-transform",
   "description": "Transforms CSS properties to lightning properties. Requires @plexinc/react-lightning-plugin-flexbox",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {
