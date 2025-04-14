@@ -1,5 +1,11 @@
 # @plexinc/react-native-lightning-components
 
+## 0.1.6
+
+### Patch Changes
+
+- d8668ce: Add RN version Column/Row components
+
 ## 0.1.5
 
 ### Patch Changes

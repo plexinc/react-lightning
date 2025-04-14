@@ -1,5 +1,13 @@
 # @plexinc/react-lightning-storybook
 
+## 0.2.6
+
+### Patch Changes
+
+- d8668ce: Add RN version Column/Row components
+- Updated dependencies [d8668ce]
+  - @plexinc/react-native-lightning-components@0.1.6
+
 ## 0.2.5
 
 ### Patch Changes
