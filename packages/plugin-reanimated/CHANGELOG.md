@@ -1,5 +1,11 @@
 # @plexinc/react-lightning-plugin-reanimated
 
+## 0.2.4
+
+### Patch Changes
+
+- 73c0485: Add `addWhitelistedNativeProps` function (no-op)
+
 ## 0.2.3
 
 ### Patch Changes

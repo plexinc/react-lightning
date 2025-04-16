@@ -1,5 +1,12 @@
 # @plexinc/react-native-lightning-example
 
+## 0.2.7
+
+### Patch Changes
+
+- Updated dependencies [73c0485]
+  - @plexinc/react-lightning-plugin-reanimated@0.2.4
+
 ## 0.2.6
 
 ### Patch Changes
