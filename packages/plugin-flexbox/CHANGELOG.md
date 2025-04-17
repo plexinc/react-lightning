@@ -1,5 +1,13 @@
 # @plexinc/react-lightning-plugin-flexbox
 
+## 0.2.4
+
+### Patch Changes
+
+- c531bf6: Skip processing hidden nodes for flex calculations, with an option to opt out
+- Updated dependencies [7155482]
+  - @plexinc/react-lightning@0.2.4
+
 ## 0.2.3
 
 ### Patch Changes

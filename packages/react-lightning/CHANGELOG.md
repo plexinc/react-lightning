@@ -1,5 +1,11 @@
 # @plexinc/react-lightning
 
+## 0.2.4
+
+### Patch Changes
+
+- 7155482: Update lightningjs renderer
+
 ## 0.2.3
 
 ### Patch Changes

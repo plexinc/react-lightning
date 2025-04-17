@@ -1,5 +1,19 @@
 # @plexinc/react-lightning-storybook
 
+## 0.2.7
+
+### Patch Changes
+
+- 7155482: Update lightningjs renderer
+- Updated dependencies [c531bf6]
+- Updated dependencies [7155482]
+  - @plexinc/react-lightning-plugin-flexbox@0.2.4
+  - @plexinc/react-native-lightning@0.2.5
+  - @plexinc/react-lightning@0.2.4
+  - @plexinc/react-lightning-components@0.2.5
+  - @plexinc/react-native-lightning-components@0.1.7
+  - @plexinc/react-lightning-plugin-flexbox-lite@0.2.4
+
 ## 0.2.6
 
 ### Patch Changes

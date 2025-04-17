@@ -1,5 +1,16 @@
 # @plexinc/react-lightning-example
 
+## 0.2.5
+
+### Patch Changes
+
+- 7155482: Update lightningjs renderer
+- Updated dependencies [c531bf6]
+- Updated dependencies [7155482]
+  - @plexinc/react-lightning-plugin-flexbox@0.2.4
+  - @plexinc/react-lightning@0.2.4
+  - @plexinc/react-lightning-components@0.2.5
+
 ## 0.2.4
 
 ### Patch Changes
