@@ -30,7 +30,7 @@ export const BrowsePage = () => {
       }}
       transition={{ y: { duration: 250 } }}
     >
-      {data.MediaContainer.Hub.map((hub, i) => (
+      {data.MediaContainer.Hub.slice(0, 2).map((hub, i) => (
         <HubRow
           key={hub.key}
           hub={hub}

@@ -7,7 +7,6 @@ import {
 } from 'react';
 import type { LightningElement } from '../types';
 import { FocusGroupContext } from './FocusGroupContext';
-import { useFocusManager } from './useFocusManager';
 
 type Props = {
   active?: boolean;
@@ -36,9 +35,7 @@ export function useFocus<T extends LightningElement>(
   },
 ) {
   const ref = useRef<T>(null);
-  const focusManager = useFocusManager();
   const parentFocusable = useContext(FocusGroupContext);
-
   const focused = useSyncExternalStore(
     (onStoreChange) => {
       if (ref.current) {
@@ -49,7 +46,7 @@ export function useFocus<T extends LightningElement>(
     },
     () => ref.current?.focused ?? false,
   );
-
+  const initialRender = useRef(true);
   // We need to keep a copy of the ref around for when this hook is unmounted,
   // so we can properly remove the child element.
   const elementRef = useRef<T>();
@@ -64,32 +61,37 @@ export function useFocus<T extends LightningElement>(
   );
 
   useEffect(() => {
-    if (ref.current && parentFocusable) {
+    if (ref.current) {
       elementRef.current = ref.current;
-      focusManager.addElement(elementRef.current, parentFocusable, {
-        autoFocus,
-        traps,
-      });
+      parentFocusable.addChild(elementRef.current, autoFocus);
+    } else {
+      console.error(
+        '[useFocusable] ref was not assigned to a Lightning element!',
+      );
     }
 
     return () => {
       if (elementRef.current) {
-        focusManager.removeElement(elementRef.current);
+        parentFocusable.removeChild(elementRef.current);
       }
     };
-  }, [focusManager, parentFocusable, autoFocus, traps]);
+  }, [parentFocusable.addChild, parentFocusable.removeChild, autoFocus]);
 
   useEffect(() => {
     if (elementRef.current) {
-      focusManager.setTraps(elementRef.current, traps);
+      parentFocusable.updateTraps(elementRef.current, traps);
     }
-  }, [focusManager.setTraps, traps]);
+  }, [parentFocusable.updateTraps, traps]);
 
   useEffect(() => {
     if (ref.current && active !== undefined) {
       ref.current.focusable = active;
     }
   }, [active]);
+
+  if (ref.current?.focusable && initialRender.current) {
+    initialRender.current = false;
+  }
 
   return { ref, focused };
 }

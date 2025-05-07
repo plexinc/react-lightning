@@ -1,4 +1,0 @@
-pnpm check:types
-pnpm lint
-pnpm test
-pnpm unused

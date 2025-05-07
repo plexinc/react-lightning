@@ -38,7 +38,13 @@ export const FocusPathContext = createContext<{
   getFocusPath: () => LightningElement[];
   subscribe: (callback: () => void) => () => void;
   focusPair: (parent: LightningElement, child: LightningElement) => void;
-}>({ getFocusPath: () => [], subscribe: () => () => {}, focusPair: () => {} });
+  removeFocusElement: (element: LightningElement) => void;
+}>({
+  getFocusPath: () => [],
+  subscribe: () => () => {},
+  focusPair: () => {},
+  removeFocusElement: () => {},
+});
 
 function useFocusPathData() {
   const focusPath = useRef<LightningElement[]>([]);
@@ -118,9 +124,49 @@ export const FocusPathProvider = ({ rootRef, children }: Props) => {
     [set, rootRef],
   );
 
+  const removeFocusElement = useCallback(
+    (child: LightningElement) => {
+      const path = [...get()];
+      const removeList: number[] = [];
+
+      let curr: number | undefined = child.id;
+
+      while (curr != null) {
+        removeList.push(curr);
+        curr = focusedPairs.current[curr];
+      }
+
+      for (const id of removeList) {
+        // Clear the focus pairs for the element and its children
+        delete focusedPairs.current[id];
+
+        // Call unfocus on the element if it's part of the focus path
+        const el = elementMap.current[id];
+        if (el) {
+          el.blur();
+        }
+
+        // Remove the element from the focus path
+        const index = path.findIndex((el) => el.id === id);
+
+        if (index !== -1) {
+          path.splice(index, 1);
+        }
+      }
+
+      set(path);
+    },
+    [set, get],
+  );
+
   return (
     <FocusPathContext.Provider
-      value={{ getFocusPath: get, subscribe, focusPair }}
+      value={{
+        getFocusPath: get,
+        subscribe,
+        focusPair,
+        removeFocusElement,
+      }}
     >
       {children}
     </FocusPathContext.Provider>

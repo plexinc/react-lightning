@@ -41,7 +41,7 @@ export const HubRow = (props: Props) => {
       </lng-text>
 
       <Row style={{ columnGap: 40 }}>
-        {data.MediaContainer.Metadata.map((metadata, i) => (
+        {data.MediaContainer.Metadata.slice(0,2).map((metadata, i) => (
           <HubItem
             key={metadata.guid}
             metadata={metadata}

@@ -4,11 +4,12 @@ import type {
   NodeLoadedEventHandler,
 } from '@lightningjs/renderer';
 import type { LightningElement } from './Element';
+import type { FocusEvents } from './Focusable';
 import type { Rect } from './Geometry';
 import type { LightningElementProps } from './Props';
 import type { LightningElementStyle } from './Styles';
 
-export interface LightningElementEvents {
+export interface LightningElementEvents extends FocusEvents<LightningElement> {
   initialized: () => void;
   destroy: () => void;
   childAdded: (child: LightningElement, index: number) => void;
@@ -20,8 +21,6 @@ export interface LightningElementEvents {
   textureFailed: NodeFailedEventHandler;
   textLoaded: NodeLoadedEventHandler;
   textFailed: NodeFailedEventHandler;
-  focusChanged: (isFocused: boolean) => void;
-  focusableChanged: (isFocusable: boolean) => void;
   stylesChanged: (styles: Partial<LightningElementStyle>) => void;
   propsChanged: (newProps: Partial<LightningElementProps>) => void;
   animationFinished: (animationName: IAnimationController) => void;
