@@ -3,13 +3,13 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useState,
   useSyncExternalStore,
 } from 'react';
 import type { LightningElement } from '../types';
 import { FocusGroupContext } from './FocusGroupContext';
+import { useFocusManager } from './useFocusManager';
 
-type Props = {
+export type FocusOptions = {
   active?: boolean;
   autoFocus?: boolean;
   trapFocusUp?: boolean;
@@ -26,7 +26,7 @@ export function useFocus<T extends LightningElement>(
     trapFocusRight,
     trapFocusDown,
     trapFocusLeft,
-  }: Props = {
+  }: FocusOptions = {
     active: true,
     autoFocus: false,
     trapFocusUp: false,
@@ -36,7 +36,9 @@ export function useFocus<T extends LightningElement>(
   },
 ) {
   const ref = useRef<T>(null);
+  const focusManager = useFocusManager();
   const parentFocusable = useContext(FocusGroupContext);
+
   const focused = useSyncExternalStore(
     (onStoreChange) => {
       if (ref.current) {
@@ -47,8 +49,7 @@ export function useFocus<T extends LightningElement>(
     },
     () => ref.current?.focused ?? false,
   );
-  const [runAutoFocus, setRunAutoFocus] = useState(false);
-  const initialRender = useRef(true);
+
   // We need to keep a copy of the ref around for when this hook is unmounted,
   // so we can properly remove the child element.
   const elementRef = useRef<T>();
@@ -63,47 +64,32 @@ export function useFocus<T extends LightningElement>(
   );
 
   useEffect(() => {
-    if (ref.current) {
+    if (ref.current && parentFocusable) {
       elementRef.current = ref.current;
-      parentFocusable.addChild(elementRef.current);
-    } else {
-      console.error(
-        '[useFocusable] ref was not assigned to a Lightning element!',
-      );
+      focusManager.addElement(elementRef.current, parentFocusable, {
+        autoFocus,
+        traps,
+      });
     }
 
     return () => {
       if (elementRef.current) {
-        parentFocusable.removeChild(elementRef.current);
+        focusManager.removeElement(elementRef.current);
       }
     };
-  }, [parentFocusable.addChild, parentFocusable.removeChild]);
+  }, [focusManager, parentFocusable, autoFocus, traps]);
 
   useEffect(() => {
     if (elementRef.current) {
-      parentFocusable.updateTraps(elementRef.current, traps);
+      focusManager.setTraps(elementRef.current, traps);
     }
-  }, [parentFocusable.updateTraps, traps]);
+  }, [focusManager.setTraps, traps]);
 
   useEffect(() => {
-    if (ref.current && active !== undefined) {
-      ref.current.focusable = active;
+    if (ref.current) {
+      ref.current.focusable = active !== undefined ? active : true;
     }
   }, [active]);
-
-  useEffect(() => {
-    if (runAutoFocus && ref.current) {
-      parentFocusable.focusChild(ref.current);
-    }
-  }, [runAutoFocus, parentFocusable.focusChild]);
-
-  if (ref.current?.focusable && initialRender.current) {
-    initialRender.current = false;
-
-    if (autoFocus) {
-      setRunAutoFocus(true);
-    }
-  }
 
   return { ref, focused };
 }

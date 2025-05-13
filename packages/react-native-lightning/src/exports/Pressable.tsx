@@ -129,4 +129,20 @@ export const Pressable = focusable<PressableProps, LightningViewElement>(
       </View>
     );
   },
+  'Pressable(lng)',
+  ({
+    active,
+    autoFocus,
+    trapFocusDown,
+    trapFocusUp,
+    trapFocusLeft,
+    trapFocusRight,
+  }) => ({
+    active,
+    autoFocus,
+    trapFocusDown,
+    trapFocusUp,
+    trapFocusLeft,
+    trapFocusRight,
+  }),
 );

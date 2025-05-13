@@ -7,12 +7,14 @@ import type {
   Ref,
   RefAttributes,
 } from 'react';
-import { forwardRef, memo } from 'react';
+import { forwardRef, memo, useMemo } from 'react';
 import { useCombinedRef } from '../hooks/useCombinedRef';
 import type { LightningElement } from '../types';
-import { useFocus } from './useFocus';
+import { type FocusOptions, useFocus } from './useFocus';
 
-type Focusable<P, T> = P & RefAttributes<T> & { focused: boolean };
+type Focusable<P, T> = P &
+  RefAttributes<T> &
+  FocusOptions & { focused: boolean };
 
 const ForwardRefComponent = forwardRef(() => <div />);
 
@@ -25,17 +27,17 @@ const ForwardRefComponent = forwardRef(() => <div />);
 export function focusable<P, T extends LightningElement = LightningElement>(
   Component: FC<Focusable<P, T>>,
   componentDisplayName?: string,
-  useFocusOptions?: Parameters<typeof useFocus>[0],
+  useFocusOptions?: FocusOptions | ((props: Focusable<P, T>) => FocusOptions),
 ): ForwardRefExoticComponent<P>;
 export function focusable<P, T extends LightningElement = LightningElement>(
   Component: (props: Focusable<P, T>, ref: Ref<T>) => ReactNode,
   componentDisplayName?: string,
-  useFocusOptions?: Parameters<typeof useFocus>[0],
+  useFocusOptions?: FocusOptions | ((props: Focusable<P, T>) => FocusOptions),
 ): ForwardRefExoticComponent<P>;
 export function focusable<P, T extends LightningElement = LightningElement>(
   Component: FC<Focusable<P, T>> | ForwardRefRenderFunction<T, Focusable<P, T>>,
   componentDisplayName?: string,
-  useFocusOptions?: Parameters<typeof useFocus>[0],
+  useFocusOptions?: FocusOptions | ((props: Focusable<P, T>) => FocusOptions),
 ) {
   if (!Component.displayName) {
     Component.displayName = componentDisplayName ?? Component.name;
@@ -56,7 +58,14 @@ export function focusable<P, T extends LightningElement = LightningElement>(
   MemoRefComponent.displayName = `Focusable${Component.displayName}`;
 
   return forwardRef<T, Focusable<P, T>>((props, forwardedRef) => {
-    const { ref, focused } = useFocus(useFocusOptions);
+    const focusOptions = useMemo(
+      () =>
+        typeof useFocusOptions === 'function'
+          ? useFocusOptions(props as Focusable<P, T>)
+          : useFocusOptions,
+      [props, useFocusOptions],
+    );
+    const { ref, focused } = useFocus(focusOptions);
     const combinedRef = useCombinedRef(ref, forwardedRef);
 
     return <MemoRefComponent {...props} ref={combinedRef} focused={focused} />;

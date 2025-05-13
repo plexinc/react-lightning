@@ -1,13 +1,6 @@
 import { createContext } from 'react';
-import type { FocusContextType } from './FocusContextType';
+import type { LightningElement } from '../types';
 
-export const FocusGroupContext = createContext<FocusContextType>({
-  focused: true,
-  focusedChild: null,
-  updateTraps: () => {},
-  addChild: () => {},
-  removeChild: () => {},
-  focusChild: () => {},
-});
+export const FocusGroupContext = createContext<LightningElement | null>(null);
 
 FocusGroupContext.displayName = 'FocusGroupContext';

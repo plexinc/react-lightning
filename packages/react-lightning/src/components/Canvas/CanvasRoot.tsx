@@ -1,6 +1,8 @@
 import { useRef } from 'react';
 import { FocusGroup } from '../../focus/FocusGroup';
-import { FocusPathProvider } from '../../focus/FocusPathProvider';
+import { FocusKeyManager } from '../../focus/FocusKeyManager';
+import { FocusManager } from '../../focus/FocusManager';
+import { FocusManagerContext } from '../../focus/FocusManagerContext';
 import { KeyEventProvider } from '../../input/KeyEventProvider';
 import { KeyMapContext } from '../../input/KeyMapContext';
 import { KeyPressHandler } from '../../input/KeyPressHandler';
@@ -14,10 +16,21 @@ export const CanvasRoot = ({
   height,
 }: CanvasProps) => {
   const ref = useRef<LightningElement>(null);
+  const focusManager = useRef<FocusManager<LightningElement>>(
+    new FocusManager(),
+  );
+  const focusKeyManager = useRef<FocusKeyManager<LightningElement>>(
+    new FocusKeyManager(focusManager.current),
+  );
 
   return (
     <KeyMapContext.Provider value={keyMap}>
-      <FocusPathProvider rootRef={ref}>
+      <FocusManagerContext.Provider
+        value={{
+          focusManager: focusManager.current,
+          focusKeyManager: focusKeyManager.current,
+        }}
+      >
         <KeyEventProvider>
           <KeyPressHandler>
             <FocusGroup
@@ -32,7 +45,7 @@ export const CanvasRoot = ({
             </FocusGroup>
           </KeyPressHandler>
         </KeyEventProvider>
-      </FocusPathProvider>
+      </FocusManagerContext.Provider>
     </KeyMapContext.Provider>
   );
 };
