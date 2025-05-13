@@ -1,5 +1,15 @@
 # @plexinc/react-native-lightning
 
+## 0.2.6
+
+### Patch Changes
+
+- 680a2ef: Refactored focus management to be a little more performant and reliable
+- Updated dependencies [680a2ef]
+  - @plexinc/react-lightning@0.2.5
+  - @plexinc/react-lightning-plugin-css-transform@0.2.5
+  - @plexinc/react-lightning-plugin-flexbox@0.2.5
+
 ## 0.2.5
 
 ### Patch Changes

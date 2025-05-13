@@ -1,5 +1,12 @@
 # @plexinc/vite-plugin-react-native-lightning
 
+## 0.2.6
+
+### Patch Changes
+
+- Updated dependencies [680a2ef]
+  - @plexinc/react-native-lightning@0.2.6
+
 ## 0.2.5
 
 ### Patch Changes

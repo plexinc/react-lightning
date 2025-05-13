@@ -1,5 +1,12 @@
 # @plexinc/react-lightning-plugin-flexbox-lite
 
+## 0.2.5
+
+### Patch Changes
+
+- Updated dependencies [680a2ef]
+  - @plexinc/react-lightning@0.2.5
+
 ## 0.2.4
 
 ### Patch Changes

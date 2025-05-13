@@ -1,5 +1,11 @@
 # @plexinc/react-lightning
 
+## 0.2.5
+
+### Patch Changes
+
+- 680a2ef: Refactored focus management to be a little more performant and reliable
+
 ## 0.2.4
 
 ### Patch Changes
