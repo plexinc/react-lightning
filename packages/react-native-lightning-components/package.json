@@ -1,7 +1,7 @@
 {
   "name": "@plexinc/react-native-lightning-components",
   "description": "React components for react-native-lightning",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {

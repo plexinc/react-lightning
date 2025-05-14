@@ -1,5 +1,12 @@
 # @plexinc/react-lightning
 
+## 0.2.6
+
+### Patch Changes
+
+- d14b8f2: Fix simpleDiff to not error on nullish objects
+- d14b8f2: Tweak focus logic to match W3C spatial navigation spec
+
 ## 0.2.5
 
 ### Patch Changes
