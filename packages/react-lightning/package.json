@@ -1,7 +1,7 @@
 {
   "name": "@plexinc/react-lightning",
   "description": "React renderer for rendering React apps with Lightning.js",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {

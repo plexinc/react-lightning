@@ -1,7 +1,7 @@
 {
   "name": "@plexinc/react-native-lightning-example",
   "description": "Sample implementation of @plexinc/react-native-lightning in a React Native app",
-  "version": "0.2.10",
+  "version": "0.2.11",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {

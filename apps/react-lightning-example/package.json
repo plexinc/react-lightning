@@ -1,7 +1,7 @@
 {
   "name": "@plexinc/react-lightning-example",
   "description": "Sample implementation of @plexinc/react-lightning in a React app",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {
