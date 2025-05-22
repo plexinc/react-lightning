@@ -1,5 +1,12 @@
 # @plexinc/react-lightning
 
+## 0.2.7
+
+### Patch Changes
+
+- d757a05: Adds support for svgs that use data urls
+- f057984: Fix FocusManager sometimes getting into infinite loop
+
 ## 0.2.6
 
 ### Patch Changes
