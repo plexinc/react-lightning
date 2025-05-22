@@ -1,5 +1,11 @@
 # @plexinc/react-lightning
 
+## 0.2.8
+
+### Patch Changes
+
+- 2f2f8f2: Fix svg imageType not getting set in all cases
+
 ## 0.2.7
 
 ### Patch Changes
