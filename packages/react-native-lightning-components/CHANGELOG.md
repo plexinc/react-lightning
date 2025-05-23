@@ -1,5 +1,12 @@
 # @plexinc/react-native-lightning-components
 
+## 0.1.12
+
+### Patch Changes
+
+- Updated dependencies [7037100]
+  - @plexinc/react-native-lightning@0.2.10
+
 ## 0.1.11
 
 ### Patch Changes

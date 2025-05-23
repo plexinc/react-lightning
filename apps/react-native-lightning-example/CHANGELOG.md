@@ -1,5 +1,13 @@
 # @plexinc/react-native-lightning-example
 
+## 0.2.13
+
+### Patch Changes
+
+- Updated dependencies [7037100]
+  - @plexinc/react-native-lightning@0.2.10
+  - @plexinc/react-native-lightning-components@0.1.12
+
 ## 0.2.12
 
 ### Patch Changes

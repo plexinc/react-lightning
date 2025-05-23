@@ -1,5 +1,11 @@
 # @plexinc/react-native-lightning
 
+## 0.2.10
+
+### Patch Changes
+
+- 7037100: Fix css classnames plugin to work with older browsers
+
 ## 0.2.9
 
 ### Patch Changes
