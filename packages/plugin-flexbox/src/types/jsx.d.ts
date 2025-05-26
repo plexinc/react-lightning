@@ -5,7 +5,7 @@ import type {
   FlexLightningBaseElementStyle,
 } from './FlexStyles';
 
-declare module '@plexinc/react-lightning' {
+declare module '@plextv/react-lightning' {
   interface LightningViewElement {
     yogaNode?: Node;
   }

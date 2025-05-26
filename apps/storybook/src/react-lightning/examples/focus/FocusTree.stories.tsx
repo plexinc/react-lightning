@@ -1,9 +1,9 @@
-import { Column, Row } from '@plexinc/react-lightning-components';
+import { Column, Row } from '@plextv/react-lightning-components';
 import type { Meta } from '@storybook/react';
 import Button from '../../../components/Button';
 
 export default {
-  title: '@plexinc∕react-lightning/Examples/Focus/Focus Tree',
+  title: '@plextv∕react-lightning/Examples/Focus/Focus Tree',
   argTypes: {},
 } as Meta;
 

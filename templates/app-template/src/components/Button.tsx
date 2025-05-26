@@ -2,7 +2,7 @@ import {
   type KeyEvent,
   type LightningElementStyle,
   useFocus,
-} from '@plexinc/react-lightning';
+} from '@plextv/react-lightning';
 import { useCallback, useMemo } from 'react';
 import { Text } from './Text';
 

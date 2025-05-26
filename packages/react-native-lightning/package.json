@@ -1,6 +1,6 @@
 {
-  "name": "@plexinc/react-native-lightning",
-  "description": "@plexinc/react-lightning implementation for react-native",
+  "name": "@plextv/react-native-lightning",
+  "description": "@plextv/react-lightning implementation for react-native",
   "version": "0.2.10",
   "author": "Plex Inc.",
   "license": "MIT",
@@ -41,12 +41,12 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@plexinc/react-lightning-plugin-css-transform": "workspace:*",
-    "@plexinc/react-lightning-plugin-flexbox": "workspace:*"
+    "@plextv/react-lightning-plugin-css-transform": "workspace:*",
+    "@plextv/react-lightning-plugin-flexbox": "workspace:*"
   },
   "devDependencies": {
     "@lightningjs/renderer": "2.13.2",
-    "@plexinc/react-lightning": "workspace:*",
+    "@plextv/react-lightning": "workspace:*",
     "@repo/rollup-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "22.13.4",
@@ -58,7 +58,7 @@
   },
   "peerDependencies": {
     "@lightningjs/renderer": "^2.5.1",
-    "@plexinc/react-lightning": "workspace:*",
+    "@plextv/react-lightning": "workspace:*",
     "@react-native-community/cli": "^15.1.2",
     "react": "^18.3.1",
     "react-native": "^0.76.1",

@@ -3,7 +3,7 @@ import type {
   LightningTextElement,
   LightningTextElementStyle,
   Rect,
-} from '@plexinc/react-lightning';
+} from '@plextv/react-lightning';
 import { forwardRef, useCallback, useMemo } from 'react';
 import type { Text as RNText, TextProps as RNTextProps } from 'react-native';
 import { createLayoutEvent } from '../utils/createLayoutEvent';

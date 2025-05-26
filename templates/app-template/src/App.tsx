@@ -1,4 +1,4 @@
-import { FocusGroup } from '@plexinc/react-lightning';
+import { FocusGroup } from '@plextv/react-lightning';
 import { Outlet } from 'react-router-dom';
 import { Nav } from './components/Nav';
 

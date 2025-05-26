@@ -1,5 +1,5 @@
-import Row from '@plexinc/react-lightning-components/layout/Row';
-import FlashList from '@plexinc/react-native-lightning-components/lists/FlashList';
+import Row from '@plextv/react-lightning-components/layout/Row';
+import FlashList from '@plextv/react-native-lightning-components/lists/FlashList';
 import { useCallback, useRef } from 'react';
 import { View } from 'react-native';
 import ScrollItem from '../components/ScrollItem';

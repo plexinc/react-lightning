@@ -1,4 +1,4 @@
-import { Row } from '@plexinc/react-lightning-components';
+import { Row } from '@plextv/react-lightning-components';
 import type { Meta } from '@storybook/react';
 import {
   ColorPalette,
@@ -18,7 +18,7 @@ const ExampleBox = () => {
 };
 
 export default {
-  title: '@plexinc∕react-lightning-components/Layout/Row',
+  title: '@plextv∕react-lightning-components/Layout/Row',
   component: Row,
   argTypes: {
     justifyContent: {

@@ -1,4 +1,4 @@
-import type { LightningElement } from '@plexinc/react-lightning';
+import type { LightningElement } from '@plextv/react-lightning';
 import type { NativeSyntheticEvent } from 'react-native';
 
 export function createNativeSyntheticEvent<T>(

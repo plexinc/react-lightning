@@ -1,5 +1,5 @@
 {
-  "name": "@plexinc/react-lightning-storybook",
+  "name": "@plextv/react-lightning-storybook",
   "description": "Documentation for react-lightning",
   "version": "0.2.12",
   "author": "Plex Inc.",
@@ -21,12 +21,12 @@
   },
   "dependencies": {
     "@lightningjs/renderer": "2.13.2",
-    "@plexinc/react-lightning": "workspace:*",
-    "@plexinc/react-lightning-components": "workspace:*",
-    "@plexinc/react-lightning-plugin-flexbox": "workspace:*",
-    "@plexinc/react-lightning-plugin-flexbox-lite": "workspace:*",
-    "@plexinc/react-native-lightning": "workspace:*",
-    "@plexinc/react-native-lightning-components": "workspace:*",
+    "@plextv/react-lightning": "workspace:*",
+    "@plextv/react-lightning-components": "workspace:*",
+    "@plextv/react-lightning-plugin-flexbox": "workspace:*",
+    "@plextv/react-lightning-plugin-flexbox-lite": "workspace:*",
+    "@plextv/react-native-lightning": "workspace:*",
+    "@plextv/react-native-lightning-components": "workspace:*",
     "@storybook/addon-essentials": "8.6.12",
     "@storybook/addon-interactions": "8.6.12",
     "@storybook/addon-links": "8.6.12",
@@ -39,9 +39,9 @@
     "storybook": "8.6.12"
   },
   "devDependencies": {
-    "@plexinc/vite-plugin-msdf-fontgen": "workspace:*",
-    "@plexinc/vite-plugin-react-native-lightning": "workspace:*",
-    "@plexinc/vite-plugin-react-reanimated-lightning": "workspace:*",
+    "@plextv/vite-plugin-msdf-fontgen": "workspace:*",
+    "@plextv/vite-plugin-react-native-lightning": "workspace:*",
+    "@plextv/vite-plugin-react-reanimated-lightning": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/react": "18.3.14",
     "vite": "6.1.0"

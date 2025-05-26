@@ -1,4 +1,4 @@
-import type { LightningElementStyle } from '@plexinc/react-lightning';
+import type { LightningElementStyle } from '@plextv/react-lightning';
 import type { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/commonTypes';
 
 export function getTransitionProperty<K extends keyof DefaultStyle>(

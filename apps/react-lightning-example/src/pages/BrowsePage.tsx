@@ -1,5 +1,5 @@
-import type { LightningElement } from '@plexinc/react-lightning';
-import { Column } from '@plexinc/react-lightning-components';
+import type { LightningElement } from '@plextv/react-lightning';
+import { Column } from '@plextv/react-lightning-components';
 import { useCallback, useState } from 'react';
 import { useHubsData } from '../api/useHubsData';
 import { HubRow } from '../components/HubRow';

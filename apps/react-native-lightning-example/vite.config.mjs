@@ -1,6 +1,6 @@
-import fontGen from '@plexinc/vite-plugin-msdf-fontgen';
-import reactNativeLightningPlugin from '@plexinc/vite-plugin-react-native-lightning';
-import reactReanimatedLightningPlugin from '@plexinc/vite-plugin-react-reanimated-lightning';
+import fontGen from '@plextv/vite-plugin-msdf-fontgen';
+import reactNativeLightningPlugin from '@plextv/vite-plugin-react-native-lightning';
+import reactReanimatedLightningPlugin from '@plextv/vite-plugin-react-reanimated-lightning';
 import { defineConfig } from 'vite';
 
 const config = defineConfig({

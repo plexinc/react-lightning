@@ -1,4 +1,4 @@
-# @plexinc/vite-plugin-msdf-fontgen
+# @plextv/vite-plugin-msdf-fontgen
 
 ## 1.2.1
 

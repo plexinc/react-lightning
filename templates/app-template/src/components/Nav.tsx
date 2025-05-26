@@ -1,4 +1,4 @@
-import { FocusGroup } from '@plexinc/react-lightning';
+import { FocusGroup } from '@plextv/react-lightning';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './Button';
 

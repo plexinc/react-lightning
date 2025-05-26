@@ -1,7 +1,7 @@
 import type {
   LightningElement,
   LightningViewElement,
-} from '@plexinc/react-lightning';
+} from '@plextv/react-lightning';
 import { forwardRef, useEffect, useMemo, useRef } from 'react';
 import type {
   Falsy,

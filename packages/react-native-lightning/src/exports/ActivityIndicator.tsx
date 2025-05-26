@@ -1,5 +1,5 @@
-import type { LightningViewElement } from '@plexinc/react-lightning';
-import { htmlColorToLightningColor } from '@plexinc/react-lightning-plugin-css-transform';
+import type { LightningViewElement } from '@plextv/react-lightning';
+import { htmlColorToLightningColor } from '@plextv/react-lightning-plugin-css-transform';
 import { forwardRef, useEffect, useState } from 'react';
 import type {
   ForwardRefExoticComponent,

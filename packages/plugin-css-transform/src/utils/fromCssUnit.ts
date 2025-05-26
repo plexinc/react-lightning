@@ -1,4 +1,4 @@
-import type { DimensionValue } from '@plexinc/react-lightning-plugin-flexbox';
+import type { DimensionValue } from '@plextv/react-lightning-plugin-flexbox';
 import type { Animated } from 'react-native';
 
 const unitRegex = /^(\d+)(px|vw|vh|%)?$/i;

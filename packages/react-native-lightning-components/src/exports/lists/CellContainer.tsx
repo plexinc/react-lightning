@@ -1,9 +1,9 @@
-import type { LightningElement, Rect } from '@plexinc/react-lightning';
-import { convertCSSStyleToLightning } from '@plexinc/react-lightning-plugin-css-transform';
+import type { LightningElement, Rect } from '@plextv/react-lightning';
+import { convertCSSStyleToLightning } from '@plextv/react-lightning-plugin-css-transform';
 import {
   type ViewProps,
   createLayoutEvent,
-} from '@plexinc/react-native-lightning';
+} from '@plextv/react-native-lightning';
 import { forwardRef, useCallback, useMemo } from 'react';
 
 type CellContainerProps = ViewProps & {

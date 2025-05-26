@@ -1,4 +1,4 @@
-import { StyledText } from '@plexinc/react-lightning-components';
+import { StyledText } from '@plextv/react-lightning-components';
 import React from 'react';
 import Button from '../../components/Button';
 
@@ -24,7 +24,7 @@ const PhoneFriendSecondLine = {
 };
 
 export default {
-  title: '@plexinc∕react-lightning-components/Text/StyledText',
+  title: '@plextv∕react-lightning-components/Text/StyledText',
   component: StyledText,
 };
 

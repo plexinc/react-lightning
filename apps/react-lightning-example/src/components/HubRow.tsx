@@ -1,5 +1,5 @@
-import type { LightningViewElementProps } from '@plexinc/react-lightning';
-import { Column, Row } from '@plexinc/react-lightning-components';
+import type { LightningViewElementProps } from '@plextv/react-lightning';
+import { Column, Row } from '@plextv/react-lightning-components';
 import type { Hub } from '../api/types/Hubs';
 import { useHubItemsData } from '../api/useHubItemsData';
 import { HubItem } from './HubItem';

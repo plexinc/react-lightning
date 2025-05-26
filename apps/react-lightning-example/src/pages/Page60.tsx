@@ -1,5 +1,5 @@
-import { type LightningElement, useFocus } from '@plexinc/react-lightning';
-import { Column, Row } from '@plexinc/react-lightning-components';
+import { type LightningElement, useFocus } from '@plextv/react-lightning';
+import { Column, Row } from '@plextv/react-lightning-components';
 import { useCallback, useState } from 'react';
 import Button from '../components/Button';
 

@@ -1,4 +1,4 @@
-import { FocusGroup, useFocus } from '@plexinc/react-lightning';
+import { FocusGroup, useFocus } from '@plextv/react-lightning';
 import { useMemo } from 'react';
 
 const WIDTH = 200;

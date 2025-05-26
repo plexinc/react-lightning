@@ -8,7 +8,7 @@ type Options = {
 const plugin = (options?: Options): Plugin => {
   const require = createRequire(options?.cwd ?? process.cwd());
   const reactNativeLightningReanimatedPath = require.resolve(
-    '@plexinc/react-lightning-plugin-reanimated',
+    '@plextv/react-lightning-plugin-reanimated',
   );
   const reactReanimatedPath = require.resolve('react-native-reanimated');
 

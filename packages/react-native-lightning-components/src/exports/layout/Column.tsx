@@ -1,8 +1,8 @@
-import type { LightningViewElement, Rect } from '@plexinc/react-lightning';
+import type { LightningViewElement, Rect } from '@plextv/react-lightning';
 import RLColumn, {
   type ColumnProps as RLColumnProps,
-} from '@plexinc/react-lightning-components/layout/Column';
-import { createLayoutEvent } from '@plexinc/react-native-lightning';
+} from '@plextv/react-lightning-components/layout/Column';
+import { createLayoutEvent } from '@plextv/react-native-lightning';
 import { forwardRef, useCallback } from 'react';
 import type { ViewProps } from 'react-native';
 

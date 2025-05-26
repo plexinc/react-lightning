@@ -3,7 +3,7 @@ import {
   Canvas,
   type RenderOptions,
   createRoot,
-} from '@plexinc/react-lightning';
+} from '@plextv/react-lightning';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { keyMap } from './keyMap';

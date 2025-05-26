@@ -5,5 +5,5 @@ export default createRollupConfig({
   input: 'src/exports/index.ts',
   preserveModules: true,
   preserveModulesRoot: path.join('src', 'exports'),
-  external: ['@plexinc/react-lightning', 'react', 'react/jsx-runtime'],
+  external: ['@plextv/react-lightning', 'react', 'react/jsx-runtime'],
 });

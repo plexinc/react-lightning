@@ -1,5 +1,5 @@
 {
-  "name": "@plexinc/react-lightning",
+  "name": "@plextv/react-lightning",
   "description": "React renderer for rendering React apps with Lightning.js",
   "version": "0.2.8",
   "author": "Plex Inc.",

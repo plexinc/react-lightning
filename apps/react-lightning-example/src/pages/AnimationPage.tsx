@@ -1,4 +1,4 @@
-import { Column } from '@plexinc/react-lightning-components';
+import { Column } from '@plextv/react-lightning-components';
 import { useCallback, useState } from 'react';
 import Button from '../components/Button';
 import { PosterCollection } from '../components/PosterCollection';

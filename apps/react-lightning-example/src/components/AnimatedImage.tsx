@@ -1,4 +1,4 @@
-import type { LightningImageElement } from '@plexinc/react-lightning';
+import type { LightningImageElement } from '@plextv/react-lightning';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 function randomInt(max: number): number {

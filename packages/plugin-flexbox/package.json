@@ -1,6 +1,6 @@
 {
-  "name": "@plexinc/react-lightning-plugin-flexbox",
-  "description": "Adds FlexBox layout support to @plexinc/react-lightning using yoga",
+  "name": "@plextv/react-lightning-plugin-flexbox",
+  "description": "Adds FlexBox layout support to @plextv/react-lightning using yoga",
   "version": "0.2.8",
   "author": "Plex Inc.",
   "license": "MIT",
@@ -45,14 +45,14 @@
     "yoga-layout": "3.2.1"
   },
   "devDependencies": {
-    "@plexinc/react-lightning": "workspace:*",
+    "@plextv/react-lightning": "workspace:*",
     "@repo/rollup-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "copyfiles": "2.4.1",
     "react": "18.3.1"
   },
   "peerDependencies": {
-    "@plexinc/react-lightning": "workspace:*",
+    "@plextv/react-lightning": "workspace:*",
     "react": "^18.3.1"
   },
   "volta": {

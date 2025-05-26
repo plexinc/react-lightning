@@ -26,7 +26,7 @@ type Options = {
 const vitePlugin = (options?: Options): PluginOption => {
   const require = createRequire(options?.cwd ?? process.cwd());
   const reactNativeLightningPath = require.resolve(
-    '@plexinc/react-native-lightning',
+    '@plextv/react-native-lightning',
   );
 
   return [

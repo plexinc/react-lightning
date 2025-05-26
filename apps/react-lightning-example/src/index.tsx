@@ -3,8 +3,8 @@ import {
   Canvas,
   type RenderOptions,
   createRoot as createRootLng,
-} from '@plexinc/react-lightning';
-import { plugin as flexPlugin } from '@plexinc/react-lightning-plugin-flexbox';
+} from '@plextv/react-lightning';
+import { plugin as flexPlugin } from '@plextv/react-lightning-plugin-flexbox';
 import { createRoot as createRootDom } from 'react-dom/client';
 import { RouterProvider, createBrowserRouter } from 'react-router-dom';
 import { keyMap } from './keyMap';

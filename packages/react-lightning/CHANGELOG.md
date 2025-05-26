@@ -1,4 +1,4 @@
-# @plexinc/react-lightning
+# @plextv/react-lightning
 
 ## 0.2.8
 

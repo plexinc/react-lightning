@@ -11,7 +11,7 @@ import {
  * ```tsx
  * import React, { forwardRef, useCallback, useRef } from 'react';
  * import { TouchableOpacity } from 'react-native';
- * import useCombinedRef from '@plexinc/react-native-helpers/hooks/useCombinedRef';
+ * import useCombinedRef from '@plextv/react-native-helpers/hooks/useCombinedRef';
  *
  * export const Component = forwardRef<TouchableOpacity, ComponentProps>(
  *   ({ children, icon, onPress, ...props }, ref) => {

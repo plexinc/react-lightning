@@ -2,7 +2,7 @@ import {
   type LightningElementEvents,
   LightningViewElement,
   type Plugin,
-} from '@plexinc/react-lightning';
+} from '@plextv/react-lightning';
 
 const ELEMENT_NODE = 1;
 

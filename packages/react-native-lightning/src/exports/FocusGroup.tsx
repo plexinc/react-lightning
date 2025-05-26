@@ -2,8 +2,8 @@ import type {
   LightningElement,
   FocusGroupProps as RLFocusGroupProps,
   Rect,
-} from '@plexinc/react-lightning';
-import { FocusGroup as RLFocusGroup } from '@plexinc/react-lightning';
+} from '@plextv/react-lightning';
+import { FocusGroup as RLFocusGroup } from '@plextv/react-lightning';
 import { forwardRef, useCallback } from 'react';
 import { createLayoutEvent } from '../utils/createLayoutEvent';
 import type { ViewProps } from './View';

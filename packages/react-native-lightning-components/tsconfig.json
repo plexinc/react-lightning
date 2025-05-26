@@ -4,7 +4,7 @@
     "rootDir": "src",
     "declaration": false,
     "declarationMap": false,
-    "types": ["node", "@plexinc/react-lightning-plugin-flexbox/jsx"]
+    "types": ["node", "@plextv/react-lightning-plugin-flexbox/jsx"]
   },
   "include": ["src", "../../types/*.d.ts"],
   "exclude": ["node_modules", "dist"]

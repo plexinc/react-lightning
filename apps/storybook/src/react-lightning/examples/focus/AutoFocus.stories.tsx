@@ -1,9 +1,9 @@
-import { Column, Row } from '@plexinc/react-lightning-components';
+import { Column, Row } from '@plextv/react-lightning-components';
 import type { Meta } from '@storybook/react';
 import { FocusableImage } from '../../../components/FocusableImage';
 
 export default {
-  title: '@plexinc∕react-lightning/Examples/Focus/AutoFocus',
+  title: '@plextv∕react-lightning/Examples/Focus/AutoFocus',
 } as Meta;
 
 export const AutoFocus = () => {

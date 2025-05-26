@@ -3,7 +3,7 @@ import {
   type LightningViewElement,
   type LightningViewElementProps,
   type LightningViewElementStyle,
-} from '@plexinc/react-lightning';
+} from '@plextv/react-lightning';
 import { forwardRef } from 'react';
 
 export interface ColumnProps extends LightningViewElementProps {

@@ -1,4 +1,4 @@
-import type { LightningViewElement } from '@plexinc/react-lightning';
+import type { LightningViewElement } from '@plextv/react-lightning';
 import type { BaseSyntheticEvent } from 'react';
 
 const defaultEventProps = {

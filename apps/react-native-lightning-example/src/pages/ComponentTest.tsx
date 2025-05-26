@@ -1,6 +1,6 @@
-import type { LightningElement } from '@plexinc/react-lightning';
-import { Column, Row } from '@plexinc/react-lightning-components';
-import { ScrollView } from '@plexinc/react-native-lightning';
+import type { LightningElement } from '@plextv/react-lightning';
+import { Column, Row } from '@plextv/react-lightning-components';
+import { ScrollView } from '@plextv/react-native-lightning';
 import { type RefObject, useCallback, useRef } from 'react';
 import {
   ActivityIndicator,

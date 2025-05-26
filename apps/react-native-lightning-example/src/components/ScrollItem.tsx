@@ -1,5 +1,5 @@
-import { focusable } from '@plexinc/react-lightning';
-import { Image, View } from '@plexinc/react-native-lightning';
+import { focusable } from '@plextv/react-lightning';
+import { Image, View } from '@plextv/react-native-lightning';
 import { type ReactNode, useEffect, useMemo } from 'react';
 import { type ColorValue, Text } from 'react-native';
 

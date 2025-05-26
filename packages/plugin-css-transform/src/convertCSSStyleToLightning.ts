@@ -1,7 +1,7 @@
 import type {
   LightningElementStyle,
   LightningTextElementStyle,
-} from '@plexinc/react-lightning';
+} from '@plextv/react-lightning';
 import type { AllStyleProps } from './types/ReactStyle';
 import { flattenStyles } from './utils/flattenStyles';
 import { htmlColorToLightningColor } from './utils/htmlColorToLightningColor';

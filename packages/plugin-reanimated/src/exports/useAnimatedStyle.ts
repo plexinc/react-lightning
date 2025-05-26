@@ -2,9 +2,9 @@ import type {
   Animatable,
   LightningElement,
   LightningElementStyle,
-} from '@plexinc/react-lightning';
-import { convertCSSTransformToLightning } from '@plexinc/react-lightning-plugin-css-transform';
-import type { Transform } from '@plexinc/react-lightning-plugin-flexbox';
+} from '@plextv/react-lightning';
+import { convertCSSTransformToLightning } from '@plextv/react-lightning-plugin-css-transform';
+import type { Transform } from '@plextv/react-lightning-plugin-flexbox';
 import type { DependencyList } from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 import type { useAnimatedStyle as useAnimatedStyleRN } from 'react-native-reanimated-original';

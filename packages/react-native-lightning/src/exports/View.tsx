@@ -3,10 +3,10 @@ import type {
   LightningElement,
   LightningViewElementProps,
   Rect,
-} from '@plexinc/react-lightning';
-import type { LightningElementEventProps } from '@plexinc/react-lightning';
-import type { LightningViewElement } from '@plexinc/react-lightning';
-import type { AllStyleProps } from '@plexinc/react-lightning-plugin-css-transform';
+} from '@plextv/react-lightning';
+import type { LightningElementEventProps } from '@plextv/react-lightning';
+import type { LightningViewElement } from '@plextv/react-lightning';
+import type { AllStyleProps } from '@plextv/react-lightning-plugin-css-transform';
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';
 import { forwardRef, useCallback } from 'react';
 import type { View as RNView, ViewProps as RNViewProps } from 'react-native';

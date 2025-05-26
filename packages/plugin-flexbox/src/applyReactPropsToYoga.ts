@@ -1,4 +1,4 @@
-import type { LightningViewElementStyle } from '@plexinc/react-lightning';
+import type { LightningViewElementStyle } from '@plextv/react-lightning';
 import type {
   Align,
   Display,

@@ -2,7 +2,7 @@ import {
   type LightningElement,
   LightningViewElement,
   simpleDiff,
-} from '@plexinc/react-lightning';
+} from '@plextv/react-lightning';
 import { Component, createRef } from 'react';
 import type {
   NativeScrollEvent,

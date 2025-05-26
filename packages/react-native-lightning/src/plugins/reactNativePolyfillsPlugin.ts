@@ -1,5 +1,5 @@
-import { LightningViewElement, type Plugin } from '@plexinc/react-lightning';
-import { flattenStyles } from '@plexinc/react-lightning-plugin-css-transform';
+import { LightningViewElement, type Plugin } from '@plextv/react-lightning';
+import { flattenStyles } from '@plextv/react-lightning-plugin-css-transform';
 import type { NativeMethods } from 'react-native';
 
 export const reactNativePolyfillsPlugin = (): Plugin => {

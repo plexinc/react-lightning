@@ -1,11 +1,11 @@
-# @plexinc/react-lightning-plugin-flexbox-lite
+# @plextv/react-lightning-plugin-flexbox-lite
 
 ## 0.2.8
 
 ### Patch Changes
 
 - Updated dependencies [2f2f8f2]
-  - @plexinc/react-lightning@0.2.8
+  - @plextv/react-lightning@0.2.8
 
 ## 0.2.7
 
@@ -13,7 +13,7 @@
 
 - Updated dependencies [d757a05]
 - Updated dependencies [f057984]
-  - @plexinc/react-lightning@0.2.7
+  - @plextv/react-lightning@0.2.7
 
 ## 0.2.6
 
@@ -21,28 +21,28 @@
 
 - Updated dependencies [d14b8f2]
 - Updated dependencies [d14b8f2]
-  - @plexinc/react-lightning@0.2.6
+  - @plextv/react-lightning@0.2.6
 
 ## 0.2.5
 
 ### Patch Changes
 
 - Updated dependencies [680a2ef]
-  - @plexinc/react-lightning@0.2.5
+  - @plextv/react-lightning@0.2.5
 
 ## 0.2.4
 
 ### Patch Changes
 
 - Updated dependencies [7155482]
-  - @plexinc/react-lightning@0.2.4
+  - @plextv/react-lightning@0.2.4
 
 ## 0.2.3
 
 ### Patch Changes
 
 - Updated dependencies [eb5907d]
-  - @plexinc/react-lightning@0.2.3
+  - @plextv/react-lightning@0.2.3
 
 ## 0.2.2
 
@@ -50,7 +50,7 @@
 
 - 2c7be90: Fix packages not importing properly in some cases
 - Updated dependencies [2c7be90]
-  - @plexinc/react-lightning@0.2.2
+  - @plextv/react-lightning@0.2.2
 
 ## 0.2.1
 
@@ -58,7 +58,7 @@
 
 - 8406624: Fix rollup not building proper index files for absolute imports
 - Updated dependencies [8406624]
-  - @plexinc/react-lightning@0.2.1
+  - @plextv/react-lightning@0.2.1
 
 ## 0.2.0
 
@@ -70,21 +70,21 @@
 
 - Updated dependencies [a793b9b]
 - Updated dependencies [c86498e]
-  - @plexinc/react-lightning@0.2.0
+  - @plextv/react-lightning@0.2.0
 
 ## 0.1.6
 
 ### Patch Changes
 
 - Updated dependencies [a4a409c]
-  - @plexinc/react-lightning@0.1.6
+  - @plextv/react-lightning@0.1.6
 
 ## 0.1.5
 
 ### Patch Changes
 
 - Updated dependencies [a2d64f0]
-  - @plexinc/react-lightning@0.1.5
+  - @plextv/react-lightning@0.1.5
 
 ## 0.1.4
 
@@ -92,7 +92,7 @@
 
 - Updated dependencies [3ef955a]
 - Updated dependencies [6bececd]
-  - @plexinc/react-lightning@0.1.4
+  - @plextv/react-lightning@0.1.4
 
 ## 0.1.3
 
@@ -100,7 +100,7 @@
 
 - c7589f6: Fixing cjs builds pt.2
 - Updated dependencies [c7589f6]
-  - @plexinc/react-lightning@0.1.3
+  - @plextv/react-lightning@0.1.3
 
 ## 0.1.2
 
@@ -108,7 +108,7 @@
 
 - 341b33d: Fix cjs builds for packages to include es interop
 - Updated dependencies [341b33d]
-  - @plexinc/react-lightning@0.1.2
+  - @plextv/react-lightning@0.1.2
 
 ## 0.1.1
 
@@ -116,4 +116,4 @@
 
 - f9d786c: Fix imports for ESM modules in flexbox-lite package
 - Updated dependencies [1dfeb72]
-  - @plexinc/react-lightning@0.1.1
+  - @plextv/react-lightning@0.1.1

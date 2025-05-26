@@ -1,4 +1,4 @@
-import { Column } from '@plexinc/react-lightning-components';
+import { Column } from '@plextv/react-lightning-components';
 
 export const ShaderPage = () => {
   return (

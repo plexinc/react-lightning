@@ -38,7 +38,7 @@ jobs:
           node-version-file: package.json
           cache: "pnpm"
           always-auth: 'true'
-          scope: '@plexinc'
+          scope: '@plextv'
           registry-url: "https://registry.npmjs.org"
 
       - run: pnpm install --frozen-lockfile
@@ -69,11 +69,11 @@ jobs:
     name: Deploy Docs to GitHub Pages
     runs-on: ubuntu-latest
     if: ${{ needs.release.outputs.deploy_docs == 'true' }}
-    
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-  
+
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

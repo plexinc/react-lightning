@@ -1,5 +1,5 @@
-import type { LightningElement } from '@plexinc/react-lightning';
-import { ScrollView } from '@plexinc/react-native-lightning';
+import type { LightningElement } from '@plextv/react-lightning';
+import { ScrollView } from '@plextv/react-native-lightning';
 import {
   type FlashListProps,
   FlashList as ShopifyFlashList,

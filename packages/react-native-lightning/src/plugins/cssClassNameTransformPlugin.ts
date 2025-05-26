@@ -1,4 +1,4 @@
-import type { Plugin } from '@plexinc/react-lightning';
+import type { Plugin } from '@plextv/react-lightning';
 // Necessary for the declaration merging to work below, since we don't import
 // the `react-native-web` typings.
 import '../types/react-native-web.d.ts';

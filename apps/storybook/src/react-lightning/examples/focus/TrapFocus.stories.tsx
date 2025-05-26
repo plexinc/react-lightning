@@ -1,10 +1,10 @@
-import type { LightningElement } from '@plexinc/react-lightning';
-import { Column, Row } from '@plexinc/react-lightning-components';
+import type { LightningElement } from '@plextv/react-lightning';
+import { Column, Row } from '@plextv/react-lightning-components';
 import type { Meta } from '@storybook/react';
 import { FocusableImage } from '../../../components/FocusableImage';
 
 export default {
-  title: '@plexinc∕react-lightning/Examples/Focus/TrapFocus',
+  title: '@plextv∕react-lightning/Examples/Focus/TrapFocus',
 } as Meta;
 
 const trapUpStyle: LightningElement['style'] = {

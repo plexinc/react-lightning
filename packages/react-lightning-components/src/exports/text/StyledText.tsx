@@ -3,7 +3,7 @@ import type {
   LightningViewElement,
   LightningViewElementProps,
   LightningViewElementStyle,
-} from '@plexinc/react-lightning';
+} from '@plextv/react-lightning';
 import type React from 'react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 

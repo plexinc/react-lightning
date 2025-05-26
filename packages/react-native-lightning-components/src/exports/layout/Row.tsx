@@ -1,8 +1,8 @@
-import type { LightningViewElement, Rect } from '@plexinc/react-lightning';
+import type { LightningViewElement, Rect } from '@plextv/react-lightning';
 import RLRow, {
   type RowProps as RLRowProps,
-} from '@plexinc/react-lightning-components/layout/Row';
-import { createLayoutEvent } from '@plexinc/react-native-lightning';
+} from '@plextv/react-lightning-components/layout/Row';
+import { createLayoutEvent } from '@plextv/react-native-lightning';
 import { forwardRef, useCallback } from 'react';
 import type { ViewProps } from 'react-native';
 

@@ -5,7 +5,7 @@
     "types": [
       "node",
       "vite/client",
-      "@plexinc/react-lightning-plugin-flexbox/jsx"
+      "@plextv/react-lightning-plugin-flexbox/jsx"
     ]
   },
   "include": ["src"],

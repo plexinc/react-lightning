@@ -1,4 +1,4 @@
-import type { Plugin } from '@plexinc/react-lightning';
+import type { Plugin } from '@plextv/react-lightning';
 import { convertCSSStyleToLightning } from './convertCSSStyleToLightning';
 import type { AllStyleProps } from './types/ReactStyle';
 

@@ -24,7 +24,7 @@ If you prefer a manual installation, you will need to install the required depen
   dark
   language="bash"
   code={`
-  npm install react @lightningjs/renderer @plexinc/react-lightning
+  npm install react @lightningjs/renderer @plextv/react-lightning
   `}
 />
 
@@ -69,7 +69,7 @@ A key map will be required for adding keyboard and remote support.
   dark
   language="ts"
   code={`
-import { Keys } from '@plexinc/react-lightning';
+import { Keys } from '@plextv/react-lightning';
 
 const keyMap = {
   37: Keys.Left,
@@ -93,7 +93,7 @@ Finally, you'll need to create a lightning root, and render a canvas.
   dark
   language="tsx"
   code={`
-import { Canvas, createRoot, type RenderOptions } from '@plexinc/react-lightning';
+import { Canvas, createRoot, type RenderOptions } from '@plextv/react-lightning';
 import { keyMap } from './keyMap';
 
 const appElement = document.getElementById('app');

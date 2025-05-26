@@ -1,4 +1,4 @@
-import { type LightningElement, useFocus } from '@plexinc/react-lightning';
+import { type LightningElement, useFocus } from '@plextv/react-lightning';
 
 export const FocusableImage = ({
   disable,

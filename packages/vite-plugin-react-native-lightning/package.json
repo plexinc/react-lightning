@@ -1,5 +1,5 @@
 {
-  "name": "@plexinc/vite-plugin-react-native-lightning",
+  "name": "@plextv/vite-plugin-react-native-lightning",
   "description": "Vite plugin for adding react-native-lightning support",
   "version": "0.2.10",
   "author": "Plex Inc.",
@@ -41,6 +41,6 @@
     "vite": "6.1.0"
   },
   "peerDependencies": {
-    "@plexinc/react-native-lightning": "workspace:*"
+    "@plextv/react-native-lightning": "workspace:*"
   }
 }

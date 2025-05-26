@@ -1,4 +1,4 @@
-import type { LightningElement } from '@plexinc/react-lightning';
+import type { LightningElement } from '@plextv/react-lightning';
 
 export type AnimatedStyle = {
   viewsRef: Set<LightningElement>;

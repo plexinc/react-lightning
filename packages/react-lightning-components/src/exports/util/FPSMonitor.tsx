@@ -1,7 +1,7 @@
 import {
   LightningRootContext,
   type LightningTextElementStyle,
-} from '@plexinc/react-lightning';
+} from '@plextv/react-lightning';
 import { useCallback, useContext, useEffect, useState } from 'react';
 
 export interface FPSMonitorProps {

@@ -6,8 +6,8 @@ export default createRollupConfig({
   preserveModules: true,
   preserveModulesRoot: path.join('src', 'exports'),
   external: [
-    '@plexinc/react-lightning',
-    '@plexinc/react-native-lightning',
+    '@plextv/react-lightning',
+    '@plextv/react-native-lightning',
     '@shopify/flash-list',
     'react',
     'react-native',

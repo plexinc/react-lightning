@@ -1,6 +1,6 @@
 {
-  "name": "@plexinc/react-lightning-plugin-flexbox-lite",
-  "description": "A less featured but more efficient flex layout support to @plexinc/react-lightning",
+  "name": "@plextv/react-lightning-plugin-flexbox-lite",
+  "description": "A less featured but more efficient flex layout support to @plextv/react-lightning",
   "version": "0.2.8",
   "author": "Plex Inc.",
   "license": "MIT",
@@ -42,13 +42,13 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "devDependencies": {
-    "@plexinc/react-lightning": "workspace:*",
+    "@plextv/react-lightning": "workspace:*",
     "@repo/rollup-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "copyfiles": "2.4.1"
   },
   "peerDependencies": {
-    "@plexinc/react-lightning": "workspace:*"
+    "@plextv/react-lightning": "workspace:*"
   },
   "volta": {
     "extends": "../../package.json"

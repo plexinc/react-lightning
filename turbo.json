@@ -11,7 +11,7 @@
       "dependsOn": ["^build:types"]
     },
     "test:unit": {
-      "dependsOn": ["^@plexinc/vite-plugin-msdf-fontgen#build"]
+      "dependsOn": ["^@plextv/vite-plugin-msdf-fontgen#build"]
     },
     "dev": {
       "cache": false,
