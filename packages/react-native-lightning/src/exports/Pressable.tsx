@@ -1,8 +1,4 @@
-import type {
-  KeyEvent,
-  LightningElement,
-  Rect,
-} from '@plextv/react-lightning';
+import type { KeyEvent, LightningElement, Rect } from '@plextv/react-lightning';
 import { Keys, focusable } from '@plextv/react-lightning';
 import type { LightningViewElement } from '@plextv/react-lightning';
 import type { DependencyList, RefAttributes } from 'react';
