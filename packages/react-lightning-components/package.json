@@ -1,7 +1,7 @@
 {
   "name": "@plextv/react-lightning-components",
   "description": "React components for react-lightning",
-  "version": "1.0.0",
+  "version": "0.3.0",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {
@@ -75,8 +75,8 @@
     "react": "18.3.1"
   },
   "peerDependencies": {
-    "@plextv/react-lightning": "workspace:*",
-    "@plextv/react-lightning-plugin-flexbox": "workspace:*",
+    "@plextv/react-lightning": "workspace:^",
+    "@plextv/react-lightning-plugin-flexbox": "workspace:^",
     "react": "^18.3.1"
   },
   "volta": {

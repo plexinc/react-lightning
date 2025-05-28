@@ -1,6 +1,6 @@
 # @plextv/react-lightning-plugin-flexbox-lite
 
-## 1.0.0
+## 0.3.0
 
 ### Minor Changes
 

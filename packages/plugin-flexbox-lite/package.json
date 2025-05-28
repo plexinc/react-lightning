@@ -1,7 +1,7 @@
 {
   "name": "@plextv/react-lightning-plugin-flexbox-lite",
   "description": "A less featured but more efficient flex layout support to @plextv/react-lightning",
-  "version": "1.0.0",
+  "version": "0.3.0",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {
@@ -48,7 +48,7 @@
     "copyfiles": "2.4.1"
   },
   "peerDependencies": {
-    "@plextv/react-lightning": "workspace:*"
+    "@plextv/react-lightning": "workspace:^"
   },
   "volta": {
     "extends": "../../package.json"

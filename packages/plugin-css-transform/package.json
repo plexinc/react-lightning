@@ -1,7 +1,7 @@
 {
   "name": "@plextv/react-lightning-plugin-css-transform",
   "description": "Transforms CSS properties to lightning properties. Requires @plextv/react-lightning-plugin-flexbox",
-  "version": "1.0.0",
+  "version": "0.3.0",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {
@@ -54,8 +54,8 @@
   },
   "peerDependencies": {
     "@lightningjs/renderer": "^2.5.1",
-    "@plextv/react-lightning": "workspace:*",
-    "@plextv/react-lightning-plugin-flexbox": "workspace:*",
+    "@plextv/react-lightning": "workspace:^",
+    "@plextv/react-lightning-plugin-flexbox": "workspace:^",
     "react-native": "^0.76.1"
   },
   "volta": {

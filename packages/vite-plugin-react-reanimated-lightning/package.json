@@ -1,7 +1,7 @@
 {
   "name": "@plextv/vite-plugin-react-reanimated-lightning",
   "description": "Vite plugin for @plextv/react-lightning-plugin-reanimated",
-  "version": "1.0.0",
+  "version": "0.3.0",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {
@@ -39,7 +39,7 @@
     "vite": "6.1.0"
   },
   "peerDependencies": {
-    "@plextv/react-lightning-plugin-reanimated": "workspace:*",
+    "@plextv/react-lightning-plugin-reanimated": "workspace:^",
     "react-native-reanimated": "^3.16.3"
   }
 }

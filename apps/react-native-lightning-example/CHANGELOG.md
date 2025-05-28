@@ -9,12 +9,12 @@
 ### Patch Changes
 
 - Updated dependencies [3c22b29]
-  - @plextv/react-native-lightning-components@1.0.0
-  - @plextv/react-lightning-components@1.0.0
-  - @plextv/react-native-lightning@1.0.0
-  - @plextv/react-lightning-plugin-reanimated@1.0.0
+  - @plextv/react-native-lightning-components@0.3.0
+  - @plextv/react-lightning-components@0.3.0
+  - @plextv/react-native-lightning@0.3.0
+  - @plextv/react-lightning-plugin-reanimated@0.3.0
   - @plextv/react-lightning@0.3.0
-  - @plextv/react-lightning-plugin-flexbox@1.0.0
+  - @plextv/react-lightning-plugin-flexbox@0.3.0
 
 ## 0.2.13
 

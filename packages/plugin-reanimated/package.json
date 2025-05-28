@@ -1,7 +1,7 @@
 {
   "name": "@plextv/react-lightning-plugin-reanimated",
   "description": "Reanimated plugin for @plextv/react-native-lightning",
-  "version": "1.0.0",
+  "version": "0.3.0",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {
@@ -53,9 +53,9 @@
   },
   "peerDependencies": {
     "@lightningjs/renderer": "^2.5.1",
-    "@plextv/react-lightning": "workspace:*",
-    "@plextv/react-lightning-plugin-css-transform": "workspace:*",
-    "@plextv/react-lightning-plugin-flexbox": "workspace:*",
+    "@plextv/react-lightning": "workspace:^",
+    "@plextv/react-lightning-plugin-css-transform": "workspace:^",
+    "@plextv/react-lightning-plugin-flexbox": "workspace:^",
     "react": "^18.3.1",
     "react-native": "^0.76.1",
     "react-native-reanimated": "^3.16.1"

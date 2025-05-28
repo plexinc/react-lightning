@@ -459,10 +459,10 @@ importers:
   packages/react-native-lightning-components:
     dependencies:
       '@plextv/react-lightning-plugin-css-transform':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-css-transform
       '@plextv/react-native-lightning':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../react-native-lightning
       '@shopify/flash-list':
         specifier: 1.7.3
@@ -547,7 +547,7 @@ importers:
   packages/vite-plugin-react-native-lightning:
     dependencies:
       '@plextv/react-native-lightning':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../react-native-lightning
       '@vitejs/plugin-react':
         specifier: 4.3.4
@@ -563,7 +563,7 @@ importers:
   packages/vite-plugin-react-reanimated-lightning:
     dependencies:
       '@plextv/react-lightning-plugin-reanimated':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../plugin-reanimated
       react-native-reanimated:
         specifier: ^3.16.3

@@ -1,6 +1,6 @@
 # @plextv/react-lightning-plugin-reanimated
 
-## 1.0.0
+## 0.3.0
 
 ### Minor Changes
 
@@ -9,9 +9,9 @@
 ### Patch Changes
 
 - Updated dependencies [3c22b29]
-  - @plextv/react-lightning-plugin-css-transform@1.0.0
+  - @plextv/react-lightning-plugin-css-transform@0.3.0
   - @plextv/react-lightning@0.3.0
-  - @plextv/react-lightning-plugin-flexbox@1.0.0
+  - @plextv/react-lightning-plugin-flexbox@0.3.0
 
 ## 0.2.9
 
