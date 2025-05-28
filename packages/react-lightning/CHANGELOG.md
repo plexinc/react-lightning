@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.0
+
+### Minor Changes
+
+- 3c22b29: Change package scope from plexinc to plextv
+
 ## 0.2.8
 
 ### Patch Changes

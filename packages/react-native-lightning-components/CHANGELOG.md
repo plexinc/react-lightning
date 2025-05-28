@@ -1,5 +1,20 @@
 # @plextv/react-native-lightning-components
 
+## 1.0.0
+
+### Minor Changes
+
+- 3c22b29: Change package scope from plexinc to plextv
+
+### Patch Changes
+
+- Updated dependencies [3c22b29]
+  - @plextv/react-lightning-components@1.0.0
+  - @plextv/react-native-lightning@1.0.0
+  - @plextv/react-lightning-plugin-css-transform@1.0.0
+  - @plextv/react-lightning@0.3.0
+  - @plextv/react-lightning-plugin-flexbox@1.0.0
+
 ## 0.1.12
 
 ### Patch Changes

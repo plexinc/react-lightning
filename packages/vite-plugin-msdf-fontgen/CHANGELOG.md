@@ -1,5 +1,11 @@
 # @plextv/vite-plugin-msdf-fontgen
 
+## 1.3.0
+
+### Minor Changes
+
+- 3c22b29: Change package scope from plexinc to plextv
+
 ## 1.2.1
 
 ### Patch Changes

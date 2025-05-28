@@ -1,5 +1,16 @@
 # @plextv/vite-plugin-react-native-lightning
 
+## 1.0.0
+
+### Minor Changes
+
+- 3c22b29: Change package scope from plexinc to plextv
+
+### Patch Changes
+
+- Updated dependencies [3c22b29]
+  - @plextv/react-native-lightning@1.0.0
+
 ## 0.2.10
 
 ### Patch Changes
