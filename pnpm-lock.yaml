@@ -74,6 +74,9 @@ importers:
       '@plextv/react-lightning-components':
         specifier: workspace:*
         version: link:../../packages/react-lightning-components
+      '@plextv/react-lightning-plugin-css-transform':
+        specifier: workspace:*
+        version: link:../../packages/plugin-css-transform
       '@plextv/react-lightning-plugin-flexbox':
         specifier: workspace:*
         version: link:../../packages/plugin-flexbox

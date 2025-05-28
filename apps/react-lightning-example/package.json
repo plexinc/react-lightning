@@ -26,6 +26,7 @@
     "@plextv/react-lightning": "workspace:*",
     "@plextv/react-lightning-components": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
+    "@plextv/react-lightning-plugin-css-transform": "workspace:*",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-router-dom": "7.1.5",
