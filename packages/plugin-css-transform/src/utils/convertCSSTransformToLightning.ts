@@ -96,6 +96,7 @@ export function convertCSSTransformToLightning(
       transformResult.scaleY = getValue(transformValue, 1, Number.parseFloat);
       break;
     case 'rotate':
+    case 'rotation':
       transformResult.rotation = getValue(
         transformValue,
         0,

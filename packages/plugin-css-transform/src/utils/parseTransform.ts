@@ -1,15 +1,43 @@
 import type { Transform } from '@plextv/react-lightning-plugin-flexbox';
 import { convertCSSTransformToLightning } from './convertCSSTransformToLightning';
+import { convertRotationValue } from './convertRotationValue';
 
 const transformPartRegex = /(\w+)\(([^)]+)\)/g;
 
-export function parseTransform(transform?: string): Transform {
+export function parseTransform(transform?: string | object | Array<object | string>): Transform {
   if (!transform) {
     return {};
   }
 
+  if (Array.isArray(transform)) {
+    const transforms = {};
+
+    transform.forEach((t) => {
+      Object.assign(
+        transforms,
+        parseTransform(t),
+      );
+    });
+
+    return transforms;
+  }
+
   if (typeof transform === 'object') {
-    return transform;
+    const safeTransform: Transform = {};
+    const originalTranform = transform as Record<string, string | number | number[]>;
+    
+    Object.keys(originalTranform).forEach((t: keyof typeof originalTranform) => {
+      if (!originalTranform[t]) {
+        return;
+      }
+
+      Object.assign(
+        safeTransform,
+        convertCSSTransformToLightning(t, originalTranform[t]),
+      );
+    })
+
+    return safeTransform;
   }
 
   const transformParts = transform.match(transformPartRegex);
