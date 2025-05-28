@@ -1,10 +1,9 @@
-import { Column, Row } from '@plexinc/react-lightning-components';
+import { Column, Row } from '@plextv/react-lightning-components';
 import { useCallback, useState } from 'react';
 import Button from '../components/Button';
 
 const img =
   'https://images.plex.tv/photo?size=large-720&scale=2&url=https://image.tmdb.org/t/p/original/65firYWt2FoK18KuYxnmHmVaEsL.jpg';
-
 
 export const TransformsPage = () => {
   const [scale, setScale] = useState(1);
@@ -45,12 +44,14 @@ export const TransformsPage = () => {
           <Button onPress={rotateLeft}>Rotate Left</Button>
           <Button onPress={rotateRight}>Rotate Right</Button>
         </Row>
-        <lng-image src={img} 
+        <lng-image
+          src={img}
           style={{
             width: 720,
             zIndex: -1,
-            transform: [{scale}, {rotate: `${rotation}deg`}],
-          }} />
+            transform: [{ scale }, { rotate: `${rotation}deg` }],
+          }}
+        />
       </Column>
     </>
   );

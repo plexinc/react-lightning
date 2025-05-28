@@ -1,10 +1,11 @@
 import type { Transform } from '@plextv/react-lightning-plugin-flexbox';
 import { convertCSSTransformToLightning } from './convertCSSTransformToLightning';
-import { convertRotationValue } from './convertRotationValue';
 
 const transformPartRegex = /(\w+)\(([^)]+)\)/g;
 
-export function parseTransform(transform?: string | object | Array<object | string>): Transform {
+export function parseTransform(
+  transform?: string | object | Array<object | string>,
+): Transform {
   if (!transform) {
     return {};
   }
@@ -12,30 +13,30 @@ export function parseTransform(transform?: string | object | Array<object | stri
   if (Array.isArray(transform)) {
     const transforms = {};
 
-    transform.forEach((t) => {
-      Object.assign(
-        transforms,
-        parseTransform(t),
-      );
-    });
+    for (const t of transform) {
+      Object.assign(transforms, parseTransform(t));
+    }
 
     return transforms;
   }
 
   if (typeof transform === 'object') {
     const safeTransform: Transform = {};
-    const originalTranform = transform as Record<string, string | number | number[]>;
-    
-    Object.keys(originalTranform).forEach((t: keyof typeof originalTranform) => {
+    const originalTranform = transform as Record<
+      string,
+      string | number | number[]
+    >;
+
+    for (const t of Object.keys(originalTranform)) {
       if (!originalTranform[t]) {
-        return;
+        continue;
       }
 
       Object.assign(
         safeTransform,
         convertCSSTransformToLightning(t, originalTranform[t]),
       );
-    })
+    }
 
     return safeTransform;
   }
