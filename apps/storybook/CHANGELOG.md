@@ -1,5 +1,12 @@
 # @plextv/react-lightning-storybook
 
+## 0.3.1
+
+### Patch Changes
+
+- @plextv/react-native-lightning@0.3.1
+- @plextv/react-native-lightning-components@0.3.1
+
 ## 0.3.0
 
 ### Minor Changes

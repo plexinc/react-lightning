@@ -1,5 +1,11 @@
 # @plextv/react-lightning-plugin-css-transform
 
+## 0.3.1
+
+### Patch Changes
+
+- 2963dd8: Allow transforms to be given as arrays
+
 ## 0.3.0
 
 ### Minor Changes

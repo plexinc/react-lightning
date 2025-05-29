@@ -1,7 +1,7 @@
 {
   "name": "@plextv/react-lightning-plugin-reanimated",
   "description": "Reanimated plugin for @plextv/react-native-lightning",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {

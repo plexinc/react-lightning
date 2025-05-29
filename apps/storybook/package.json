@@ -1,7 +1,7 @@
 {
   "name": "@plextv/react-lightning-storybook",
   "description": "Documentation for react-lightning",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {
