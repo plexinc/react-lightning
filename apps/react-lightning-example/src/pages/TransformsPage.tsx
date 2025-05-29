@@ -23,36 +23,34 @@ export const TransformsPage = () => {
   }, []);
 
   return (
-    <>
-      <Column
-        focusable
+    <Column
+      focusable
+      style={{
+        gap: 20,
+        zIndex: 10,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: 1920,
+        height: 1080,
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <Row>
+        <Button onPress={scaleUp}>Scale Up</Button>
+        <Button onPress={scaleDown}>Scale Down</Button>
+        <Button onPress={rotateLeft}>Rotate Left</Button>
+        <Button onPress={rotateRight}>Rotate Right</Button>
+      </Row>
+      <lng-image
+        src={img}
         style={{
-          gap: 20,
-          zIndex: 10,
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: 1920,
-          height: 1080,
-          justifyContent: 'center',
-          alignItems: 'center',
+          width: 720,
+          zIndex: -1,
+          transform: [{ scale }, { rotate: `${rotation}deg` }],
         }}
-      >
-        <Row>
-          <Button onPress={scaleUp}>Scale Up</Button>
-          <Button onPress={scaleDown}>Scale Down</Button>
-          <Button onPress={rotateLeft}>Rotate Left</Button>
-          <Button onPress={rotateRight}>Rotate Right</Button>
-        </Row>
-        <lng-image
-          src={img}
-          style={{
-            width: 720,
-            zIndex: -1,
-            transform: [{ scale }, { rotate: `${rotation}deg` }],
-          }}
-        />
-      </Column>
-    </>
+      />
+    </Column>
   );
 };
