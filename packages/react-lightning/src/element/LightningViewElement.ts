@@ -12,6 +12,7 @@ import type {
   Texture,
 } from '@lightningjs/renderer';
 import type { Fiber } from 'react-reconciler';
+import { EventEmitter, type IEventEmitter } from 'tseep';
 import type { UnionToIntersection } from 'type-fest';
 import type { Plugin } from '../render/Plugin';
 import {
@@ -29,7 +30,6 @@ import {
   type ShaderDef,
   type TextureDef,
 } from '../types';
-import { EventEmitter } from '../utils/EventEmitter';
 import { areArraysEqual } from '../utils/areArraysEqual';
 import { AllStyleProps } from './AllStyleProps';
 
@@ -101,12 +101,10 @@ function createTexture(
 let idCounter = 0;
 
 export class LightningViewElement<
-    TStyleProps extends LightningViewElementStyle = LightningViewElementStyle,
-    TProps extends
-      LightningViewElementProps<TStyleProps> = LightningViewElementProps<TStyleProps>,
-  >
-  extends EventEmitter<LightningElementEvents>
-  implements Focusable
+  TStyleProps extends LightningViewElementStyle = LightningViewElementStyle,
+  TProps extends
+    LightningViewElementProps<TStyleProps> = LightningViewElementProps<TStyleProps>,
+> implements Focusable
 {
   public static allElements: Record<number, LightningElement> = {};
 
@@ -132,6 +130,7 @@ export class LightningViewElement<
   private _focused = false;
   private _focusable = false;
   private _visible = true;
+  private _eventEmitter = new EventEmitter<LightningElementEvents>();
 
   public get visible(): boolean {
     return this._visible;
@@ -153,7 +152,7 @@ export class LightningViewElement<
       this.blur();
     }
 
-    this.emit('focusableChanged', this, this._focusable);
+    this._eventEmitter.emit('focusableChanged', this, this._focusable);
   }
 
   public get focused() {
@@ -245,8 +244,6 @@ export class LightningViewElement<
     plugins: Plugin<LightningElement>[],
     fiber: Fiber,
   ) {
-    super();
-
     this._renderer = renderer;
     this._plugins = plugins ?? [];
 
@@ -289,7 +286,7 @@ export class LightningViewElement<
 
     LightningViewElement.allElements[this.id] = this;
 
-    this.emit('initialized');
+    this._eventEmitter.emit('initialized');
   }
 
   public destroy() {
@@ -307,8 +304,18 @@ export class LightningViewElement<
 
     delete LightningViewElement.allElements[this.id];
 
-    this.emit('destroy');
+    this._eventEmitter.emit('destroy');
   }
+
+  public on = (
+    ...args: Parameters<IEventEmitter<LightningElementEvents>['on']>
+  ): (() => void) => {
+    this._eventEmitter.on(...args);
+
+    return () => this._eventEmitter.off(...args);
+  };
+  public off = this._eventEmitter.off.bind(this._eventEmitter);
+  public emit = this._eventEmitter.emit.bind(this._eventEmitter);
 
   public insertChild(
     child: LightningElement,
@@ -326,7 +333,7 @@ export class LightningViewElement<
 
     child.parent = this;
 
-    this.emit('childAdded', child, index);
+    this._eventEmitter.emit('childAdded', child, index);
   }
 
   public removeChild(child: LightningElement) {
@@ -338,14 +345,14 @@ export class LightningViewElement<
 
     child.node.parent = null;
 
-    this.emit('childRemoved', child, index);
+    this._eventEmitter.emit('childRemoved', child, index);
   }
 
   public focus(): void {
     if (!this._focused) {
       this.props.onFocusCapture?.(this);
       this._focused = true;
-      this.emit('focusChanged', this, true);
+      this._eventEmitter.emit('focusChanged', this, true);
       this.props.onFocus?.(this);
     }
   }
@@ -353,7 +360,7 @@ export class LightningViewElement<
   public blur(): void {
     if (this._focused) {
       this._focused = false;
-      this.emit('focusChanged', this, false);
+      this._eventEmitter.emit('focusChanged', this, false);
       this.props.onBlur?.(this);
     }
   }
@@ -498,11 +505,11 @@ export class LightningViewElement<
       this.node.alpha > 0 && (!this.parent || this.parent.visible);
 
     if (this._visible !== prevVisible) {
-      this.emit('visibilityChanged', this._visible);
+      this._eventEmitter.emit('visibilityChanged', this._visible);
     }
 
     if (this.focusable !== prevFocusable) {
-      this.emit('focusableChanged', this, this.focusable);
+      this._eventEmitter.emit('focusableChanged', this, this.focusable);
     }
   };
 
@@ -554,13 +561,13 @@ export class LightningViewElement<
     }
 
     if (payload.style && Object.keys(payload.style).length) {
-      this.emit(
+      this._eventEmitter.emit(
         'stylesChanged',
         this.props.style as Partial<LightningElementStyle>,
       );
     }
 
-    this.emit('propsChanged', this.props);
+    this._eventEmitter.emit('propsChanged', this.props);
 
     this._isUpdateQueued = false;
   };
@@ -575,12 +582,12 @@ export class LightningViewElement<
 
   private _onTextureLoaded: NodeLoadedEventHandler = (node, event) => {
     this._handleTextureLoaded(event);
-    this.emit('textureLoaded', node, event);
+    this._eventEmitter.emit('textureLoaded', node, event);
     this.props.onTextureReady?.(event.dimensions);
   };
 
   private _onTextureFailed: NodeFailedEventHandler = (...args) => {
-    this.emit('textureFailed', ...args);
+    this._eventEmitter.emit('textureFailed', ...args);
   };
 
   private _onLayout = (dimensions: Rect) => {
@@ -594,7 +601,7 @@ export class LightningViewElement<
     const animation = this.node.animate(props, animationSettings || {});
 
     animation.once('stopped', (controller) => {
-      this.emit('animationFinished', controller);
+      this._eventEmitter.emit('animationFinished', controller);
     });
 
     return animation;

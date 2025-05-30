@@ -1,19 +1,25 @@
 import type { Focusable } from '../types';
-import { EventEmitter } from '../utils/EventEmitter';
+import type { EventNotifier } from '../types/EventNotifier';
 
-export class MockElement
-  extends EventEmitter<Record<string, () => unknown>>
-  implements Focusable
-{
+export class MockElement implements Focusable, EventNotifier {
   private _focused = false;
 
   public constructor(
     public id = 0,
     public name = '',
     public visible = true,
-  ) {
-    super();
-  }
+  ) {}
+
+  public on = (): (() => void) => {
+    // Mock implementation, does nothing
+    return () => {};
+  };
+  public off = (): void => {
+    // Mock implementation, does nothing
+  };
+  public emit = (): void => {
+    // Mock implementation, does nothing
+  };
 
   public get focusable() {
     return this.visible;
