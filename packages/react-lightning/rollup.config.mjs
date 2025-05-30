@@ -9,5 +9,6 @@ export default createRollupConfig({
     'react',
     'react-reconciler',
     'react/jsx-runtime',
+    'tseep',
   ],
 });

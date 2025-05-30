@@ -1,5 +1,6 @@
+import { EventEmitter, type IEventEmitter } from 'tseep';
 import type { Focusable } from '../types';
-import { EventEmitter } from '../utils/EventEmitter';
+import type { EventNotifier } from '../types/EventNotifier';
 import type { Traps } from './Traps';
 
 export type FocusNode<T> = {
@@ -22,23 +23,21 @@ type FocusEvents<T> = {
   focusPathChanged: (focusPath: T[]) => void;
 };
 
-export class FocusManager<T extends Focusable> extends EventEmitter<
-  FocusEvents<T>
-> {
+export class FocusManager<T extends Focusable>
+  implements EventNotifier<FocusEvents<T>>
+{
   private _allFocusableElements: Map<T, FocusNode<T>> = new Map();
   private _focusPath: T[] = [];
   private _root: RootNode<T>;
   private _disposers: Map<T, (() => void)[]> = new Map();
 
-  private _eventEmitter: EventEmitter<FocusEvents<T>> = new EventEmitter();
+  private _eventEmitter = new EventEmitter<FocusEvents<T>>();
 
   public get focusPath(): T[] {
     return this._focusPath;
   }
 
   public constructor() {
-    super();
-
     this._root = {
       element: null,
       children: [],
@@ -48,8 +47,15 @@ export class FocusManager<T extends Focusable> extends EventEmitter<
     };
   }
 
-  public on = this._eventEmitter.on.bind(this._eventEmitter);
+  public on = (
+    ...args: Parameters<IEventEmitter<FocusEvents<T>>['on']>
+  ): (() => void) => {
+    this._eventEmitter.on(...args);
+
+    return () => this._eventEmitter.off(...args);
+  };
   public off = this._eventEmitter.off.bind(this._eventEmitter);
+  public emit = this._eventEmitter.emit.bind(this._eventEmitter);
 
   public getFocusNode(element: T): FocusNode<T> | null {
     const node = this._allFocusableElements.get(element);
