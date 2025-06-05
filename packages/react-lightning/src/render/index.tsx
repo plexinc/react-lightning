@@ -37,7 +37,6 @@ export type RenderOptions = Omit<
   RendererMainSettings,
   'renderEngine' | 'fontEngines' | 'inspector'
 > & {
-  useWasm?: boolean;
   useCanvas?: boolean;
   includeCanvasFontRenderer?: boolean;
   fonts: (stage: Stage) => TrFontFace[];
@@ -73,7 +72,6 @@ const defaultOptions: Partial<RenderOptions> = {
   devicePhysicalPixelRatio: 1,
   fonts: () => [],
   plugins: [],
-  useWasm: true,
   isPrimaryRenderer: true,
   debug: false,
 };
