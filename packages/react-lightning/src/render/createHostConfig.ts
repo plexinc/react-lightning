@@ -1,8 +1,8 @@
 import type { RendererMain } from '@lightningjs/renderer';
 import type { HostConfig } from 'react-reconciler';
 import { DiscreteEventPriority } from 'react-reconciler/constants';
-import { LightningTextElement } from '../element/LightningTextElement';
 import { createLightningElement } from '../element/createLightningElement';
+import { LightningTextElement } from '../element/LightningTextElement';
 import {
   type LightningElement,
   type LightningElementProps,
@@ -11,8 +11,8 @@ import {
   type RendererNode,
 } from '../types';
 import { simpleDiff } from '../utils/simpleDiff';
-import type { Plugin } from './Plugin';
 import { mapReactPropsToLightning } from './mapReactPropsToLightning';
+import type { Plugin } from './Plugin';
 
 export type LightningHostConfig = HostConfig<
   LightningElementType,
@@ -83,20 +83,13 @@ export function createHostConfig(
 
     appendChildToContainer(container, child) {
       if (container.root) {
-        const oldNode = child.node;
         const root =
           container.root as unknown as RendererNode<LightningElement>;
 
-        child.node = root;
-
-        for (const c of child.children) {
-          c.parent = child;
-        }
+        child.setLightningNode(root);
 
         // biome-ignore lint/suspicious/noExplicitAny: TODO
         (window as any).rootElement = child;
-
-        oldNode.destroy();
       }
     },
 
@@ -136,21 +129,10 @@ export function createHostConfig(
     },
 
     prepareUpdate(_instance, type, oldProps, newProps) {
-      let diffedProps: Partial<LightningElementProps> | null = simpleDiff(
+      const diffedProps: Partial<LightningElementProps> | null = simpleDiff(
         oldProps,
         newProps,
-        { ignore: ['children'] },
       );
-
-      if (newProps.children && newProps.children !== oldProps.children) {
-        if (diffedProps === null) {
-          diffedProps = {
-            children: newProps.children,
-          };
-        } else {
-          diffedProps.children = newProps.children;
-        }
-      }
 
       return diffedProps ? mapReactPropsToLightning(type, diffedProps) : null;
     },

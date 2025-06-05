@@ -1,7 +1,6 @@
 import type {
   AnimationSettings,
-  BaseShaderController,
-  EffectDescUnion,
+  CoreShaderNode,
   INode,
   INodeAnimateProps,
   INodeProps,
@@ -13,11 +12,8 @@ import type {
 } from '@lightningjs/renderer';
 import type { Fiber } from 'react-reconciler';
 import { EventEmitter, type IEventEmitter } from 'tseep';
-import type { UnionToIntersection } from 'type-fest';
 import type { Plugin } from '../render/Plugin';
 import {
-  type EffectsMap,
-  type EffectsTypes,
   type Focusable,
   type LightningElement,
   type LightningElementEvents,
@@ -30,18 +26,10 @@ import {
   type ShaderDef,
   type TextureDef,
 } from '../types';
-import { areArraysEqual } from '../utils/areArraysEqual';
 import { AllStyleProps } from './AllStyleProps';
 
-type LightningElementProp = keyof UnionToIntersection<LightningElement>;
-
-// These props exist on the lightning element, and needs to be set when the
-// corresponding prop is set so that the element can update.
-const ELEMENT_PROPS: LightningElementProp[] = ['text', 'src'];
-
-const __bannedProps: string[] = [];
-const __warnedProps: string[] = [];
-const __bannedPropsInitialized = false;
+const __bannedProps: Record<string, boolean> = {};
+let __bannedPropsInitialized = false;
 
 /**
  * In dev mode, warn when we override any CoreNode props, since those are set internally by Lightning
@@ -51,44 +39,23 @@ function __getBannedProps(node: INode) {
 
   for (const prop in descriptor) {
     if (descriptor[prop]?.value) {
-      __bannedProps.push(prop);
+      __bannedProps[prop] = false;
     }
   }
+
+  __bannedPropsInitialized = true;
 }
 
 function __checkProps(props: string[]) {
   for (const prop of props) {
-    if (__bannedProps.includes(prop) && !__warnedProps.includes(prop)) {
+    if (prop in __bannedProps && __bannedProps[prop] === false) {
       console.error(
         `Warning: ${prop} is a reserved property on Lightning elements. Setting this prop will override the internal value. This may cause unexpected behavior.`,
       );
-      __warnedProps.push(prop);
+
+      __bannedProps[prop] = true;
     }
   }
-}
-
-function getEffectName(type: string | number, id: number) {
-  return `${type}_${id}`;
-}
-
-function createEffectsShader(
-  renderer: RendererMain,
-  effects: EffectsMap,
-  id: LightningElement['id'],
-): BaseShaderController {
-  return renderer.createShader('DynamicShader', {
-    effects: Object.entries(effects).map(([name, effect]) => ({
-      name: getEffectName(name, id),
-      ...effect,
-    })),
-  });
-}
-
-function createShader(
-  renderer: RendererMain,
-  shaderDef: ShaderDef,
-): BaseShaderController {
-  return renderer.createShader(shaderDef.type, shaderDef.props);
 }
 
 function createTexture(
@@ -120,16 +87,16 @@ export class LightningViewElement<
 
   protected _parent: LightningElement | null = null;
   protected _plugins: Plugin<LightningElement>[] = [];
+  protected _stagedUpdates: Partial<TProps> = {};
 
   private _styleProxy: Partial<TStyleProps>;
-  private _stagedUpdates: Partial<TProps> = {};
   private _isUpdateQueued = false;
-  private _effects: EffectsMap = {};
   private _shaderDef?: ShaderDef;
   private _textureDef?: TextureDef;
   private _focused = false;
   private _focusable = false;
   private _visible = true;
+  private _hasStagedUpdates = false;
   private _eventEmitter = new EventEmitter<LightningElementEvents>();
 
   public get visible(): boolean {
@@ -180,15 +147,25 @@ export class LightningViewElement<
   }
 
   public set parent(parent) {
+    if (
+      parent &&
+      this._parent === parent &&
+      this._parent.node === parent.node
+    ) {
+      return;
+    }
+
     if (this._parent) {
       this._parent.off('visibilityChanged', this._checkVisibility);
     }
 
     this._parent = parent;
     this.node.parent = parent?.node ?? null;
+
     if (this._parent) {
       this._parent.on('visibilityChanged', this._checkVisibility);
     }
+
     this._checkVisibility();
   }
 
@@ -247,8 +224,10 @@ export class LightningViewElement<
     this._renderer = renderer;
     this._plugins = plugins ?? [];
 
-    if (process.env.NODE_ENV !== 'production' && !__bannedPropsInitialized) {
-      __getBannedProps(renderer.createNode({}));
+    if (import.meta.env.DEV) {
+      if (!__bannedPropsInitialized) {
+        __getBannedProps(renderer.createNode({}));
+      }
     }
 
     this.id = ++idCounter;
@@ -269,13 +248,13 @@ export class LightningViewElement<
       this._createStyleProxyHandler(),
     );
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (import.meta.env.DEV) {
       __checkProps(Object.keys(lngProps));
     }
 
     this.node = this._createNode(lngProps);
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (import.meta.env.DEV) {
       this.node.__reactNode = this;
       this.node.__reactFiber = fiber;
     }
@@ -292,13 +271,14 @@ export class LightningViewElement<
   public destroy() {
     this.node.off('loaded', this._onTextureLoaded);
     this.node.off('failed', this._onTextureFailed);
+    this.off('layout', this._onLayout);
 
-    for (const child of this.children) {
-      child.destroy();
+    for (let i = this.children.length - 1; i >= 0; i--) {
+      this.children[i]?.destroy();
     }
 
     this.parent = null;
-    this.children = [];
+    this.children.length = 0; // More efficient than reassigning
 
     this._renderer.destroyNode(this.node);
 
@@ -314,13 +294,44 @@ export class LightningViewElement<
 
     return () => this._eventEmitter.off(...args);
   };
+  public once = (
+    ...args: Parameters<IEventEmitter<LightningElementEvents>['once']>
+  ): (() => void) => {
+    this._eventEmitter.once(...args);
+
+    return () => this._eventEmitter.off(...args);
+  };
   public off = this._eventEmitter.off.bind(this._eventEmitter);
   public emit = this._eventEmitter.emit.bind(this._eventEmitter);
+
+  public setLightningNode(node: INode) {
+    const oldNode = this.node;
+
+    oldNode.off('loaded', this._onTextureLoaded);
+    oldNode.off('failed', this._onTextureFailed);
+
+    node.on('loaded', this._onTextureLoaded);
+    node.on('failed', this._onTextureFailed);
+
+    this.node = node;
+
+    for (const c of this.children) {
+      c.node.parent = node;
+    }
+
+    oldNode.destroy();
+
+    this._checkVisibility();
+  }
 
   public insertChild(
     child: LightningElement,
     beforeChild?: LightningElement | null,
   ) {
+    if (child.parent === this && child.parent.node === this.node) {
+      return;
+    }
+
     const index = beforeChild
       ? this.children.indexOf(beforeChild)
       : this.children.length;
@@ -412,21 +423,26 @@ export class LightningViewElement<
     const { style, transition, ...otherProps } = payload;
 
     Object.assign(this._stagedUpdates, otherProps);
+    this._hasStagedUpdates = true;
 
+    // Transitions can be applied to props immediately instead of staging it.
+    // This allows us to also know if a prop needs to be animated or not.
     if (transition) {
-      if (!this._stagedUpdates.transition) {
-        this._stagedUpdates.transition = transition;
+      if (!this.props.transition) {
+        this.props.transition = transition;
       } else {
-        Object.assign(this._stagedUpdates.transition, transition);
+        Object.assign(this.props.transition, transition);
       }
     }
 
     if (style) {
       if (!this._stagedUpdates.style) {
-        this._stagedUpdates.style = {} as TStyleProps;
+        this._stagedUpdates.style = style;
+      } else {
+        Object.assign(this._stagedUpdates.style, style);
       }
 
-      Object.assign(this._stagedUpdates.style, style);
+      this._hasStagedUpdates = true;
     }
 
     this._scheduleUpdate();
@@ -434,19 +450,19 @@ export class LightningViewElement<
 
   /**
    * Set a value on the lightning node directly. Animate if the `animate` flag
-   * is true, and a transition is defined for the prop.
+   * is true, and a transition is defined for the prop. Returns true if value was set
    */
   public setNodeProp<K extends keyof RendererNode<LightningElement>>(
     key: K,
     value: RendererNode<LightningElement>[K],
     animate = true,
-  ) {
-    if (process.env.NODE_ENV !== 'production') {
+  ): boolean {
+    if (import.meta.env.DEV) {
       __checkProps([key]);
     }
 
     if (this.node[key] === value) {
-      return;
+      return false;
     }
 
     if (animate && this.props.transition?.[key as keyof TStyleProps]) {
@@ -457,6 +473,17 @@ export class LightningViewElement<
     } else {
       this.node[key] = value;
     }
+
+    return true;
+  }
+
+  public emitLayoutEvent() {
+    this.emit('layout', {
+      x: this.node.x,
+      y: this.node.y,
+      height: this.node.height,
+      width: this.node.width,
+    });
   }
 
   public animateStyle<K extends keyof TStyleProps>(
@@ -471,17 +498,12 @@ export class LightningViewElement<
     ).start();
   }
 
-  public animateEffect<K extends keyof EffectsMap>(
-    key: K,
-    props: Partial<EffectsMap[K]>,
-  ) {
+  public animateShader(props: Partial<CoreShaderNode['props']>) {
     return this._createAnimation(
       {
-        shaderProps: {
-          [getEffectName(key, this.id)]: props,
-        },
+        shaderProps: props,
       },
-      this.props.transition?.[key],
+      this.props.transition?.shaderProps,
     ).start();
   }
 
@@ -508,56 +530,64 @@ export class LightningViewElement<
       this._eventEmitter.emit('visibilityChanged', this._visible);
     }
 
-    if (this.focusable !== prevFocusable) {
-      this._eventEmitter.emit('focusableChanged', this, this.focusable);
+    const currentFocusable = this.focusable;
+
+    if (currentFocusable !== prevFocusable) {
+      this._eventEmitter.emit('focusableChanged', this, currentFocusable);
     }
   };
 
   private _scheduleUpdate() {
-    if (this._isUpdateQueued) {
+    if (this._isUpdateQueued || !this._hasStagedUpdates) {
       return;
     }
 
     this._isUpdateQueued = true;
 
-    requestAnimationFrame(this._doUpdate);
+    queueMicrotask(() => {
+      const changed = this._doUpdate();
+
+      if (changed) {
+        this._eventEmitter.emit('propsChanged', this.props);
+      }
+    });
   }
 
-  private _doUpdate = () => {
-    if (Object.keys(this._stagedUpdates).length === 0) {
-      return;
-    }
-
+  protected _doUpdate() {
     const payload = this._stagedUpdates;
 
     this._stagedUpdates = {};
+    this._hasStagedUpdates = false;
 
     const transformedProps = this._transformProps(payload) ?? ({} as TProps);
+    const previousOpacity = this.node.alpha;
 
-    // don't pass in some props to node, as they conflict with the node props
-    const fullProps = Object.assign({}, this.props, transformedProps);
-    const lngProps = this._toLightningNodeProps(fullProps);
+    let changed = false;
 
-    if (process.env.NODE_ENV !== 'production') {
-      __checkProps(Object.keys(lngProps));
+    for (const key in transformedProps) {
+      if (this.props[key] !== transformedProps[key]) {
+        this.props[key] = transformedProps[key];
+        changed = true;
+      }
     }
 
-    Object.assign(this.rawProps, payload);
-    Object.assign(this.props, transformedProps);
+    const lngProps = this._toLightningNodeProps({
+      ...this.props,
+      ...transformedProps,
+    });
+
+    if (import.meta.env.DEV) {
+      __checkProps(Object.keys(lngProps));
+      Object.assign(this.rawProps, payload);
+    }
+
     Object.assign(this.node, lngProps);
 
-    // biome-ignore lint/suspicious/noExplicitAny: TODO
+    // biome-ignore lint/suspicious/noExplicitAny: Required for accessing AllStyleProps symbol
     Object.assign((this.style as any)[AllStyleProps], this.props.style);
 
-    if (this.props.style?.alpha != null) {
+    if (previousOpacity !== this.node.alpha) {
       this._checkVisibility();
-    }
-
-    for (const prop of ELEMENT_PROPS) {
-      if (prop in this.props) {
-        // biome-ignore lint/suspicious/noExplicitAny: TODO
-        (this as any)[prop] = this.props[prop as keyof TProps];
-      }
     }
 
     if (payload.style && Object.keys(payload.style).length) {
@@ -567,10 +597,10 @@ export class LightningViewElement<
       );
     }
 
-    this._eventEmitter.emit('propsChanged', this.props);
-
     this._isUpdateQueued = false;
-  };
+
+    return changed;
+  }
 
   /**
    * This method is intended to handle changes that are important before
@@ -607,32 +637,74 @@ export class LightningViewElement<
     return animation;
   }
 
-  private _getEffectFromStyle<K extends keyof TStyleProps>(
-    prop: K,
-    value: TStyleProps[K],
-  ): EffectDescUnion | null {
-    if (prop === 'borderRadius') {
-      return {
-        type: 'radius',
-        props: {
-          radius: value as number,
-        },
-      };
-    }
-    if (
-      prop === 'border' ||
-      prop === 'borderTop' ||
-      prop === 'borderLeft' ||
-      prop === 'borderRight' ||
-      prop === 'borderBottom'
-    ) {
-      return {
-        type: prop,
-        props: value as NonNullable<EffectsTypes['border']>,
-      };
+  private _getShaderFromStyle(
+    style: TStyleProps | undefined | null,
+  ): ShaderDef | undefined {
+    if (!style) {
+      return;
     }
 
-    return null;
+    const props: ShaderDef['props'] = {};
+    let type: ShaderDef['type'] | undefined;
+    let hasRounded = false;
+
+    const {
+      border,
+      borderColor,
+      borderTop,
+      borderLeft,
+      borderRight,
+      borderBottom,
+      borderRadius,
+    } = style;
+
+    if (borderRadius) {
+      type = 'Rounded';
+      props.radius = borderRadius;
+      hasRounded = true;
+    }
+
+    if (
+      border ||
+      borderColor ||
+      borderTop ||
+      borderLeft ||
+      borderRight ||
+      borderBottom
+    ) {
+      if (type && type === 'Rounded') {
+        type = 'RoundedWithBorder';
+      } else {
+        type = 'Border';
+      }
+    }
+
+    if (border) {
+      if (typeof border === 'number') {
+        props[hasRounded ? 'border-width' : 'width'] = border;
+      } else if (typeof border === 'object') {
+        props[hasRounded ? 'border-width' : 'width'] = border.width;
+        props[hasRounded ? 'border-color' : 'color'] = border.color;
+      }
+    }
+
+    if (borderTop) {
+      props[hasRounded ? 'border-top' : 'top'] = borderTop;
+    }
+    if (borderLeft) {
+      props[hasRounded ? 'border-left' : 'left'] = borderLeft;
+    }
+    if (borderRight) {
+      props[hasRounded ? 'border-right' : 'right'] = borderRight;
+    }
+    if (borderBottom) {
+      props[hasRounded ? 'border-bottom' : 'bottom'] = borderBottom;
+    }
+    if (borderColor) {
+      props[hasRounded ? 'border-color' : 'color'] = borderColor;
+    }
+
+    return type ? { type, props } : undefined;
   }
 
   public _toLightningNodeProps(
@@ -648,39 +720,43 @@ export class LightningViewElement<
       data: _data,
       // These props require processing and mapping to lightning node props
       style,
-      transition,
-      effects,
       shader,
       texture,
       ...otherProps
     } = props;
 
     const finalStyle: Partial<INodeProps> = {};
-    let effectsChanged = false;
-    const newEffects: EffectsMap = {};
-
-    if (effects) {
-      Object.assign(newEffects, effects);
-      effectsChanged = true;
-    }
 
     if (style !== undefined && style !== null) {
-      for (const prop in style) {
-        const key = prop as keyof TStyleProps;
-        const value = style[key];
+      const styleEntries = Object.entries(style);
+
+      for (let i = 0; i < styleEntries.length; i++) {
+        const [key, value] = styleEntries[i] as [
+          keyof TStyleProps,
+          TStyleProps[keyof TStyleProps],
+        ];
 
         if (value == null) {
           continue;
         }
 
-        const effect = this._getEffectFromStyle(key, value);
-
-        if (effect) {
-          // Cache busting the shader cache in lightning
-          newEffects[effect.type] = effect;
-          effectsChanged = true;
-        } else if (!initial && this.props.transition?.[key]) {
+        if (!initial && this.props.transition?.[key]) {
           this.animateStyle(key, value);
+        } else if (initial && key === 'initialDimensions') {
+          const rect = value as NonNullable<TStyleProps['initialDimensions']>;
+
+          if (!style.width) {
+            finalStyle.width = rect.width;
+          }
+          if (!style.height) {
+            finalStyle.height = rect.height;
+          }
+          if (!style.x) {
+            finalStyle.x = rect.x;
+          }
+          if (!style.y) {
+            finalStyle.y = rect.y;
+          }
         } else {
           // biome-ignore lint/suspicious/noExplicitAny: TODO
           (finalStyle as any)[key] = value;
@@ -688,63 +764,43 @@ export class LightningViewElement<
       }
     }
 
-    if (shader && this._shaderDef !== shader) {
-      this._shaderDef = shader;
-      finalStyle.shader = createShader(this._renderer, shader);
-    } else if (effectsChanged) {
+    const styleShader = this._getShaderFromStyle(style);
+
+    // If the style also requires a shader, then warn. We can only apply one shader per node.
+    if (shader && styleShader && import.meta.env.DEV) {
+      console.warn(
+        `Warning: The styles on element ${this.id} requires a shader (${styleShader.type}). Only one shader can be applied to a node. Move the 'shader' prop or the styles to a parent element.`,
+      );
+    }
+
+    const oldShader = this._shaderDef;
+    this._shaderDef = shader || styleShader;
+
+    if (this._shaderDef?.props) {
+      // if the shader is the same as the previous one, we don't need to recreate it
+      // Animate it if there's a shaderProps transition
       if (
-        !initial &&
-        transition &&
-        this.node?.shader?.type === 'DynamicShader'
+        this._shaderDef.type === oldShader?.type &&
+        initial === false &&
+        this.props.transition?.shaderProps &&
+        this._shaderDef.props
       ) {
-        const oldEffectsNames = Object.keys(this._effects);
-        const newEffectsNames = Object.keys(newEffects);
-
-        if (!areArraysEqual(oldEffectsNames, newEffectsNames)) {
-          this._shaderDef = undefined;
-          finalStyle.shader = createEffectsShader(
-            this._renderer,
-            this._effects,
-            this.id,
-          );
-        } else {
-          for (const effectName in newEffects) {
-            const effectProps =
-              this.node.shader.props[getEffectName(effectName, this.id)];
-            if (transition[effectName] && newEffects[effectName]) {
-              const animatableProps: Record<string, number> = {};
-              const nonAnimatableProps: Record<string, unknown> = {};
-
-              const {
-                name: _name,
-                type: _type,
-                ...props
-              } = newEffects[effectName].props;
-
-              for (const key of Object.keys(props)) {
-                if (typeof props[key] === 'number') {
-                  animatableProps[key] = props[key];
-                } else {
-                  nonAnimatableProps[key] = props[key];
-                }
-              }
-
-              Object.assign(effectProps, nonAnimatableProps);
-              this.animateEffect(effectName, animatableProps);
-            } else {
-              Object.assign(effectProps, newEffects[effectName]?.props);
-            }
+        this.animateShader(this._shaderDef.props);
+      } else if (
+        this._shaderDef.type === oldShader?.type &&
+        this.shader.props
+      ) {
+        for (const [key, value] of Object.entries(this._shaderDef.props)) {
+          if (this.shader.props[key]) {
+            this.shader.props[key] = value;
           }
         }
       } else {
-        this._shaderDef = undefined;
-        finalStyle.shader = createEffectsShader(
-          this._renderer,
-          newEffects,
-          this.id,
+        finalStyle.shader = this._renderer.createShader(
+          this._shaderDef.type,
+          this._shaderDef.props,
         );
       }
-      this._effects = newEffects;
     }
 
     if (texture && texture !== this._textureDef) {
@@ -753,6 +809,7 @@ export class LightningViewElement<
     }
 
     const finalProps = Object.assign(otherProps, finalStyle);
+
     if (
       initial === true &&
       this.isImageElement === false &&

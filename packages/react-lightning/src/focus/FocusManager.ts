@@ -315,63 +315,47 @@ export class FocusManager<T extends Focusable>
     return bestMatch;
   }
 
-  private _focusPathDiff(
-    oldPath: T[],
-    newPath: T[],
-  ): false | { added: T[]; removed: T[] } {
-    const length = Math.max(oldPath.length, newPath.length);
-    const added: T[] = [];
-    const removed: T[] = [];
-
-    for (let i = 0; i < length; i++) {
-      const oldEl = oldPath[i];
-      const newEl = newPath[i];
-
-      if (oldEl !== newEl) {
-        if (newEl) {
-          added.push(newEl);
-        }
-        if (oldEl) {
-          removed.push(oldEl);
-        }
-      }
-    }
-
-    return added.length === 0 && removed.length === 0
-      ? false
-      : { added, removed };
-  }
-
   private _recalculateFocusPath() {
     const newPath: T[] = [];
     let curr: FocusNode<T> | null = this._root.focusedElement;
+    let divergenceIndex = 0;
 
     while (curr) {
       newPath.push(curr.element);
+
+      if (newPath[divergenceIndex] === this._focusPath[divergenceIndex]) {
+        divergenceIndex++;
+      }
+
       curr = curr.focusedElement;
     }
 
-    const diff = this._focusPathDiff(this._focusPath, newPath);
+    // Only process elements that actually changed
+    let changed = false;
 
-    if (diff) {
-      if (diff.removed.length) {
-        for (const removedFocus of diff.removed) {
-          if (removedFocus.focused) {
-            removedFocus.blur();
-            this._eventEmitter.emit('blurred', removedFocus);
-          }
-        }
+    for (let i = this._focusPath.length - 1; i >= divergenceIndex; i--) {
+      const removedFocus = this._focusPath[i];
+
+      if (removedFocus?.focused) {
+        removedFocus.blur();
+        this._eventEmitter.emit('blurred', removedFocus);
       }
 
-      if (diff.added.length) {
-        for (const addedFocus of diff.added) {
-          if (!addedFocus.focused) {
-            addedFocus.focus();
-            this._eventEmitter.emit('focused', addedFocus);
-          }
-        }
+      changed = true;
+    }
+
+    for (let i = divergenceIndex; i < newPath.length; i++) {
+      const addedFocus = newPath[i];
+
+      if (addedFocus && !addedFocus.focused) {
+        addedFocus.focus();
+        this._eventEmitter.emit('focused', addedFocus);
       }
 
+      changed = true;
+    }
+
+    if (changed) {
       this._focusPath = newPath;
       this._eventEmitter.emit('focusPathChanged', newPath);
     }

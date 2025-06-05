@@ -1,8 +1,7 @@
 import {
-  type EffectMap,
+  type CoreShaderType,
   RendererMain,
   type RendererMainSettings,
-  type ShaderMap,
   type Stage,
   type TextureMap,
   type TrFontFace,
@@ -15,13 +14,13 @@ import {
   SdfTextRenderer,
   WebGlCoreRenderer,
 } from '@lightningjs/renderer/webgl';
-import { createContext } from 'react';
 import type { ComponentClass, ComponentType, ReactNode } from 'react';
+import { createContext } from 'react';
 import createReconciler from 'react-reconciler';
 import type { LightningElement } from '../types';
 import { traceWrap } from '../utils/traceWrap';
-import type { Plugin } from './Plugin';
 import { createHostConfig } from './createHostConfig';
+import type { Plugin } from './Plugin';
 
 // https://github.com/lightning-js/devtools/blob/main/src/types/globals.d.ts
 declare global {
@@ -33,8 +32,10 @@ declare global {
   }
 }
 
+type ShaderMap = string | Record<string, CoreShaderType>;
+
 export type RenderOptions = Omit<
-  RendererMainSettings,
+  Partial<RendererMainSettings>,
   'renderEngine' | 'fontEngines' | 'inspector'
 > & {
   useCanvas?: boolean;
@@ -43,8 +44,7 @@ export type RenderOptions = Omit<
   isPrimaryRenderer?: boolean;
   plugins?: Plugin<LightningElement>[];
   debug?: boolean;
-  shaders?: Partial<ShaderMap>;
-  effects?: Partial<EffectMap>;
+  shaders?: ShaderMap[];
   textures?: Partial<TextureMap>;
 };
 
@@ -97,13 +97,18 @@ export async function createRoot(
 
   const fontEngines: RendererMainSettings['fontEngines'] = [];
   let renderEngine: RendererMainSettings['renderEngine'];
+  let shaders:
+    | typeof import('@lightningjs/renderer/webgl/shaders')
+    | typeof import('@lightningjs/renderer/canvas/shaders');
 
   if (useCanvas) {
     renderEngine = CanvasCoreRenderer;
     fontEngines.push(CanvasTextRenderer);
+    shaders = await import('@lightningjs/renderer/canvas/shaders');
   } else {
     renderEngine = WebGlCoreRenderer;
     fontEngines.push(SdfTextRenderer);
+    shaders = await import('@lightningjs/renderer/webgl/shaders');
 
     if (includeCanvasFontRenderer) {
       fontEngines.push(CanvasTextRenderer);
@@ -120,7 +125,7 @@ export async function createRoot(
     target,
   );
 
-  if (process.env.NODE_ENV !== 'production') {
+  if (import.meta.env.DEV) {
     window.__LIGHTNINGJS_DEVTOOLS__ = {
       renderer,
       features: ['react-lightning'],
@@ -132,20 +137,25 @@ export async function createRoot(
   }
 
   if (finalOptions.shaders) {
-    for (const [key, shaderType] of Object.entries(finalOptions.shaders)) {
-      renderer.stage.shManager.registerShaderType(
-        key as keyof ShaderMap,
-        shaderType,
-      );
-    }
-  }
+    for (const shader of finalOptions.shaders) {
+      if (typeof shader === 'string') {
+        if (!(shader in shaders)) {
+          throw new Error(
+            `Shader "${shader}" is not registered in the renderer. Available shaders: ${Object.keys(
+              shaders,
+            ).join(', ')}`,
+          );
+        }
 
-  if (finalOptions.effects) {
-    for (const [key, effectType] of Object.entries(finalOptions.effects)) {
-      renderer.stage.shManager.registerEffectType(
-        key as keyof EffectMap,
-        effectType,
-      );
+        renderer.stage.shManager.registerShaderType(
+          shader as keyof typeof shaders,
+          shaders[shader as keyof typeof shaders],
+        );
+      } else {
+        for (const [key, value] of Object.entries(shader)) {
+          renderer.stage.shManager.registerShaderType(key, value);
+        }
+      }
     }
   }
 

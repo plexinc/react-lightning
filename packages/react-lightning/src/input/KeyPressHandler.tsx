@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { useCallback, useContext, useEffect, useRef } from 'react';
-import { LightningRootContext } from '../render';
 import { KeyEventContext } from './KeyEventProvider';
 import type { KeyMap } from './KeyMapContext';
 import { KeyMapContext } from './KeyMapContext';
@@ -9,11 +8,9 @@ import { Keys } from './Keys';
 const LONG_PRESS_THRESHOLD = 500;
 
 export const KeyPressHandler = ({ children }: { children: ReactNode }) => {
-  const lngContext = useContext(LightningRootContext);
   const keyMap = useContext(KeyMapContext);
   const keyEvents = useContext(KeyEventContext);
   const keyDownTime = useRef<number>(0);
-  const domElement = lngContext?.renderer.canvas;
 
   const createKeyHandler = useCallback(
     (handler: 'onKeyDown' | 'onKeyUp', keyMap: KeyMap) => {
@@ -64,26 +61,16 @@ export const KeyPressHandler = ({ children }: { children: ReactNode }) => {
     const keyDownHandler = createKeyHandler('onKeyDown', keyMap);
     const keyUpHandler = createKeyHandler('onKeyUp', keyMap);
 
-    if (domElement) {
-      if (!(domElement instanceof HTMLCanvasElement)) {
-        throw new Error(
-          'InputHandler: Provider must be attached at the root of the application. ',
-        );
-      }
-
-      domElement.tabIndex = 1;
-      domElement.addEventListener('keydown', keyDownHandler);
-      domElement.addEventListener('keyup', keyUpHandler);
-      domElement.focus();
-    }
+    document.body.tabIndex = 1;
+    document.body.addEventListener('keydown', keyDownHandler);
+    document.body.addEventListener('keyup', keyUpHandler);
+    document.body.focus();
 
     return () => {
-      if (domElement) {
-        domElement.removeEventListener('keydown', keyDownHandler);
-        domElement.removeEventListener('keyup', keyUpHandler);
-      }
+      document.body.removeEventListener('keydown', keyDownHandler);
+      document.body.removeEventListener('keyup', keyUpHandler);
     };
-  }, [keyMap, createKeyHandler, domElement]);
+  }, [keyMap, createKeyHandler]);
 
   return children;
 };
