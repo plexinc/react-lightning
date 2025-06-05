@@ -39,8 +39,7 @@ type LightningElementProp = keyof UnionToIntersection<LightningElement>;
 // corresponding prop is set so that the element can update.
 const ELEMENT_PROPS: LightningElementProp[] = ['text', 'src'];
 
-const __bannedProps: string[] = [];
-const __warnedProps: string[] = [];
+const __bannedProps: Record<string, boolean> = {};
 const __bannedPropsInitialized = false;
 
 /**
@@ -51,18 +50,19 @@ function __getBannedProps(node: INode) {
 
   for (const prop in descriptor) {
     if (descriptor[prop]?.value) {
-      __bannedProps.push(prop);
+      __bannedProps[prop] = false;
     }
   }
 }
 
 function __checkProps(props: string[]) {
   for (const prop of props) {
-    if (__bannedProps.includes(prop) && !__warnedProps.includes(prop)) {
+    if (prop in __bannedProps && __bannedProps[prop] === false) {
       console.error(
         `Warning: ${prop} is a reserved property on Lightning elements. Setting this prop will override the internal value. This may cause unexpected behavior.`,
       );
-      __warnedProps.push(prop);
+
+      __bannedProps[prop] = true;
     }
   }
 }
@@ -549,7 +549,7 @@ export class LightningViewElement<
     // biome-ignore lint/suspicious/noExplicitAny: TODO
     Object.assign((this.style as any)[AllStyleProps], this.props.style);
 
-    if (this.props.style?.alpha != null) {
+    if (payload.style?.alpha != null) {
       this._checkVisibility();
     }
 
