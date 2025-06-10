@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.1
+
+### Patch Changes
+
+- 4e58bb5: Remove useWasm RenderOption
+
 ## 0.3.0
 
 ### Minor Changes

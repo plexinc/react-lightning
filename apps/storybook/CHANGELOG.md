@@ -1,5 +1,17 @@
 # @plextv/react-lightning-storybook
 
+## 0.3.2
+
+### Patch Changes
+
+- Updated dependencies [4e58bb5]
+  - @plextv/react-lightning@0.3.1
+  - @plextv/react-lightning-plugin-flexbox@0.3.1
+  - @plextv/react-lightning-plugin-flexbox-lite@0.3.1
+  - @plextv/react-lightning-components@0.3.1
+  - @plextv/react-native-lightning@0.3.2
+  - @plextv/react-native-lightning-components@0.3.2
+
 ## 0.3.1
 
 ### Patch Changes
