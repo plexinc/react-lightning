@@ -136,21 +136,10 @@ export function createHostConfig(
     },
 
     prepareUpdate(_instance, type, oldProps, newProps) {
-      let diffedProps: Partial<LightningElementProps> | null = simpleDiff(
+      const diffedProps: Partial<LightningElementProps> | null = simpleDiff(
         oldProps,
         newProps,
-        { ignore: ['children'] },
       );
-
-      if (newProps.children && newProps.children !== oldProps.children) {
-        if (diffedProps === null) {
-          diffedProps = {
-            children: newProps.children,
-          };
-        } else {
-          diffedProps.children = newProps.children;
-        }
-      }
 
       return diffedProps ? mapReactPropsToLightning(type, diffedProps) : null;
     },

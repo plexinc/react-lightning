@@ -40,7 +40,7 @@ type LightningElementProp = keyof UnionToIntersection<LightningElement>;
 const ELEMENT_PROPS: LightningElementProp[] = ['text', 'src'];
 
 const __bannedProps: Record<string, boolean> = {};
-const __bannedPropsInitialized = false;
+let __bannedPropsInitialized = false;
 
 /**
  * In dev mode, warn when we override any CoreNode props, since those are set internally by Lightning
@@ -53,6 +53,8 @@ function __getBannedProps(node: INode) {
       __bannedProps[prop] = false;
     }
   }
+
+  __bannedPropsInitialized = true;
 }
 
 function __checkProps(props: string[]) {
@@ -130,6 +132,7 @@ export class LightningViewElement<
   private _focused = false;
   private _focusable = false;
   private _visible = true;
+  private _hasStagedUpdates = false;
   private _eventEmitter = new EventEmitter<LightningElementEvents>();
 
   public get visible(): boolean {
@@ -180,15 +183,25 @@ export class LightningViewElement<
   }
 
   public set parent(parent) {
+    if (
+      parent &&
+      this._parent === parent &&
+      this._parent.node.parent === parent.node
+    ) {
+      return;
+    }
+
     if (this._parent) {
       this._parent.off('visibilityChanged', this._checkVisibility);
     }
 
     this._parent = parent;
     this.node.parent = parent?.node ?? null;
+
     if (this._parent) {
       this._parent.on('visibilityChanged', this._checkVisibility);
     }
+
     this._checkVisibility();
   }
 
@@ -292,13 +305,14 @@ export class LightningViewElement<
   public destroy() {
     this.node.off('loaded', this._onTextureLoaded);
     this.node.off('failed', this._onTextureFailed);
+    this.off('layout', this._onLayout);
 
-    for (const child of this.children) {
-      child.destroy();
+    for (let i = this.children.length - 1; i >= 0; i--) {
+      this.children[i]?.destroy();
     }
 
     this.parent = null;
-    this.children = [];
+    this.children.length = 0; // More efficient than reassigning
 
     this._renderer.destroyNode(this.node);
 
@@ -314,6 +328,13 @@ export class LightningViewElement<
 
     return () => this._eventEmitter.off(...args);
   };
+  public once = (
+    ...args: Parameters<IEventEmitter<LightningElementEvents>['once']>
+  ): (() => void) => {
+    this._eventEmitter.once(...args);
+
+    return () => this._eventEmitter.off(...args);
+  };
   public off = this._eventEmitter.off.bind(this._eventEmitter);
   public emit = this._eventEmitter.emit.bind(this._eventEmitter);
 
@@ -321,6 +342,10 @@ export class LightningViewElement<
     child: LightningElement,
     beforeChild?: LightningElement | null,
   ) {
+    if (child.parent === this) {
+      return;
+    }
+
     const index = beforeChild
       ? this.children.indexOf(beforeChild)
       : this.children.length;
@@ -429,24 +454,25 @@ export class LightningViewElement<
       Object.assign(this._stagedUpdates.style, style);
     }
 
+    this._hasStagedUpdates = true;
     this._scheduleUpdate();
   }
 
   /**
    * Set a value on the lightning node directly. Animate if the `animate` flag
-   * is true, and a transition is defined for the prop.
+   * is true, and a transition is defined for the prop. Returns true if value was set
    */
   public setNodeProp<K extends keyof RendererNode<LightningElement>>(
     key: K,
     value: RendererNode<LightningElement>[K],
     animate = true,
-  ) {
+  ): boolean {
     if (process.env.NODE_ENV !== 'production') {
       __checkProps([key]);
     }
 
     if (this.node[key] === value) {
-      return;
+      return false;
     }
 
     if (animate && this.props.transition?.[key as keyof TStyleProps]) {
@@ -457,6 +483,17 @@ export class LightningViewElement<
     } else {
       this.node[key] = value;
     }
+
+    return true;
+  }
+
+  public emitLayoutEvent() {
+    this.emit('layout', {
+      x: this.node.x,
+      y: this.node.y,
+      height: this.node.height,
+      width: this.node.width,
+    });
   }
 
   public animateStyle<K extends keyof TStyleProps>(
@@ -508,54 +545,73 @@ export class LightningViewElement<
       this._eventEmitter.emit('visibilityChanged', this._visible);
     }
 
-    if (this.focusable !== prevFocusable) {
-      this._eventEmitter.emit('focusableChanged', this, this.focusable);
+    const currentFocusable = this.focusable;
+
+    if (currentFocusable !== prevFocusable) {
+      this._eventEmitter.emit('focusableChanged', this, currentFocusable);
     }
   };
 
   private _scheduleUpdate() {
-    if (this._isUpdateQueued) {
+    if (this._isUpdateQueued && this._hasStagedUpdates) {
       return;
     }
 
     this._isUpdateQueued = true;
 
-    requestAnimationFrame(this._doUpdate);
+    queueMicrotask(this._doUpdate);
   }
 
   private _doUpdate = () => {
-    if (Object.keys(this._stagedUpdates).length === 0) {
+    this._isUpdateQueued = false;
+
+    if (!this._hasStagedUpdates) {
       return;
     }
 
     const payload = this._stagedUpdates;
 
+    // Reset state efficiently
     this._stagedUpdates = {};
+    this._hasStagedUpdates = false;
 
     const transformedProps = this._transformProps(payload) ?? ({} as TProps);
 
-    // don't pass in some props to node, as they conflict with the node props
-    const fullProps = Object.assign({}, this.props, transformedProps);
-    const lngProps = this._toLightningNodeProps(fullProps);
+    // Merge only changed props for performance - avoid creating intermediate objects
+    let changed = false;
+
+    for (const key in transformedProps) {
+      if (this.props[key] !== transformedProps[key]) {
+        this.props[key] = transformedProps[key];
+        changed = true;
+      }
+    }
+
+    const lngProps = this._toLightningNodeProps({
+      ...this.props,
+      ...transformedProps,
+    });
 
     if (process.env.NODE_ENV !== 'production') {
       __checkProps(Object.keys(lngProps));
     }
 
     Object.assign(this.rawProps, payload);
-    Object.assign(this.props, transformedProps);
     Object.assign(this.node, lngProps);
 
-    // biome-ignore lint/suspicious/noExplicitAny: TODO
+    // biome-ignore lint/suspicious/noExplicitAny: Required for accessing AllStyleProps symbol
     Object.assign((this.style as any)[AllStyleProps], this.props.style);
 
     if (payload.style?.alpha != null) {
       this._checkVisibility();
     }
 
-    for (const prop of ELEMENT_PROPS) {
-      if (prop in this.props) {
-        // biome-ignore lint/suspicious/noExplicitAny: TODO
+    // Optimize: avoid for...of loop with proper null checks
+    for (let i = 0; i < ELEMENT_PROPS.length; i++) {
+      const prop = ELEMENT_PROPS[i];
+
+      if (prop && prop in this.props) {
+        // biome-ignore lint/suspicious/noExplicitAny: Required for dynamic property assignment
         (this as any)[prop] = this.props[prop as keyof TProps];
       }
     }
@@ -567,9 +623,9 @@ export class LightningViewElement<
       );
     }
 
-    this._eventEmitter.emit('propsChanged', this.props);
-
-    this._isUpdateQueued = false;
+    if (changed) {
+      this._eventEmitter.emit('propsChanged', this.props);
+    }
   };
 
   /**
@@ -665,7 +721,10 @@ export class LightningViewElement<
     }
 
     if (style !== undefined && style !== null) {
-      for (const prop in style) {
+      const styleKeys = Object.keys(style);
+
+      for (let i = 0; i < styleKeys.length; i++) {
+        const prop = styleKeys[i];
         const key = prop as keyof TStyleProps;
         const value = style[key];
 
@@ -708,20 +767,33 @@ export class LightningViewElement<
             this.id,
           );
         } else {
-          for (const effectName in newEffects) {
+          const effectNames = Object.keys(newEffects);
+
+          for (let i = 0; i < effectNames.length; i++) {
+            const effectName = effectNames[i];
+
+            if (!effectName) {
+              continue;
+            }
+
             const effectProps =
               this.node.shader.props[getEffectName(effectName, this.id)];
-            if (transition[effectName] && newEffects[effectName]) {
+            const effect = newEffects[effectName];
+
+            if (transition[effectName] && effect) {
               const animatableProps: Record<string, number> = {};
               const nonAnimatableProps: Record<string, unknown> = {};
 
-              const {
-                name: _name,
-                type: _type,
-                ...props
-              } = newEffects[effectName].props;
+              const { name: _name, type: _type, ...props } = effect.props;
+              const propKeys = Object.keys(props);
 
-              for (const key of Object.keys(props)) {
+              for (let j = 0; j < propKeys.length; j++) {
+                const key = propKeys[j];
+
+                if (!key) {
+                  continue;
+                }
+
                 if (typeof props[key] === 'number') {
                   animatableProps[key] = props[key];
                 } else {
@@ -731,8 +803,8 @@ export class LightningViewElement<
 
               Object.assign(effectProps, nonAnimatableProps);
               this.animateEffect(effectName, animatableProps);
-            } else {
-              Object.assign(effectProps, newEffects[effectName]?.props);
+            } else if (effect?.props) {
+              Object.assign(effectProps, effect.props);
             }
           }
         }

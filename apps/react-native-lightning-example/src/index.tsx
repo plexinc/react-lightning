@@ -129,6 +129,15 @@ AppRegistry.runApplication('plex', {
   rootId: 'app',
   renderOptions: {
     driver: 'normal',
+    // appWidth: 1280,
+    // appHeight: 720,
+    quadBufferSize: 1024 * 1024 * 1, // 1 MB
+    textureProcessingTimeLimit: 2,
+    // deviceLogicalPixelRatio: 720 / 1080,
+    // devicePhysicalPixelRatio: 1080 / 720,
+    // useCanvas: true,
+    createImageBitmapSupport: 'auto',
+    numImageWorkers: window.navigator.hardwareConcurrency || 2,
     fonts: (stage) => [
       new SdfTrFontFace('msdf', {
         fontFamily: 'sans-serif',

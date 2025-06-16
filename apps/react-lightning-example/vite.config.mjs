@@ -21,6 +21,7 @@ const config = {
   server: {
     port: 3333,
     host: true,
+    hmr: false,
   },
   build: {
     outDir: 'dist',

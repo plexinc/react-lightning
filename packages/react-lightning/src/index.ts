@@ -1,25 +1,3 @@
-declare global {
-  interface Window {
-    timeStart(
-      condition?: boolean,
-    ): (...args: Parameters<(typeof console)['log']>) => void;
-  }
-}
-
-window.timeStart = (condition?: boolean) => {
-  if (condition === false) {
-    return () => {};
-  }
-
-  const start = performance.now();
-
-  return (...args: Parameters<(typeof console)['log']>) => {
-    const end = performance.now();
-    const duration = end - start;
-    console.log('>>', ...args, 'duration:', duration, 'ms');
-  };
-};
-
 export {
   type RenderOptions,
   createRoot,

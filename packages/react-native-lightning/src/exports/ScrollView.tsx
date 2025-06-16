@@ -14,6 +14,7 @@ import { FocusGroup } from './FocusGroup';
 import { View, defaultViewStyle } from './View';
 
 type ScrollViewProps = RNScrollViewProps & {
+  animated?: boolean;
   onChildFocused?: (el: LightningElement) => void;
 };
 
@@ -114,7 +115,7 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
 
     this.state = {
       offset: props.contentOffset ?? { x: 0, y: 0 },
-      animated: true,
+      animated: props.animated ?? true,
     };
   }
 

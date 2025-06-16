@@ -15,7 +15,6 @@ import Yoga, { createNode, init } from './yoga';
 export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
   let _isRenderQueued = false;
   let _rootElement: LightningElement | null = null;
-  let _queueTimeout: number | null = null;
 
   function getRootElement(element: LightningElement): LightningElement {
     if (_rootElement) {
@@ -57,6 +56,7 @@ export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
     // style retains the original value that was set.
     let skipX = false;
     let skipY = false;
+    let hasPropsChanged = false;
 
     if (element.parent?.style.display !== 'flex') {
       skipX =
@@ -68,19 +68,19 @@ export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
     }
 
     if (!skipX) {
-      element.setNodeProp('x', layout.left);
+      hasPropsChanged ||= element.setNodeProp('x', layout.left);
     }
 
     if (!skipY) {
-      element.setNodeProp('y', layout.top);
+      hasPropsChanged ||= element.setNodeProp('y', layout.top);
     }
 
     if (!Number.isNaN(layout.width)) {
-      element.setNodeProp('width', layout.width);
+      hasPropsChanged ||= element.setNodeProp('width', layout.width);
     }
 
     if (!Number.isNaN(layout.height)) {
-      element.setNodeProp('height', layout.height);
+      hasPropsChanged ||= element.setNodeProp('height', layout.height);
     }
 
     node.markLayoutSeen();
@@ -89,13 +89,9 @@ export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
       applyLayout(child, force);
     }
 
-    element.emit('flexLayout');
-    element.emit('layout', {
-      x: element.node.x,
-      y: element.node.y,
-      height: element.node.height,
-      width: element.node.width,
-    });
+    if (hasPropsChanged) {
+      element.emitLayoutEvent();
+    }
   }
 
   function applyTransform(style: LightningElementStyle, yogaNode: Node) {
@@ -120,27 +116,31 @@ export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
   }
 
   function queueRender(element: LightningElement, force = false) {
-    if (_isRenderQueued && _queueTimeout) {
-      window.clearTimeout(_queueTimeout);
+    if (_isRenderQueued) {
+      return;
     }
 
     _isRenderQueued = true;
 
-    _queueTimeout = window.setTimeout(() => {
-      const rootElement = getRootElement(element);
+    queueMicrotask(() => {
+      try {
+        const rootElement = getRootElement(element);
 
-      if (rootElement.yogaNode) {
-        rootElement.yogaNode.calculateLayout(
-          rootElement?.style.width,
-          rootElement?.style.height,
-          Yoga.instance.DIRECTION_LTR,
-        );
+        if (rootElement.yogaNode) {
+          rootElement.yogaNode.calculateLayout(
+            rootElement?.style.width,
+            rootElement?.style.height,
+            Yoga.instance.DIRECTION_LTR,
+          );
 
-        applyLayout(rootElement, force);
+          applyLayout(rootElement, force);
+        }
+      } catch (err) {
+        console.error('Error during Yoga layout calculation:', err);
+      } finally {
+        _isRenderQueued = false;
       }
-
-      _isRenderQueued = false;
-    }, 1);
+    });
   }
 
   function getYogaStyle(style: Partial<LightningViewElementStyle> | null = {}) {

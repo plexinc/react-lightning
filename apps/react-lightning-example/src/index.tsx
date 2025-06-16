@@ -82,7 +82,14 @@ const options: RenderOptions = {
       stage,
     }),
   ],
-  enableContextSpy: true,
+  // appWidth: 1280,
+  // appHeight: 720,
+  quadBufferSize: 1024 * 1024 * 1, // 1 MB
+  textureProcessingTimeLimit: 2,
+  // deviceLogicalPixelRatio: 720 / 1080,
+  // devicePhysicalPixelRatio: 1080 / 720,
+  createImageBitmapSupport: 'auto',
+  numImageWorkers: window.navigator.hardwareConcurrency || 2,
   plugins: [cssTransformPlugin(), flexPlugin()],
   effects: {
     Noise: NoiseEffect,

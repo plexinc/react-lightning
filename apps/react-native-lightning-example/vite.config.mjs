@@ -19,6 +19,7 @@ const config = defineConfig({
   server: {
     host: true,
     port: 3333,
+    hmr: false,
   },
   define: {
     'process.env': JSON.stringify({
