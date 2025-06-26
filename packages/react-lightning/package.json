@@ -24,8 +24,8 @@
     "access": "public",
     "exports": {
       ".": {
-        "default": "./dist/esm/index.mjs",
-        "import": "./dist/esm/index.mjs",
+        "default": "./dist/es/index.production.mjs",
+        "import": "./dist/es/index.production.mjs",
         "require": "./dist/cjs/index.js",
         "types": "./dist/types/index.d.ts"
       },
@@ -34,7 +34,9 @@
   },
   "scripts": {
     "build": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
-    "build:bundle": "rollup -c --failAfterWarnings",
+    "build:bundle": "pnpm run build:prod && pnpm run build:dev",
+    "build:prod": "vite build --mode=production",
+    "build:dev": "vite build --mode=development",
     "build:types": "tsc --outDir dist/lib --declarationDir dist/types --declaration true --emitDeclarationOnly true && pnpm run build:copy-dts",
     "build:copy-dts": "copyfiles -f src/types/jsx.d.ts dist/types/types",
     "watch": "pnpm run build:types && rollup -c -w",
@@ -47,8 +49,8 @@
     "tseep": "^1.3.1"
   },
   "devDependencies": {
-    "@lightningjs/renderer": "2.13.2",
-    "@repo/rollup-config": "workspace:*",
+    "@lightningjs/renderer": "3.0.0-beta8",
+    "@repo/vite-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/react": "18.3.14",
     "@types/react-reconciler": "0.28.8",
@@ -56,7 +58,7 @@
     "react": "18.3.1"
   },
   "peerDependencies": {
-    "@lightningjs/renderer": "^2.5.1",
+    "@lightningjs/renderer": "^3.0.0-beta8",
     "react": "^18.3.1"
   },
   "volta": {

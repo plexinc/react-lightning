@@ -1,9 +1,11 @@
 import fontGen from '@plextv/vite-plugin-msdf-fontgen';
 import reactNativeLightningPlugin from '@plextv/vite-plugin-react-native-lightning';
 import reactReanimatedLightningPlugin from '@plextv/vite-plugin-react-reanimated-lightning';
+import legacy from '@vitejs/plugin-legacy';
 import { defineConfig } from 'vite';
 
 const config = defineConfig({
+  base: './',
   plugins: [
     reactNativeLightningPlugin(),
     reactReanimatedLightningPlugin(),
@@ -15,10 +17,17 @@ const config = defineConfig({
         },
       ],
     }),
+    legacy({
+      targets: ['chrome>=69'],
+    }),
   ],
+  build: {
+    minify: false,
+  },
   server: {
     host: true,
     port: 3333,
+    hmr: false,
   },
   define: {
     'process.env': JSON.stringify({

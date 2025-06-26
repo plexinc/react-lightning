@@ -27,40 +27,42 @@
     "access": "public",
     "exports": {
       ".": {
-        "default": "./dist/esm/index.mjs",
-        "import": "./dist/esm/index.mjs",
+        "default": "./dist/es/index.production.mjs",
+        "import": "./dist/es/index.production.mjs",
         "require": "./dist/cjs/index.js",
         "types": "./dist/types/exports/index.d.ts"
       },
       "./layout/Column": {
-        "default": "./dist/esm/layout/Column.mjs",
-        "import": "./dist/esm/layout/Column.mjs",
-        "require": "./dist/cjs/layout/Column.js",
+        "default": "./dist/es/layout/Column.production.mjs",
+        "import": "./dist/es/layout/Column.production.mjs",
+        "require": "./dist/cjs/layout/Column.production.js",
         "types": "./dist/types/exports/layout/Column.d.ts"
       },
       "./layout/Row": {
-        "default": "./dist/esm/layout/Row.mjs",
-        "import": "./dist/esm/layout/Row.mjs",
-        "require": "./dist/cjs/layout/Row.js",
+        "default": "./dist/es/layout/Row.production.mjs",
+        "import": "./dist/es/layout/Row.production.mjs",
+        "require": "./dist/cjs/layout/Row.production.js",
         "types": "./dist/types/exports/layout/Row.d.ts"
       },
       "./lists/CellContainer": {
-        "default": "./dist/esm/lists/CellContainer.mjs",
-        "import": "./dist/esm/lists/CellContainer.mjs",
-        "require": "./dist/cjs/lists/CellContainer.js",
+        "default": "./dist/es/lists/CellContainer.production.mjs",
+        "import": "./dist/es/lists/CellContainer.production.mjs",
+        "require": "./dist/cjs/lists/CellContainer.production.js",
         "types": "./dist/types/exports/lists/CellContainer.d.ts"
       },
       "./lists/FlashList": {
-        "default": "./dist/esm/lists/FlashList.mjs",
-        "import": "./dist/esm/lists/FlashList.mjs",
-        "require": "./dist/cjs/lists/FlashList.js",
+        "default": "./dist/es/lists/FlashList.production.mjs",
+        "import": "./dist/es/lists/FlashList.production.mjs",
+        "require": "./dist/cjs/lists/FlashList.production.js",
         "types": "./dist/types/exports/lists/FlashList.d.ts"
       }
     }
   },
   "scripts": {
     "build": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
-    "build:bundle": "rollup -c --failAfterWarnings",
+    "build:bundle": "pnpm run build:prod && pnpm run build:dev",
+    "build:prod": "vite build --mode=production",
+    "build:dev": "vite build --mode=development",
     "build:types": "tsc --outDir dist/lib --declarationDir dist/types --declaration true --emitDeclarationOnly true",
     "clean": "del ./dist",
     "check:types": "tsc --noEmit",
@@ -70,11 +72,11 @@
     "@plextv/react-lightning": "workspace:*",
     "@plextv/react-lightning-components": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
-    "@repo/rollup-config": "workspace:*",
+    "@repo/vite-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/react": "18.3.14",
     "react": "18.3.1",
-    "react-native": "0.77.1"
+    "react-native": "0.77.2"
   },
   "peerDependencies": {
     "@plextv/react-lightning": "workspace:^",
@@ -82,9 +84,9 @@
     "@plextv/react-lightning-plugin-css-transform": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
     "@plextv/react-native-lightning": "workspace:^",
-    "@shopify/flash-list": "1.7.3",
+    "@shopify/flash-list": "1.8.3",
     "react": "^18.3.1",
-    "react-native": "0.77.1"
+    "react-native": "0.77.2"
   },
   "peerDependenciesMeta": {
     "@shopify/flash-list": {

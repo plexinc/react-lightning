@@ -17,6 +17,7 @@
   ],
   "exports": {
     ".": "./src/index.ts",
+    "./worker": "./src/worker.ts",
     "./jsx": "./src/types/jsx.d.ts"
   },
   "publishConfig": {
@@ -24,8 +25,8 @@
     "access": "public",
     "exports": {
       ".": {
-        "default": "./dist/esm/index.mjs",
-        "import": "./dist/esm/index.mjs",
+        "default": "./dist/es/index.production.mjs",
+        "import": "./dist/es/index.production.mjs",
         "require": "./dist/cjs/index.js",
         "types": "./dist/types/index.d.ts"
       },
@@ -34,7 +35,9 @@
   },
   "scripts": {
     "build": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
-    "build:bundle": "rollup -c --failAfterWarnings",
+    "build:bundle": "pnpm run build:prod && pnpm run build:dev",
+    "build:prod": "vite build --mode=production",
+    "build:dev": "vite build --mode=development",
     "build:types": "tsc --outDir dist/lib --declarationDir dist/types --declaration true --emitDeclarationOnly true && pnpm run build:copy-dts",
     "build:copy-dts": "copyfiles -f src/types/jsx.d.ts dist/types/types",
     "clean": "del ./dist",
@@ -42,11 +45,12 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "tseep": "^1.3.1",
     "yoga-layout": "3.2.1"
   },
   "devDependencies": {
     "@plextv/react-lightning": "workspace:*",
-    "@repo/rollup-config": "workspace:*",
+    "@repo/vite-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "copyfiles": "2.4.1",
     "react": "18.3.1"

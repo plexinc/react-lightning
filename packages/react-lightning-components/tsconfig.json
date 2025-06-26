@@ -4,7 +4,11 @@
     "rootDir": "src",
     "declaration": false,
     "declarationMap": false,
-    "types": ["node", "@plextv/react-lightning-plugin-flexbox/jsx"]
+    "types": [
+      "node",
+      "@plextv/react-lightning-plugin-flexbox/jsx",
+      "vite/client"
+    ]
   },
   "include": ["src", "../../types/*.d.ts"],
   "exclude": ["node_modules", "dist"]
