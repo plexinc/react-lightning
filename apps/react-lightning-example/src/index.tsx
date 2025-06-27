@@ -1,17 +1,16 @@
 import { SdfTrFontFace } from '@lightningjs/renderer';
 import {
   Canvas,
-  type RenderOptions,
   createRoot as createRootLng,
+  type RenderOptions,
 } from '@plextv/react-lightning';
 import { plugin as cssTransformPlugin } from '@plextv/react-lightning-plugin-css-transform';
 import { plugin as flexPlugin } from '@plextv/react-lightning-plugin-flexbox';
 import { createRoot as createRootDom } from 'react-dom/client';
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { keyMap } from './keyMap';
 import { AnimationPage } from './pages/AnimationPage';
 import { BrowsePage } from './pages/BrowsePage';
-import { EffectsPage } from './pages/EffectsPage';
 import { LayoutPage } from './pages/LayoutPage';
 import { Page60 } from './pages/Page60';
 import { PosterPage } from './pages/PosterPage';
@@ -20,9 +19,6 @@ import { TexturePage } from './pages/TexturePage';
 import { TransformsPage } from './pages/TransformsPage';
 import { MyCustomShader } from './shaders/MyCustomShader';
 import { MyCustomTexture } from './shaders/MyCustomTexture';
-import { NoiseEffect } from './shaders/NoiseEffect';
-import { SimpleRadialEffect } from './shaders/SimpleRadialEffect';
-import { StaticAlphaEffect } from './shaders/StaticAlphaEffect';
 
 const router = createBrowserRouter([
   {
@@ -40,10 +36,6 @@ const router = createBrowserRouter([
   {
     path: '/animation',
     element: <AnimationPage />,
-  },
-  {
-    path: '/effects',
-    element: <EffectsPage />,
   },
   {
     path: '/shader',
@@ -82,16 +74,17 @@ const options: RenderOptions = {
       stage,
     }),
   ],
-  enableContextSpy: true,
+  numImageWorkers: window.navigator.hardwareConcurrency || 2,
   plugins: [cssTransformPlugin(), flexPlugin()],
-  effects: {
-    Noise: NoiseEffect,
-    StaticAlpha: StaticAlphaEffect,
-    SimpleRadial: SimpleRadialEffect,
-  },
-  shaders: {
-    MyCustomShader: MyCustomShader,
-  },
+  shaders: [
+    'Border',
+    'Shadow',
+    'Rounded',
+    'RoundedWithBorder',
+    'RoundedWithShadow',
+    'RoundedWithBorderAndShadow',
+    { MyCustomShader: MyCustomShader },
+  ],
   textures: {
     MyCustomTexture: MyCustomTexture,
   },

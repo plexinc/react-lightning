@@ -1,7 +1,7 @@
 // Default export react-native-web for any exports we don't override
-export * from 'react-native-web';
 
 export { useRef as usePlatformMethods } from 'react';
+export * from 'react-native-web';
 
 // Override RN exports with our own
 export {
@@ -9,8 +9,8 @@ export {
   type ActivityIndicatorProps,
 } from './exports/ActivityIndicator';
 export { Button, type ButtonProps } from './exports/Button';
-export { FocusGroup, type FocusGroupProps } from './exports/FocusGroup';
 export { FocusableView } from './exports/FocusableView';
+export { FocusGroup, type FocusGroupProps } from './exports/FocusGroup';
 export { Image, type ImageProps } from './exports/Image';
 export * as Platform from './exports/Platform';
 export { Pressable, type PressableProps } from './exports/Pressable';
@@ -31,9 +31,13 @@ export {
 } from './exports/TouchableWithoutFeedback';
 export { View, type ViewProps } from './exports/View';
 export { VirtualizedList } from './exports/VirtualizedList';
-export { AppRegistry, getPlugins } from './render/AppRegistry';
-export { createLayoutEvent } from './utils/createLayoutEvent';
-export { createSyntheticEvent } from './utils/createSyntheticEvent';
 export { cssClassNameTransformPlugin } from './plugins/cssClassNameTransformPlugin';
 export { domPolyfillsPlugin } from './plugins/domPolyfillsPlugin';
 export { reactNativePolyfillsPlugin } from './plugins/reactNativePolyfillsPlugin';
+export {
+  AppRegistry,
+  getPlugins,
+  type PluginOptions,
+} from './render/AppRegistry';
+export { createLayoutEvent } from './utils/createLayoutEvent';
+export { createSyntheticEvent } from './utils/createSyntheticEvent';

@@ -10,7 +10,7 @@ export async function readFileChecksum(filePath: string) {
     const fileData = await readFile(filePath);
 
     return crc32.buf(fileData, 0);
-  } catch (err) {
+  } catch (_err) {
     return null;
   }
 }

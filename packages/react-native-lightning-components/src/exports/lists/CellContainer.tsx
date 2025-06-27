@@ -1,8 +1,8 @@
 import type { LightningElement, Rect } from '@plextv/react-lightning';
 import { convertCSSStyleToLightning } from '@plextv/react-lightning-plugin-css-transform';
 import {
-  type ViewProps,
   createLayoutEvent,
+  type ViewProps,
 } from '@plextv/react-native-lightning';
 import { forwardRef, useCallback, useMemo } from 'react';
 
@@ -20,7 +20,7 @@ const CellContainer = forwardRef<LightningElement, CellContainerProps>(
       },
       [onLayout],
     );
-    if (!estimatedSize && process.env.NODE_ENV !== 'production') {
+    if (!estimatedSize && import.meta.env.DEV) {
       console.error(
         'FlashList: estimatedItemSize is required when using CellRendererComponent. Defaulting to 2.',
       );

@@ -1,14 +1,16 @@
-import { SdfTrFontFace } from '@lightningjs/renderer';
 import { Canvas, type RenderOptions } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
 import '@plextv/react-lightning-plugin-flexbox/jsx';
+import { SdfTrFontFace } from '@lightningjs/renderer';
 import type { LinkingOptions } from '@react-navigation/native';
 import {
+  createNavigatorFactory,
   DarkTheme,
   NavigationContainer,
+  StackRouter,
   useNavigation,
+  useNavigationBuilder,
 } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
 import { AppRegistry, Button } from 'react-native';
 import { ErrorBoundary } from './ErrorBoundary';
 import { keyMap } from './keyMap';
@@ -17,14 +19,41 @@ import { ComponentTest } from './pages/ComponentTest';
 import { FlashListTest } from './pages/FlashListTest';
 import { LayoutTest } from './pages/LayoutTest';
 import { LibraryTest } from './pages/LibraryTest';
+import { SimpleTest } from './pages/SimpleTest';
 import { VirtualizedListTest } from './pages/VirtualizedListTest';
 
-const Stack = createStackNavigator();
+function CustomNavigator(props: Parameters<typeof useNavigationBuilder>[1]) {
+  const { state, descriptors, NavigationContent } = useNavigationBuilder(
+    StackRouter,
+    props,
+  );
+
+  const focusedRoute = state.routes[state.index];
+
+  if (!focusedRoute) {
+    console.warn('No focused route found in the navigation state');
+    return null;
+  }
+
+  const descriptor = descriptors[focusedRoute.key];
+
+  if (!descriptor) {
+    console.warn(`No descriptor found for route: ${focusedRoute.key}`);
+    return null;
+  }
+
+  return <NavigationContent>{descriptor.render()}</NavigationContent>;
+}
+
+export const createCustomNavigator = createNavigatorFactory(CustomNavigator);
+
+const CustomStack = createCustomNavigator();
 
 const screens = {
   Layout: 'layout',
   Animation: 'animation',
   Library: 'library',
+  Simple: 'simple',
   Components: 'components',
   NestedLayouts: 'nestedLayouts',
   VirtualizedList: 'virtualizedList',
@@ -71,6 +100,11 @@ const MainApp = () => {
           onPress={() => nav.navigate('Library')}
         />
         <Button
+          title="Simple"
+          color={'rgba(55, 55, 22, 1)'}
+          onPress={() => nav.navigate('Simple')}
+        />
+        <Button
           title="Components"
           color={'rgba(55, 55, 22, 1)'}
           onPress={() => nav.navigate('Components')}
@@ -91,22 +125,23 @@ const MainApp = () => {
         focusable
         style={{ width: 1670, height: 1080, color: 0x000000ff, clipping: true }}
       >
-        <Stack.Navigator
+        <CustomStack.Navigator
           initialRouteName="Layout"
           screenOptions={{
             headerShown: false,
           }}
         >
-          <Stack.Screen name="Layout" component={LayoutTest} />
-          <Stack.Screen name="Animation" component={AnimationTest} />
-          <Stack.Screen name="Library" component={LibraryTest} />
-          <Stack.Screen name="Components" component={ComponentTest} />
-          <Stack.Screen name="FlashList" component={FlashListTest} />
-          <Stack.Screen
+          <CustomStack.Screen name="Layout" component={LayoutTest} />
+          <CustomStack.Screen name="Animation" component={AnimationTest} />
+          <CustomStack.Screen name="Library" component={LibraryTest} />
+          <CustomStack.Screen name="Simple" component={SimpleTest} />
+          <CustomStack.Screen name="Components" component={ComponentTest} />
+          <CustomStack.Screen name="FlashList" component={FlashListTest} />
+          <CustomStack.Screen
             name="VirtualizedList"
             component={VirtualizedListTest}
           />
-        </Stack.Navigator>
+        </CustomStack.Navigator>
       </Column>
     </Row>
   );
@@ -129,6 +164,7 @@ AppRegistry.runApplication('plex', {
   rootId: 'app',
   renderOptions: {
     driver: 'normal',
+    numImageWorkers: window.navigator.hardwareConcurrency - 1 || 2,
     fonts: (stage) => [
       new SdfTrFontFace('msdf', {
         fontFamily: 'sans-serif',
@@ -147,5 +183,18 @@ AppRegistry.runApplication('plex', {
         stage,
       }),
     ],
+    shaders: [
+      'Border',
+      'Shadow',
+      'Rounded',
+      'RoundedWithBorder',
+      'RoundedWithShadow',
+      'RoundedWithBorderAndShadow',
+    ],
   } as RenderOptions,
+  pluginOptions: {
+    flexbox: {
+      useWebWorker: false,
+    },
+  },
 });

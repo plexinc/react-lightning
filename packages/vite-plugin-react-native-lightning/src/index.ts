@@ -35,9 +35,6 @@ const vitePlugin = (options?: Options): PluginOption => {
       name: 'vite-react-native-lightning',
       enforce: 'pre',
       config: () => ({
-        define: {
-          global: 'window',
-        },
         optimizeDeps: {
           esbuildOptions: {
             resolveExtensions: extensions,

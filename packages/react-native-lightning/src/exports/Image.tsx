@@ -63,7 +63,7 @@ export const Image = forwardRef<LightningImageElement, ImageProps>(
       [src, onLoad, onImageLoaded],
     );
 
-    let finalSource: string | undefined = undefined;
+    let finalSource: string | undefined;
 
     if (typeof source === 'object') {
       if (!isImageURISource(source)) {

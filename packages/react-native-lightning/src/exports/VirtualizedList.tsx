@@ -1,4 +1,4 @@
-import { type FC, type LegacyRef, type Ref, forwardRef } from 'react';
+import { type FC, forwardRef, type LegacyRef, type Ref } from 'react';
 import {
   VirtualizedList as RNVirtualizedList,
   type VirtualizedListProps as RNVirtualizedListProps,

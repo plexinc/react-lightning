@@ -1,7 +1,17 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.5/schema.json",
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "root": true,
   "files": {
-    "includes": ["**", "!package.json", "!.vscode", "!public"]
+    "includes": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.json",
+      "!.vscode",
+      "!**/public"
+    ],
+    "ignoreUnknown": true
   },
   "linter": {
     "enabled": true,

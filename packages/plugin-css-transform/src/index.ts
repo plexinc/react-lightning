@@ -3,11 +3,11 @@ import { convertCSSStyleToLightning } from './convertCSSStyleToLightning';
 import type { AllStyleProps } from './types/ReactStyle';
 
 export { convertCSSStyleToLightning };
-export { convertCSSTransformToLightning } from './utils/convertCSSTransformToLightning';
-export { htmlColorToLightningColor } from './utils/htmlColorToLightningColor';
-export { flattenStyles } from './utils/flattenStyles';
-export { parseTransform } from './utils/parseTransform';
 export * from './types';
+export { convertCSSTransformToLightning } from './utils/convertCSSTransformToLightning';
+export { flattenStyles } from './utils/flattenStyles';
+export { htmlColorToLightningColor } from './utils/htmlColorToLightningColor';
+export { parseTransform } from './utils/parseTransform';
 
 export function plugin(): Plugin {
   return {

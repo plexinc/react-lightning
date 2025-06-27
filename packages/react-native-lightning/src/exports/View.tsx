@@ -1,11 +1,11 @@
 import type {
   FocusableProps,
   LightningElement,
+  LightningElementEventProps,
+  LightningViewElement,
   LightningViewElementProps,
   Rect,
 } from '@plextv/react-lightning';
-import type { LightningElementEventProps } from '@plextv/react-lightning';
-import type { LightningViewElement } from '@plextv/react-lightning';
 import type { AllStyleProps } from '@plextv/react-lightning-plugin-css-transform';
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';
 import { forwardRef, useCallback } from 'react';

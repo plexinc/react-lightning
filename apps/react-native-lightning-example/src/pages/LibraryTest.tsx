@@ -1,154 +1,116 @@
-import type { KeyEvent, LightningElement } from '@plextv/react-lightning';
-import { Keys, focusable } from '@plextv/react-lightning';
-import { Column, Row } from '@plextv/react-lightning-components';
-import { useCallback, useEffect, useState } from 'react';
+import type { LightningElement } from '@plextv/react-lightning';
+import { useFocus } from '@plextv/react-lightning';
+import { Column, FlashList } from '@plextv/react-native-lightning-components';
+import { type FC, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Image, Text } from 'react-native';
 
-const COLUMN_COUNT = 6;
-const ROW_COUNT = 7;
+const ITEM_COUNT = 150;
 
 interface Props {
   title: string;
   subtitle: string;
   seed: number;
-  alpha?: number;
   onFocus: (element: LightningElement) => void;
 }
 
-const Poster = focusable<Props, LightningElement>(
-  ({ alpha = 1, focused, title, subtitle, seed, onFocus }, ref) => {
-    useEffect(() => {
-      console.log(`Rendering poster ${seed}`);
-    });
+const Poster: FC<Props> = ({ title, subtitle, seed, onFocus }) => {
+  const { focused, ref } = useFocus();
 
-    return (
-      <Column
-        ref={ref}
-        style={{
-          // @ts-expect-error TODO
-          opacity: alpha,
-          width: 200,
-          height: 350,
-          scale: focused ? 1.3 : 1,
-        }}
-        transition={{
-          scale: { duration: 150 },
-        }}
-        onFocus={onFocus}
-      >
-        <Image
-          style={{ opacity: alpha }}
-          src={`https://picsum.photos/200/300?seed=${seed}`}
-        />
-        <Text
-          style={{
-            opacity: alpha,
-            fontSize: 30,
-            fontWeight: 'bold',
-            textAlign: 'center',
-          }}
-        >
-          {title}
-        </Text>
-        <Text
-          style={{
-            opacity: alpha,
-            fontSize: 20,
-            fontWeight: 'normal',
-            textAlign: 'center',
-          }}
-        >
-          {subtitle}
-        </Text>
-      </Column>
-    );
-  },
-);
-
-const LibraryView = ({
-  items,
-}: {
-  items: { index: number; title: string; subtitle: string; seed: number }[];
-}) => {
-  const [verticalOffset, setVerticalOffset] = useState(0);
-
-  const handleFocus = useCallback((element: LightningElement) => {
-    setVerticalOffset(
-      Math.min(0, -element.node.y - element.node.height / 2 + 1080 / 2),
-    );
-  }, []);
+  useEffect(() => {
+    console.log(`Rendering poster ${seed}`);
+  });
 
   return (
-    <Row
-      focusable
+    <Column
+      ref={ref}
       style={{
-        top: verticalOffset,
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        rowGap: 100,
-        columnGap: 50,
+        clipping: true,
+        width: 250,
+        height: 400,
+        scale: focused ? 1.3 : 1,
       }}
-      transition={{ y: { duration: 250 } }}
+      transition={{
+        scale: { duration: 250 },
+      }}
+      onFocus={onFocus}
     >
-      {items.map((item) => (
-        <Poster
-          key={item.seed}
-          seed={item.seed}
-          subtitle={item.subtitle}
-          title={item.title}
-          onFocus={handleFocus}
-        />
-      ))}
-    </Row>
+      <Image src={`https://picsum.photos/200/300?seed=${seed}`} />
+      <Text
+        style={{
+          fontSize: 30,
+          fontWeight: 'bold',
+          textAlign: 'center',
+        }}
+      >
+        {title}
+      </Text>
+      <Text
+        style={{
+          fontSize: 20,
+          fontWeight: 'normal',
+          textAlign: 'center',
+        }}
+      >
+        {subtitle}
+      </Text>
+    </Column>
+  );
+};
+
+type PosterItem = {
+  index: number;
+  title: string;
+  subtitle: string;
+  seed: number;
+};
+
+const LibraryView = ({ items }: { items: PosterItem[] }) => {
+  const ref = useRef<FlashList<PosterItem>>(null);
+
+  const handleFocus = useCallback((element: PosterItem) => {
+    ref.current?.scrollToItem({ item: element, viewPosition: 0.5 });
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: PosterItem }) => (
+      <Poster
+        seed={item.seed}
+        title={item.title}
+        subtitle={item.subtitle}
+        onFocus={() => handleFocus(item)}
+      />
+    ),
+    [handleFocus],
+  );
+
+  return (
+    <FlashList<PosterItem>
+      snapToAlignment="center"
+      ref={ref}
+      drawDistance={100}
+      numColumns={6}
+      centerContent={true}
+      estimatedItemSize={500}
+      estimatedListSize={{ height: 1080, width: 1670 }}
+      renderItem={renderItem}
+      data={items}
+    />
   );
 };
 
 export const LibraryTest = () => {
-  const [numRows, setNumRows] = useState(ROW_COUNT);
-
-  const handleKeyDown = useCallback(
-    (e: KeyEvent) => {
-      switch (e.remoteKey) {
-        case Keys.Enter:
-          setNumRows(numRows + 1);
-          break;
-        case Keys.Back:
-          setNumRows(Math.max(numRows - 1, 1));
-          break;
-      }
-
-      return true;
-    },
-    [numRows],
+  const items = useMemo(
+    () =>
+      Array.from({ length: ITEM_COUNT })
+        .fill(null)
+        .map((_col, i) => ({
+          index: i,
+          title: `Item #${i}`,
+          subtitle: `This is item ${(i % 6) + 1} of row ${Math.floor(i / 6) + 1}`,
+          seed: i,
+        })),
+    [],
   );
 
-  const items = Array.from({ length: numRows * COLUMN_COUNT })
-    .fill(null)
-    .map((_col, i) => ({
-      index: i,
-      title: `Item #${i}`,
-      subtitle: `This is item ${(i % COLUMN_COUNT) + 1} of row ${Math.floor(i / COLUMN_COUNT) + 1}`,
-      seed: i,
-    }));
-
-  return (
-    <Column
-      focusable
-      style={{ y: 50, width: 1670, height: 1030 }}
-      onKeyDown={handleKeyDown}
-    >
-      <Text
-        style={{
-          zIndex: 99,
-          fontSize: 50,
-          // @ts-expect-error TODO
-          y: 50,
-        }}
-      >
-        Rows: {numRows}
-      </Text>
-
-      <LibraryView items={items} />
-    </Column>
-  );
+  return <LibraryView items={items} />;
 };

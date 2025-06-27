@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { type LightningRoot, createRoot } from '../../render';
+import { createRoot, type LightningRoot } from '../../render';
 import type { CanvasProps } from './CanvasProps';
 
 export const CanvasBridge = ({

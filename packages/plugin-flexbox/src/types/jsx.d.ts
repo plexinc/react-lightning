@@ -1,4 +1,3 @@
-import type { Node } from 'yoga-layout';
 import type {
   FlexContainer,
   FlexItem,
@@ -6,18 +5,6 @@ import type {
 } from './FlexStyles';
 
 declare module '@plextv/react-lightning' {
-  interface LightningViewElement {
-    yogaNode?: Node;
-  }
-
-  interface LightningTextElement {
-    yogaNode?: Node;
-  }
-
-  interface LightningImageElement {
-    yogaNode?: Node;
-  }
-
   interface LightningViewElementStyle
     extends FlexLightningBaseElementStyle,
       FlexItem,
