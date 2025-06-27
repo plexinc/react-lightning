@@ -47,7 +47,7 @@
     "@plextv/react-lightning-plugin-flexbox": "workspace:*"
   },
   "devDependencies": {
-    "@lightningjs/renderer": "3.0.0-beta8",
+    "@lightningjs/renderer": "3.0.0-beta9",
     "@plextv/react-lightning": "workspace:*",
     "@repo/vite-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",

@@ -64,10 +64,5 @@
       "rollup",
       "typescript"
     ]
-  },
-  "pnpm": {
-    "patchedDependencies": {
-      "@lightningjs/renderer@3.0.0-beta8": "patches/@lightningjs__renderer@3.0.0-beta8.patch"
-    }
   }
 }

@@ -4,11 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  '@lightningjs/renderer@3.0.0-beta8':
-    hash: 23on4wku6pmeeg5bck2fc43snq
-    path: patches/@lightningjs__renderer@3.0.0-beta8.patch
-
 importers:
 
   .:
@@ -74,8 +69,8 @@ importers:
   apps/react-lightning-example:
     dependencies:
       '@lightningjs/renderer':
-        specifier: 3.0.0-beta8
-        version: 3.0.0-beta8(patch_hash=23on4wku6pmeeg5bck2fc43snq)
+        specifier: 3.0.0-beta9
+        version: 3.0.0-beta9
       '@plextv/react-lightning':
         specifier: workspace:*
         version: link:../../packages/react-lightning
@@ -126,8 +121,8 @@ importers:
   apps/react-native-lightning-example:
     dependencies:
       '@lightningjs/renderer':
-        specifier: 3.0.0-beta8
-        version: 3.0.0-beta8(patch_hash=23on4wku6pmeeg5bck2fc43snq)
+        specifier: 3.0.0-beta9
+        version: 3.0.0-beta9
       '@plextv/react-lightning':
         specifier: workspace:*
         version: link:../../packages/react-lightning
@@ -196,8 +191,8 @@ importers:
   apps/storybook:
     dependencies:
       '@lightningjs/renderer':
-        specifier: 3.0.0-beta8
-        version: 3.0.0-beta8(patch_hash=23on4wku6pmeeg5bck2fc43snq)
+        specifier: 3.0.0-beta9
+        version: 3.0.0-beta9
       '@plextv/react-lightning':
         specifier: workspace:*
         version: link:../../packages/react-lightning
@@ -266,8 +261,8 @@ importers:
   packages/plugin-css-transform:
     devDependencies:
       '@lightningjs/renderer':
-        specifier: 3.0.0-beta8
-        version: 3.0.0-beta8(patch_hash=23on4wku6pmeeg5bck2fc43snq)
+        specifier: 3.0.0-beta9
+        version: 3.0.0-beta9
       '@plextv/react-lightning':
         specifier: workspace:*
         version: link:../react-lightning
@@ -339,8 +334,8 @@ importers:
         specifier: 7.27.4
         version: 7.27.4
       '@lightningjs/renderer':
-        specifier: 3.0.0-beta8
-        version: 3.0.0-beta8(patch_hash=23on4wku6pmeeg5bck2fc43snq)
+        specifier: 3.0.0-beta9
+        version: 3.0.0-beta9
       '@plextv/react-lightning':
         specifier: workspace:*
         version: link:../react-lightning
@@ -379,8 +374,8 @@ importers:
         version: 1.3.1
     devDependencies:
       '@lightningjs/renderer':
-        specifier: 3.0.0-beta8
-        version: 3.0.0-beta8(patch_hash=23on4wku6pmeeg5bck2fc43snq)
+        specifier: 3.0.0-beta9
+        version: 3.0.0-beta9
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
@@ -434,8 +429,8 @@ importers:
         version: 15.1.3(typescript@5.8.3)
     devDependencies:
       '@lightningjs/renderer':
-        specifier: 3.0.0-beta8
-        version: 3.0.0-beta8(patch_hash=23on4wku6pmeeg5bck2fc43snq)
+        specifier: 3.0.0-beta9
+        version: 3.0.0-beta9
       '@plextv/react-lightning':
         specifier: workspace:*
         version: link:../react-lightning
@@ -2195,8 +2190,8 @@ packages:
     resolution: {integrity: sha512-+NmqNUr4UA6mAOuz2fbIgI+y6ic2XpalS/MRPzrba/RaazY6WWxXM2/y3HUdacmYUpAUmq0kU3fSN3BzomS/eg==}
     engines: {node: '>=18.0.0'}
 
-  '@lightningjs/renderer@3.0.0-beta8':
-    resolution: {integrity: sha512-LBMglS7L2rOxvWM4dr0d2lOeaRAMCGFWcUIQLSYXgNGEIvV/9orKZV0lE58zpuUv8pj7Zctj9uHWuOaHlyNNzA==}
+  '@lightningjs/renderer@3.0.0-beta9':
+    resolution: {integrity: sha512-ZcPWCIqK375L4tyFDTUcCNATettLxM2s0WQ/fG0pivl9GqjLP8LIK74fLSXXUMa+v20K6L92qGmr6m1ATfA5PA==}
     engines: {node: '>= 18.0.0', npm: '>= 10.0.0', pnpm: '>= 8.9.2'}
 
   '@manypkg/find-root@1.1.0':
@@ -8187,7 +8182,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@lightningjs/renderer@3.0.0-beta8(patch_hash=23on4wku6pmeeg5bck2fc43snq)': {}
+  '@lightningjs/renderer@3.0.0-beta9': {}
 
   '@manypkg/find-root@1.1.0':
     dependencies:
@@ -11049,7 +11044,7 @@ snapshots:
   metro-source-map@0.81.5:
     dependencies:
       '@babel/traverse': 7.26.9
-      '@babel/traverse--for-generate-function-map': '@babel/traverse@7.26.9'
+      '@babel/traverse--for-generate-function-map': '@babel/traverse@7.27.7'
       '@babel/types': 7.26.9
       flow-enums-runtime: 0.0.6
       invariant: 2.2.4
