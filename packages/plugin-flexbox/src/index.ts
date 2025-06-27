@@ -1,314 +1,53 @@
 import type {
   LightningElement,
   LightningElementStyle,
-  LightningViewElementStyle,
   Plugin,
 } from '@plextv/react-lightning';
-import type { Node } from 'yoga-layout';
-import applyReactPropsToYoga, {
-  applyFlexPropToYoga,
-} from './applyReactPropsToYoga';
-import { isFlexStyleProp } from './isFlexStyleProp';
-import type { YogaOptions } from './yoga';
-import Yoga, { createNode, init } from './yoga';
+import { LightningManager } from './LightningManager';
+import type { YogaOptions } from './types/YogaOptions';
+import { isFlexStyleProp } from './util/isFlexStyleProp';
 
 export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
-  let _isRenderQueued = false;
-  let _rootElement: LightningElement | null = null;
-  let _queueTimeout: number | null = null;
-
-  function getRootElement(element: LightningElement): LightningElement {
-    if (_rootElement) {
-      return _rootElement;
-    }
-
-    let parent: LightningElement | null = element;
-    let root = element;
-
-    while (parent) {
-      root = parent;
-      parent = parent.parent as LightningElement;
-    }
-
-    if (root.node.id === 1) {
-      _rootElement = root;
-    }
-
-    return root;
-  }
-
-  function applyLayout(element: LightningElement, force = false) {
-    const node = element.yogaNode;
-
-    if (!node) {
-      return;
-    }
-
-    const skipHiddenNode =
-      !yogaOptions?.processHiddenNodes && element.node.alpha === 0;
-
-    if (!force && (skipHiddenNode || !node.hasNewLayout())) {
-      return;
-    }
-
-    const layout = node.getComputedLayout();
-
-    // Apply layout directly to the node to prevent re-rendering, and the
-    // style retains the original value that was set.
-    let skipX = false;
-    let skipY = false;
-
-    if (element.parent?.style.display !== 'flex') {
-      skipX =
-        element.style.x !== undefined &&
-        element.style.transform?.translateX === undefined;
-      skipY =
-        element.style.y !== undefined &&
-        element.style.transform?.translateY === undefined;
-    }
-
-    if (!skipX) {
-      element.setNodeProp('x', layout.left);
-    }
-
-    if (!skipY) {
-      element.setNodeProp('y', layout.top);
-    }
-
-    if (!Number.isNaN(layout.width)) {
-      element.setNodeProp('width', layout.width);
-    }
-
-    if (!Number.isNaN(layout.height)) {
-      element.setNodeProp('height', layout.height);
-    }
-
-    node.markLayoutSeen();
-
-    for (const child of element.children) {
-      applyLayout(child, force);
-    }
-
-    element.emit('flexLayout');
-    element.emit('layout', {
-      x: element.node.x,
-      y: element.node.y,
-      height: element.node.height,
-      width: element.node.width,
-    });
-  }
-
-  function applyTransform(style: LightningElementStyle, yogaNode: Node) {
-    const { x, y, transform } = style;
-
-    // Apply transforms after all the styles are applied
-    if (transform) {
-      const { translateX, translateY } = transform;
-
-      if (translateX != null) {
-        const left = x ?? 0;
-
-        applyFlexPropToYoga(yogaNode, 'left', left + translateX);
-      }
-
-      if (translateY != null) {
-        const top = y ?? 0;
-
-        applyFlexPropToYoga(yogaNode, 'top', top + translateY);
-      }
-    }
-  }
-
-  function queueRender(element: LightningElement, force = false) {
-    if (_isRenderQueued && _queueTimeout) {
-      window.clearTimeout(_queueTimeout);
-    }
-
-    _isRenderQueued = true;
-
-    _queueTimeout = window.setTimeout(() => {
-      const rootElement = getRootElement(element);
-
-      if (rootElement.yogaNode) {
-        rootElement.yogaNode.calculateLayout(
-          rootElement?.style.width,
-          rootElement?.style.height,
-          Yoga.instance.DIRECTION_LTR,
-        );
-
-        applyLayout(rootElement, force);
-      }
-
-      _isRenderQueued = false;
-    }, 1);
-  }
-
-  function getYogaStyle(style: Partial<LightningViewElementStyle> | null = {}) {
-    const yogaStyles: typeof style = {};
-
-    for (const key in style) {
-      if (isFlexStyleProp(key)) {
-        const value = style[key];
-
-        if (value != null) {
-          // biome-ignore lint/suspicious/noExplicitAny: TODO
-          (yogaStyles as any)[key] = value;
-        }
-      }
-    }
-
-    return yogaStyles;
-  }
+  const lightningManager = new LightningManager();
 
   return {
     init() {
-      return init(yogaOptions);
+      return lightningManager.init(yogaOptions);
     },
 
-    onCreateInstance(instance) {
-      const flexInstance = instance as LightningElement;
-
-      flexInstance.yogaNode = createNode();
-
-      const disposers = [
-        flexInstance.on('initialized', () => {
-          const initialDimensions = flexInstance.style.initialDimensions;
-
-          if (initialDimensions) {
-            flexInstance.node.width = initialDimensions.width;
-            flexInstance.node.height = initialDimensions.height;
-            flexInstance.node.x = initialDimensions.x;
-            flexInstance.node.y = initialDimensions.y;
-          }
-        }),
-
-        flexInstance.on('destroy', () => {
-          for (const dispose of disposers) {
-            dispose();
-          }
-
-          flexInstance.yogaNode?.free();
-          flexInstance.yogaNode = undefined;
-
-          queueRender(flexInstance);
-        }),
-
-        flexInstance.on('childAdded', (child, index) => {
-          if (!flexInstance.yogaNode || !child.yogaNode) {
-            return;
-          }
-
-          flexInstance.yogaNode.insertChild(child.yogaNode, index);
-
-          const yogaStyle = getYogaStyle(flexInstance.props.style);
-
-          applyReactPropsToYoga(flexInstance.yogaNode, yogaStyle);
-
-          queueRender(flexInstance);
-        }),
-
-        flexInstance.on('childRemoved', (child) => {
-          if (!flexInstance.yogaNode || !child.yogaNode) {
-            return;
-          }
-
-          flexInstance.yogaNode.removeChild(child.yogaNode);
-
-          queueRender(flexInstance);
-        }),
-
-        flexInstance.on('stylesChanged', () => {
-          if (!flexInstance.yogaNode?.getParent()) {
-            return;
-          }
-
-          queueRender(flexInstance);
-        }),
-
-        flexInstance.on('textureLoaded', (node, event) => {
-          if (!flexInstance.yogaNode) {
-            return;
-          }
-
-          // Text elements will already have its height and width set on the
-          // node before loaded event is fired, so we need to set it on the yoga
-          // node. If there's a maxWidth set, we should clamp the text to that size.
-          const maxWidth = flexInstance.yogaNode.getMaxWidth();
-
-          if (
-            !Number.isNaN(maxWidth.value) &&
-            maxWidth.unit !== Yoga.instance.UNIT_UNDEFINED
-          ) {
-            // If there is a max width specified, the width on the yogaNode will
-            // be the computed width
-            let computedWidth = flexInstance.yogaNode.getComputedWidth();
-            const isPercentage = maxWidth.unit === Yoga.instance.UNIT_PERCENT;
-
-            if (Number.isNaN(computedWidth) || isPercentage) {
-              const parentWidth = flexInstance.yogaNode
-                .getParent()
-                ?.getComputedWidth();
-
-              if (parentWidth) {
-                computedWidth = isPercentage
-                  ? parentWidth * (maxWidth.value / 100)
-                  : parentWidth;
-              } else if (maxWidth.unit === Yoga.instance.UNIT_POINT) {
-                computedWidth = maxWidth.value;
-              }
-            }
-
-            if (
-              !Number.isNaN(computedWidth) &&
-              computedWidth > 0 &&
-              event.dimensions.width > computedWidth
-            ) {
-              node.contain = 'width';
-              node.width = computedWidth;
-            }
-          }
-
-          applyFlexPropToYoga(flexInstance.yogaNode, 'width', node.width);
-          applyFlexPropToYoga(flexInstance.yogaNode, 'height', node.height);
-
-          queueRender(flexInstance);
-        }),
-      ];
+    onCreateInstance(instance: LightningElement) {
+      lightningManager.trackElement(instance);
     },
+
     transformProps(instance, props) {
-      const remainingStyles = props.style;
+      const styles = props.style;
 
-      if (!remainingStyles) {
+      if (!styles) {
         return props;
       }
 
-      const yogaNode = instance.yogaNode;
+      const [flexStyles, remainingStyles] = Object.entries(styles).reduce(
+        ([flex, remaining], [key, value]) => {
+          const prop = key as keyof LightningElementStyle;
 
-      if (!yogaNode) {
-        return props;
-      }
+          if (prop === 'width' || prop === 'height') {
+            flex[prop] = value;
+            remaining[prop] = value;
+          } else if (isFlexStyleProp(prop) && value != null) {
+            flex[prop] = value;
+          } else {
+            remaining[prop] = value;
+          }
 
-      for (const key in remainingStyles) {
-        const value = remainingStyles[key as keyof LightningViewElementStyle];
+          return [flex, remaining];
+        },
+        [{}, {}] as [
+          Partial<LightningElementStyle>,
+          Partial<LightningElementStyle>,
+        ],
+      );
 
-        if (!isFlexStyleProp(key) || value == null) {
-          continue;
-        }
-
-        applyFlexPropToYoga(
-          yogaNode,
-          key,
-          value as LightningViewElementStyle[typeof key],
-        );
-
-        if (key !== 'width' && key !== 'height') {
-          delete remainingStyles[key];
-        }
-      }
-
-      if (props.style && 'transform' in props.style) {
-        applyTransform(props.style, yogaNode);
-      }
+      lightningManager.applyStyle(instance.id, flexStyles, true);
 
       return { ...props, style: remainingStyles };
     },
