@@ -4,55 +4,53 @@ import {
   type FlashListProps,
   FlashList as ShopifyFlashList,
 } from '@shopify/flash-list';
-import { type FC, type LegacyRef, type Ref, forwardRef, useMemo } from 'react';
+import {
+  forwardRef,
+  type LegacyRef,
+  type ReactElement,
+  type Ref,
+  useMemo,
+} from 'react';
 import CellContainer from './CellContainer';
 
 type FlashList<T> = ShopifyFlashList<T>;
 
-interface ForwardRef extends FC<FlashListProps<unknown>> {
-  <T = unknown>(
-    props: FlashListProps<T> & { ref: Ref<FlashList<T>> },
-  ): ReturnType<FC<FlashListProps<T>>>;
+function FlashListImpl<T>(
+  { CellRendererComponent, renderScrollComponent, ...props }: FlashListProps<T>,
+  ref: Ref<T>,
+) {
+  const CellComponent = useMemo(
+    () =>
+      forwardRef((componentProps, ref) => {
+        const Component = CellRendererComponent ?? CellContainer;
+
+        return (
+          <Component
+            {...componentProps}
+            ref={ref as LegacyRef<LightningElement>}
+            estimatedSize={props.estimatedItemSize}
+          />
+        );
+      }),
+
+    [CellRendererComponent, props.estimatedItemSize],
+  );
+
+  return (
+    <ShopifyFlashList
+      CellRendererComponent={CellComponent}
+      renderScrollComponent={renderScrollComponent ?? ScrollView}
+      ref={ref as LegacyRef<ShopifyFlashList<T>>}
+      {...props}
+    />
+  );
 }
 
-const FlashList: ForwardRef = forwardRef(
-  <T,>(
-    {
-      CellRendererComponent,
-      renderScrollComponent,
-      ...props
-    }: FlashListProps<T>,
-    ref: Ref<ShopifyFlashList<T>>,
-  ) => {
-    const CellComponent = useMemo(
-      () =>
-        forwardRef((componentProps, ref) => {
-          const Component = CellRendererComponent ?? CellContainer;
+const FlashList = forwardRef(FlashListImpl) as <T>(
+  props: FlashListProps<T> & { ref: Ref<FlashList<T>> },
+) => ReactElement;
 
-          return (
-            <Component
-              {...componentProps}
-              ref={ref as LegacyRef<LightningElement>}
-              estimatedSize={props.estimatedItemSize}
-            />
-          );
-        }),
-
-      [CellRendererComponent, props.estimatedItemSize],
-    );
-
-    return (
-      <ShopifyFlashList
-        CellRendererComponent={CellComponent}
-        renderScrollComponent={renderScrollComponent ?? ScrollView}
-        ref={ref}
-        {...props}
-      />
-    );
-  },
-);
-
-FlashList.displayName = 'LightningFlashList';
+FlashListImpl.displayName = 'LightningFlashList';
 
 export type { FlashListProps };
 
