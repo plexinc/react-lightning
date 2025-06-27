@@ -46,11 +46,9 @@ export const DynamicFocusDisabling = () => {
   const children = useMemo(
     () =>
       childStates.map((row, index) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-        <Row key={index} focusable style={{ gap: 16 }}>
+        <Row key={index.toString()} focusable style={{ gap: 16 }}>
           {row.map((state, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            <lng-view key={index}>
+            <lng-view key={index.toString()}>
               <FocusableImage
                 disable={state === DISABLE}
                 hidden={state === HIDE}

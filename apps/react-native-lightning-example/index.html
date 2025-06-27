@@ -13,15 +13,13 @@
         overflow: hidden;
       }
     </style>
+    <script>
+      window.global = window;
+    </script>
   </head>
 
   <body>
     <div id="app"></div>
-    <script
-      type="text/javascript"
-      crossorigin="anonymous"
-      src="https://polyfill-fastly.io/v3/polyfill.min.js?features=globalThis%2CqueueMicrotask"
-    ></script>
     <script type="module" src="./src/index.tsx"></script>
   </body>
 </html>

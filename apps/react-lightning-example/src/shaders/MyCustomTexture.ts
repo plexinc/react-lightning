@@ -3,6 +3,7 @@ import {
   Texture,
   type TextureData,
 } from '@lightningjs/renderer';
+
 /**
  * Augment the EffectMap interface to include the CustomEffect
  */

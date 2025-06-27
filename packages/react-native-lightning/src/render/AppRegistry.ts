@@ -1,19 +1,32 @@
 import {
+  createRoot,
   type Plugin,
   type RenderOptions,
-  createRoot,
 } from '@plextv/react-lightning';
 import { plugin as cssPlugin } from '@plextv/react-lightning-plugin-css-transform';
-import { plugin as flexboxPlugin } from '@plextv/react-lightning-plugin-flexbox';
+import {
+  plugin as flexboxPlugin,
+  type YogaOptions,
+} from '@plextv/react-lightning-plugin-flexbox';
 import type { ComponentProvider } from 'react-native';
 import { cssClassNameTransformPlugin } from '../plugins/cssClassNameTransformPlugin';
 import { domPolyfillsPlugin } from '../plugins/domPolyfillsPlugin';
 import { reactNativePolyfillsPlugin } from '../plugins/reactNativePolyfillsPlugin';
 
+export type PluginOptions = {
+  flexbox?: {
+    errata?: YogaOptions['errata'];
+    useWebWorker?: boolean;
+  };
+};
+
 const registry: Record<string, ComponentProvider> = {};
 
 // Automatically add some plugins since react native will always use them
-export function getPlugins(extraPlugins?: Plugin[]): Plugin[] {
+export function getPlugins(
+  extraPlugins?: Plugin[],
+  pluginOptions?: PluginOptions,
+): Plugin[] {
   const finalPlugins: Plugin[] = extraPlugins ?? [];
 
   finalPlugins.unshift(
@@ -23,6 +36,7 @@ export function getPlugins(extraPlugins?: Plugin[]): Plugin[] {
     cssPlugin(),
     flexboxPlugin({
       errata: 'all',
+      ...pluginOptions?.flexbox,
     }),
   );
 
@@ -42,6 +56,7 @@ const AppRegistry = {
     appKey: string,
     options: {
       renderOptions: RenderOptions | (() => RenderOptions);
+      pluginOptions?: PluginOptions;
       rootId: string;
       onRender?: () => void;
     },
@@ -60,7 +75,7 @@ const AppRegistry = {
 
     const finalOptions = {
       ...otherOptions,
-      plugins: getPlugins(plugins),
+      plugins: getPlugins(plugins, options.pluginOptions),
     };
 
     const root = await createRoot(options.rootId, finalOptions);

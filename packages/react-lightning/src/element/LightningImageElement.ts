@@ -97,4 +97,17 @@ export class LightningImageElement<
 
     return finalProps;
   }
+
+  protected override _doUpdate() {
+    const payload = this._stagedUpdates;
+    let changed = super._doUpdate();
+
+    if (payload.src) {
+      this.src = payload.src;
+
+      changed = true;
+    }
+
+    return changed;
+  }
 }

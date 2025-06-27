@@ -1,5 +1,6 @@
+import { EventEmitter, type IEventEmitter } from 'tseep';
 import type { Focusable } from '../types';
-import { EventEmitter } from '../utils/EventEmitter';
+import type { EventNotifier } from '../types/EventNotifier';
 import type { Traps } from './Traps';
 
 export type FocusNode<T> = {
@@ -22,23 +23,21 @@ type FocusEvents<T> = {
   focusPathChanged: (focusPath: T[]) => void;
 };
 
-export class FocusManager<T extends Focusable> extends EventEmitter<
-  FocusEvents<T>
-> {
+export class FocusManager<T extends Focusable>
+  implements EventNotifier<FocusEvents<T>>
+{
   private _allFocusableElements: Map<T, FocusNode<T>> = new Map();
   private _focusPath: T[] = [];
   private _root: RootNode<T>;
   private _disposers: Map<T, (() => void)[]> = new Map();
 
-  private _eventEmitter: EventEmitter<FocusEvents<T>> = new EventEmitter();
+  private _eventEmitter = new EventEmitter<FocusEvents<T>>();
 
   public get focusPath(): T[] {
     return this._focusPath;
   }
 
   public constructor() {
-    super();
-
     this._root = {
       element: null,
       children: [],
@@ -48,8 +47,15 @@ export class FocusManager<T extends Focusable> extends EventEmitter<
     };
   }
 
-  public on = this._eventEmitter.on.bind(this._eventEmitter);
+  public on = (
+    ...args: Parameters<IEventEmitter<FocusEvents<T>>['on']>
+  ): (() => void) => {
+    this._eventEmitter.on(...args);
+
+    return () => this._eventEmitter.off(...args);
+  };
   public off = this._eventEmitter.off.bind(this._eventEmitter);
+  public emit = this._eventEmitter.emit.bind(this._eventEmitter);
 
   public getFocusNode(element: T): FocusNode<T> | null {
     const node = this._allFocusableElements.get(element);
@@ -309,63 +315,47 @@ export class FocusManager<T extends Focusable> extends EventEmitter<
     return bestMatch;
   }
 
-  private _focusPathDiff(
-    oldPath: T[],
-    newPath: T[],
-  ): false | { added: T[]; removed: T[] } {
-    const length = Math.max(oldPath.length, newPath.length);
-    const added: T[] = [];
-    const removed: T[] = [];
-
-    for (let i = 0; i < length; i++) {
-      const oldEl = oldPath[i];
-      const newEl = newPath[i];
-
-      if (oldEl !== newEl) {
-        if (newEl) {
-          added.push(newEl);
-        }
-        if (oldEl) {
-          removed.push(oldEl);
-        }
-      }
-    }
-
-    return added.length === 0 && removed.length === 0
-      ? false
-      : { added, removed };
-  }
-
   private _recalculateFocusPath() {
     const newPath: T[] = [];
     let curr: FocusNode<T> | null = this._root.focusedElement;
+    let divergenceIndex = 0;
 
     while (curr) {
       newPath.push(curr.element);
+
+      if (newPath[divergenceIndex] === this._focusPath[divergenceIndex]) {
+        divergenceIndex++;
+      }
+
       curr = curr.focusedElement;
     }
 
-    const diff = this._focusPathDiff(this._focusPath, newPath);
+    // Only process elements that actually changed
+    let changed = false;
 
-    if (diff) {
-      if (diff.removed.length) {
-        for (const removedFocus of diff.removed) {
-          if (removedFocus.focused) {
-            removedFocus.blur();
-            this._eventEmitter.emit('blurred', removedFocus);
-          }
-        }
+    for (let i = this._focusPath.length - 1; i >= divergenceIndex; i--) {
+      const removedFocus = this._focusPath[i];
+
+      if (removedFocus?.focused) {
+        removedFocus.blur();
+        this._eventEmitter.emit('blurred', removedFocus);
       }
 
-      if (diff.added.length) {
-        for (const addedFocus of diff.added) {
-          if (!addedFocus.focused) {
-            addedFocus.focus();
-            this._eventEmitter.emit('focused', addedFocus);
-          }
-        }
+      changed = true;
+    }
+
+    for (let i = divergenceIndex; i < newPath.length; i++) {
+      const addedFocus = newPath[i];
+
+      if (addedFocus && !addedFocus.focused) {
+        addedFocus.focus();
+        this._eventEmitter.emit('focused', addedFocus);
       }
 
+      changed = true;
+    }
+
+    if (changed) {
       this._focusPath = newPath;
       this._eventEmitter.emit('focusPathChanged', newPath);
     }

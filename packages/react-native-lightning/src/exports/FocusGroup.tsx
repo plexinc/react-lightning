@@ -1,7 +1,7 @@
 import type {
   LightningElement,
-  FocusGroupProps as RLFocusGroupProps,
   Rect,
+  FocusGroupProps as RLFocusGroupProps,
 } from '@plextv/react-lightning';
 import { FocusGroup as RLFocusGroup } from '@plextv/react-lightning';
 import { forwardRef, useCallback } from 'react';

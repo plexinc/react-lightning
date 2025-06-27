@@ -35,11 +35,10 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
-    "vite": "6.1.0"
+    "@repo/typescript-config": "workspace:*"
   },
   "peerDependencies": {
     "@plextv/react-lightning-plugin-reanimated": "workspace:^",
-    "react-native-reanimated": "^3.16.3"
+    "react-native-reanimated": "^3.16.7"
   }
 }

@@ -34,11 +34,10 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "4.3.4"
+    "@vitejs/plugin-react": "4.6.0"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
-    "vite": "6.1.0"
+    "@repo/typescript-config": "workspace:*"
   },
   "peerDependencies": {
     "@plextv/react-native-lightning": "workspace:^"

@@ -6,18 +6,18 @@
  *
  *
  */
+/** biome-ignore-all lint/suspicious/noExplicitAny: Valid use of any */
 
 import * as React from 'react';
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 export default function mergeRefs(...refs: any[]) {
   const _len = refs.length;
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const args = Array.from<any>({ length: _len });
+
   for (let _key = 0; _key < _len; _key++) {
     args[_key] = refs[_key];
   }
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+
   return function forwardRef(node: any) {
     for (const ref of args) {
       if (ref == null) {
@@ -37,7 +37,7 @@ export default function mergeRefs(...refs: any[]) {
     }
   };
 }
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+
 export function useMergeRefs(...refs: any[]) {
   const _len = refs.length;
   const args = Array.from({ length: _len });

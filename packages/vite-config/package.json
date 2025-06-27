@@ -1,0 +1,18 @@
+{
+  "name": "@repo/vite-config",
+  "version": "0.0.1",
+  "private": true,
+  "author": "Plex Inc.",
+  "license": "MIT",
+  "type": "module",
+  "types": "./types.d.ts",
+  "exports": {
+    "./lib": "./vite.config.lib.mjs"
+  },
+  "scripts": {
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  }
+}

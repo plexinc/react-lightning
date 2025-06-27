@@ -1,4 +1,5 @@
 import type { INodeProps, ITextNodeProps } from '@lightningjs/renderer';
+import type { Rect } from './Geometry';
 
 interface BorderStyleObject {
   width: number;
@@ -18,15 +19,22 @@ export interface LightningViewElementStyle
     'parent' | 'src' | 'shader' | 'data' | 'texture'
   > {
   border?: BorderStyle;
-  borderTop?: BorderStyle;
-  borderRight?: BorderStyle;
-  borderBottom?: BorderStyle;
-  borderLeft?: BorderStyle;
+  borderColor?: number;
+  borderTop?: number;
+  borderRight?: number;
+  borderBottom?: number;
+  borderLeft?: number;
   /**
    * Follows css border-radius syntax
    * https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius#syntax
    */
   borderRadius?: number | [number, number?, number?, number?];
+
+  /** Used as the initial dimensions for the element before yoga has calculated
+   * where placement should actually go. This is to estimate where elements are
+   * place on the screen so things like images don't all get loaded immediately
+   * when they aren't supposed to be visible */
+  initialDimensions?: Rect;
 }
 
 export interface LightningImageElementStyle extends LightningViewElementStyle {}

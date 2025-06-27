@@ -1,10 +1,10 @@
 import { SdfTrFontFace } from '@lightningjs/renderer';
 import {
   Canvas,
-  type RenderOptions,
   createRoot,
+  type RenderOptions,
 } from '@plextv/react-lightning';
-import { RouterProvider, createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { App } from './App';
 import { keyMap } from './keyMap';
 import { BrowsePage } from './pages/BrowsePage';

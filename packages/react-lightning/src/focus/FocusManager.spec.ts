@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  type MockElement,
   createMockElement,
+  type MockElement,
 } from '../mocks/createMockElement';
 import { FocusManager } from './FocusManager';
 
@@ -73,7 +73,16 @@ describe('FocusManager', () => {
     focusManager.addElement(element);
     focusManager.focus(element);
 
-    expect(focusedSpy).toHaveBeenCalledWith(element);
+    expect(focusedSpy).toHaveBeenCalled();
+    expect(focusedSpy).toHaveBeenCalledTimes(1);
+    expect(focusedSpy).toHaveBeenCalledWith(
+      element,
+      // tseep sends events with extra undefined params
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
   });
 
   it('should emit "blurred" event when an element is blurred', () => {
@@ -87,7 +96,14 @@ describe('FocusManager', () => {
     focusManager.addElement(element2);
     focusManager.focus(element2);
 
-    expect(blurredSpy).toHaveBeenCalledWith(element1);
+    expect(blurredSpy).toHaveBeenCalledWith(
+      element1,
+      // tseep sends events with extra undefined params
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
   });
 
   it('should emit "focusPathChanged" event when the focus path changes', () => {
@@ -97,7 +113,14 @@ describe('FocusManager', () => {
     focusManager.on('focusPathChanged', focusPathChangedSpy);
     focusManager.addElement(element, null, { autoFocus: true });
 
-    expect(focusPathChangedSpy).toHaveBeenCalledWith([element]);
+    expect(focusPathChangedSpy).toHaveBeenCalledWith(
+      [element],
+      // tseep sends events with extra undefined params
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
   });
 
   it('should not focus an element if it is not visible', () => {

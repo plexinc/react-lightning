@@ -1,3 +1,2 @@
-export * from './ReactStyle';
-
 export type * from './jsx';
+export * from './ReactStyle';

@@ -1,11 +1,11 @@
 import type { LightningViewElement } from '@plextv/react-lightning';
 import { htmlColorToLightningColor } from '@plextv/react-lightning-plugin-css-transform';
-import { forwardRef, useEffect, useState } from 'react';
 import type {
   ForwardRefExoticComponent,
   RefAttributes,
   // useCallback,
 } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import type { ActivityIndicatorProps as RNActivityIndicatorProps } from 'react-native';
 import activityImage from '../../assets/activity.png';
 

@@ -17,12 +17,7 @@
  * limitations under the License.
  */
 
-import {
-  type ShaderProgramSources,
-  type WebGlCoreCtxTexture,
-  type WebGlCoreRenderer,
-  WebGlCoreShader,
-} from '@lightningjs/renderer';
+import type { WebGlShaderType } from '@lightningjs/renderer/webgl';
 
 declare module '@lightningjs/renderer' {
   interface ShaderMap {
@@ -30,72 +25,52 @@ declare module '@lightningjs/renderer' {
   }
 }
 
-export class MyCustomShader extends WebGlCoreShader {
-  constructor(renderer: WebGlCoreRenderer) {
-    super({
-      renderer,
-      attributes: ['a_position', 'a_textureCoordinate', 'a_color'],
-      uniforms: [
-        { name: 'u_resolution', uniform: 'uniform2fv' },
-        { name: 'u_pixelRatio', uniform: 'uniform1f' },
-        { name: 'u_texture', uniform: 'uniform2fv' },
-      ],
-    });
-  }
+export const MyCustomShader: WebGlShaderType = {
+  vertex: `
+    # ifdef GL_FRAGMENT_PRECISION_HIGH
+    precision highp float;
+    # else
+    precision mediump float;
+    # endif
 
-  override bindTextures(textures: WebGlCoreCtxTexture[]) {
-    const { glw } = this;
-    glw.activeTexture(0);
-    glw.bindTexture(textures[0]?.ctxTexture ?? null);
-  }
+    attribute vec2 a_position;
+    attribute vec2 a_textureCoordinate;
+    attribute vec4 a_color;
 
-  static override shaderSources: ShaderProgramSources = {
-    vertex: `
-      # ifdef GL_FRAGMENT_PRECISION_HIGH
-      precision highp float;
-      # else
-      precision mediump float;
-      # endif
-
-      attribute vec2 a_position;
-      attribute vec2 a_textureCoordinate;
-      attribute vec4 a_color;
-
-      uniform vec2 u_resolution;
-      uniform float u_pixelRatio;
+    uniform vec2 u_resolution;
+    uniform float u_pixelRatio;
 
 
-      varying vec4 v_color;
-      varying vec2 v_textureCoordinate;
+    varying vec4 v_color;
+    varying vec2 v_textureCoordinate;
 
-      void main() {
-        vec2 normalized = a_position * u_pixelRatio;
-        vec2 screenSpace = vec2(2.0 / u_resolution.x, -2.0 / u_resolution.y);
+    void main() {
+      vec2 normalized = a_position * u_pixelRatio;
+      vec2 screenSpace = vec2(2.0 / u_resolution.x, -2.0 / u_resolution.y);
 
-        v_color = a_color;
-        v_textureCoordinate = a_textureCoordinate;
+      v_color = a_color;
+      v_textureCoordinate = a_textureCoordinate;
 
-        gl_Position = vec4(normalized.x * screenSpace.x - 1.0, normalized.y * -abs(screenSpace.y) + 1.0, 0.0, 1.0);
-        gl_Position.y = -sign(screenSpace.y) * gl_Position.y;
-      }
-    `,
-    fragment: `
-      # ifdef GL_FRAGMENT_PRECISION_HIGH
-      precision highp float;
-      # else
-      precision mediump float;
-      # endif
+      gl_Position = vec4(normalized.x * screenSpace.x - 1.0, normalized.y * -abs(screenSpace.y) + 1.0, 0.0, 1.0);
+      gl_Position.y = -sign(screenSpace.y) * gl_Position.y;
+    }
+  `,
+  fragment: `
+    # ifdef GL_FRAGMENT_PRECISION_HIGH
+    precision highp float;
+    # else
+    precision mediump float;
+    # endif
 
-      uniform vec2 u_resolution;
-      uniform sampler2D u_texture;
+    uniform vec2 u_resolution;
+    uniform sampler2D u_texture;
 
-      varying vec4 v_color;
-      varying vec2 v_textureCoordinate;
+    varying vec4 v_color;
+    varying vec2 v_textureCoordinate;
 
-      void main() {
-          vec4 color = texture2D(u_texture, v_textureCoordinate);
-          gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0) * texture2D(u_texture, v_textureCoordinate);
-      }
-    `,
-  };
-}
+    void main() {
+        vec4 color = texture2D(u_texture, v_textureCoordinate);
+        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0) * texture2D(u_texture, v_textureCoordinate);
+    }
+  `,
+};

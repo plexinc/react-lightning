@@ -63,4 +63,17 @@ export class LightningTextElement extends LightningViewElement<
 
     return finalProps;
   }
+
+  protected override _doUpdate() {
+    const payload = this._stagedUpdates;
+    let changed = super._doUpdate();
+
+    if (payload.text) {
+      this.text = payload.text;
+
+      changed = true;
+    }
+
+    return changed;
+  }
 }

@@ -9,10 +9,6 @@ type FontFileInfo = {
   checksum: number | null;
 };
 
-type FontCharset = {
-  currentChecksum: number | null;
-};
-
 type FontInfo = {
   inputDir: string;
   outputDir: string;

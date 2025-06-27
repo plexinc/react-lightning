@@ -27,17 +27,17 @@ const ForwardRefComponent = forwardRef(() => <div />);
 export function focusable<P, T extends LightningElement = LightningElement>(
   Component: FC<Focusable<P, T>>,
   componentDisplayName?: string,
-  useFocusOptions?: FocusOptions | ((props: Focusable<P, T>) => FocusOptions),
+  focusOptions?: FocusOptions | ((props: Focusable<P, T>) => FocusOptions),
 ): ForwardRefExoticComponent<P>;
 export function focusable<P, T extends LightningElement = LightningElement>(
   Component: (props: Focusable<P, T>, ref: Ref<T>) => ReactNode,
   componentDisplayName?: string,
-  useFocusOptions?: FocusOptions | ((props: Focusable<P, T>) => FocusOptions),
+  focusOptions?: FocusOptions | ((props: Focusable<P, T>) => FocusOptions),
 ): ForwardRefExoticComponent<P>;
 export function focusable<P, T extends LightningElement = LightningElement>(
   Component: FC<Focusable<P, T>> | ForwardRefRenderFunction<T, Focusable<P, T>>,
   componentDisplayName?: string,
-  useFocusOptions?: FocusOptions | ((props: Focusable<P, T>) => FocusOptions),
+  focusOptions?: FocusOptions | ((props: Focusable<P, T>) => FocusOptions),
 ) {
   if (!Component.displayName) {
     Component.displayName = componentDisplayName ?? Component.name;
@@ -58,14 +58,14 @@ export function focusable<P, T extends LightningElement = LightningElement>(
   MemoRefComponent.displayName = `Focusable${Component.displayName}`;
 
   return forwardRef<T, Focusable<P, T>>((props, forwardedRef) => {
-    const focusOptions = useMemo(
+    const options = useMemo(
       () =>
-        typeof useFocusOptions === 'function'
-          ? useFocusOptions(props as Focusable<P, T>)
-          : useFocusOptions,
-      [props, useFocusOptions],
+        typeof focusOptions === 'function'
+          ? focusOptions(props as Focusable<P, T>)
+          : focusOptions,
+      [props, focusOptions],
     );
-    const { ref, focused } = useFocus(focusOptions);
+    const { ref, focused } = useFocus(options);
     const combinedRef = useCombinedRef(ref, forwardedRef);
 
     return <MemoRefComponent {...props} ref={combinedRef} focused={focused} />;

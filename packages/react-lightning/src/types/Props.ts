@@ -1,12 +1,11 @@
 import type {
   Dimensions,
   INodeProps,
-  ShaderMap,
+  RendererMain,
   TextureMap,
 } from '@lightningjs/renderer';
 import type { ReactNode, RefAttributes } from 'react';
 import type { Animatable } from './Animatable';
-import type { EffectsMap } from './Effects';
 import type { LightningElement } from './Element';
 import type { FocusableProps } from './Focusable';
 import type { Rect } from './Geometry';
@@ -36,13 +35,6 @@ export type ExtractProps<Type> = Type extends {
   ? Props
   : never;
 
-export interface ShaderDef<
-  shaderType extends keyof ShaderMap = keyof ShaderMap,
-> {
-  type: shaderType;
-  props?: ExtractProps<ShaderMap[shaderType]>;
-}
-
 export interface TextureDef<
   textureType extends keyof TextureMap = keyof TextureMap,
 > {
@@ -50,13 +42,17 @@ export interface TextureDef<
   props: ExtractProps<TextureMap[textureType]>;
 }
 
+export interface ShaderDef {
+  type: Parameters<RendererMain['createShader']>[0];
+  props: Parameters<RendererMain['createShader']>[1];
+}
+
 export interface LightningViewElementProps<
   TStyleProps extends LightningViewElementStyle = LightningViewElementStyle,
 > extends LightningElementEventProps,
     FocusableProps,
-    Animatable<TStyleProps & EffectsMap>,
+    Animatable<TStyleProps>,
     RefAttributes<LightningElement> {
-  effects?: EffectsMap;
   shader?: ShaderDef;
   texture?: TextureDef;
   rtt?: boolean;

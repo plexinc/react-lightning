@@ -25,5 +25,5 @@ export interface LightningElementEvents extends FocusEvents<LightningElement> {
   animationFinished: (animationName: IAnimationController) => void;
 
   // biome-ignore lint/suspicious/noExplicitAny: TODO
-  [k: string]: (...args: any[]) => void;
+  [k: string | symbol]: (...args: any[]) => void;
 }

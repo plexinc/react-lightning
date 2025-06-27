@@ -8,103 +8,103 @@ import type {
   Wrap,
   FlexDirection as YogaFlexDirection,
 } from 'yoga-layout';
+import type { Yoga } from 'yoga-layout/load';
+import type { AutoDimensionValue, Transform } from '../types/FlexStyles';
 import type { FlexProps } from './isFlexStyleProp';
 import { isFlexStyleProp } from './isFlexStyleProp';
-import type { AutoDimensionValue, Transform } from './types/FlexStyles';
-import Yoga from './yoga';
 
-function mapDisplay(value?: 'flex' | 'none'): Display {
+function mapDisplay(yoga: Yoga, value?: 'flex' | 'none'): Display {
   switch (value) {
     case 'none':
-      return Yoga.instance.DISPLAY_NONE;
+      return yoga.DISPLAY_NONE;
     default:
-      return Yoga.instance.DISPLAY_FLEX;
+      return yoga.DISPLAY_FLEX;
   }
 }
 
-function mapDirection(value?: number | string): YogaFlexDirection {
+function mapDirection(yoga: Yoga, value?: number | string): YogaFlexDirection {
   switch (value) {
     case 'column-reverse':
-      return Yoga.instance.FLEX_DIRECTION_COLUMN_REVERSE;
+      return yoga.FLEX_DIRECTION_COLUMN_REVERSE;
     case 'column':
-      return Yoga.instance.FLEX_DIRECTION_COLUMN;
+      return yoga.FLEX_DIRECTION_COLUMN;
     case 'row-reverse':
-      return Yoga.instance.FLEX_DIRECTION_ROW_REVERSE;
+      return yoga.FLEX_DIRECTION_ROW_REVERSE;
     default:
-      return Yoga.instance.FLEX_DIRECTION_ROW;
+      return yoga.FLEX_DIRECTION_ROW;
   }
 }
 
-function mapAlignItems(value?: number | string): Align {
+function mapAlignItems(yoga: Yoga, value?: number | string): Align {
   switch (value) {
     case 'flex-start':
-      return Yoga.instance.ALIGN_FLEX_START;
+      return yoga.ALIGN_FLEX_START;
     case 'flex-end':
-      return Yoga.instance.ALIGN_FLEX_END;
+      return yoga.ALIGN_FLEX_END;
     case 'center':
-      return Yoga.instance.ALIGN_CENTER;
+      return yoga.ALIGN_CENTER;
     case 'baseline':
-      return Yoga.instance.ALIGN_BASELINE;
+      return yoga.ALIGN_BASELINE;
     default:
-      return Yoga.instance.ALIGN_STRETCH;
+      return yoga.ALIGN_STRETCH;
   }
 }
 
-function mapAlignContent(value?: number | string): Align {
+function mapAlignContent(yoga: Yoga, value?: number | string): Align {
   switch (value) {
     case 'space-around':
-      return Yoga.instance.ALIGN_SPACE_AROUND;
+      return yoga.ALIGN_SPACE_AROUND;
     case 'space-between':
     case 'space-evenly':
-      return Yoga.instance.ALIGN_SPACE_BETWEEN;
+      return yoga.ALIGN_SPACE_BETWEEN;
     case 'center':
-      return Yoga.instance.ALIGN_CENTER;
+      return yoga.ALIGN_CENTER;
     case 'flex-end':
-      return Yoga.instance.ALIGN_FLEX_END;
+      return yoga.ALIGN_FLEX_END;
     case 'stretch':
-      return Yoga.instance.ALIGN_STRETCH;
+      return yoga.ALIGN_STRETCH;
     default:
-      return Yoga.instance.ALIGN_FLEX_START;
+      return yoga.ALIGN_FLEX_START;
   }
 }
 
-function mapWrap(value?: number | string): Wrap {
+function mapWrap(yoga: Yoga, value?: number | string): Wrap {
   switch (value) {
     case 'wrap':
-      return Yoga.instance.WRAP_WRAP;
+      return yoga.WRAP_WRAP;
     case 'wrap-reverse':
-      return Yoga.instance.WRAP_WRAP_REVERSE;
+      return yoga.WRAP_WRAP_REVERSE;
     default:
-      return Yoga.instance.WRAP_NO_WRAP;
+      return yoga.WRAP_NO_WRAP;
   }
 }
 
-function mapJustify(value?: number | string): Justify {
+function mapJustify(yoga: Yoga, value?: number | string): Justify {
   switch (value) {
     case 'center':
-      return Yoga.instance.JUSTIFY_CENTER;
+      return yoga.JUSTIFY_CENTER;
     case 'flex-end':
-      return Yoga.instance.JUSTIFY_FLEX_END;
+      return yoga.JUSTIFY_FLEX_END;
     case 'space-around':
-      return Yoga.instance.JUSTIFY_SPACE_AROUND;
+      return yoga.JUSTIFY_SPACE_AROUND;
     case 'space-between':
-      return Yoga.instance.JUSTIFY_SPACE_BETWEEN;
+      return yoga.JUSTIFY_SPACE_BETWEEN;
     case 'space-evenly':
-      return Yoga.instance.JUSTIFY_SPACE_EVENLY;
+      return yoga.JUSTIFY_SPACE_EVENLY;
     default:
-      return Yoga.instance.JUSTIFY_FLEX_START;
+      return yoga.JUSTIFY_FLEX_START;
   }
 }
 
-function mapPosition(value?: number | string): PositionType {
+function mapPosition(yoga: Yoga, value?: number | string): PositionType {
   switch (value) {
     case 'absolute':
     case 'fixed':
-      return Yoga.instance.POSITION_TYPE_ABSOLUTE;
+      return yoga.POSITION_TYPE_ABSOLUTE;
     case 'static':
-      return Yoga.instance.POSITION_TYPE_STATIC;
+      return yoga.POSITION_TYPE_STATIC;
     default:
-      return Yoga.instance.POSITION_TYPE_RELATIVE;
+      return yoga.POSITION_TYPE_RELATIVE;
   }
 }
 
@@ -118,22 +118,134 @@ function formatSizeValue<T extends keyof LightningViewElementStyle>(
   return value as LightningViewElementStyle[T];
 }
 
+function applyFlexBasis(node: Node, value?: AutoDimensionValue | string) {
+  if (value == null) {
+    return;
+  }
+
+  if (typeof value === 'string') {
+    if (value === 'auto') {
+      node.setFlexBasisAuto();
+    } else if (value.endsWith('%')) {
+      node.setFlexBasisPercent(Number.parseFloat(value));
+    } else {
+      node.setFlexBasis(Number.parseFloat(value));
+    }
+  } else if (typeof value === 'number') {
+    node.setFlexBasis(value);
+  }
+}
+
+// Cache for parsed flex values
+const flexCache = new Map<
+  string,
+  { grow: number; shrink: number; basis: AutoDimensionValue | string }
+>();
+
+function applyFlex(node: Node, value?: string | number) {
+  if (value == null) {
+    return;
+  }
+
+  if (typeof value === 'number') {
+    node.setFlexGrow(value);
+    node.setFlexShrink(1);
+    node.setFlexBasis(0);
+
+    return;
+  }
+
+  // Check cache first for string values to prevent parsing again
+  const cached = flexCache.get(value);
+
+  if (cached) {
+    node.setFlexGrow(cached.grow);
+    node.setFlexShrink(cached.shrink);
+    applyFlexBasis(node, cached.basis);
+
+    return;
+  }
+
+  const parts = value.split(' ');
+  const [grow, shrink, basis] = parts;
+  let flexConfig: {
+    grow: number;
+    shrink: number;
+    basis: AutoDimensionValue | string;
+  };
+
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/flex
+  if (grow != null && shrink != null && basis != null) {
+    flexConfig = {
+      grow: Number.parseFloat(grow),
+      shrink: Number.parseFloat(shrink),
+      basis,
+    };
+  } else if (parts.length === 2 && grow != null && shrink != null) {
+    if (/^\d+$/.test(shrink)) {
+      flexConfig = {
+        grow: Number.parseFloat(grow),
+        shrink: Number.parseFloat(shrink),
+        basis: 0,
+      };
+    } else {
+      flexConfig = {
+        grow: Number.parseFloat(grow),
+        shrink: 1,
+        basis: shrink,
+      };
+    }
+  } else if (parts.length === 1 && grow != null) {
+    if (/^\d+$/.test(grow)) {
+      flexConfig = {
+        grow: Number.parseFloat(grow),
+        shrink: 1,
+        basis: 0,
+      };
+    } else if (grow === 'none') {
+      flexConfig = { grow: 0, shrink: 0, basis: 'auto' };
+    } else {
+      flexConfig = { grow: 1, shrink: 1, basis: grow };
+    }
+  } else {
+    return;
+  }
+
+  // Cache the parsed result
+  flexCache.set(value, flexConfig);
+
+  node.setFlexGrow(flexConfig.grow);
+  node.setFlexShrink(flexConfig.shrink);
+  applyFlexBasis(node, flexConfig.basis);
+}
+
 export default function applyReactPropsToYoga(
+  yoga: Yoga,
   node: Node,
   style: Partial<LightningViewElementStyle>,
 ) {
-  for (const prop of Object.keys(style)) {
+  for (const [prop, value] of Object.entries(style)) {
     if (isFlexStyleProp(prop)) {
-      applyFlexPropToYoga(node, prop, style[prop]);
+      applyFlexPropToYoga(
+        yoga,
+        node,
+        prop,
+        value as LightningViewElementStyle[typeof prop],
+      );
     }
   }
 }
 
 export function applyFlexPropToYoga<K extends FlexProps>(
+  yoga: Yoga,
   node: Node,
   key: K,
   styleValue: LightningViewElementStyle[K],
 ): boolean {
+  if (styleValue == null) {
+    return false;
+  }
+
   try {
     const value = styleValue as Exclude<
       LightningViewElementStyle[K],
@@ -143,7 +255,7 @@ export function applyFlexPropToYoga<K extends FlexProps>(
     switch (key) {
       case 'display':
         node.setDisplay(
-          mapDisplay(value as LightningViewElementStyle['display']),
+          mapDisplay(yoga, value as LightningViewElementStyle['display']),
         );
         return true;
       case 'width':
@@ -169,113 +281,113 @@ export function applyFlexPropToYoga<K extends FlexProps>(
         return true;
       case 'margin':
         node.setMargin(
-          Yoga.instance.EDGE_ALL,
+          yoga.EDGE_ALL,
           value as LightningViewElementStyle['margin'],
         );
         return true;
       case 'marginBottom':
         node.setMargin(
-          Yoga.instance.EDGE_BOTTOM,
+          yoga.EDGE_BOTTOM,
           value as LightningViewElementStyle['marginBottom'],
         );
         return true;
       case 'marginEnd':
         node.setMargin(
-          Yoga.instance.EDGE_END,
+          yoga.EDGE_END,
           value as LightningViewElementStyle['marginEnd'],
         );
         return true;
       case 'marginLeft':
         node.setMargin(
-          Yoga.instance.EDGE_LEFT,
+          yoga.EDGE_LEFT,
           value as LightningViewElementStyle['marginLeft'],
         );
         return true;
       case 'marginRight':
         node.setMargin(
-          Yoga.instance.EDGE_RIGHT,
+          yoga.EDGE_RIGHT,
           value as LightningViewElementStyle['marginRight'],
         );
         return true;
       case 'marginStart':
         node.setMargin(
-          Yoga.instance.EDGE_START,
+          yoga.EDGE_START,
           value as LightningViewElementStyle['marginStart'],
         );
         return true;
       case 'marginTop':
         node.setMargin(
-          Yoga.instance.EDGE_TOP,
+          yoga.EDGE_TOP,
           value as LightningViewElementStyle['marginTop'],
         );
         return true;
       case 'marginHorizontal':
       case 'marginInline':
         node.setMargin(
-          Yoga.instance.EDGE_HORIZONTAL,
+          yoga.EDGE_HORIZONTAL,
           value as LightningViewElementStyle['marginInline'],
         );
         return true;
       case 'marginVertical':
       case 'marginBlock':
         node.setMargin(
-          Yoga.instance.EDGE_VERTICAL,
+          yoga.EDGE_VERTICAL,
           value as LightningViewElementStyle['marginBlock'],
         );
         return true;
       case 'padding':
         node.setPadding(
-          Yoga.instance.EDGE_ALL,
+          yoga.EDGE_ALL,
           value as LightningViewElementStyle['padding'],
         );
         return true;
       case 'paddingBottom':
         node.setPadding(
-          Yoga.instance.EDGE_BOTTOM,
+          yoga.EDGE_BOTTOM,
           value as LightningViewElementStyle['paddingBottom'],
         );
         return true;
       case 'paddingEnd':
         node.setPadding(
-          Yoga.instance.EDGE_END,
+          yoga.EDGE_END,
           value as LightningViewElementStyle['paddingEnd'],
         );
         return true;
       case 'paddingLeft':
         node.setPadding(
-          Yoga.instance.EDGE_LEFT,
+          yoga.EDGE_LEFT,
           value as LightningViewElementStyle['paddingLeft'],
         );
         return true;
       case 'paddingRight':
         node.setPadding(
-          Yoga.instance.EDGE_RIGHT,
+          yoga.EDGE_RIGHT,
           value as LightningViewElementStyle['paddingRight'],
         );
         return true;
       case 'paddingStart':
         node.setPadding(
-          Yoga.instance.EDGE_START,
+          yoga.EDGE_START,
           value as LightningViewElementStyle['paddingStart'],
         );
         return true;
       case 'paddingTop':
         node.setPadding(
-          Yoga.instance.EDGE_TOP,
+          yoga.EDGE_TOP,
           value as LightningViewElementStyle['paddingTop'],
         );
         return true;
       case 'paddingHorizontal':
       case 'paddingInline':
         node.setPadding(
-          Yoga.instance.EDGE_HORIZONTAL,
+          yoga.EDGE_HORIZONTAL,
           value as LightningViewElementStyle['paddingInline'],
         );
         return true;
       case 'paddingVertical':
       case 'paddingBlock':
         node.setPadding(
-          Yoga.instance.EDGE_VERTICAL,
+          yoga.EDGE_VERTICAL,
           value as LightningViewElementStyle['paddingBlock'],
         );
         return true;
@@ -283,22 +395,22 @@ export function applyFlexPropToYoga<K extends FlexProps>(
         applyFlex(node, value);
         return true;
       case 'flexDirection':
-        node.setFlexDirection(mapDirection(value));
+        node.setFlexDirection(mapDirection(yoga, value));
         return true;
       case 'alignContent':
-        node.setAlignContent(mapAlignContent(value));
+        node.setAlignContent(mapAlignContent(yoga, value));
         return true;
       case 'alignItems':
-        node.setAlignItems(mapAlignItems(value));
+        node.setAlignItems(mapAlignItems(yoga, value));
         return true;
       case 'alignSelf':
-        node.setAlignSelf(mapAlignItems(value));
+        node.setAlignSelf(mapAlignItems(yoga, value));
         return true;
       case 'justifyContent':
-        node.setJustifyContent(mapJustify(value));
+        node.setJustifyContent(mapJustify(yoga, value));
         return true;
       case 'flexWrap':
-        node.setFlexWrap(mapWrap(value));
+        node.setFlexWrap(mapWrap(yoga, value));
         return true;
       case 'flexBasis':
         applyFlexBasis(node, value as LightningViewElementStyle['flexBasis']);
@@ -313,46 +425,46 @@ export function applyFlexPropToYoga<K extends FlexProps>(
         return true;
       case 'gap':
         node.setGap(
-          Yoga.instance.GUTTER_ALL,
+          yoga.GUTTER_ALL,
           (value as LightningViewElementStyle['gap']) ?? 0,
         );
         return true;
       case 'columnGap':
         node.setGap(
-          Yoga.instance.GUTTER_COLUMN,
+          yoga.GUTTER_COLUMN,
           (value as LightningViewElementStyle['columnGap']) ?? 0,
         );
         return true;
       case 'rowGap':
         node.setGap(
-          Yoga.instance.GUTTER_ROW,
+          yoga.GUTTER_ROW,
           (value as LightningViewElementStyle['rowGap']) ?? 0,
         );
         return true;
       case 'position':
-        node.setPositionType(mapPosition(value));
+        node.setPositionType(mapPosition(yoga, value));
         return true;
       case 'right':
         node.setPosition(
-          Yoga.instance.EDGE_RIGHT,
+          yoga.EDGE_RIGHT,
           (value as LightningViewElementStyle['right']) ?? 0,
         );
         return true;
       case 'bottom':
         node.setPosition(
-          Yoga.instance.EDGE_BOTTOM,
+          yoga.EDGE_BOTTOM,
           (value as LightningViewElementStyle['bottom']) ?? 0,
         );
         return true;
       case 'left':
         node.setPosition(
-          Yoga.instance.EDGE_LEFT,
+          yoga.EDGE_LEFT,
           (value as LightningViewElementStyle['left']) ?? 0,
         );
         return true;
       case 'top':
         node.setPosition(
-          Yoga.instance.EDGE_TOP,
+          yoga.EDGE_TOP,
           (value as LightningViewElementStyle['top']) ?? 0,
         );
         return true;
@@ -362,66 +474,4 @@ export function applyFlexPropToYoga<K extends FlexProps>(
   }
 
   return false;
-}
-
-function applyFlexBasis(node: Node, value?: AutoDimensionValue) {
-  if (value == null) {
-    return;
-  }
-
-  if (typeof value === 'string' && value.endsWith('%')) {
-    node.setFlexBasisPercent(Number.parseFloat(value));
-  } else if (value === 'auto') {
-    node.setFlexBasisAuto();
-  } else {
-    node.setFlexBasis(value);
-  }
-}
-
-function applyFlex(node: Node, value?: string | number) {
-  if (value == null) {
-    return;
-  }
-
-  if (typeof value === 'number') {
-    node.setFlexGrow(value);
-    node.setFlexShrink(1);
-    node.setFlexBasis(0);
-
-    return;
-  }
-
-  const parts = value.split(' ');
-  const [grow, shrink, basis] = parts;
-
-  // https://developer.mozilla.org/en-US/docs/Web/CSS/flex
-  if (grow != null && shrink != null && basis != null) {
-    node.setFlexGrow(Number.parseFloat(grow));
-    node.setFlexShrink(Number.parseFloat(shrink));
-    applyFlexBasis(node, shrink as AutoDimensionValue);
-  } else if (parts.length === 2 && grow != null && shrink != null) {
-    node.setFlexGrow(Number.parseFloat(grow));
-
-    if (/^\d+$/.test(shrink)) {
-      node.setFlexShrink(Number.parseFloat(shrink));
-      node.setFlexBasis(0);
-    } else {
-      node.setFlexShrink(1);
-      applyFlexBasis(node, shrink as AutoDimensionValue);
-    }
-  } else if (parts.length === 1 && grow != null) {
-    if (/^\d+$/.test(grow)) {
-      node.setFlexGrow(Number.parseFloat(grow));
-      node.setFlexShrink(1);
-      node.setFlexBasis(0);
-    } else if (grow === 'none') {
-      node.setFlexGrow(0);
-      node.setFlexShrink(0);
-      node.setFlexBasisAuto();
-    } else if (typeof grow === 'string') {
-      node.setFlexGrow(1);
-      node.setFlexShrink(1);
-      applyFlexBasis(node, grow as AutoDimensionValue);
-    }
-  }
 }
