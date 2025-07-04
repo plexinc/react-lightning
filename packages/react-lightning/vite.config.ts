@@ -12,7 +12,6 @@ export default defineConfig((env) =>
           'react',
           'react-reconciler',
           'react/jsx-runtime',
-          'tseep',
         ],
       },
     },

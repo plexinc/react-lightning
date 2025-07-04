@@ -5,7 +5,7 @@ export default defineConfig((env) =>
   mergeConfig<UserConfig, UserConfig>(config(env), {
     build: {
       rollupOptions: {
-        external: ['yoga-layout/load', 'tseep'],
+        external: ['yoga-layout/load'],
       },
     },
   }),
