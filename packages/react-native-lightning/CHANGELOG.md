@@ -1,5 +1,22 @@
 # @plextv/react-native-lightning
 
+## 0.3.2
+
+### Patch Changes
+
+- 81ff0f5: Flexbox performance improvements, and added optional useWebWorker option
+- 81ff0f5: Various performance improvements
+- 81ff0f5: Switch builds to use vite and update packages
+- Updated dependencies [81ff0f5]
+- Updated dependencies [81ff0f5]
+- Updated dependencies [c2fe33c]
+- Updated dependencies [81ff0f5]
+- Updated dependencies [4e58bb5]
+- Updated dependencies [81ff0f5]
+  - @plextv/react-lightning-plugin-flexbox@0.3.1
+  - @plextv/react-lightning@0.3.1
+  - @plextv/react-lightning-plugin-css-transform@0.3.2
+
 ## 0.3.1
 
 ### Patch Changes
