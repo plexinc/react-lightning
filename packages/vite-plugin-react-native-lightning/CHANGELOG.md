@@ -1,5 +1,15 @@
 # @plextv/vite-plugin-react-native-lightning
 
+## 0.3.2
+
+### Patch Changes
+
+- 81ff0f5: Switch builds to use vite and update packages
+- Updated dependencies [81ff0f5]
+- Updated dependencies [81ff0f5]
+- Updated dependencies [81ff0f5]
+  - @plextv/react-native-lightning@0.3.2
+
 ## 0.3.1
 
 ### Patch Changes

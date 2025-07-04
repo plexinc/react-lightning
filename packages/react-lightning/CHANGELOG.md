@@ -1,5 +1,15 @@
 # @plextv/react-lightning
 
+## 0.3.1
+
+### Patch Changes
+
+- 81ff0f5: Various performance improvements
+- c2fe33c: More optimizations with yoga workers
+- 81ff0f5: Switch builds to use vite and update packages
+- 4e58bb5: Remove useWasm RenderOption
+- 81ff0f5: Removed effects and improved shaders
+
 ## 0.3.0
 
 ### Minor Changes

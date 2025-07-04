@@ -1,5 +1,11 @@
 # @plextv/vite-plugin-msdf-fontgen
 
+## 1.3.1
+
+### Patch Changes
+
+- 81ff0f5: Switch builds to use vite and update packages
+
 ## 1.3.0
 
 ### Minor Changes

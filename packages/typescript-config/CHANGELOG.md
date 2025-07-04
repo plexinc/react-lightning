@@ -1,5 +1,11 @@
 # @repo/typescript-config
 
+## 0.2.2
+
+### Patch Changes
+
+- 81ff0f5: Switch builds to use vite and update packages
+
 ## 0.2.1
 
 ### Patch Changes
