@@ -1,5 +1,13 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.3.2
+
+### Patch Changes
+
+- 56769e3: Include tseep into the build
+- Updated dependencies [56769e3]
+  - @plextv/react-lightning@0.3.2
+
 ## 0.3.1
 
 ### Patch Changes
