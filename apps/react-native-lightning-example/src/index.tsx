@@ -194,7 +194,7 @@ AppRegistry.runApplication('plex', {
   } as RenderOptions,
   pluginOptions: {
     flexbox: {
-      useWebWorker: false,
+      useWebWorker: true,
     },
   },
 });

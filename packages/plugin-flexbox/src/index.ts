@@ -26,30 +26,39 @@ export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
         return props;
       }
 
-      const [flexStyles, remainingStyles] = Object.entries(styles).reduce(
-        ([flex, remaining], [key, value]) => {
-          const prop = key as keyof LightningElementStyle;
+      const flexStyles: Record<string, unknown> = {};
+      const remainingStyles: Record<string, unknown> = {};
+      let hasFlexStyles = false;
 
-          if (prop === 'width' || prop === 'height') {
-            flex[prop] = value;
-            remaining[prop] = value;
-          } else if (isFlexStyleProp(prop) && value != null) {
-            flex[prop] = value;
-          } else {
-            remaining[prop] = value;
-          }
+      // Direct property iteration is faster than Object.entries + reduce
+      for (const key in styles) {
+        const value = styles[key as keyof LightningElementStyle];
 
-          return [flex, remaining];
-        },
-        [{}, {}] as [
-          Partial<LightningElementStyle>,
-          Partial<LightningElementStyle>,
-        ],
-      );
+        if (key === 'width' || key === 'height') {
+          // Width and height go to both flex and remaining styles
+          flexStyles[key] = value;
+          remainingStyles[key] = value;
+          hasFlexStyles = true;
+        } else if (isFlexStyleProp(key) && value != null) {
+          flexStyles[key] = value;
+          hasFlexStyles = true;
+        } else {
+          remainingStyles[key] = value;
+        }
+      }
 
-      lightningManager.applyStyle(instance.id, flexStyles, true);
+      if (hasFlexStyles) {
+        lightningManager.applyStyle(
+          instance.id,
+          flexStyles as Partial<LightningElementStyle>,
+          true,
+        );
+      }
 
-      return { ...props, style: remainingStyles };
+      return {
+        ...props,
+        style: remainingStyles as Partial<LightningElementStyle>,
+      };
     },
   };
 }

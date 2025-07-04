@@ -1,16 +1,11 @@
 import type { LightningElementStyle, Rect } from '@plextv/react-lightning';
 import { EventEmitter } from 'tseep';
 import { type Config, loadYoga, type Node, type Yoga } from 'yoga-layout/load';
-import {
-  UPDATE_HEIGHT,
-  UPDATE_WIDTH,
-  UPDATE_X,
-  UPDATE_Y,
-} from './types/UpdateFlags';
 import type { YogaOptions } from './types/YogaOptions';
 import applyReactPropsToYoga, {
   applyFlexPropToYoga,
 } from './util/applyReactPropsToYoga';
+import { SimpleDataView } from './util/SimpleDataView';
 
 export type BatchedUpdate = Record<number, Partial<Rect>>;
 
@@ -28,20 +23,15 @@ export type YogaManagerEvents = {
   // array are reserved for the number of elements being updated. The rest of the
   // array contains the updates for each element. The data structure is as follows:
   //   uint32 - The element ID of the element being updated
-  //   uint8 - a bitmask that indicates which properties are set.
-  //     Examples:
-  //       If only x and y are set, the FLAG will be 0b00000011 (3).
-  //       If only width and height are set, the FLAG will be 0b00001100 (12).
-  //       If all properties are set, the FLAG will be 0b00001111 (15).
-  //  int16? - The x coordinate of the element, only included if the x flag is set.
-  //  int16? - The y coordinate of the element, only included if the y flag is set.
-  //  int16? - The width of the element, only included if the width flag is set.
-  //  int16? - The height of the element, only included if the height flag is set.
+  //   int16 - The x coordinate of the element
+  //   int16 - The y coordinate of the element
+  //   int16 - The width of the element
+  //   int16 - The height of the element
   render: (updates: ArrayBuffer) => void;
 };
 
-// elementId + flags + x + y + width + height, as per spec above
-const APPROX_SIZEOF_UPDATE = 4 + 1 + 2 + 2 + 2 + 2;
+// elementId + x + y + width + height, as per spec above
+const APPROX_SIZEOF_UPDATE = 4 + 2 + 2 + 2 + 2;
 // 10KB, should be enough for most updates. If it's bigger than this, we'll chunk the updates
 const MAX_SIZEOF_UPDATE = 1024 * 10;
 
@@ -61,15 +51,21 @@ export class YogaManager {
     useWebWorker: false,
   };
   private _eventEmitter: EventEmitter<YogaManagerEvents> = new EventEmitter();
-  private _currentArrayBuffer?: ArrayBuffer;
-  private _currentDataView?: DataView;
-  private _currentOffset = 0;
+  private _dataView: SimpleDataView;
 
   public on = this._eventEmitter.on.bind(this._eventEmitter);
   public off = this._eventEmitter.off.bind(this._eventEmitter);
 
   public get initialized() {
     return this._initialized;
+  }
+
+  public constructor() {
+    this._dataView = new SimpleDataView(
+      MAX_SIZEOF_UPDATE,
+      true,
+      this._flushArrayBuffer,
+    );
   }
 
   public async init(yogaOptions?: YogaOptions) {
@@ -139,7 +135,7 @@ export class YogaManager {
     }
   }
 
-  public addChildNode(parentId: number, childId: number, index: number) {
+  public addChildNode(parentId: number, childId: number, index?: number) {
     const parentYogaNode = this._elementMap.get(parentId);
     const childYogaNode = this._elementMap.get(childId);
 
@@ -148,6 +144,8 @@ export class YogaManager {
         `Parent or child node not found for IDs ${parentId} and ${childId}.`,
       );
     }
+
+    index ??= childYogaNode.children.length;
 
     parentYogaNode.node.insertChild(childYogaNode.node, index);
     parentYogaNode.children.splice(index, 0, childYogaNode);
@@ -191,13 +189,16 @@ export class YogaManager {
 
       this._initializeArrayBuffer();
       this._getUpdatedStyles(root, force);
-      this._flushArrayBuffer();
+      this._flushArrayBuffer(this._dataView.buffer);
 
       this._isRenderQueued = false;
     }, 1);
   }
 
-  public applyStyles(styles: Record<number, Partial<LightningElementStyle>>) {
+  public applyStyles(
+    styles: Record<number, Partial<LightningElementStyle>>,
+    skipRender = false,
+  ) {
     if (!this._initialized || !this._yoga || !this._config) {
       throw new Error('Yoga was not initialized! Did you call `init()`?');
     }
@@ -205,11 +206,19 @@ export class YogaManager {
     const styleEntries = Object.entries(styles);
 
     for (const [elementId, style] of styleEntries) {
-      this.applyStyle(Number(elementId), style);
+      this.applyStyle(Number(elementId), style, skipRender);
     }
   }
 
-  public applyStyle(elementId: number, style: Partial<LightningElementStyle>) {
+  public applyStyle(
+    elementId: number,
+    style: Partial<LightningElementStyle> | null,
+    skipRender = false,
+  ) {
+    if (!style) {
+      return;
+    }
+
     if (!this._initialized || !this._yoga || !this._config) {
       throw new Error('Yoga was not initialized! Did you call `init()`?');
     }
@@ -252,6 +261,10 @@ export class YogaManager {
           );
         }
       }
+    }
+
+    if (!skipRender) {
+      this.queueRender(elementId);
     }
   }
 
@@ -298,32 +311,14 @@ export class YogaManager {
     return null;
   }
 
-  private _flushArrayBuffer() {
-    if (!this._currentArrayBuffer || !this._currentDataView) {
-      return;
-    }
-
+  private _flushArrayBuffer(buffer: ArrayBuffer) {
     // Emit the current buffer
-    this._eventEmitter.emit('render', this._currentArrayBuffer);
-
-    // Reset the current buffer and data view
-    this._currentArrayBuffer = undefined;
-    this._currentDataView = undefined;
-    this._currentOffset = 0;
+    this._eventEmitter.emit('render', buffer);
+    this._initializeArrayBuffer();
   }
 
   private _initializeArrayBuffer() {
-    if (this._currentArrayBuffer) {
-      // If we already have a buffer, warn
-      console.warn(
-        'YogaManager: Buffer already initialized. Clearing the previous buffer. Any data in it will be lost.',
-      );
-    }
-
-    // Create a new buffer and data view
-    this._currentArrayBuffer = new ArrayBuffer(MAX_SIZEOF_UPDATE);
-    this._currentDataView = new DataView(this._currentArrayBuffer);
-    this._currentOffset = 0;
+    this._dataView.reset();
   }
 
   private _createNode(elementId: number): ManagerNode {
@@ -349,71 +344,23 @@ export class YogaManager {
       !this._yogaOptions.processHiddenNodes &&
       this._hiddenElements.has(yogaNode.id);
 
-    if (!this._currentDataView || !this._currentArrayBuffer) {
-      // If we don't have a data view or array buffer, initialize them
-      throw new Error(
-        'YogaManager: DataView or ArrayBuffer not initialized! Did you call `queueRender`?',
-      );
-    }
-
     if (!force && (skipHiddenNode || !yogaNode.node.hasNewLayout())) {
       return;
     }
 
-    // Ensure we have enough space in the dataView
-    if (
-      this._currentOffset + APPROX_SIZEOF_UPDATE >
-      this._currentDataView.byteLength
-    ) {
-      // Too big. Send what we have, and create a new buffer
-      this._flushArrayBuffer();
-      this._initializeArrayBuffer();
+    // We want to keep chunks together, so check the size to ensure we have enough space
+    if (!this._dataView.hasSpace(APPROX_SIZEOF_UPDATE)) {
+      // If we don't have enough space, flush the current buffer
+      this._flushArrayBuffer(this._dataView.buffer);
     }
 
     const layout = yogaNode.node.getComputedLayout();
-    const dataView = this._currentDataView;
 
-    // Increase item count
-    dataView.setUint32(0, dataView.getUint32(0) + 1);
-
-    if (this._currentOffset === 0) {
-      this._currentOffset = 4;
-    }
-
-    // Set the element ID
-    dataView.setUint32(this._currentOffset, yogaNode.id);
-    this._currentOffset += 4;
-
-    // Set the flags for the properties that are set. X and Y will always be set
-    const flagIndex = this._currentOffset;
-    dataView.setUint8(this._currentOffset, UPDATE_X | UPDATE_Y);
-    this._currentOffset += 1;
-
-    // x and y will always be set, so set the flags
-    dataView.setInt16(this._currentOffset, layout.left);
-    this._currentOffset += 2;
-
-    dataView.setInt16(this._currentOffset, layout.top);
-    this._currentOffset += 2;
-
-    if (!Number.isNaN(layout.width)) {
-      dataView.setInt16(this._currentOffset, layout.width);
-      this._currentOffset += 2;
-
-      // Update the flags to indicate width is set
-      dataView.setUint8(flagIndex, dataView.getUint8(flagIndex) | UPDATE_WIDTH);
-    }
-
-    if (!Number.isNaN(layout.height)) {
-      dataView.setInt16(this._currentOffset, layout.height);
-      this._currentOffset += 2;
-
-      // Update the flags to indicate height is set
-      dataView.setUint8(
-        flagIndex,
-        dataView.getUint8(flagIndex) | UPDATE_HEIGHT,
-      );
-    }
+    this._dataView.writeUint32(yogaNode.id);
+    this._dataView.writeInt16(layout.left);
+    this._dataView.writeInt16(layout.top);
+    this._dataView.writeInt16(layout.width);
+    this._dataView.writeInt16(layout.height);
 
     yogaNode.node.markLayoutSeen();
 

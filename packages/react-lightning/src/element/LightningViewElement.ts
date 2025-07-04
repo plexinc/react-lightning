@@ -155,18 +155,10 @@ export class LightningViewElement<
       return;
     }
 
-    if (this._parent) {
-      this._parent.off('visibilityChanged', this._checkVisibility);
-    }
-
     this._parent = parent;
     this.node.parent = parent?.node ?? null;
 
-    if (this._parent) {
-      this._parent.on('visibilityChanged', this._checkVisibility);
-    }
-
-    this._checkVisibility();
+    this.recalculateVisibility();
   }
 
   public get style(): TStyleProps {
@@ -261,7 +253,6 @@ export class LightningViewElement<
 
     this.node.on('loaded', this._onTextureLoaded);
     this.node.on('failed', this._onTextureFailed);
-    this.on('layout', this._onLayout);
 
     LightningViewElement.allElements[this.id] = this;
 
@@ -271,7 +262,6 @@ export class LightningViewElement<
   public destroy() {
     this.node.off('loaded', this._onTextureLoaded);
     this.node.off('failed', this._onTextureFailed);
-    this.off('layout', this._onLayout);
 
     for (let i = this.children.length - 1; i >= 0; i--) {
       this.children[i]?.destroy();
@@ -321,7 +311,7 @@ export class LightningViewElement<
 
     oldNode.destroy();
 
-    this._checkVisibility();
+    this.recalculateVisibility();
   }
 
   public insertChild(
@@ -478,13 +468,38 @@ export class LightningViewElement<
   }
 
   public emitLayoutEvent() {
-    this.emit('layout', {
+    const dimensions = {
       x: this.node.x,
       y: this.node.y,
       height: this.node.height,
       width: this.node.width,
-    });
+    };
+
+    this.emit('layout', dimensions);
+    this._onLayout(dimensions);
   }
+
+  public recalculateVisibility = () => {
+    const prevFocusable = this.focusable;
+    const prevVisible = this._visible;
+
+    this._visible =
+      this.node.alpha > 0 && (!this.parent || this.parent.visible);
+
+    if (this._visible !== prevVisible) {
+      this._eventEmitter.emit('visibilityChanged', this._visible);
+
+      this.children.forEach((child) => {
+        child.recalculateVisibility();
+      });
+    }
+
+    const currentFocusable = this.focusable;
+
+    if (currentFocusable !== prevFocusable) {
+      this._eventEmitter.emit('focusableChanged', this, currentFocusable);
+    }
+  };
 
   public animateStyle<K extends keyof TStyleProps>(
     key: K,
@@ -518,24 +533,6 @@ export class LightningViewElement<
 
     return node as RendererNode<this>;
   }
-
-  private _checkVisibility = () => {
-    const prevFocusable = this.focusable;
-    const prevVisible = this._visible;
-
-    this._visible =
-      this.node.alpha > 0 && (!this.parent || this.parent.visible);
-
-    if (this._visible !== prevVisible) {
-      this._eventEmitter.emit('visibilityChanged', this._visible);
-    }
-
-    const currentFocusable = this.focusable;
-
-    if (currentFocusable !== prevFocusable) {
-      this._eventEmitter.emit('focusableChanged', this, currentFocusable);
-    }
-  };
 
   private _scheduleUpdate() {
     if (this._isUpdateQueued || !this._hasStagedUpdates) {
@@ -587,7 +584,7 @@ export class LightningViewElement<
     Object.assign((this.style as any)[AllStyleProps], this.props.style);
 
     if (previousOpacity !== this.node.alpha) {
-      this._checkVisibility();
+      this.recalculateVisibility();
     }
 
     if (payload.style && Object.keys(payload.style).length) {

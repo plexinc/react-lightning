@@ -5,11 +5,16 @@
     "source.fixAll.biome": "explicit"
   },
   "typescript.tsdk": "node_modules/typescript/lib",
-  "cSpell.words": ["lightningjs", "threadx"],
+  "cSpell.words": [
+    "lightningjs",
+    "threadx"
+  ],
   "biome.enabled": true,
   "json.schemas": [
     {
-      "fileMatch": ["manifest.json"],
+      "fileMatch": [
+        "manifest.json"
+      ],
       "url": "https://json.schemastore.org/chrome-manifest.json"
     }
   ],
@@ -27,5 +32,6 @@
   },
   "[json]": {
     "editor.defaultFormatter": "biomejs.biome"
-  }
+  },
+  "vitest.disableWorkspaceWarning": true
 }

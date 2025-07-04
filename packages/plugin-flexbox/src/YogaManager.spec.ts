@@ -1,12 +1,7 @@
 import type { LightningElementStyle } from '@plextv/react-lightning';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  UPDATE_HEIGHT,
-  UPDATE_WIDTH,
-  UPDATE_X,
-  UPDATE_Y,
-} from './types/UpdateFlags';
 import type { YogaOptions } from './types/YogaOptions';
+import { SimpleDataView } from './util/SimpleDataView';
 import { YogaManager } from './YogaManager';
 
 // Mock the yoga-layout/load module
@@ -315,29 +310,15 @@ describe('YogaManager', () => {
         yogaManager.on('render', (arrayBuffer) => {
           expect(arrayBuffer.byteLength).toBeGreaterThan(0); // Ensure some data is present
 
-          const dataView = new DataView(arrayBuffer);
-          let offset = 0;
-
-          // Number of nodes
-          expect(dataView.getUint32(offset)).toBe(numNodes);
-          offset += 4;
+          const dataView = new SimpleDataView(arrayBuffer);
 
           // Check each node's data
           for (let i = 0; i < numNodes; i++) {
-            expect(dataView.getUint32(offset)).toBe(i); // Node ID
-            offset += 4;
-            expect(dataView.getUint8(offset)).toBe(
-              UPDATE_X | UPDATE_Y | UPDATE_WIDTH | UPDATE_HEIGHT,
-            ); // Flags
-            offset += 1;
-            expect(dataView.getInt16(offset)).toBe(10); // x
-            offset += 2;
-            expect(dataView.getInt16(offset)).toBe(20); // y
-            offset += 2;
-            expect(dataView.getInt16(offset)).toBe(100); // width
-            offset += 2;
-            expect(dataView.getInt16(offset)).toBe(50); // height
-            offset += 2;
+            expect(dataView.readUint32()).toBe(i); // Node ID
+            expect(dataView.readInt16()).toBe(10); // x
+            expect(dataView.readInt16()).toBe(20); // y
+            expect(dataView.readInt16()).toBe(100); // width
+            expect(dataView.readInt16()).toBe(50); // height
           }
 
           resolve();

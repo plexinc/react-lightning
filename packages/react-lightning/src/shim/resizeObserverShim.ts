@@ -3,7 +3,7 @@ import type { Rect } from '../types';
 
 class LightningResizeObserver extends window.ResizeObserver {
   private _callback: ResizeObserverCallback;
-  private _targets: Set<LightningViewElement> = new Set();
+  private _targets: Set<Element> = new Set();
 
   public constructor(callback: ResizeObserverCallback) {
     super(callback);
@@ -30,6 +30,12 @@ class LightningResizeObserver extends window.ResizeObserver {
       return;
     }
     super.unobserve(target);
+  }
+
+  public override disconnect(): void {
+    this._targets.forEach(this.unobserve.bind(this));
+
+    super.disconnect();
   }
 
   private _fireCallbacks = (dimensions: Rect): void => {
