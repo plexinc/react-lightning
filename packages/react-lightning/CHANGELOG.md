@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.2
+
+### Patch Changes
+
+- 56769e3: Include tseep into the build
+
 ## 0.3.1
 
 ### Patch Changes
