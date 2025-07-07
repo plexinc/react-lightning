@@ -39,11 +39,6 @@ const config = {
     },
     force: true,
   },
-  define: {
-    'process.env': JSON.stringify({
-      NODE_ENV: process.env.NODE_ENV,
-    }),
-  },
 };
 
 export default config;

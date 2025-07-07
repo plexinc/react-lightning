@@ -16,10 +16,9 @@ const config: StorybookConfig = {
   },
   viteFinal(config) {
     config.define = {
-      'process.env': JSON.stringify({
-        NODE_ENV: process.env.NODE_ENV,
-      }),
-      __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'),
+      __DEV__: JSON.stringify(
+        (config.mode ?? process.env.NODE_ENV) !== 'production',
+      ),
     };
 
     config.plugins = [

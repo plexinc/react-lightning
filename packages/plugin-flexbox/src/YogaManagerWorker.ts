@@ -2,7 +2,7 @@ import type { LightningElementStyle } from '@plextv/react-lightning';
 import { EventEmitter } from 'tseep';
 import { NodeOperations } from './types/NodeOperations';
 import { SimpleDataView } from './util/SimpleDataView';
-import Worker from './worker?worker';
+import Worker from './worker?worker&inline';
 import type { YogaManager, YogaManagerEvents } from './YogaManager';
 
 const DELAY_DURATION = 1;
@@ -50,9 +50,16 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
   const _eventEmitter = new EventEmitter<YogaManagerEvents>();
   let _stylesToSend: Record<number, Partial<LightningElementStyle>> = {};
   let _needsRender = false;
-  // TODO: Handle possible overflows
-  const _childOperations = new SimpleDataView();
-  const _sizeRequests = new SimpleDataView();
+  const _childOperations = new SimpleDataView(
+    undefined,
+    undefined,
+    flushChildOperations,
+  );
+  const _sizeRequests = new SimpleDataView(
+    undefined,
+    undefined,
+    flushSizeRequests,
+  );
   let _sizeRequestPromise: Promise<void> | null = null;
 
   const queueSendStyles = delay(() => {
@@ -61,6 +68,10 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     if (Object.keys(_stylesToSend).length === 0) {
       return;
     }
+
+    // If we need to send styles, make sure we send any pending
+    // child operations first
+    flushChildOperations();
 
     worker.postMessage({
       method: 'applyStyles',
@@ -90,7 +101,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     queueSendStyles();
   }
 
-  const queueSendNodeOperations = delay(() => {
+  function flushChildOperations() {
     const buffer = _childOperations.buffer;
 
     if (buffer.byteLength === 0) {
@@ -106,7 +117,9 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     }
 
     _childOperations.reset();
-  }, DELAY_DURATION);
+  }
+
+  const queueSendNodeOperations = delay(flushChildOperations, DELAY_DURATION);
 
   function nodeOperation(
     method: 'addNode' | 'removeNode' | 'addChildNode',
@@ -150,7 +163,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     queueSendNodeOperations();
   }
 
-  const queueSendSizeRequests = delay(() => {
+  function flushSizeRequests() {
     if (_sizeRequestPromise) {
       return _sizeRequestPromise;
     }
@@ -207,7 +220,9 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
 
       _sizeRequests.reset();
     });
-  }, DELAY_DURATION);
+  }
+
+  const queueSendSizeRequests = delay(flushSizeRequests, DELAY_DURATION);
 
   function getClampedSize(elementId: number) {
     const callbackId = getId();

@@ -22,11 +22,6 @@ const config: InlineConfig = {
   build: {
     target: 'esnext',
   },
-  define: {
-    'process.env': JSON.stringify({
-      NODE_ENV: process.env.NODE_ENV,
-    }),
-  },
 };
 
 export default config;

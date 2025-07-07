@@ -4,7 +4,7 @@ import reactReanimatedLightningPlugin from '@plextv/vite-plugin-react-reanimated
 import legacy from '@vitejs/plugin-legacy';
 import { defineConfig } from 'vite';
 
-const config = defineConfig({
+const config = defineConfig((env) => ({
   base: './',
   plugins: [
     reactNativeLightningPlugin(),
@@ -30,11 +30,10 @@ const config = defineConfig({
     hmr: false,
   },
   define: {
-    'process.env': JSON.stringify({
-      NODE_ENV: process.env.NODE_ENV,
-    }),
-    __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'),
+    __DEV__: JSON.stringify(
+      (env.mode ?? process.env.NODE_ENV) !== 'production',
+    ),
   },
-});
+}));
 
 export default config;
