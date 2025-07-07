@@ -1,5 +1,11 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.3.3
+
+### Patch Changes
+
+- d26a135: Fix race condition in flexbox worker mode
+
 ## 0.3.2
 
 ### Patch Changes
