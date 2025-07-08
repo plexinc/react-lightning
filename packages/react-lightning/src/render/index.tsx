@@ -14,7 +14,7 @@ import {
   SdfTextRenderer,
   WebGlCoreRenderer,
 } from '@lightningjs/renderer/webgl';
-import type { ComponentClass, ComponentType, ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { createContext, createElement } from 'react';
 import createReconciler from 'react-reconciler';
 import type { LightningElement } from '../types';
@@ -75,12 +75,6 @@ const defaultOptions: Partial<RenderOptions> = {
   isPrimaryRenderer: true,
   debug: false,
 };
-
-function isReactClassComponent(
-  ReactComponent: ComponentType<unknown>,
-): ReactComponent is ComponentClass<unknown> {
-  return ReactComponent.prototype?.isReactComponent;
-}
 
 export async function createRoot(
   target: string | HTMLElement,

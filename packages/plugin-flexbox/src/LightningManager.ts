@@ -34,6 +34,7 @@ export class LightningManager {
         }
 
         this._elements.delete(element.id);
+        yoga.instance.applyStyle(element.id, null, true);
         yoga.instance.removeNode(element.id);
       }),
 
@@ -95,13 +96,17 @@ export class LightningManager {
   private _applyUpdates = (buffer: ArrayBuffer) => {
     const dataView = new SimpleDataView(buffer);
 
-    // See YogaManagerWorker.ts for the structure of the updates
-    while (dataView.hasSpace(1)) {
+    // See YogaManager.ts for the structure of the updates
+    while (dataView.hasSpace(12)) {
       const elementId = dataView.readUint32();
+      const x = dataView.readInt16();
+      const y = dataView.readInt16();
+      const width = dataView.readUint16();
+      const height = dataView.readUint16();
+
       const el = this._elements.get(elementId);
 
       if (!el) {
-        console.warn(`Element with ID ${elementId} not found.`);
         continue;
       }
 
@@ -121,22 +126,12 @@ export class LightningManager {
       }
 
       if (!skipX) {
-        dirty = el.setNodeProp('x', dataView.readInt16()) || dirty;
-      } else {
-        // If the x is skipped, we still need to read the value to maintain the
-        // correct offset in the data view.
-        dataView.moveBy(2);
+        dirty = el.setNodeProp('x', x) || dirty;
       }
 
       if (!skipY) {
-        dirty = el.setNodeProp('y', dataView.readInt16()) || dirty;
-      } else {
-        // Same as above
-        dataView.moveBy(2);
+        dirty = el.setNodeProp('y', y) || dirty;
       }
-
-      const width = dataView.readUint16();
-      const height = dataView.readUint16();
 
       // If width is 0, we should not set it on the node, as it will cause
       // layout issues.
