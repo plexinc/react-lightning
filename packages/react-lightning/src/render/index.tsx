@@ -15,7 +15,7 @@ import {
   WebGlCoreRenderer,
 } from '@lightningjs/renderer/webgl';
 import type { ComponentClass, ComponentType, ReactNode } from 'react';
-import { createContext } from 'react';
+import { createContext, createElement } from 'react';
 import createReconciler from 'react-reconciler';
 import type { LightningElement } from '../types';
 import { traceWrap } from '../utils/traceWrap';
@@ -205,9 +205,7 @@ export async function createRoot(
       let reactElement: ReactNode;
 
       if (componentOrElement instanceof Function) {
-        reactElement = isReactClassComponent(componentOrElement)
-          ? (new componentOrElement({}) as unknown as ReactNode)
-          : componentOrElement({});
+        reactElement = createElement(componentOrElement);
       } else {
         reactElement = componentOrElement;
       }
