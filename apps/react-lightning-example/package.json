@@ -1,7 +1,7 @@
 {
   "name": "@plextv/react-lightning-example",
   "description": "Sample implementation of @plextv/react-lightning in a React app",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {

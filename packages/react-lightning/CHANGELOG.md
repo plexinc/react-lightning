@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.3
+
+### Patch Changes
+
+- 2201571: Fixed react native entry rendering
+
 ## 0.3.2
 
 ### Patch Changes
