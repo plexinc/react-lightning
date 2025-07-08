@@ -1,5 +1,11 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.3.4
+
+### Patch Changes
+
+- 948b31b: Handle flexbox sometimes not parsing updates correctly when components were removed
+
 ## 0.3.3
 
 ### Patch Changes
