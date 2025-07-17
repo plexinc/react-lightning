@@ -1,5 +1,18 @@
 # @plextv/react-lightning-storybook
 
+## 0.3.7
+
+### Patch Changes
+
+- eb0c947: Added Focus Redirection support
+- Updated dependencies [eb0c947]
+  - @plextv/react-native-lightning@0.3.6
+  - @plextv/react-lightning@0.3.4
+  - @plextv/react-lightning-plugin-flexbox@0.3.5
+  - @plextv/react-lightning-plugin-flexbox-lite@0.3.1
+  - @plextv/react-lightning-components@0.3.1
+  - @plextv/react-native-lightning-components@0.3.2
+
 ## 0.3.6
 
 ### Patch Changes

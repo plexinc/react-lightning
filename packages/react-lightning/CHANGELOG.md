@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.4
+
+### Patch Changes
+
+- eb0c947: Added Focus Redirection support
+
 ## 0.3.3
 
 ### Patch Changes

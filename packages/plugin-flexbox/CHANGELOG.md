@@ -1,5 +1,13 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.3.5
+
+### Patch Changes
+
+- eb0c947: Added Focus Redirection support
+- Updated dependencies [eb0c947]
+  - @plextv/react-lightning@0.3.4
+
 ## 0.3.4
 
 ### Patch Changes
