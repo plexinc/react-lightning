@@ -15,11 +15,14 @@ import type {
 import { FocusGroupContext } from './FocusGroupContext';
 import { useFocus } from './useFocus';
 import { useFocusKeyManager } from './useFocusKeyManager';
+import { useFocusManager } from './useFocusManager';
 
 export interface FocusGroupProps
   extends Omit<LightningViewElementProps, 'style'> {
   autoFocus?: boolean;
   disable?: boolean;
+  focusRedirect?: boolean;
+  destinations?: (LightningElement | null)[];
   trapFocusUp?: boolean;
   trapFocusRight?: boolean;
   trapFocusDown?: boolean;
@@ -35,6 +38,8 @@ export const FocusGroup = forwardRef<LightningElement, FocusGroupProps>(
     {
       autoFocus = false,
       disable,
+      focusRedirect,
+      destinations,
       trapFocusUp,
       trapFocusRight,
       trapFocusDown,
@@ -46,20 +51,29 @@ export const FocusGroup = forwardRef<LightningElement, FocusGroupProps>(
     },
     ref,
   ) => {
+    const focusManager = useFocusManager();
     const focusKeyManager = useFocusKeyManager();
     const { ref: focusRef, focused } = useFocus({
       autoFocus,
       active: !disable,
-      trapFocusUp,
-      trapFocusRight,
-      trapFocusDown,
-      trapFocusLeft,
+      focusRedirect,
+      destinations,
     });
     const [viewElement, setViewElement] = useState<LightningElement | null>(
       null,
     );
     const viewRef = useRef<LightningElement>(null);
     const combinedRef = useCombinedRef(ref, focusRef, viewRef);
+
+    const traps = useMemo(
+      () => ({
+        up: trapFocusUp ?? false,
+        right: trapFocusRight ?? false,
+        down: trapFocusDown ?? false,
+        left: trapFocusLeft ?? false,
+      }),
+      [trapFocusUp, trapFocusRight, trapFocusDown, trapFocusLeft],
+    );
 
     const handleFocusKeyDown = useCallback(
       (event: KeyEvent) => {
@@ -81,6 +95,12 @@ export const FocusGroup = forwardRef<LightningElement, FocusGroupProps>(
       () => (typeof style === 'function' ? style(focused) : style),
       [style, focused],
     );
+
+    useEffect(() => {
+      if (viewElement) {
+        focusManager.setTraps(viewElement, traps);
+      }
+    }, [focusManager.setTraps, viewElement, traps]);
 
     useEffect(() => {
       if (viewRef.current) {

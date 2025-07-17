@@ -6,6 +6,7 @@ export { LightningTextElement } from './element/LightningTextElement';
 export { LightningViewElement } from './element/LightningViewElement';
 export { FocusGroup, type FocusGroupProps } from './focus/FocusGroup';
 export { FocusGroupContext } from './focus/FocusGroupContext';
+export { FocusManager } from './focus/FocusManager';
 export { focusable } from './focus/focusable';
 export { useFocus } from './focus/useFocus';
 export { useCombinedRef } from './hooks/useCombinedRef';

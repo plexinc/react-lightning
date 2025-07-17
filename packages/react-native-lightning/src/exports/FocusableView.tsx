@@ -4,20 +4,9 @@ import { View, type ViewProps } from './View';
 const FocusableView = focusable<ViewProps>(
   View,
   undefined,
-  ({
+  ({ active, autoFocus }) => ({
     active,
     autoFocus,
-    trapFocusDown,
-    trapFocusUp,
-    trapFocusLeft,
-    trapFocusRight,
-  }) => ({
-    active,
-    autoFocus,
-    trapFocusDown,
-    trapFocusUp,
-    trapFocusLeft,
-    trapFocusRight,
   }),
 );
 

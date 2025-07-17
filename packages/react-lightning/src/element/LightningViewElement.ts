@@ -248,9 +248,9 @@ export class LightningViewElement<
 
     if (import.meta.env.DEV) {
       this.node.__reactNode = this;
-      this.node.__reactFiber = fiber;
     }
 
+    this.node.__reactFiber = fiber;
     this.node.on('loaded', this._onTextureLoaded);
     this.node.on('failed', this._onTextureFailed);
 
@@ -294,7 +294,7 @@ export class LightningViewElement<
   public off = this._eventEmitter.off.bind(this._eventEmitter);
   public emit = this._eventEmitter.emit.bind(this._eventEmitter);
 
-  public setLightningNode(node: INode) {
+  public setLightningNode(node: RendererNode<LightningElement>) {
     const oldNode = this.node;
 
     oldNode.off('loaded', this._onTextureLoaded);

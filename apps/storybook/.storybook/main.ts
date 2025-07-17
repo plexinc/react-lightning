@@ -29,6 +29,8 @@ const config: StorybookConfig = {
           {
             src: 'public/fonts',
             dest: 'public/fonts',
+            charset:
+              ' !\\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{|}~’“”←↑→↓',
           },
         ],
       }),

@@ -1,85 +1,152 @@
-import type { LightningElement } from '@plextv/react-lightning';
+import { FocusGroup, type LightningElement } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
 import type { Meta } from '@storybook/react';
-import { FocusableImage } from '../../../components/FocusableImage';
+import {
+  FocusableImage,
+  type FocusableImageProps,
+} from '../../../components/FocusableImage';
 
 export default {
   title: '@plextv∕react-lightning/Examples/Focus/TrapFocus',
 } as Meta;
 
 const trapUpStyle: LightningElement['style'] = {
-  borderTop: { width: 5, color: 0xff0000ff },
+  borderColor: 0xff0000ff,
+  borderTop: 5,
 };
 const trapRightStyle: LightningElement['style'] = {
-  borderRight: { width: 5, color: 0xff0000ff },
+  borderColor: 0xff0000ff,
+  borderRight: 5,
 };
 const trapDownStyle: LightningElement['style'] = {
-  borderBottom: { width: 5, color: 0xff0000ff },
+  borderColor: 0xff0000ff,
+  borderBottom: 5,
 };
 const trapLeftStyle: LightningElement['style'] = {
-  borderLeft: { width: 5, color: 0xff0000ff },
+  borderColor: 0xff0000ff,
+  borderLeft: 5,
+};
+
+const TrappableImage = ({
+  trapFocusUp,
+  trapFocusRight,
+  trapFocusDown,
+  trapFocusLeft,
+  width,
+  height,
+  x,
+  y,
+  style,
+  ...props
+}: FocusableImageProps & {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  trapFocusUp?: boolean;
+  trapFocusRight?: boolean;
+  trapFocusDown?: boolean;
+  trapFocusLeft?: boolean;
+}) => {
+  return (
+    <FocusGroup
+      style={{
+        width: width,
+        height: height,
+        x: x,
+        y: y,
+      }}
+      trapFocusUp={trapFocusUp}
+      trapFocusRight={trapFocusRight}
+      trapFocusDown={trapFocusDown}
+      trapFocusLeft={trapFocusLeft}
+    >
+      <FocusableImage {...props} style={{ width, height, ...style }} />
+    </FocusGroup>
+  );
 };
 
 export const TrapFocus = () => {
   return (
     <>
-      <FocusableImage style={{ width: 75, height: 75, x: 10, y: 10 }} />
-      <FocusableImage style={{ width: 75, height: 75, x: 95, y: 10 }} />
-      <FocusableImage
+      <TrappableImage width={75} height={75} x={10} y={10} />
+      <TrappableImage width={75} height={75} x={95} y={10} />
+      <TrappableImage
+        width={75}
+        height={75}
+        x={180}
+        y={10}
+        trapFocusRight
+        trapFocusDown
         style={{
-          width: 75,
-          height: 75,
-          x: 180,
-          y: 10,
           ...trapRightStyle,
           ...trapDownStyle,
         }}
-        trapFocusRight
+      />
+      <TrappableImage
+        width={75}
+        height={75}
+        x={265}
+        y={10}
         trapFocusDown
+        style={trapDownStyle}
       />
-      <FocusableImage
-        style={{ width: 75, height: 75, x: 265, y: 10, ...trapDownStyle }}
-        trapFocusDown
-      />
-      <FocusableImage style={{ width: 75, height: 75, x: 350, y: 10 }} />
+      <TrappableImage width={75} height={75} x={350} y={10} />
 
-      <FocusableImage style={{ width: 75, height: 75, x: 10, y: 95 }} />
-      <FocusableImage style={{ width: 75, height: 75, x: 95, y: 95 }} />
-      <FocusableImage
-        style={{ width: 75, height: 75, x: 180, y: 95, ...trapLeftStyle }}
+      <TrappableImage width={75} height={75} x={10} y={95} />
+      <TrappableImage width={75} height={75} x={95} y={95} />
+      <TrappableImage
+        width={75}
+        height={75}
+        x={180}
+        y={95}
         trapFocusLeft
+        style={trapLeftStyle}
       />
-      <FocusableImage
-        style={{ width: 75, height: 75, x: 265, y: 95 }}
-        autoFocus
-      />
-      <FocusableImage
-        style={{ width: 75, height: 75, x: 350, y: 95, ...trapLeftStyle }}
+      <TrappableImage width={75} height={75} x={265} y={95} autoFocus />
+      <TrappableImage
+        width={75}
+        height={75}
+        x={350}
+        y={95}
         trapFocusLeft
+        style={trapLeftStyle}
       />
 
-      <FocusableImage
-        style={{ width: 75, height: 75, x: 10, y: 180, ...trapUpStyle }}
+      <TrappableImage
+        width={75}
+        height={75}
+        x={10}
+        y={180}
         trapFocusUp
+        style={trapUpStyle}
       />
-      <FocusableImage
-        style={{ width: 75, height: 75, x: 95, y: 180, ...trapRightStyle }}
+      <TrappableImage
+        width={75}
+        height={75}
+        x={95}
+        y={180}
         trapFocusRight
+        style={trapRightStyle}
       />
-      <FocusableImage style={{ width: 75, height: 75, x: 180, y: 180 }} />
-      <FocusableImage
-        style={{ width: 75, height: 75, x: 265, y: 180, ...trapUpStyle }}
+      <TrappableImage width={75} height={75} x={180} y={180} />
+      <TrappableImage
+        width={75}
+        height={75}
+        x={265}
+        y={180}
         trapFocusUp
+        style={trapUpStyle}
       />
-      <FocusableImage style={{ width: 75, height: 75, x: 350, y: 180 }} />
+      <TrappableImage width={75} height={75} x={350} y={180} />
 
-      <FocusableImage style={{ width: 75, height: 75, x: 10, y: 265 }} />
-      <FocusableImage
+      <TrappableImage width={75} height={75} x={10} y={265} />
+      <TrappableImage
+        width={75}
+        height={75}
+        x={95}
+        y={265}
         style={{
-          width: 75,
-          height: 75,
-          x: 95,
-          y: 265,
           ...trapUpStyle,
           ...trapRightStyle,
           ...trapDownStyle,
@@ -88,23 +155,35 @@ export const TrapFocus = () => {
         trapFocusRight
         trapFocusDown
       />
-      <FocusableImage style={{ width: 75, height: 75, x: 180, y: 265 }} />
-      <FocusableImage
-        style={{ width: 75, height: 75, x: 265, y: 265, ...trapRightStyle }}
+      <TrappableImage width={75} height={75} x={180} y={265} />
+      <TrappableImage
+        width={75}
+        height={75}
+        x={265}
+        y={265}
         trapFocusRight
+        style={trapRightStyle}
       />
-      <FocusableImage style={{ width: 75, height: 75, x: 350, y: 265 }} />
+      <TrappableImage width={75} height={75} x={350} y={265} />
 
-      <FocusableImage style={{ width: 75, height: 75, x: 10, y: 350 }} />
-      <FocusableImage style={{ width: 75, height: 75, x: 95, y: 350 }} />
-      <FocusableImage
-        style={{ width: 75, height: 75, x: 180, y: 350, ...trapRightStyle }}
+      <TrappableImage width={75} height={75} x={10} y={350} />
+      <TrappableImage width={75} height={75} x={95} y={350} />
+      <TrappableImage
+        width={75}
+        height={75}
+        x={180}
+        y={350}
         trapFocusRight
+        style={trapRightStyle}
       />
-      <FocusableImage style={{ width: 75, height: 75, x: 265, y: 350 }} />
-      <FocusableImage
-        style={{ width: 75, height: 75, x: 350, y: 350, ...trapUpStyle }}
+      <TrappableImage width={75} height={75} x={265} y={350} />
+      <TrappableImage
+        width={75}
+        height={75}
+        x={350}
+        y={350}
         trapFocusUp
+        style={trapUpStyle}
       />
     </>
   );

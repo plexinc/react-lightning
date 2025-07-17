@@ -1,10 +1,4 @@
-import {
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useSyncExternalStore,
-} from 'react';
+import { useContext, useEffect, useRef, useSyncExternalStore } from 'react';
 import type { LightningElement } from '../types';
 import { FocusGroupContext } from './FocusGroupContext';
 import { useFocusManager } from './useFocusManager';
@@ -12,27 +6,15 @@ import { useFocusManager } from './useFocusManager';
 export type FocusOptions = {
   active?: boolean;
   autoFocus?: boolean;
-  trapFocusUp?: boolean;
-  trapFocusRight?: boolean;
-  trapFocusDown?: boolean;
-  trapFocusLeft?: boolean;
+  focusRedirect?: boolean;
+  destinations?: (LightningElement | null)[];
 };
 
 export function useFocus<T extends LightningElement>(
-  {
-    active,
-    autoFocus,
-    trapFocusUp,
-    trapFocusRight,
-    trapFocusDown,
-    trapFocusLeft,
-  }: FocusOptions = {
+  { active, autoFocus, focusRedirect, destinations }: FocusOptions = {
     active: true,
     autoFocus: false,
-    trapFocusUp: false,
-    trapFocusRight: false,
-    trapFocusDown: false,
-    trapFocusLeft: false,
+    focusRedirect: false,
   },
 ) {
   const ref = useRef<T>(null);
@@ -53,22 +35,14 @@ export function useFocus<T extends LightningElement>(
   // We need to keep a copy of the ref around for when this hook is unmounted,
   // so we can properly remove the child element.
   const elementRef = useRef<T>();
-  const traps = useMemo(
-    () => ({
-      up: trapFocusUp ?? false,
-      right: trapFocusRight ?? false,
-      down: trapFocusDown ?? false,
-      left: trapFocusLeft ?? false,
-    }),
-    [trapFocusUp, trapFocusRight, trapFocusDown, trapFocusLeft],
-  );
 
   useEffect(() => {
     if (ref.current && parentFocusable) {
       elementRef.current = ref.current;
       focusManager.addElement(elementRef.current, parentFocusable, {
         autoFocus,
-        traps,
+        focusRedirect,
+        destinations,
       });
     }
 
@@ -77,13 +51,19 @@ export function useFocus<T extends LightningElement>(
         focusManager.removeElement(elementRef.current);
       }
     };
-  }, [focusManager, parentFocusable, autoFocus, traps]);
+  }, [focusManager, parentFocusable, autoFocus, focusRedirect, destinations]);
 
   useEffect(() => {
-    if (elementRef.current) {
-      focusManager.setTraps(elementRef.current, traps);
+    if (ref.current) {
+      focusManager.setFocusRedirect(ref.current, focusRedirect);
     }
-  }, [focusManager.setTraps, traps]);
+  }, [focusManager.setFocusRedirect, focusRedirect]);
+
+  useEffect(() => {
+    if (ref.current) {
+      focusManager.setDestinations(ref.current, destinations);
+    }
+  }, [focusManager.setDestinations, destinations]);
 
   useEffect(() => {
     if (ref.current) {

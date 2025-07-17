@@ -9,6 +9,8 @@ export type FocusNode<T> = {
   parent: FocusNode<T> | RootNode<T>;
   focusedElement: FocusNode<T> | null;
   autoFocus: boolean;
+  focusRedirect: boolean;
+  destinations: (T | null)[] | null;
   traps: Traps;
   hasFocusableChildren: boolean;
 };
@@ -23,8 +25,13 @@ type FocusEvents<T> = {
   focusPathChanged: (focusPath: T[]) => void;
 };
 
-export class FocusManager<T extends Focusable>
-  implements EventNotifier<FocusEvents<T>>
+function isRootNode<T>(node: FocusNode<T> | RootNode<T>): node is RootNode<T> {
+  return !('parent' in node) && node.element === null;
+}
+
+export class FocusManager<
+  T extends Focusable & { id: number; parent?: T | null },
+> implements EventNotifier<FocusEvents<T>>
 {
   private _allFocusableElements: Map<T, FocusNode<T>> = new Map();
   private _focusPath: T[] = [];
@@ -43,6 +50,8 @@ export class FocusManager<T extends Focusable>
       children: [],
       focusedElement: null,
       autoFocus: true,
+      focusRedirect: false,
+      destinations: null,
       hasFocusableChildren: false,
     };
   }
@@ -67,13 +76,20 @@ export class FocusManager<T extends Focusable>
     return null;
   }
 
-  addElement(
+  public addElement(
     child: T,
     parent?: T | null,
-    options?: { autoFocus?: boolean; traps?: Traps },
+    options?: {
+      autoFocus?: boolean;
+      focusRedirect?: boolean;
+      destinations?: (T | null)[];
+      traps?: Traps;
+    },
   ) {
     let parentNode: FocusNode<T> | RootNode<T>;
     const autoFocus = options?.autoFocus ?? false;
+    const focusRedirect = options?.focusRedirect ?? false;
+    const destinations = options?.destinations ?? null;
     const traps = options?.traps ?? {
       up: false,
       right: false,
@@ -89,6 +105,8 @@ export class FocusManager<T extends Focusable>
           parent,
           this._root,
           autoFocus,
+          focusRedirect,
+          destinations,
           traps,
         );
 
@@ -107,6 +125,8 @@ export class FocusManager<T extends Focusable>
 
     if (childNode) {
       childNode.autoFocus = autoFocus;
+      childNode.focusRedirect = focusRedirect;
+      childNode.destinations = destinations;
       childNode.traps = traps;
 
       // If the child node already exists, we need to remove it from its current parent
@@ -127,7 +147,14 @@ export class FocusManager<T extends Focusable>
       }
     } else {
       // If the child node doesn't exist, we need to create it
-      childNode = this._createFocusNode(child, parentNode, autoFocus, traps);
+      childNode = this._createFocusNode(
+        child,
+        parentNode,
+        autoFocus,
+        focusRedirect,
+        destinations,
+        traps,
+      );
     }
 
     if (parentNode.children.indexOf(childNode) === -1) {
@@ -165,6 +192,22 @@ export class FocusManager<T extends Focusable>
     }
   }
 
+  public setFocusRedirect(element: T, focusRedirect?: boolean) {
+    const node = this._allFocusableElements.get(element);
+
+    if (node) {
+      node.focusRedirect = !!focusRedirect;
+    }
+  }
+
+  public setDestinations(element: T, destinations?: (T | null)[]): void {
+    const node = this._allFocusableElements.get(element);
+
+    if (node) {
+      node.destinations = destinations ?? null;
+    }
+  }
+
   public focus(element: T) {
     const node = this._allFocusableElements.get(element);
 
@@ -173,10 +216,52 @@ export class FocusManager<T extends Focusable>
     }
   }
 
+  // Print out the whole focus tree
+  public toString(): string {
+    const printNode = (node: FocusNode<T> | RootNode<T>, depth = 0): string => {
+      const indent = ' '.repeat(depth * 2);
+      let result = `${indent}${node.element ? node.element.toString() : 'Root'}\n`;
+
+      for (const child of node.children) {
+        result += printNode(child, depth + 1);
+      }
+
+      return result;
+    };
+
+    return printNode(this._root);
+  }
+
+  // Prints the focus path to this element. If fullPath is true, it will include the focused child nodes.
+  public printPath(node: FocusNode<T>, fullPath = true): string {
+    const path: string[] = [];
+    let curr: FocusNode<T> | null = node;
+
+    while (curr) {
+      path.unshift(curr.element.id.toString());
+      curr = !isRootNode(curr.parent) ? curr.parent : null;
+    }
+
+    if (fullPath) {
+      curr = node.focusedElement;
+
+      while (curr) {
+        path.push(curr.element.id.toString());
+        curr = curr.focusedElement;
+      }
+    }
+
+    return path
+      .map((id) => (id === node.element.id.toString() ? `[${id}]` : id))
+      .join(' > ');
+  }
+
   private _createFocusNode(
     element: T,
     parent: FocusNode<T> | RootNode<T>,
     autoFocus: boolean,
+    focusRedirect: boolean,
+    destinations: (T | null)[] | null,
     traps: Traps,
   ) {
     const node: FocusNode<T> = {
@@ -185,6 +270,8 @@ export class FocusManager<T extends Focusable>
       parent,
       focusedElement: null,
       autoFocus,
+      focusRedirect,
+      destinations,
       traps,
       hasFocusableChildren: false,
     };
@@ -240,10 +327,29 @@ export class FocusManager<T extends Focusable>
     let currChild: RootNode<T> | FocusNode<T> = childNode;
 
     while (currChild && currChild !== this._root && currParent) {
-      if (currParent.focusedElement) {
-        currParent.focusedElement = currChild as FocusNode<T>;
+      if (currChild.focusRedirect && currChild.destinations) {
+        // TODO: Probably something smarter here to decide which destination to focus
+        const destination = currChild.destinations?.find(
+          (child) => child?.focusable,
+        );
+
+        if (destination) {
+          const focusNode = this._allFocusableElements.get(destination);
+
+          if (!focusNode) {
+            console.warn(
+              'FocusManager: No focus node found for destination',
+              destination,
+            );
+            return;
+          }
+
+          this._focusNode(focusNode);
+          return;
+        }
       }
 
+      currParent.focusedElement = currChild as FocusNode<T>;
       currChild = currParent;
       currParent = 'parent' in currChild ? currChild.parent : this._root;
     }
@@ -277,9 +383,64 @@ export class FocusManager<T extends Focusable>
   }
 
   private _checkFocusableChildren(parentNode: FocusNode<T> | RootNode<T>) {
-    parentNode.hasFocusableChildren = parentNode.children.some(
-      (child) => child.element.focusable,
-    );
+    const children = parentNode.children;
+    const childrenLength = children.length;
+
+    if (childrenLength === 0) {
+      parentNode.hasFocusableChildren = false;
+      return;
+    }
+
+    const leafNodes = new Set<number>();
+    let hasFocusableChildren = false;
+
+    for (let i = 0; i < childrenLength; i++) {
+      // biome-ignore lint/style/noNonNullAssertion: Already asserted that child exists
+      const child = children[i]!;
+
+      if (child.element.focusable) {
+        hasFocusableChildren = true;
+      }
+
+      if (child.children.length === 0) {
+        leafNodes.add(child.element.id);
+      }
+    }
+
+    parentNode.hasFocusableChildren = hasFocusableChildren;
+
+    // Early return if no leaf nodes to check
+    if (leafNodes.size === 0) {
+      return;
+    }
+
+    // Check each child for leaf node ancestry and update focusability
+    for (let i = 0; i < childrenLength; i++) {
+      // biome-ignore lint/style/noNonNullAssertion: Already asserted that child exists
+      const child = children[i]!;
+
+      if (this._hasLeafParent(child.element, leafNodes, parentNode.element)) {
+        child.element.focusable = false;
+      }
+    }
+  }
+
+  private _hasLeafParent(
+    element: T,
+    leafNodes: Set<number>,
+    parentNode: T | null,
+  ): boolean {
+    let curr: T | null = element.parent as T | null;
+
+    while (curr && curr !== parentNode) {
+      if (leafNodes.has(curr.id)) {
+        return true;
+      }
+
+      curr = curr.parent as T | null;
+    }
+
+    return false;
   }
 
   private _findNextBestFocus(

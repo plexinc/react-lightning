@@ -1,14 +1,50 @@
-import { LightningViewElement, type Plugin } from '@plextv/react-lightning';
+import {
+  type FocusManager,
+  LightningViewElement,
+  type Plugin,
+} from '@plextv/react-lightning';
 import { flattenStyles } from '@plextv/react-lightning-plugin-css-transform';
+import { type Fiber, traverseFiber } from 'its-fine';
 import type { NativeMethods } from 'react-native';
 
 type LightningNativeViewElement = NativeMethods &
   LightningViewElement & {
     __loaded?: boolean;
     __loadPromise: Promise<void>;
+    setDestinations(destinations?: LightningViewElement[]): void;
+    requestTVFocus(): void;
   };
 
+// Kind of hacky, but we can't use hooks here. We need to somehow traverse the
+// fiber tree to find the focus manager though, so we can set destinations for
+// focusable elements.
+function tryFindFocusManager(
+  fiber: Fiber<LightningNativeViewElement>,
+): FocusManager<LightningViewElement> | null {
+  try {
+    const context = traverseFiber(
+      fiber,
+      true,
+      (f) =>
+        f.type?.$$typeof?.toString() === 'Symbol(react.provider)' &&
+        !!f.memoizedProps.value?.focusManager,
+    );
+
+    if (context) {
+      return context.memoizedProps.value
+        .focusManager as FocusManager<LightningViewElement>;
+    }
+  } catch (error) {
+    console.warn('>> React fiber access failed:', error);
+  }
+
+  return null;
+}
+
 export const reactNativePolyfillsPlugin = (): Plugin => {
+  // Track the single FocusManager instance
+  let focusManager: FocusManager<LightningViewElement> | null = null;
+
   return {
     async init() {
       const originalSetProps = LightningViewElement.prototype.setProps;
@@ -71,6 +107,24 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
         },
         setNativeProps(this: LightningNativeViewElement, props) {
           Object.assign(this.node, props);
+        },
+        setDestinations(this: LightningNativeViewElement, destinations) {
+          // Access React fiber to call hooks directly
+          if (!focusManager) {
+            focusManager = tryFindFocusManager(this.node.__reactFiber);
+
+            if (!focusManager) {
+              console.warn(
+                '>> FocusManager not found, cannot set destinations',
+              );
+              return;
+            }
+          }
+
+          focusManager.setDestinations(this, destinations);
+        },
+        requestTVFocus(): void {
+          // No-op
         },
       } satisfies Partial<LightningNativeViewElement>;
 

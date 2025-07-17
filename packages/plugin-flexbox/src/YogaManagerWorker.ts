@@ -49,6 +49,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
   const _callees: Record<string, [AnyFunc, AnyFunc]> = {};
   const _eventEmitter = new EventEmitter<YogaManagerEvents>();
   let _stylesToSend: Record<number, Partial<LightningElementStyle>> = {};
+  let _numStylesToSend = 0;
   let _needsRender = false;
   const _childOperations = new SimpleDataView(
     undefined,
@@ -62,7 +63,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
   );
   let _sizeRequestPromise: Promise<void> | null = null;
 
-  const queueSendStyles = delay(() => {
+  function flushSendStyles() {
     const needsRender = _needsRender;
 
     if (Object.keys(_stylesToSend).length === 0) {
@@ -80,7 +81,10 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
 
     _needsRender = false;
     _stylesToSend = {};
-  }, DELAY_DURATION);
+    _numStylesToSend = 0;
+  }
+
+  const queueSendStyles = delay(flushSendStyles, DELAY_DURATION);
 
   function applyStyle(
     elementId: number,
@@ -88,17 +92,27 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     skipRender = false,
   ) {
     if (style) {
+      if (!_stylesToSend[elementId]) {
+        _numStylesToSend++;
+      }
+
       _stylesToSend[elementId] = {
         ..._stylesToSend[elementId],
         ...style,
       };
     } else {
       delete _stylesToSend[elementId];
+      _numStylesToSend--;
     }
 
     _needsRender ||= !skipRender;
 
-    queueSendStyles();
+    if (_numStylesToSend > 50) {
+      // Flush early if the object gets too large
+      flushSendStyles();
+    } else {
+      queueSendStyles();
+    }
   }
 
   function flushChildOperations() {

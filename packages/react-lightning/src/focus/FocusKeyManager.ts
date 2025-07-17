@@ -5,9 +5,9 @@ import { Direction } from './Direction';
 import type { FocusManager } from './FocusManager';
 
 export class FocusKeyManager<T extends LightningElement> {
-  private _focusManager: FocusManager<T>;
+  private _focusManager: FocusManager<LightningElement>;
 
-  public constructor(focusManager: FocusManager<T>) {
+  public constructor(focusManager: FocusManager<LightningElement>) {
     this._focusManager = focusManager;
   }
 
@@ -58,10 +58,6 @@ export class FocusKeyManager<T extends LightningElement> {
       return true;
     }
 
-    if (!element.focusable || !focusNode.focusedElement) {
-      return true;
-    }
-
     const { traps } = focusNode;
 
     if (
@@ -72,6 +68,10 @@ export class FocusKeyManager<T extends LightningElement> {
     ) {
       // Don't bubble up
       return false;
+    }
+
+    if (!element.focusable || !focusNode.focusedElement) {
+      return true;
     }
 
     const closestElement = findClosestElement(
