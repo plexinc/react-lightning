@@ -1,5 +1,11 @@
 # @plextv/react-native-lightning
 
+## 0.3.8
+
+### Patch Changes
+
+- aed6819: Fix react-native polyfill to prevent multiple polyfills
+
 ## 0.3.7
 
 ### Patch Changes
