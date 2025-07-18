@@ -1,5 +1,11 @@
 # @plextv/react-native-lightning
 
+## 0.3.7
+
+### Patch Changes
+
+- 712abe5: Prevent running react native polyfill multiple times
+
 ## 0.3.6
 
 ### Patch Changes
