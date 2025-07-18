@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.5
+
+### Patch Changes
+
+- d7d750f: Fix initial focus on elements with focus redirection
+
 ## 0.3.4
 
 ### Patch Changes
