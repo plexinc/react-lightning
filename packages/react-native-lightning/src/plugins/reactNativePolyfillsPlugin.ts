@@ -44,9 +44,14 @@ function tryFindFocusManager(
 export const reactNativePolyfillsPlugin = (): Plugin => {
   // Track the single FocusManager instance
   let focusManager: FocusManager<LightningViewElement> | null = null;
+  let polyfilled = false;
 
   return {
     async init() {
+      if (polyfilled) {
+        return;
+      }
+
       const originalSetProps = LightningViewElement.prototype.setProps;
 
       const nativeMethods = {
@@ -147,6 +152,8 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
           return acc;
         }, {} as PropertyDescriptorMap),
       );
+
+      polyfilled = true;
     },
 
     onCreateInstance(instance) {
