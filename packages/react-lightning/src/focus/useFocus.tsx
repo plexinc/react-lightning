@@ -36,6 +36,10 @@ export function useFocus<T extends LightningElement>(
   // so we can properly remove the child element.
   const elementRef = useRef<T>();
 
+  /* biome-ignore lint/correctness/useExhaustiveDependencies: We purposely leave
+    out the autoFocus/focusRedirect/destinations dependencies here. This will
+    prevent unnecessary removal and re-addition of the elements to the focus
+    manager. Those dependencies get updated below in other effects. */
   useEffect(() => {
     if (ref.current && parentFocusable) {
       elementRef.current = ref.current;
@@ -51,7 +55,13 @@ export function useFocus<T extends LightningElement>(
         focusManager.removeElement(elementRef.current);
       }
     };
-  }, [focusManager, parentFocusable, autoFocus, focusRedirect, destinations]);
+  }, [focusManager, parentFocusable]);
+
+  useEffect(() => {
+    if (ref.current) {
+      focusManager.setAutoFocus(ref.current, autoFocus);
+    }
+  }, [focusManager.setAutoFocus, autoFocus]);
 
   useEffect(() => {
     if (ref.current) {

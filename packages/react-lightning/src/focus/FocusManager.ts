@@ -29,6 +29,27 @@ function isRootNode<T>(node: FocusNode<T> | RootNode<T>): node is RootNode<T> {
   return !('parent' in node) && node.element === null;
 }
 
+function hasExternalRedirect<T extends { parent?: T | null }>(
+  node: FocusNode<T> | RootNode<T>,
+): boolean {
+  if (!node.focusRedirect || !node.destinations) {
+    return false;
+  }
+
+  return node.destinations.some((destination) => {
+    let curr = destination;
+
+    while (curr) {
+      if (curr === node.element) {
+        return false;
+      }
+      curr = curr.parent as T | null;
+    }
+
+    return true;
+  });
+}
+
 export class FocusManager<
   T extends Focusable & { id: number; parent?: T | null },
 > implements EventNotifier<FocusEvents<T>>
@@ -101,14 +122,7 @@ export class FocusManager<
       const storedNode = this._allFocusableElements.get(parent);
 
       if (!storedNode) {
-        parentNode = this._createFocusNode(
-          parent,
-          this._root,
-          autoFocus,
-          focusRedirect,
-          destinations,
-          traps,
-        );
+        parentNode = this._createFocusNode(parent, this._root);
 
         if (!this._root.focusedElement) {
           this._root.focusedElement = parentNode;
@@ -165,6 +179,7 @@ export class FocusManager<
 
     if (
       child.focusable &&
+      !hasExternalRedirect(childNode) &&
       (!parentNode.focusedElement ||
         (!parentNode.focusedElement.autoFocus && autoFocus))
     ) {
@@ -189,6 +204,14 @@ export class FocusManager<
 
     if (node) {
       node.traps = traps;
+    }
+  }
+
+  public setAutoFocus(element: T, autoFocus?: boolean) {
+    const node = this._allFocusableElements.get(element);
+
+    if (node) {
+      node.autoFocus = !!autoFocus;
     }
   }
 
@@ -259,10 +282,10 @@ export class FocusManager<
   private _createFocusNode(
     element: T,
     parent: FocusNode<T> | RootNode<T>,
-    autoFocus: boolean,
-    focusRedirect: boolean,
-    destinations: (T | null)[] | null,
-    traps: Traps,
+    autoFocus = false,
+    focusRedirect = false,
+    destinations: (T | null)[] | null = null,
+    traps: Traps = { up: false, right: false, down: false, left: false },
   ) {
     const node: FocusNode<T> = {
       element,
@@ -464,7 +487,11 @@ export class FocusManager<
     for (let i = 0; i < parent.children.length; i++) {
       const newChild = Array.from(parent.children)[i];
 
-      if (newChild?.element.focusable && newChild !== relativeNode) {
+      if (
+        newChild?.element.focusable &&
+        !hasExternalRedirect(newChild) &&
+        newChild !== relativeNode
+      ) {
         if (i >= relativeIndex) {
           return newChild;
         }
