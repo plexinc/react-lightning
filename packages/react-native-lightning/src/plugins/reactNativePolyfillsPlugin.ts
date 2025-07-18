@@ -41,10 +41,11 @@ function tryFindFocusManager(
   return null;
 }
 
+let polyfilled = false;
+
 export const reactNativePolyfillsPlugin = (): Plugin => {
   // Track the single FocusManager instance
   let focusManager: FocusManager<LightningViewElement> | null = null;
-  let polyfilled = false;
 
   return {
     async init() {
