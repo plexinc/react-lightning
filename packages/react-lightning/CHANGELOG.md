@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.6
+
+### Patch Changes
+
+- 54622f2: Add support for focus layers, for example for Modals
+
 ## 0.3.5
 
 ### Patch Changes
