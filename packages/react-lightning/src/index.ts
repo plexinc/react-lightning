@@ -9,6 +9,7 @@ export { FocusGroupContext } from './focus/FocusGroupContext';
 export { FocusManager } from './focus/FocusManager';
 export { focusable } from './focus/focusable';
 export { useFocus } from './focus/useFocus';
+export { useFocusManager } from './focus/useFocusManager';
 export { useCombinedRef } from './hooks/useCombinedRef';
 export { Keys } from './input/Keys';
 export {

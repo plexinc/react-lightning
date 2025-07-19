@@ -250,4 +250,234 @@ describe('FocusManager', () => {
 
     expect(focusManager.focusPath).toEqual([parent]);
   });
+
+  describe('Layer Management (Modal Support)', () => {
+    it('should create a new layer when pushLayer is called', () => {
+      const mainElement = createMockElement(1, 'main');
+      const modalElement = createMockElement(2, 'modal');
+
+      // Add element to main layer
+      focusManager.addElement(mainElement, null, { autoFocus: true });
+      expect(focusManager.focusPath).toEqual([mainElement]);
+
+      // Push new layer with modal
+      focusManager.pushLayer(modalElement);
+      expect(focusManager.focusPath).toEqual([modalElement]);
+
+      // Main element should still be focused on its layer, but modal takes precedence
+      expect(mainElement.focused).toBe(false);
+      expect(modalElement.focused).toBe(true);
+    });
+
+    it('should maintain separate focus paths for different layers', () => {
+      const mainElement = createMockElement(1, 'main');
+      const modalElement = createMockElement(2, 'modal');
+      const modalChild = createMockElement(3, 'modalChild');
+
+      // Setup main layer
+      focusManager.addElement(mainElement, null, { autoFocus: true });
+      expect(focusManager.focusPath).toEqual([mainElement]);
+
+      // Push modal layer
+      focusManager.pushLayer(modalElement);
+      expect(focusManager.focusPath).toEqual([modalElement]);
+
+      // Add child to modal
+      focusManager.addElement(modalChild, modalElement, { autoFocus: true });
+      expect(focusManager.focusPath).toEqual([modalElement, modalChild]);
+    });
+
+    it('should not allow focusing elements outside the active layer', () => {
+      const mainElement = createMockElement(1, 'main');
+      const modalElement = createMockElement(2, 'modal');
+
+      // Setup main layer
+      focusManager.addElement(mainElement, null, { autoFocus: true });
+      expect(focusManager.focusPath).toEqual([mainElement]);
+
+      // Push modal layer
+      focusManager.pushLayer(modalElement);
+      expect(focusManager.focusPath).toEqual([modalElement]);
+
+      // Try to focus element from main layer - should be blocked
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      focusManager.focus(mainElement);
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'FocusManager: Cannot focus element outside of active focus layer',
+      );
+      expect(focusManager.focusPath).toEqual([modalElement]);
+      expect(mainElement.focused).toBe(false);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should restore previous layer focus when popLayer is called', () => {
+      const mainElement = createMockElement(1, 'main');
+      const modalElement = createMockElement(2, 'modal');
+
+      // Setup main layer
+      focusManager.addElement(mainElement, null, { autoFocus: true });
+      expect(focusManager.focusPath).toEqual([mainElement]);
+      expect(mainElement.focused).toBe(true);
+
+      // Push modal layer
+      focusManager.pushLayer(modalElement);
+      expect(focusManager.focusPath).toEqual([modalElement]);
+      expect(mainElement.focused).toBe(false);
+      expect(modalElement.focused).toBe(true);
+
+      // Pop modal layer
+      focusManager.popLayer();
+      expect(focusManager.focusPath).toEqual([mainElement]);
+      expect(modalElement.focused).toBe(false);
+      expect(mainElement.focused).toBe(true);
+    });
+
+    it('should handle multiple nested layers', () => {
+      const mainElement = createMockElement(1, 'main');
+      const modal1Element = createMockElement(2, 'modal1');
+      const modal2Element = createMockElement(3, 'modal2');
+
+      // Setup main layer
+      focusManager.addElement(mainElement, null, { autoFocus: true });
+
+      // Push first modal
+      focusManager.pushLayer(modal1Element);
+      expect(focusManager.focusPath).toEqual([modal1Element]);
+
+      // Push second modal
+      focusManager.pushLayer(modal2Element);
+      expect(focusManager.focusPath).toEqual([modal2Element]);
+
+      // Pop second modal
+      focusManager.popLayer();
+      expect(focusManager.focusPath).toEqual([modal1Element]);
+
+      // Pop first modal
+      focusManager.popLayer();
+      expect(focusManager.focusPath).toEqual([mainElement]);
+    });
+
+    it('should not close the main layer when popLayer is called', () => {
+      const mainElement = createMockElement(1, 'main');
+
+      // Setup main layer
+      focusManager.addElement(mainElement, null, { autoFocus: true });
+      expect(focusManager.focusPath).toEqual([mainElement]);
+
+      // Try to pop the main layer - should not do anything
+      focusManager.popLayer();
+      expect(focusManager.focusPath).toEqual([mainElement]);
+      expect(mainElement.focused).toBe(true);
+    });
+
+    it('should close all layers except main when popAllLayers is called', () => {
+      const mainElement = createMockElement(1, 'main');
+      const modal1Element = createMockElement(2, 'modal1');
+      const modal2Element = createMockElement(3, 'modal2');
+      const modal3Element = createMockElement(4, 'modal3');
+
+      // Setup main layer
+      focusManager.addElement(mainElement, null, { autoFocus: true });
+
+      // Push multiple modals
+      focusManager.pushLayer(modal1Element);
+      focusManager.pushLayer(modal2Element);
+      focusManager.pushLayer(modal3Element);
+      expect(focusManager.focusPath).toEqual([modal3Element]);
+
+      // Pop all layers
+      focusManager.popAllLayers();
+      expect(focusManager.focusPath).toEqual([mainElement]);
+      expect(modal1Element.focused).toBe(false);
+      expect(modal2Element.focused).toBe(false);
+      expect(modal3Element.focused).toBe(false);
+      expect(mainElement.focused).toBe(true);
+    });
+
+    it('should emit modalOpened and modalClosed events', () => {
+      const mainElement = createMockElement(1, 'main');
+      const modalElement = createMockElement(2, 'modal');
+      const modalOpenedSpy = vi.fn();
+      const modalClosedSpy = vi.fn();
+
+      focusManager.on('modalOpened', modalOpenedSpy);
+      focusManager.on('modalClosed', modalClosedSpy);
+
+      // Setup main layer
+      focusManager.addElement(mainElement, null, { autoFocus: true });
+
+      // Push modal layer
+      focusManager.pushLayer(modalElement);
+      expect(modalOpenedSpy).toHaveBeenCalledWith(
+        modalElement,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
+
+      // Pop modal layer
+      focusManager.popLayer();
+      expect(modalClosedSpy).toHaveBeenCalledWith(
+        modalElement,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
+    });
+
+    it('should handle complex hierarchies within layers', () => {
+      const mainParent = createMockElement(1, 'mainParent');
+      const mainChild = createMockElement(2, 'mainChild');
+      const modalParent = createMockElement(3, 'modalParent');
+      const modalChild1 = createMockElement(4, 'modalChild1');
+      const modalChild2 = createMockElement(5, 'modalChild2');
+
+      // Setup main layer hierarchy
+      focusManager.addElement(mainParent, null, { autoFocus: true });
+      focusManager.addElement(mainChild, mainParent, { autoFocus: true });
+      expect(focusManager.focusPath).toEqual([mainParent, mainChild]);
+
+      // Push modal with hierarchy
+      focusManager.pushLayer(modalParent);
+      focusManager.addElement(modalChild1, modalParent, { autoFocus: true });
+      focusManager.addElement(modalChild2, modalParent, { autoFocus: false });
+      expect(focusManager.focusPath).toEqual([modalParent, modalChild1]);
+
+      // Focus different child in modal
+      focusManager.focus(modalChild2);
+      expect(focusManager.focusPath).toEqual([modalParent, modalChild2]);
+
+      // Pop modal and verify main layer is restored
+      focusManager.popLayer();
+      expect(focusManager.focusPath).toEqual([mainParent, mainChild]);
+    });
+
+    it('should properly handle element removal within layers', () => {
+      const mainElement = createMockElement(1, 'main');
+      const modalParent = createMockElement(2, 'modalParent');
+      const modalChild1 = createMockElement(3, 'modalChild1');
+      const modalChild2 = createMockElement(4, 'modalChild2');
+
+      // Setup main layer
+      focusManager.addElement(mainElement, null, { autoFocus: true });
+
+      // Push modal with children
+      focusManager.pushLayer(modalParent);
+      focusManager.addElement(modalChild1, modalParent, { autoFocus: true });
+      focusManager.addElement(modalChild2, modalParent, { autoFocus: false });
+      expect(focusManager.focusPath).toEqual([modalParent, modalChild1]);
+
+      // Remove focused child, should focus next available
+      focusManager.removeElement(modalChild1);
+      expect(focusManager.focusPath).toEqual([modalParent, modalChild2]);
+
+      // Remove last child, should focus parent
+      focusManager.removeElement(modalChild2);
+      expect(focusManager.focusPath).toEqual([modalParent]);
+    });
+  });
 });
