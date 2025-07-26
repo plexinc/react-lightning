@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.7
+
+### Patch Changes
+
+- bcc5e8c: Fix some issues with focus and layers
+
 ## 0.3.6
 
 ### Patch Changes
