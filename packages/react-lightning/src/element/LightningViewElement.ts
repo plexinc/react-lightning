@@ -522,6 +522,10 @@ export class LightningViewElement<
     ).start();
   }
 
+  public toString(expanded?: boolean) {
+    return `${this.constructor.name} id=${this.id}${this.focusable ? ' focusable' : ''}${this.visible ? ' visible' : ''}${expanded ? ` props=${JSON.stringify(this.props)}` : ''}`;
+  }
+
   // Don't pass down the `data` prop to the lightning node.
   private _createNode({
     data: _data,

@@ -24,6 +24,14 @@ const mockConfig = {
   setErrata: vi.fn(),
 };
 
+const mockYogaOptions = {
+  errata: 'none',
+  expandToAutoFlexBasis: false,
+  processHiddenNodes: false,
+  useWebDefaults: false,
+  useWebWorker: false,
+};
+
 const mockYoga = {
   Node: {
     create: vi.fn(() => mockNode),
@@ -357,6 +365,7 @@ describe('YogaManager', () => {
       );
       expect(applyReactPropsToYoga).toHaveBeenCalledWith(
         mockYoga,
+        mockYogaOptions,
         mockNode,
         style,
       );
@@ -394,12 +403,14 @@ describe('YogaManager', () => {
       );
       expect(applyFlexPropToYoga).toHaveBeenCalledWith(
         mockYoga,
+        mockYogaOptions,
         mockNode,
         'left',
         15,
       ); // x + translateX
       expect(applyFlexPropToYoga).toHaveBeenCalledWith(
         mockYoga,
+        mockYogaOptions,
         mockNode,
         'top',
         30,

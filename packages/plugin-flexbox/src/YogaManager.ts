@@ -49,6 +49,7 @@ export class YogaManager {
     errata: 'none',
     processHiddenNodes: false,
     useWebWorker: false,
+    expandToAutoFlexBasis: false,
   };
   private _eventEmitter: EventEmitter<YogaManagerEvents> = new EventEmitter();
   private _dataView: SimpleDataView;
@@ -199,7 +200,7 @@ export class YogaManager {
     styles: Record<number, Partial<LightningElementStyle>>,
     skipRender = false,
   ) {
-    if (!this._initialized || !this._yoga || !this._config) {
+    if (!this._initialized) {
       throw new Error('Yoga was not initialized! Did you call `init()`?');
     }
 
@@ -230,7 +231,7 @@ export class YogaManager {
       return;
     }
 
-    applyReactPropsToYoga(this._yoga, yogaNode.node, style);
+    applyReactPropsToYoga(this._yoga, this._yogaOptions, yogaNode.node, style);
 
     if (style.transform) {
       const { x, y, transform } = style;
@@ -244,6 +245,7 @@ export class YogaManager {
 
           applyFlexPropToYoga(
             this._yoga,
+            this._yogaOptions,
             yogaNode.node,
             'left',
             left + translateX,
@@ -255,6 +257,7 @@ export class YogaManager {
 
           applyFlexPropToYoga(
             this._yoga,
+            this._yogaOptions,
             yogaNode.node,
             'top',
             top + translateY,
@@ -274,7 +277,7 @@ export class YogaManager {
     // node. If there's a maxWidth set, we should clamp the text to that size.
     const yogaNode = this._elementMap.get(elementId);
 
-    if (!this._initialized || !this._yoga || !this._config) {
+    if (!this._initialized || !this._yoga) {
       throw new Error('Yoga was not initialized! Did you call `init()`?');
     }
 

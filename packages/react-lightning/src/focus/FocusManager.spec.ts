@@ -251,6 +251,26 @@ describe('FocusManager', () => {
     expect(focusManager.focusPath).toEqual([parent]);
   });
 
+  it("should not allow focus on elements that are children of another focusable element, that isn't a FocusGroup", () => {
+    const parent = createMockElement(1, 'parent');
+    const child = createMockElement(2, 'child');
+    const grandChild = createMockElement(3, 'grandChild');
+
+    grandChild.parent = child;
+    child.children.push(grandChild);
+
+    focusManager.addElement(parent, null);
+    focusManager.addElement(grandChild, parent);
+    focusManager.addElement(child, parent);
+
+    expect(child.focusable).toEqual(true);
+    expect(grandChild.focusable).toEqual(false);
+
+    expect(child.focused).toBe(true);
+    expect(grandChild.focused).toBe(false);
+    expect(focusManager.focusPath).toEqual([parent, child]);
+  });
+
   describe('Layer Management (Modal Support)', () => {
     it('should create a new layer when pushLayer is called', () => {
       const mainElement = createMockElement(1, 'main');
@@ -303,9 +323,6 @@ describe('FocusManager', () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       focusManager.focus(mainElement);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'FocusManager: Cannot focus element outside of active focus layer',
-      );
       expect(focusManager.focusPath).toEqual([modalElement]);
       expect(mainElement.focused).toBe(false);
 
@@ -402,8 +419,8 @@ describe('FocusManager', () => {
       const modalOpenedSpy = vi.fn();
       const modalClosedSpy = vi.fn();
 
-      focusManager.on('modalOpened', modalOpenedSpy);
-      focusManager.on('modalClosed', modalClosedSpy);
+      focusManager.on('layerAdded', modalOpenedSpy);
+      focusManager.on('layerRemoved', modalClosedSpy);
 
       // Setup main layer
       focusManager.addElement(mainElement, null, { autoFocus: true });

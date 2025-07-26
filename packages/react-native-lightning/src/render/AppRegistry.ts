@@ -14,10 +14,7 @@ import { domPolyfillsPlugin } from '../plugins/domPolyfillsPlugin';
 import { reactNativePolyfillsPlugin } from '../plugins/reactNativePolyfillsPlugin';
 
 export type PluginOptions = {
-  flexbox?: {
-    errata?: YogaOptions['errata'];
-    useWebWorker?: boolean;
-  };
+  flexbox?: YogaOptions;
 };
 
 const registry: Record<string, ComponentProvider> = {};
@@ -36,6 +33,7 @@ export function getPlugins(
     cssPlugin(),
     flexboxPlugin({
       errata: 'all',
+      expandToAutoFlexBasis: true,
       ...pluginOptions?.flexbox,
     }),
   );

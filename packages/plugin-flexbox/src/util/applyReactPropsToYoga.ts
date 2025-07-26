@@ -9,9 +9,11 @@ import type {
   FlexDirection as YogaFlexDirection,
 } from 'yoga-layout';
 import type { Yoga } from 'yoga-layout/load';
+import type { YogaOptions } from '../types';
 import type { AutoDimensionValue, Transform } from '../types/FlexStyles';
 import type { FlexProps } from './isFlexStyleProp';
 import { isFlexStyleProp } from './isFlexStyleProp';
+import { parseFlexValue } from './parseFlexValue';
 
 function mapDisplay(yoga: Yoga, value?: 'flex' | 'none'): Display {
   switch (value) {
@@ -136,91 +138,27 @@ function applyFlexBasis(node: Node, value?: AutoDimensionValue | string) {
   }
 }
 
-// Cache for parsed flex values
-const flexCache = new Map<
-  string,
-  { grow: number; shrink: number; basis: AutoDimensionValue | string }
->();
-
-function applyFlex(node: Node, value?: string | number) {
+function applyFlex(
+  node: Node,
+  value?: string | number,
+  expandToAutoFlexBasis = false,
+) {
   if (value == null) {
     return;
   }
 
-  if (typeof value === 'number') {
-    node.setFlexGrow(value);
-    node.setFlexShrink(1);
-    node.setFlexBasis(0);
+  const flexConfig = parseFlexValue(value, expandToAutoFlexBasis);
 
-    return;
+  if (flexConfig) {
+    node.setFlexGrow(flexConfig.grow);
+    node.setFlexShrink(flexConfig.shrink);
+    applyFlexBasis(node, flexConfig.basis);
   }
-
-  // Check cache first for string values to prevent parsing again
-  const cached = flexCache.get(value);
-
-  if (cached) {
-    node.setFlexGrow(cached.grow);
-    node.setFlexShrink(cached.shrink);
-    applyFlexBasis(node, cached.basis);
-
-    return;
-  }
-
-  const parts = value.split(' ');
-  const [grow, shrink, basis] = parts;
-  let flexConfig: {
-    grow: number;
-    shrink: number;
-    basis: AutoDimensionValue | string;
-  };
-
-  // https://developer.mozilla.org/en-US/docs/Web/CSS/flex
-  if (grow != null && shrink != null && basis != null) {
-    flexConfig = {
-      grow: Number.parseFloat(grow),
-      shrink: Number.parseFloat(shrink),
-      basis,
-    };
-  } else if (parts.length === 2 && grow != null && shrink != null) {
-    if (/^\d+$/.test(shrink)) {
-      flexConfig = {
-        grow: Number.parseFloat(grow),
-        shrink: Number.parseFloat(shrink),
-        basis: 0,
-      };
-    } else {
-      flexConfig = {
-        grow: Number.parseFloat(grow),
-        shrink: 1,
-        basis: shrink,
-      };
-    }
-  } else if (parts.length === 1 && grow != null) {
-    if (/^\d+$/.test(grow)) {
-      flexConfig = {
-        grow: Number.parseFloat(grow),
-        shrink: 1,
-        basis: 0,
-      };
-    } else if (grow === 'none') {
-      flexConfig = { grow: 0, shrink: 0, basis: 'auto' };
-    } else {
-      flexConfig = { grow: 1, shrink: 1, basis: grow };
-    }
-  } else {
-    return;
-  }
-
-  // Cache the parsed result
-  flexCache.set(value, flexConfig);
-
-  node.setFlexGrow(flexConfig.grow);
-  node.setFlexShrink(flexConfig.shrink);
-  applyFlexBasis(node, flexConfig.basis);
 }
 
 export default function applyReactPropsToYoga(
   yoga: Yoga,
+  config: YogaOptions,
   node: Node,
   style: Partial<LightningViewElementStyle>,
 ) {
@@ -228,6 +166,7 @@ export default function applyReactPropsToYoga(
     if (isFlexStyleProp(prop)) {
       applyFlexPropToYoga(
         yoga,
+        config,
         node,
         prop,
         value as LightningViewElementStyle[typeof prop],
@@ -238,6 +177,7 @@ export default function applyReactPropsToYoga(
 
 export function applyFlexPropToYoga<K extends FlexProps>(
   yoga: Yoga,
+  config: YogaOptions,
   node: Node,
   key: K,
   styleValue: LightningViewElementStyle[K],
@@ -392,7 +332,7 @@ export function applyFlexPropToYoga<K extends FlexProps>(
         );
         return true;
       case 'flex':
-        applyFlex(node, value);
+        applyFlex(node, value, config.expandToAutoFlexBasis);
         return true;
       case 'flexDirection':
         node.setFlexDirection(mapDirection(yoga, value));

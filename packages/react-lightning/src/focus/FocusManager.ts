@@ -24,6 +24,7 @@ export type FocusNode<T> = Omit<RootNode<T>, 'element'> & {
 
 type FocusLayer<T> = {
   root: RootNode<T>;
+  elements: Map<T, FocusNode<T>>;
   focusPath: T[];
 };
 
@@ -31,8 +32,8 @@ type FocusEvents<T> = {
   blurred: (target: T) => void;
   focused: (target: T) => void;
   focusPathChanged: (focusPath: T[]) => void;
-  modalOpened: (modal: T) => void;
-  modalClosed: (modal: T) => void;
+  layerAdded: (element: T) => void;
+  layerRemoved: (element: T) => void;
 };
 
 function isRootNode<T>(node: FocusNode<T> | RootNode<T>): node is RootNode<T> {
@@ -64,7 +65,6 @@ export class FocusManager<
   T extends Focusable & { id: number; parent?: T | null },
 > implements EventNotifier<FocusEvents<T>>
 {
-  private _allFocusableElements: Map<T, FocusNode<T>> = new Map();
   private _disposers: Map<T, (() => void)[]> = new Map();
   private _focusStack: FocusLayer<T>[] = [];
   private _eventEmitter = new EventEmitter<FocusEvents<T>>();
@@ -90,6 +90,7 @@ export class FocusManager<
           focusedElement: null,
           hasFocusableChildren: false,
         },
+        elements: new Map(),
         focusPath: [],
       },
     ];
@@ -106,7 +107,7 @@ export class FocusManager<
   public emit = this._eventEmitter.emit.bind(this._eventEmitter);
 
   public getFocusNode(element: T): FocusNode<T> | null {
-    const node = this._allFocusableElements.get(element);
+    const node = this.activeLayer.elements.get(element);
 
     if (node) {
       return node;
@@ -135,10 +136,10 @@ export class FocusManager<
       down: false,
       left: false,
     };
-    const root = this.activeLayer.root;
+    const { elements, root } = this.activeLayer;
 
     if (parent) {
-      const storedNode = this._allFocusableElements.get(parent);
+      const storedNode = elements.get(parent);
 
       if (!storedNode) {
         parentNode = this._createFocusNode(parent, root);
@@ -146,7 +147,7 @@ export class FocusManager<
         if (!root.focusedElement) {
           root.focusedElement = parentNode;
         }
-        this._allFocusableElements.set(parent, parentNode);
+        elements.set(parent, parentNode);
       } else {
         parentNode = storedNode;
       }
@@ -154,7 +155,7 @@ export class FocusManager<
       parentNode = root;
     }
 
-    let childNode = this._allFocusableElements.get(child);
+    let childNode = elements.get(child);
 
     if (childNode) {
       childNode.autoFocus = autoFocus;
@@ -165,15 +166,16 @@ export class FocusManager<
       // If the child node already exists, we need to remove it from its current parent
       if (childNode.parent !== parentNode) {
         const index = childNode.parent.children.indexOf(childNode);
-        if (index !== -1) {
-          childNode.parent.children.splice(index, 1);
-        }
 
         if (childNode.parent.focusedElement === childNode) {
           childNode.parent.focusedElement = this._findNextBestFocus(
             childNode.parent,
             childNode,
           );
+        }
+
+        if (index !== -1) {
+          childNode.parent.children.splice(index, 1);
         }
 
         childNode.parent = parentNode;
@@ -209,7 +211,7 @@ export class FocusManager<
   }
 
   public removeElement(element: T) {
-    const node = this._allFocusableElements.get(element);
+    const node = this.activeLayer.elements.get(element);
 
     if (!node) {
       return;
@@ -219,7 +221,7 @@ export class FocusManager<
   }
 
   public setTraps(element: T, traps: Traps) {
-    const node = this._allFocusableElements.get(element);
+    const node = this.activeLayer.elements.get(element);
 
     if (node) {
       node.traps = traps;
@@ -227,7 +229,7 @@ export class FocusManager<
   }
 
   public setAutoFocus(element: T, autoFocus?: boolean) {
-    const node = this._allFocusableElements.get(element);
+    const node = this.activeLayer.elements.get(element);
 
     if (node) {
       node.autoFocus = !!autoFocus;
@@ -235,7 +237,7 @@ export class FocusManager<
   }
 
   public setFocusRedirect(element: T, focusRedirect?: boolean) {
-    const node = this._allFocusableElements.get(element);
+    const node = this.activeLayer.elements.get(element);
 
     if (node) {
       node.focusRedirect = !!focusRedirect;
@@ -243,14 +245,13 @@ export class FocusManager<
   }
 
   public setDestinations(element: T, destinations?: (T | null)[]): void {
-    const node = this._allFocusableElements.get(element);
+    const node = this.activeLayer.elements.get(element);
 
     if (node) {
       node.destinations = destinations ?? null;
     }
   }
 
-  // Add modal methods
   public pushLayer(rootElement: T): void {
     // Store the current layer before creating new one
     const previousLayer = this.activeLayer;
@@ -264,23 +265,24 @@ export class FocusManager<
     }
 
     // Create a new layer
-    const modalLayer: FocusLayer<T> = {
+    const newLayer: FocusLayer<T> = {
       root: {
         element: null,
         children: [],
         focusedElement: null,
         hasFocusableChildren: false,
       },
+      elements: new Map(),
       focusPath: [],
     };
 
-    this._focusStack.push(modalLayer);
+    this._focusStack.push(newLayer);
 
     this.addElement(rootElement);
 
     this._recalculateFocusPath();
 
-    this._eventEmitter.emit('modalOpened', rootElement);
+    this._eventEmitter.emit('layerAdded', rootElement);
   }
 
   public popLayer(): void {
@@ -291,7 +293,7 @@ export class FocusManager<
 
     // Get current layer info before popping
     const currentLayer = this.activeLayer;
-    const modalElement = currentLayer.root.children[0]?.element;
+    const rootElement = currentLayer.root.children[0]?.element;
 
     // Blur all elements in current layer
     for (const element of currentLayer.focusPath) {
@@ -304,9 +306,8 @@ export class FocusManager<
     // biome-ignore lint/style/noNonNullAssertion: Already checked above
     this._focusStack.pop()!;
 
-    // Emit modal closed event if we have a modal element
-    if (modalElement) {
-      this._eventEmitter.emit('modalClosed', modalElement);
+    if (rootElement) {
+      this._eventEmitter.emit('layerRemoved', rootElement);
     }
 
     // Now restore focus to the previous layer (which is now active)
@@ -332,20 +333,10 @@ export class FocusManager<
   }
 
   public focus(element: T): void {
-    const node = this._allFocusableElements.get(element);
+    const node = this.activeLayer.elements.get(element);
 
     if (!node) {
       return;
-    }
-
-    // If modal is active, only allow focus within the modal
-    if (this._focusStack.length > 0) {
-      if (!this._isElementInModal(node)) {
-        console.warn(
-          'FocusManager: Cannot focus element outside of active focus layer',
-        );
-        return;
-      }
     }
 
     this._focusNode(node);
@@ -354,8 +345,8 @@ export class FocusManager<
   // Print out the whole focus tree
   public toString(): string {
     const printNode = (node: FocusNode<T> | RootNode<T>, depth = 0): string => {
-      const indent = ' '.repeat(depth * 2);
-      let result = `${indent}${node.element ? node.element.toString() : 'Root'}\n`;
+      const indent = ' '.repeat((depth - (node.element?.focused ? 1 : 0)) * 2);
+      let result = `${indent}${node.element?.focused ? '> ' : ''}${node.element ? node.element.toString() : 'Root'}\n`;
 
       for (const child of node.children) {
         result += printNode(child, depth + 1);
@@ -411,7 +402,7 @@ export class FocusManager<
       hasFocusableChildren: false,
     };
 
-    this._allFocusableElements.set(element, node);
+    this.activeLayer.elements.set(element, node);
 
     parent.children.push(node);
 
@@ -460,6 +451,7 @@ export class FocusManager<
   private _focusNode(childNode: FocusNode<T>) {
     let currParent = childNode.parent;
     let currChild: FocusNode<T> | RootNode<T> = childNode;
+    const elements = this.activeLayer.elements;
 
     while (currChild && !isRootNode(currChild) && currParent) {
       if (currChild.focusRedirect && currChild.destinations) {
@@ -469,7 +461,7 @@ export class FocusManager<
         );
 
         if (destination) {
-          const focusNode = this._allFocusableElements.get(destination);
+          const focusNode = elements.get(destination);
 
           if (!focusNode) {
             console.warn(
@@ -509,7 +501,7 @@ export class FocusManager<
       node.parent.focusedElement = this._findNextBestFocus(node.parent, node);
     }
 
-    this._allFocusableElements.delete(node.element);
+    this.activeLayer.elements.delete(node.element);
 
     if (isTopMostParentNode) {
       this._recalculateFocusPath();
@@ -557,6 +549,13 @@ export class FocusManager<
 
       if (this._hasLeafParent(child.element, leafNodes, parentNode.element)) {
         child.element.focusable = false;
+
+        if (parentNode.focusedElement === child) {
+          parentNode.focusedElement = this._findNextBestFocus(
+            parentNode,
+            child,
+          );
+        }
       }
     }
   }
@@ -591,14 +590,14 @@ export class FocusManager<
     let relativeIndex = -1;
 
     if (relativeNode) {
-      relativeIndex = Array.from(parent.children).indexOf(relativeNode);
+      relativeIndex = parent.children.indexOf(relativeNode);
     }
 
     // Loop through from the beginning of the children, even if we want to
     // select an element relative to the relative node. This is to prevent
     // having to loop through twice.
     for (let i = 0; i < parent.children.length; i++) {
-      const newChild = Array.from(parent.children)[i];
+      const newChild = parent.children[i];
 
       if (
         newChild?.element.focusable &&
@@ -616,23 +615,6 @@ export class FocusManager<
     return bestMatch;
   }
 
-  // Helper to check if element is within a modal
-  private _isElementInModal(node: FocusNode<T>): boolean {
-    const root = this.activeLayer.root;
-    let current: FocusNode<T> | RootNode<T> | null = node;
-
-    while (current) {
-      if (current === root) {
-        return true;
-      }
-
-      current = isRootNode(current) ? null : current.parent;
-    }
-
-    return false;
-  }
-
-  // Modified _recalculateFocusPath to respect modals
   private _recalculateFocusPath(): void {
     const newPath: T[] = [];
     const layer = this.activeLayer;
