@@ -1,5 +1,13 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.3.6
+
+### Patch Changes
+
+- bcc5e8c: Fix some issues with focus and layers
+- Updated dependencies [bcc5e8c]
+  - @plextv/react-lightning@0.3.7
+
 ## 0.3.5
 
 ### Patch Changes

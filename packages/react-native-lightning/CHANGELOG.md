@@ -1,5 +1,15 @@
 # @plextv/react-native-lightning
 
+## 0.3.9
+
+### Patch Changes
+
+- bcc5e8c: Fix some issues with focus and layers
+- Updated dependencies [bcc5e8c]
+  - @plextv/react-lightning@0.3.7
+  - @plextv/react-lightning-plugin-flexbox@0.3.6
+  - @plextv/react-lightning-plugin-css-transform@0.3.2
+
 ## 0.3.8
 
 ### Patch Changes
