@@ -18,7 +18,7 @@ const ExampleBox = () => {
 };
 
 export default {
-  title: '@plextv∕react-native-lightning-components/Layout/Column',
+  title: 'react-native-lightning-components/Layout/Column',
   component: Column,
   argTypes: {
     justifyContent: {

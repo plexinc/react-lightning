@@ -4,7 +4,7 @@ import { View, VirtualizedList } from 'react-native';
 import ScrollItem from '../../components/ScrollItem';
 
 export default {
-  title: '@plextv∕react-native-lightning/Lists/VirtualizedList',
+  title: 'react-native-lightning/Lists/VirtualizedList',
   component: VirtualizedList,
   tags: ['reactNative'],
 } as Meta<typeof VirtualizedList>;

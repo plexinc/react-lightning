@@ -5,7 +5,7 @@ import Button from '../../../components/Button';
 import { FocusableImage } from '../../../components/FocusableImage';
 
 export default {
-  title: '@plextv∕react-lightning/Examples/Focus/Focus Group',
+  title: 'react-lightning/Examples/Focus/Focus Group',
   argTypes: {},
 } as Meta;
 

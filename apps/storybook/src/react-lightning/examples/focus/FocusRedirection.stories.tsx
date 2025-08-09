@@ -9,7 +9,7 @@ import { forwardRef, type ReactNode, useState } from 'react';
 import { FocusableImage } from '../../../components/FocusableImage';
 
 export default {
-  title: '@plextv∕react-lightning/Examples/Focus/FocusRedirection',
+  title: 'react-lightning/Examples/Focus/FocusRedirection',
 } as Meta;
 
 const Redirector = forwardRef<

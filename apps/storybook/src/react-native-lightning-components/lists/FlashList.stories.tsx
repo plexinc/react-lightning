@@ -6,7 +6,7 @@ import { View } from 'react-native';
 import ScrollItem from '../../components/ScrollItem';
 
 export default {
-  title: '@plextv∕react-native-lightning-components/Lists/FlashList',
+  title: 'react-native-lightning-components/Lists/FlashList',
   component: FlashList,
   tags: ['reactNative'],
 } as Meta<typeof FlashList>;

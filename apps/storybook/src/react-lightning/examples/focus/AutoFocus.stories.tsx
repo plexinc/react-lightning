@@ -3,7 +3,7 @@ import type { Meta } from '@storybook/react';
 import { FocusableImage } from '../../../components/FocusableImage';
 
 export default {
-  title: '@plextv∕react-lightning/Examples/Focus/AutoFocus',
+  title: 'react-lightning/Examples/Focus/AutoFocus',
 } as Meta;
 
 export const AutoFocus = () => {

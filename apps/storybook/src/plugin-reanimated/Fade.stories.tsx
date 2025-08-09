@@ -15,7 +15,7 @@ import type { Meta } from '@storybook/react';
 import { AnimationSampler } from './AnimationSampler';
 
 export default {
-  title: 'Plugins/@plextv∕react-lightning-plugin-reanimated/Fade',
+  title: 'Plugins/react-lightning-plugin-reanimated/Fade',
   tags: ['reactNative'],
 } as Meta;
 

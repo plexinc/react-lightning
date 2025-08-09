@@ -3,7 +3,7 @@ import type { Meta } from '@storybook/react';
 import Button from '../../../components/Button';
 
 export default {
-  title: '@plextv∕react-lightning/Examples/Focus/Focus Tree',
+  title: 'react-lightning/Examples/Focus/Focus Tree',
   argTypes: {},
 } as Meta;
 

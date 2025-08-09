@@ -24,7 +24,7 @@ const PhoneFriendSecondLine = {
 };
 
 export default {
-  title: '@plextv∕react-lightning-components/Text/StyledText',
+  title: 'react-lightning-components/Text/StyledText',
   component: StyledText,
 };
 

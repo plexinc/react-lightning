@@ -13,7 +13,7 @@ import type { Meta } from '@storybook/react';
 import { AnimationSampler } from './AnimationSampler';
 
 export default {
-  title: 'Plugins/@plextv∕react-lightning-plugin-reanimated/Slide',
+  title: 'Plugins/react-lightning-plugin-reanimated/Slide',
   tags: ['reactNative'],
 } as Meta;
 

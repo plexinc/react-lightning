@@ -7,7 +7,7 @@ import {
 } from '../../../components/FocusableImage';
 
 export default {
-  title: '@plextv∕react-lightning/Examples/Focus/TrapFocus',
+  title: 'react-lightning/Examples/Focus/TrapFocus',
 } as Meta;
 
 const trapUpStyle: LightningElement['style'] = {

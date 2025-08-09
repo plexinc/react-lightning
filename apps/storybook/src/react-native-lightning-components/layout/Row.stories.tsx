@@ -18,7 +18,7 @@ const ExampleBox = () => {
 };
 
 export default {
-  title: '@plextv∕react-native-lightning-components/Layout/Row',
+  title: 'react-native-lightning-components/Layout/Row',
   component: Row,
   argTypes: {
     justifyContent: {

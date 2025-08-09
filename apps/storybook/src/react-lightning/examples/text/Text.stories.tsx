@@ -13,7 +13,7 @@ type Props = {
 };
 
 export default {
-  title: '@plextv∕react-lightning/Examples/Text/Text Wrapping',
+  title: 'react-lightning/Examples/Text/Text Wrapping',
   argTypes: {
     text: {
       type: { name: 'string', required: false },
