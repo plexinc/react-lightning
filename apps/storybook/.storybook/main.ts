@@ -19,6 +19,7 @@ const config: StorybookConfig = {
       __DEV__: JSON.stringify(
         (config.mode ?? process.env.NODE_ENV) !== 'production',
       ),
+      'process.env.NODE_ENV': JSON.stringify(config.mode),
     };
 
     config.plugins = [

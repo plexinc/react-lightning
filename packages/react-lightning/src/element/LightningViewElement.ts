@@ -98,6 +98,9 @@ export class LightningViewElement<
   private _visible = true;
   private _hasStagedUpdates = false;
   private _eventEmitter = new EventEmitter<LightningElementEvents>();
+  private _deferTarget: LightningElement | null = null;
+  private _deferNodeRemovalHandler: ((destroy: () => void) => void) | null =
+    null;
 
   public get visible(): boolean {
     return this._visible;
@@ -179,6 +182,28 @@ export class LightningViewElement<
     this.setProps({
       style: {},
     } as TProps);
+  }
+
+  /**
+   * If a handler here is set, the lightning node will not be immediately
+   * removed. The destroy function passed to the handler must be called to
+   * complete cleanup. This is to allow for things like animations to complete
+   * before the node is removed.
+   */
+  public set deferNodeRemoval(handler: ((destroy: () => void) => void) | null) {
+    this._deferNodeRemovalHandler = handler;
+
+    this.deferTarget = handler ? this : null;
+  }
+
+  public set deferTarget(value: LightningElement | null) {
+    this._deferTarget?.off('deferredDestroyComplete', this._destroyFinalize);
+    this._deferTarget = value;
+    this._deferTarget?.once('deferredDestroyComplete', this._destroyFinalize);
+
+    for (const child of this.children) {
+      child.deferTarget = value;
+    }
   }
 
   public get isTextElement() {
@@ -267,10 +292,16 @@ export class LightningViewElement<
       this.children[i]?.destroy();
     }
 
-    this.parent = null;
+    this.parent?.removeChild(this);
     this.children.length = 0; // More efficient than reassigning
 
-    this._renderer.destroyNode(this.node);
+    if (this._deferNodeRemovalHandler) {
+      this._deferNodeRemovalHandler(() => {
+        this.emit('deferredDestroyComplete');
+      });
+    } else if (!this._deferTarget) {
+      this._renderer.destroyNode(this.node);
+    }
 
     delete LightningViewElement.allElements[this.id];
 
@@ -281,18 +312,19 @@ export class LightningViewElement<
     ...args: Parameters<IEventEmitter<LightningElementEvents>['on']>
   ): (() => void) => {
     this._eventEmitter.on(...args);
-
     return () => this._eventEmitter.off(...args);
   };
   public once = (
     ...args: Parameters<IEventEmitter<LightningElementEvents>['once']>
   ): (() => void) => {
     this._eventEmitter.once(...args);
-
     return () => this._eventEmitter.off(...args);
   };
-  public off = this._eventEmitter.off.bind(this._eventEmitter);
-  public emit = this._eventEmitter.emit.bind(this._eventEmitter);
+
+  public off: IEventEmitter<LightningElementEvents>['off'] = (...args) =>
+    this._eventEmitter.off(...args);
+  public emit: IEventEmitter<LightningElementEvents>['emit'] = (...args) =>
+    this._eventEmitter.emit(...args);
 
   public setLightningNode(node: RendererNode<LightningElement>) {
     const oldNode = this.node;
@@ -334,6 +366,10 @@ export class LightningViewElement<
 
     child.parent = this;
 
+    if (this._deferTarget) {
+      child.deferTarget = this._deferTarget;
+    }
+
     this._eventEmitter.emit('childAdded', child, index);
   }
 
@@ -344,7 +380,9 @@ export class LightningViewElement<
       this.children.splice(index, 1);
     }
 
-    child.node.parent = null;
+    if (!child._deferTarget) {
+      child.node.parent = null;
+    }
 
     this._eventEmitter.emit('childRemoved', child, index);
   }
@@ -525,6 +563,12 @@ export class LightningViewElement<
   public toString(expanded?: boolean) {
     return `${this.constructor.name} id=${this.id}${this.focusable ? ' focusable' : ''}${this.visible ? ' visible' : ''}${expanded ? ` props=${JSON.stringify(this.props)}` : ''}`;
   }
+
+  private _destroyFinalize = () => {
+    this._deferTarget?.off('deferredDestroyComplete', this._destroyFinalize);
+    this.node.parent = null;
+    this._renderer.destroyNode(this.node);
+  };
 
   // Don't pass down the `data` prop to the lightning node.
   private _createNode({

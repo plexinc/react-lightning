@@ -12,6 +12,10 @@ import type { LightningElementStyle } from './Styles';
 export interface LightningElementEvents extends FocusEvents<LightningElement> {
   initialized: () => void;
   destroy: () => void;
+  /**
+   * Fired when the lightning node has been destroyed after a deferred removal.
+   */
+  deferredDestroyComplete: () => void;
   childAdded: (child: LightningElement, index: number) => void;
   childRemoved: (child: LightningElement, index: number) => void;
   beforeRender: () => void;

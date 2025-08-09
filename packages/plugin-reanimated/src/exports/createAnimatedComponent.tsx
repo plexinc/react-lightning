@@ -1,85 +1,321 @@
 import type {
   LightningElement,
-  LightningViewElement,
+  LightningElementProps,
+  LightningViewElementStyle,
+  Rect,
+  RendererNode,
 } from '@plextv/react-lightning';
-import { forwardRef, useEffect, useMemo, useRef } from 'react';
+import {
+  Component,
+  type ComponentType,
+  type ForwardedRef,
+  forwardRef,
+} from 'react';
+import type { NativeMethods, StyleProp, ViewStyle } from 'react-native';
 import type {
-  Falsy,
-  RecursiveArray,
-  RegisteredStyle,
-  ViewProps,
-  ViewStyle,
-} from 'react-native';
+  BaseAnimationBuilder,
+  LayoutAnimationFunction,
+} from 'react-native-reanimated-original';
 import { isAnimatedStyle } from '../isAnimatedStyle';
-import { useMergeRefs } from '../mergeRefs';
 import type { AnimatedStyle } from '../types/AnimatedStyle';
+import type { ReanimatedAnimation } from '../types/ReanimatedAnimation';
+import { toLightningAnimationAndStyles } from '../utils/toLightningAnimationAndStyles';
 
-function groupStyles(
-  styleArray: RecursiveArray<Falsy | ViewStyle | RegisteredStyle<ViewStyle>>,
+type NativeLightningElement = NativeMethods & LightningElement;
+
+type AnimatedProps<T extends {}> = T &
+  Pick<LightningElementProps, 'transition'> & {
+    style?: StyleProp<ViewStyle>;
+    forwardedRef?: ForwardedRef<NativeLightningElement>;
+    layout?: ReanimatedAnimation;
+    entering?: ReanimatedAnimation;
+    exiting?: ReanimatedAnimation;
+  };
+
+function flattenStyles<T>(
+  style: StyleProp<T>,
+  animatedStyles: Set<AnimatedStyle>,
+  flattenedStyles: Partial<T>,
+): void;
+function flattenStyles<T>(
+  style: StyleProp<T>,
+): [Set<AnimatedStyle>, Partial<T>];
+function flattenStyles<T>(
+  style: StyleProp<T>,
+  animatedStyles: Set<AnimatedStyle> = new Set(),
+  flattenedStyles: Partial<T> = {},
 ) {
-  return styleArray.reduce<[AnimatedStyle[], Partial<ViewStyle>]>(
-    (acc, s) => {
-      if (isAnimatedStyle(s)) {
-        acc[0].push(s);
-      } else if (s != null && s !== false) {
-        if (Array.isArray(s)) {
-          const [animatedStyles, flatStyles] = groupStyles(s);
-
-          acc[0].push(...animatedStyles);
-          Object.assign(acc[1], flatStyles);
-        } else {
-          Object.assign(acc[1], s);
-        }
+  if (Array.isArray(style)) {
+    for (const s of style) {
+      if (s == null || s === false) {
+        continue;
       }
 
-      return acc;
-    },
-    [[], {}],
+      flattenStyles(s as StyleProp<T>, animatedStyles, flattenedStyles);
+    }
+  } else if (isAnimatedStyle(style)) {
+    animatedStyles.add(style);
+  } else if (style != null && style !== false) {
+    Object.assign(flattenedStyles, style);
+  }
+
+  return [animatedStyles, flattenedStyles];
+}
+
+function isAnimationBuilder(
+  layoutAnimationOrBuilder: ReanimatedAnimation,
+): layoutAnimationOrBuilder is BaseAnimationBuilder {
+  return (
+    !!layoutAnimationOrBuilder &&
+    'build' in layoutAnimationOrBuilder &&
+    typeof layoutAnimationOrBuilder.build === 'function'
   );
 }
 
-function useNormalizedStyles(
-  style: RecursiveArray<Falsy | ViewStyle | RegisteredStyle<ViewStyle>>,
-) {
-  const [animatedStyles, flatStyles] = useMemo(
-    () => groupStyles(style),
-    [style],
-  );
-  const ref = useRef<LightningViewElement | null>(null);
+function getBuilder(layoutAnimationOrBuilder?: ReanimatedAnimation) {
+  if (!layoutAnimationOrBuilder) {
+    return null;
+  }
 
-  useEffect(() => {
-    if (!ref.current || !animatedStyles) {
-      return;
-    }
-
-    for (const animatedStyle of animatedStyles) {
-      if (ref.current) {
-        animatedStyle.viewsRef?.add(ref.current);
-      }
-    }
-
-    return () => {
-      for (const animatedStyle of animatedStyles) {
-        if (ref.current) {
-          animatedStyle.viewsRef?.delete(ref.current);
-        }
-      }
-    };
-  }, [animatedStyles]);
-
-  return [flatStyles, ref];
-}
-
-export function createAnimatedComponent(Component: JSX.ElementType) {
-  return forwardRef<LightningElement, ViewProps>((props, forwardedRef) => {
-    const { style, ...otherProps } = props;
-    const styleArray = useMemo(
-      () => (Array.isArray(style) ? style : [style]),
-      [style],
+  if (isAnimationBuilder(layoutAnimationOrBuilder)) {
+    return layoutAnimationOrBuilder.build();
+  } else if (typeof layoutAnimationOrBuilder === 'function') {
+    return layoutAnimationOrBuilder;
+  } else if (import.meta.env.DEV) {
+    console.warn(
+      'This animation is not supported in React Lightning: ',
+      layoutAnimationOrBuilder,
     );
-    const [normalizedStyles, ref] = useNormalizedStyles(styleArray);
-    const refs = useMergeRefs(forwardedRef, ref);
+  }
 
-    return <Component {...otherProps} style={normalizedStyles} ref={refs} />;
+  return null;
+}
+
+function buildTransitions(
+  builder: LayoutAnimationFunction | null,
+  layout: (Rect & { globalX: number; globalY: number }) | null,
+) {
+  if (!builder) {
+    return null;
+  }
+
+  const { x, y, width, height, globalX, globalY } = layout || {
+    x: 0,
+    y: 0,
+    globalX: 0,
+    globalY: 0,
+    width: 0,
+    height: 0,
+  };
+
+  const animation = builder({
+    targetOriginX: x,
+    targetOriginY: y,
+    targetWidth: width,
+    targetHeight: height,
+    targetGlobalOriginX: globalX,
+    targetGlobalOriginY: globalY,
+    targetBorderRadius: 0,
+    windowWidth: 1920,
+    windowHeight: 1080,
+    currentOriginX: x,
+    currentOriginY: y,
+    currentWidth: width,
+    currentHeight: height,
+    currentGlobalOriginX: globalX,
+    currentGlobalOriginY: globalY,
+    currentBorderRadius: 0,
   });
+
+  if (!animation) {
+    return null;
+  }
+
+  // return toLightningAnimationAndStyles(animation.animations);
+  return animation;
+}
+
+export function createAnimatedComponent<TProps extends {}>(
+  ComponentToAnimate: ComponentType<AnimatedProps<TProps>>,
+) {
+  class AnimatedComponent extends Component<AnimatedProps<TProps>> {
+    static displayName =
+      `LightningAnimated(${ComponentToAnimate.displayName || ComponentToAnimate.name || 'Component'})`;
+
+    private _ref: NativeLightningElement | null = null;
+    private _animatedStyles: Set<AnimatedStyle> = new Set();
+    private _styles: Partial<ViewStyle> | null = null;
+
+    constructor(props: AnimatedProps<TProps>) {
+      super(props);
+
+      this._transformStyles();
+    }
+
+    componentDidMount(): void {
+      this._runAnimation(getBuilder(this.props.entering));
+    }
+
+    componentDidUpdate(prevProps: Readonly<AnimatedProps<TProps>>): void {
+      const styleChanged = this.props.style !== prevProps.style;
+      const layoutChanged = this.props.layout !== prevProps.layout;
+
+      if (styleChanged) {
+        this._transformStyles();
+      }
+
+      if (styleChanged || layoutChanged) {
+        this._runAnimation(getBuilder(this.props.layout));
+      }
+    }
+
+    componentWillUnmount(): void {
+      if (!this.props.exiting || !this._ref) {
+        return;
+      }
+
+      this._ref.deferNodeRemoval = (destroy) => {
+        this._runAnimation(getBuilder(this.props.exiting), destroy);
+      };
+    }
+
+    render() {
+      return (
+        <ComponentToAnimate
+          {...this.props}
+          style={this._styles}
+          ref={this._setRefs}
+        />
+      );
+    }
+
+    _resolveComponentRef = (ref: NativeLightningElement | null) => {
+      const componentRef = ref as NativeLightningElement & {
+        getAnimatableRef?: () => NativeLightningElement;
+      };
+
+      // Component can specify ref which should be animated when animated version of the component is created.
+      // Otherwise, we animate the component itself.
+      if (componentRef?.getAnimatableRef) {
+        return componentRef.getAnimatableRef();
+      }
+
+      return componentRef;
+    };
+
+    _setRefs = (ref: NativeLightningElement | null) => {
+      if (!ref || this._ref === ref) {
+        return;
+      }
+
+      const forwardedRef = this.props.forwardedRef;
+      const newRef = this._resolveComponentRef(ref);
+
+      if (typeof forwardedRef === 'function') {
+        // Handle function-based refs. String-based refs are handled as functions.
+        forwardedRef(newRef);
+      } else if (typeof forwardedRef === 'object' && forwardedRef != null) {
+        // Handle createRef-based refs
+        forwardedRef.current = newRef;
+      }
+
+      for (const animatedStyle of this._animatedStyles) {
+        // Remove old refs and add our new ref to our animated styles
+        if (this._ref) {
+          animatedStyle.viewsRef.delete(this._ref);
+        }
+
+        animatedStyle.viewsRef.add(newRef);
+      }
+
+      this._ref = newRef;
+    };
+
+    _transformStyles() {
+      const [newAnimatedStyles, flattenedStyles] = flattenStyles(
+        this.props.style,
+      );
+
+      if (this._ref) {
+        // Remove refs for any animated styles that were removed
+        for (const oldAnimatedStyle of this._animatedStyles) {
+          oldAnimatedStyle.viewsRef.delete(this._ref);
+        }
+
+        for (const newAnimatedStyle of newAnimatedStyles) {
+          newAnimatedStyle.viewsRef.add(this._ref);
+        }
+      }
+
+      this._animatedStyles = newAnimatedStyles;
+      this._styles = flattenedStyles;
+    }
+
+    private _runAnimation(
+      builder: LayoutAnimationFunction | null,
+      callback?: () => void,
+    ) {
+      if (!this._ref || !builder) {
+        callback?.();
+        return;
+      }
+
+      const el = this._ref;
+
+      this._ref.measure((x, y, width, height) => {
+        const absRect = this._ref?.getBoundingClientRect();
+
+        const layoutAnimation = buildTransitions(builder, {
+          x,
+          y,
+          globalX: absRect?.left || 0,
+          globalY: absRect?.top || 0,
+          width,
+          height,
+        });
+
+        if (!layoutAnimation) {
+          callback?.();
+          return;
+        }
+
+        const lightningAnimation = toLightningAnimationAndStyles(
+          layoutAnimation.animations,
+        );
+
+        el.once('animationFinished', () => {
+          if (layoutAnimation.callback) {
+            layoutAnimation.callback(true);
+          }
+          callback?.();
+        });
+
+        for (const [key, value] of Object.entries(
+          layoutAnimation.initialValues,
+        )) {
+          el.setNodeProp(
+            key as keyof RendererNode<NativeLightningElement>,
+            value,
+            false,
+          );
+        }
+
+        el?.setProps({
+          style: lightningAnimation.style as LightningViewElementStyle,
+          transition: lightningAnimation.transition,
+        });
+      });
+    }
+  }
+
+  return forwardRef<NativeLightningElement, AnimatedProps<TProps>>(
+    (props, forwardedRef) => {
+      return (
+        <AnimatedComponent
+          {...(props as AnimatedProps<TProps>)}
+          forwardedRef={forwardedRef}
+        />
+      );
+    },
+  );
 }

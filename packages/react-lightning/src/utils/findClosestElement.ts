@@ -102,29 +102,23 @@ function calculateShortestDistance(
 ): number | null {
   const euclidean = getDistance(direction, source, target);
   const displacement = getDisplacement(direction, source, target);
-  const alignment = getAlignment(direction, source, target);
+  const overlap = getOverlap(direction, source, target);
+  const alignment = getAlignment(direction, source, overlap);
 
   if (euclidean === null) {
     return null;
   }
 
-  return (
-    euclidean +
-    displacement -
-    alignment -
-    Math.sqrt(getOverlap(direction, source, target))
-  );
+  return euclidean + displacement - alignment - Math.sqrt(overlap);
 }
 
 function getAlignment(
   direction: Direction,
   source: Dimensions,
-  target: Dimensions,
+  overlap: number,
 ): number {
   const isHorizontal = direction & Direction.Horizontal;
-  const bias =
-    getOverlap(direction, source, target) /
-    (isHorizontal ? source.width : source.height);
+  const bias = overlap / (isHorizontal ? source.width : source.height);
 
   return bias * 5;
 }
@@ -139,7 +133,7 @@ function getDisplacement(
   const bias = isHorizontal ? h1 / 2 : w1 / 2;
   const weight = isHorizontal ? 30 : 2;
 
-  return (distance + bias) * weight;
+  return Math.abs((distance + bias) * weight);
 }
 
 export function getOverlap(
@@ -164,7 +158,7 @@ export function getOverlap(
       break;
   }
 
-  return length;
+  return Math.abs(length);
 }
 
 function isOverlap(
