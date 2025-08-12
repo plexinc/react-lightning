@@ -1,0 +1,44 @@
+name: Release Packages
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Run tests"]
+    branches: [main]
+    types:
+      - completed
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  id-token: write
+
+jobs:
+  release:
+    name: Release Packages
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+
+    steps:
+      - name: Setup workspace
+        uses: plexinc/react-lightning/.github/actions/setup@main
+        with:
+          npm-token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create release pull request or publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm run ci:version
+          commit: "chore: Update versions"
+          title: "chore: Update versions"
+          publish: pnpm run ci:publish
+        env:
+          # When you use the repository's GITHUB_TOKEN to perform tasks, events
+          # triggered by the GITHUB_TOKEN will not create a new workflow run.
+          # This means that checks won't run on the release PRs. We work around
+          # this by using our own GH_TOKEN_REPO_ACCESS organization secret.
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN_REPO_ACCESS }}

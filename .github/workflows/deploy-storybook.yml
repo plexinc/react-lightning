@@ -1,0 +1,41 @@
+name: Deploy Storybook
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  pages: write # to deploy to Pages
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy Storybook
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Setup workspace
+        uses: plexinc/react-lightning/.github/actions/setup@main
+        with:
+          npm-token: ${{ secrets.NPM_TOKEN }}
+
+      - name: Build Storybook
+        run: pnpm run build:storybook
+
+      - name: Upload storybook static files as artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/storybook/dist/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

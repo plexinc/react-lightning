@@ -28,8 +28,12 @@ export function StorybookDecorator({
         new SdfTrFontFace('msdf', {
           fontFamily: 'sans-serif',
           descriptors: {},
-          atlasUrl: '/fonts/ChocolateClassicalSans-Regular.msdf.png',
-          atlasDataUrl: '/fonts/ChocolateClassicalSans-Regular.msdf.json',
+          atlasUrl:
+            import.meta.env.BASE_URL +
+            'fonts/ChocolateClassicalSans-Regular.msdf.png',
+          atlasDataUrl:
+            import.meta.env.BASE_URL +
+            'fonts/ChocolateClassicalSans-Regular.msdf.json',
           stage,
         }),
       ],
