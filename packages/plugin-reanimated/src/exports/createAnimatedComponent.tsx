@@ -45,13 +45,17 @@ function flattenStyles<T>(
   animatedStyles: Set<AnimatedStyle> = new Set(),
   flattenedStyles: Partial<T> = {},
 ) {
-  if (Array.isArray(style)) {
-    for (const s of style) {
-      if (s == null || s === false) {
-        continue;
-      }
+  if (!style) {
+    return [animatedStyles, flattenedStyles];
+  }
 
-      flattenStyles(s as StyleProp<T>, animatedStyles, flattenedStyles);
+  if (Array.isArray(style)) {
+    for (let i = 0; i < style.length; i++) {
+      const s = style[i];
+
+      if (s != null && s !== false) {
+        flattenStyles(s as StyleProp<T>, animatedStyles, flattenedStyles);
+      }
     }
   } else if (isAnimatedStyle(style)) {
     animatedStyles.add(style);
@@ -145,6 +149,10 @@ export function createAnimatedComponent<TProps extends {}>(
     private _ref: NativeLightningElement | null = null;
     private _animatedStyles: Set<AnimatedStyle> = new Set();
     private _styles: Partial<ViewStyle> | null = null;
+    private _cachedBuilders = new WeakMap<
+      ReanimatedAnimation,
+      LayoutAnimationFunction | null
+    >();
 
     constructor(props: AnimatedProps<TProps>) {
       super(props);
@@ -153,7 +161,19 @@ export function createAnimatedComponent<TProps extends {}>(
     }
 
     componentDidMount(): void {
-      this._runAnimation(getBuilder(this.props.entering));
+      this._runAnimation(this._getCachedBuilder(this.props.entering));
+    }
+
+    private _getCachedBuilder(animation?: ReanimatedAnimation) {
+      if (!animation) {
+        return null;
+      }
+
+      if (!this._cachedBuilders.has(animation)) {
+        this._cachedBuilders.set(animation, getBuilder(animation));
+      }
+
+      return this._cachedBuilders.get(animation) || null;
     }
 
     componentDidUpdate(prevProps: Readonly<AnimatedProps<TProps>>): void {
@@ -165,7 +185,7 @@ export function createAnimatedComponent<TProps extends {}>(
       }
 
       if (styleChanged || layoutChanged) {
-        this._runAnimation(getBuilder(this.props.layout));
+        this._runAnimation(this._getCachedBuilder(this.props.layout));
       }
     }
 
@@ -175,7 +195,7 @@ export function createAnimatedComponent<TProps extends {}>(
       }
 
       this._ref.deferNodeRemoval = (destroy) => {
-        this._runAnimation(getBuilder(this.props.exiting), destroy);
+        this._runAnimation(this._getCachedBuilder(this.props.exiting), destroy);
       };
     }
 
