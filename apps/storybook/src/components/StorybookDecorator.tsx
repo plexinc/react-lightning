@@ -8,13 +8,13 @@ import { DefaultStoryHeight, DefaultStoryWidth } from '../helpers/constants';
 
 type Props = {
   story: () => JSX.Element;
-  tags: string[];
+  tags?: string[];
   canvasOptions?: Partial<RenderOptions>;
 };
 
 export function StorybookDecorator({
   story: Story,
-  tags = [],
+  tags,
   canvasOptions,
 }: Props) {
   const options: RenderOptions = useMemo(
@@ -41,7 +41,7 @@ export function StorybookDecorator({
         'RoundedWithShadow',
         'RoundedWithBorderAndShadow',
       ],
-      plugins: tags.includes('reactNative') ? getPlugins() : [flexPlugin()],
+      plugins: tags?.includes('reactNative') ? getPlugins() : [flexPlugin()],
       ...canvasOptions,
     }),
     [tags, canvasOptions],

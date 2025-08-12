@@ -14,6 +14,7 @@ import {
 import { AppRegistry, Button } from 'react-native';
 import { ErrorBoundary } from './ErrorBoundary';
 import { keyMap } from './keyMap';
+import { AnimationBuilderTest } from './pages/AnimationBuilderTest';
 import { AnimationTest } from './pages/AnimationTest';
 import { ComponentTest } from './pages/ComponentTest';
 import { FlashListTest } from './pages/FlashListTest';
@@ -52,6 +53,7 @@ const CustomStack = createCustomNavigator();
 const screens = {
   Layout: 'layout',
   Animation: 'animation',
+  AnimationBuilder: 'animationBuilder',
   Library: 'library',
   Simple: 'simple',
   Components: 'components',
@@ -95,6 +97,11 @@ const MainApp = () => {
           onPress={() => nav.navigate('Animation')}
         />
         <Button
+          title="Animation Builder"
+          color={'rgba(55, 55, 22, 1)'}
+          onPress={() => nav.navigate('AnimationBuilder')}
+        />
+        <Button
           title="Library"
           color={'rgba(55, 55, 22, 1)'}
           onPress={() => nav.navigate('Library')}
@@ -133,6 +140,10 @@ const MainApp = () => {
         >
           <CustomStack.Screen name="Layout" component={LayoutTest} />
           <CustomStack.Screen name="Animation" component={AnimationTest} />
+          <CustomStack.Screen
+            name="AnimationBuilder"
+            component={AnimationBuilderTest}
+          />
           <CustomStack.Screen name="Library" component={LibraryTest} />
           <CustomStack.Screen name="Simple" component={SimpleTest} />
           <CustomStack.Screen name="Components" component={ComponentTest} />

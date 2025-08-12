@@ -8,7 +8,7 @@ type Props = {
 const View: FC<Props> = (props) => <lng-view {...props} />;
 
 export default {
-  title: '@plextv∕react-lightning/Examples/Render/Render To Texture',
+  title: 'react-lightning/Examples/Render/Render To Texture',
   component: View,
   argTypes: {
     rtt: {

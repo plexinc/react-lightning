@@ -25,6 +25,7 @@
     "@plextv/react-lightning-components": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox-lite": "workspace:*",
+    "@plextv/react-lightning-plugin-reanimated": "workspace:*",
     "@plextv/react-native-lightning": "workspace:*",
     "@plextv/react-native-lightning-components": "workspace:*",
     "@storybook/addon-essentials": "8.6.12",

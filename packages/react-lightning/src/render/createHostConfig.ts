@@ -162,7 +162,6 @@ export function createHostConfig(
     removeChild(parentInstance, child) {
       if (child) {
         parentInstance.removeChild(child);
-        child.destroy();
       }
     },
 
@@ -170,7 +169,9 @@ export function createHostConfig(
 
     removeChildFromContainer() {},
 
-    detachDeletedInstance() {},
+    detachDeletedInstance(instance) {
+      instance.destroy();
+    },
 
     commitUpdate(instance, updatePayload) {
       if (Object.keys(updatePayload).length === 0) {

@@ -32,7 +32,7 @@ const ExampleBox = () => {
 };
 
 export default {
-  title: 'Plugins/@plextv∕react-lightning-plugin-flexbox-lite/FlexBoxLite',
+  title: 'Plugins/react-lightning-plugin-flexbox-lite/FlexBoxLite',
   decorators: [
     (Story) => (
       <StorybookDecorator

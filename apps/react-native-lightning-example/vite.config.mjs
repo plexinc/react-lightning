@@ -33,6 +33,7 @@ const config = defineConfig((env) => ({
     __DEV__: JSON.stringify(
       (env.mode ?? process.env.NODE_ENV) !== 'production',
     ),
+    'process.env.NODE_ENV': JSON.stringify(env.mode),
   },
 }));
 

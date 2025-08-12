@@ -18,8 +18,7 @@ export class AnimatedValue<TType extends AnimationType = AnimationType> {
   public type: AnimationType;
   public value: AnimatableValue;
   public lngAnimation: AnimationSettings;
-
-  private _callback?: AnimationCallback;
+  public callback?: AnimationCallback;
 
   public constructor(
     type: TType,
@@ -30,7 +29,7 @@ export class AnimatedValue<TType extends AnimationType = AnimationType> {
     this.type = type;
     this.value = value;
     this.lngAnimation = this._getLightningAnimationSettings(config);
-    this._callback = callback;
+    this.callback = callback;
   }
 
   private _getLightningAnimationSettings(

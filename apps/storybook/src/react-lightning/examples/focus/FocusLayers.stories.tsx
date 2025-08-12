@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 import Button from '../../../components/Button';
 
 export default {
-  title: '@plextv∕react-lightning/Examples/Focus/Focus Layers',
+  title: 'react-lightning/Examples/Focus/Focus Layers',
   argTypes: {},
 } as Meta;
 

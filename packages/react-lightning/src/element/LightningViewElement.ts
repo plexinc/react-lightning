@@ -98,6 +98,9 @@ export class LightningViewElement<
   private _visible = true;
   private _hasStagedUpdates = false;
   private _eventEmitter = new EventEmitter<LightningElementEvents>();
+  private _deferTarget: LightningElement | null = null;
+  private _deferNodeRemovalHandler: ((destroy: () => void) => void) | null =
+    null;
 
   public get visible(): boolean {
     return this._visible;
@@ -174,11 +177,37 @@ export class LightningViewElement<
   public set style(_style: TStyleProps) {
     // If you set the style prop, it creates a new CSSStyleDeclaration object.
     // We'll create a new proxy and reset the styles.
-    this._styleProxy = new Proxy({}, this._createStyleProxyHandler());
+    this._styleProxy = new Proxy({}, this._styleProxyHandler);
 
     this.setProps({
       style: {},
     } as TProps);
+  }
+
+  /**
+   * If a handler here is set, the lightning node will not be immediately
+   * removed. The destroy function passed to the handler must be called to
+   * complete cleanup. This is to allow for things like animations to complete
+   * before the node is removed.
+   */
+  public set deferNodeRemoval(handler: ((destroy: () => void) => void) | null) {
+    this._deferNodeRemovalHandler = handler;
+
+    this.deferTarget = handler ? this : null;
+  }
+
+  public set deferTarget(value: LightningElement | null) {
+    this._deferTarget?.off('deferredDestroyComplete', this._destroyFinalize);
+    this._deferTarget = value;
+    this._deferTarget?.once('deferredDestroyComplete', this._destroyFinalize);
+
+    // Optimize child iteration
+    for (let i = 0; i < this.children.length; i++) {
+      const child = this.children[i];
+      if (child) {
+        child.deferTarget = value;
+      }
+    }
   }
 
   public get isTextElement() {
@@ -237,7 +266,7 @@ export class LightningViewElement<
 
     this._styleProxy = new Proxy(
       this.props.style ?? {},
-      this._createStyleProxyHandler(),
+      this._styleProxyHandler,
     );
 
     if (import.meta.env.DEV) {
@@ -267,10 +296,16 @@ export class LightningViewElement<
       this.children[i]?.destroy();
     }
 
-    this.parent = null;
+    this.parent?.removeChild(this);
     this.children.length = 0; // More efficient than reassigning
 
-    this._renderer.destroyNode(this.node);
+    if (this._deferNodeRemovalHandler) {
+      this._deferNodeRemovalHandler(() => {
+        this.emit('deferredDestroyComplete');
+      });
+    } else if (!this._deferTarget) {
+      this._renderer.destroyNode(this.node);
+    }
 
     delete LightningViewElement.allElements[this.id];
 
@@ -281,18 +316,19 @@ export class LightningViewElement<
     ...args: Parameters<IEventEmitter<LightningElementEvents>['on']>
   ): (() => void) => {
     this._eventEmitter.on(...args);
-
     return () => this._eventEmitter.off(...args);
   };
   public once = (
     ...args: Parameters<IEventEmitter<LightningElementEvents>['once']>
   ): (() => void) => {
     this._eventEmitter.once(...args);
-
     return () => this._eventEmitter.off(...args);
   };
-  public off = this._eventEmitter.off.bind(this._eventEmitter);
-  public emit = this._eventEmitter.emit.bind(this._eventEmitter);
+
+  public off: IEventEmitter<LightningElementEvents>['off'] = (...args) =>
+    this._eventEmitter.off(...args);
+  public emit: IEventEmitter<LightningElementEvents>['emit'] = (...args) =>
+    this._eventEmitter.emit(...args);
 
   public setLightningNode(node: RendererNode<LightningElement>) {
     const oldNode = this.node;
@@ -305,8 +341,11 @@ export class LightningViewElement<
 
     this.node = node;
 
-    for (const c of this.children) {
-      c.node.parent = node;
+    for (let i = 0; i < this.children.length; i++) {
+      const child = this.children[i];
+      if (child) {
+        child.node.parent = node;
+      }
     }
 
     oldNode.destroy();
@@ -334,6 +373,10 @@ export class LightningViewElement<
 
     child.parent = this;
 
+    if (this._deferTarget) {
+      child.deferTarget = this._deferTarget;
+    }
+
     this._eventEmitter.emit('childAdded', child, index);
   }
 
@@ -344,7 +387,9 @@ export class LightningViewElement<
       this.children.splice(index, 1);
     }
 
-    child.node.parent = null;
+    if (!child._deferTarget) {
+      child.node.parent = null;
+    }
 
     this._eventEmitter.emit('childRemoved', child, index);
   }
@@ -489,9 +534,10 @@ export class LightningViewElement<
     if (this._visible !== prevVisible) {
       this._eventEmitter.emit('visibilityChanged', this._visible);
 
-      this.children.forEach((child) => {
-        child.recalculateVisibility();
-      });
+      // Optimize child iteration - use traditional for loop for better performance
+      for (let i = 0; i < this.children.length; i++) {
+        this.children[i]?.recalculateVisibility();
+      }
     }
 
     const currentFocusable = this.focusable;
@@ -525,6 +571,12 @@ export class LightningViewElement<
   public toString(expanded?: boolean) {
     return `${this.constructor.name} id=${this.id}${this.focusable ? ' focusable' : ''}${this.visible ? ' visible' : ''}${expanded ? ` props=${JSON.stringify(this.props)}` : ''}`;
   }
+
+  private _destroyFinalize = () => {
+    this._deferTarget?.off('deferredDestroyComplete', this._destroyFinalize);
+    this.node.parent = null;
+    this._renderer.destroyNode(this.node);
+  };
 
   // Don't pass down the `data` prop to the lightning node.
   private _createNode({
@@ -591,7 +643,11 @@ export class LightningViewElement<
       this.recalculateVisibility();
     }
 
-    if (payload.style && Object.keys(payload.style).length) {
+    // Check for style changes before computing Object.keys()
+    const hasStyleChanges =
+      payload.style && Object.keys(payload.style).length > 0;
+
+    if (hasStyleChanges) {
       this._eventEmitter.emit(
         'stylesChanged',
         this.props.style as Partial<LightningElementStyle>,
@@ -729,20 +785,16 @@ export class LightningViewElement<
     const finalStyle: Partial<INodeProps> = {};
 
     if (style !== undefined && style !== null) {
-      const styleEntries = Object.entries(style);
-
-      for (let i = 0; i < styleEntries.length; i++) {
-        const [key, value] = styleEntries[i] as [
-          keyof TStyleProps,
-          TStyleProps[keyof TStyleProps],
-        ];
+      // Optimize by using for...in loop instead of Object.entries()
+      for (const key in style) {
+        const value = style[key as keyof TStyleProps];
 
         if (value == null) {
           continue;
         }
 
-        if (!initial && this.props.transition?.[key]) {
-          this.animateStyle(key, value);
+        if (!initial && this.props.transition?.[key as keyof TStyleProps]) {
+          this.animateStyle(key as keyof TStyleProps, value);
         } else if (initial && key === 'initialDimensions') {
           const rect = value as NonNullable<TStyleProps['initialDimensions']>;
 
@@ -824,37 +876,34 @@ export class LightningViewElement<
   }
 
   // Setting any styling applied to the style attribute on an element
-  private _createStyleProxyHandler = (): ProxyHandler<Partial<TStyleProps>> => {
-    return {
-      get: (target, prop) => {
-        if (prop === AllStyleProps) {
-          return target;
-        }
+  private _styleProxyHandler: ProxyHandler<Partial<TStyleProps>> = {
+    get: (target, prop) => {
+      if (prop === AllStyleProps) {
+        return target;
+      }
 
-        return (
-          this._stagedUpdates?.style?.[
-            prop as keyof LightningViewElementStyle
-          ] ?? target[prop as keyof TStyleProps]
-        );
-      },
-      set: (target, prop, value) => {
-        const key = prop as keyof TStyleProps;
+      return (
+        this._stagedUpdates?.style?.[prop as keyof LightningViewElementStyle] ??
+        target[prop as keyof TStyleProps]
+      );
+    },
+    set: (target, prop, value) => {
+      const key = prop as keyof TStyleProps;
 
-        if (this.style[key] === value) {
-          return true;
-        }
-
-        target[key] = value;
-
-        this.setProps({
-          style: {
-            [key]: value,
-          },
-        } as Partial<TProps>);
-
+      if (this.style[key] === value) {
         return true;
-      },
-    };
+      }
+
+      target[key] = value;
+
+      this.setProps({
+        style: {
+          [key]: value,
+        },
+      } as Partial<TProps>);
+
+      return true;
+    },
   };
 
   private _transformProps(props: Partial<TProps>) {

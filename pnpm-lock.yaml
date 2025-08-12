@@ -205,6 +205,9 @@ importers:
       '@plextv/react-lightning-plugin-flexbox-lite':
         specifier: workspace:*
         version: link:../../packages/plugin-flexbox-lite
+      '@plextv/react-lightning-plugin-reanimated':
+        specifier: workspace:*
+        version: link:../../packages/plugin-reanimated
       '@plextv/react-native-lightning':
         specifier: workspace:*
         version: link:../../packages/react-native-lightning

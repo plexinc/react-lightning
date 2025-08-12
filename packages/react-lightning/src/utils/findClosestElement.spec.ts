@@ -296,8 +296,8 @@ suite('findClosestElement', () => {
      */
     const elements = createLayout(500, 500, [
       { height: 48, width: 243, x: 160, y: 24 },
-      { height: 96, width: 820, x: 160, y: 88 },
-      { height: 64, width: 544, x: 160, y: 264 },
+      { height: 96, width: 450, x: 160, y: 88 },
+      { height: 64, width: 150, x: 160, y: 264 },
     ]);
     const tests: TestCases = [
       [1, Direction.Up, null],
