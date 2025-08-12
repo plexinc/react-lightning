@@ -66,8 +66,15 @@ function applyTransform(
 
         break;
       case 'scale':
-        applyStyle(style, transition, 'scaleX', value as AnimatedValue);
-        applyStyle(style, transition, 'scaleY', value as AnimatedValue);
+      case 'scaleX':
+      case 'scaleY':
+        if (key === 'scale' || key === 'scaleX') {
+          applyStyle(style, transition, 'scaleX', value as AnimatedValue);
+        }
+
+        if (key === 'scale' || key === 'scaleY') {
+          applyStyle(style, transition, 'scaleY', value as AnimatedValue);
+        }
         break;
       case 'rotate':
         applyStyle(style, transition, 'rotation', value as AnimatedValue);

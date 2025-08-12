@@ -177,7 +177,7 @@ export class LightningViewElement<
   public set style(_style: TStyleProps) {
     // If you set the style prop, it creates a new CSSStyleDeclaration object.
     // We'll create a new proxy and reset the styles.
-    this._styleProxy = new Proxy({}, this._createStyleProxyHandler());
+    this._styleProxy = new Proxy({}, this._styleProxyHandler);
 
     this.setProps({
       style: {},
@@ -201,8 +201,12 @@ export class LightningViewElement<
     this._deferTarget = value;
     this._deferTarget?.once('deferredDestroyComplete', this._destroyFinalize);
 
-    for (const child of this.children) {
-      child.deferTarget = value;
+    // Optimize child iteration
+    for (let i = 0; i < this.children.length; i++) {
+      const child = this.children[i];
+      if (child) {
+        child.deferTarget = value;
+      }
     }
   }
 
@@ -262,7 +266,7 @@ export class LightningViewElement<
 
     this._styleProxy = new Proxy(
       this.props.style ?? {},
-      this._createStyleProxyHandler(),
+      this._styleProxyHandler,
     );
 
     if (import.meta.env.DEV) {
@@ -337,8 +341,11 @@ export class LightningViewElement<
 
     this.node = node;
 
-    for (const c of this.children) {
-      c.node.parent = node;
+    for (let i = 0; i < this.children.length; i++) {
+      const child = this.children[i];
+      if (child) {
+        child.node.parent = node;
+      }
     }
 
     oldNode.destroy();
@@ -527,9 +534,10 @@ export class LightningViewElement<
     if (this._visible !== prevVisible) {
       this._eventEmitter.emit('visibilityChanged', this._visible);
 
-      this.children.forEach((child) => {
-        child.recalculateVisibility();
-      });
+      // Optimize child iteration - use traditional for loop for better performance
+      for (let i = 0; i < this.children.length; i++) {
+        this.children[i]?.recalculateVisibility();
+      }
     }
 
     const currentFocusable = this.focusable;
@@ -635,7 +643,11 @@ export class LightningViewElement<
       this.recalculateVisibility();
     }
 
-    if (payload.style && Object.keys(payload.style).length) {
+    // Check for style changes before computing Object.keys()
+    const hasStyleChanges =
+      payload.style && Object.keys(payload.style).length > 0;
+
+    if (hasStyleChanges) {
       this._eventEmitter.emit(
         'stylesChanged',
         this.props.style as Partial<LightningElementStyle>,
@@ -773,20 +785,16 @@ export class LightningViewElement<
     const finalStyle: Partial<INodeProps> = {};
 
     if (style !== undefined && style !== null) {
-      const styleEntries = Object.entries(style);
-
-      for (let i = 0; i < styleEntries.length; i++) {
-        const [key, value] = styleEntries[i] as [
-          keyof TStyleProps,
-          TStyleProps[keyof TStyleProps],
-        ];
+      // Optimize by using for...in loop instead of Object.entries()
+      for (const key in style) {
+        const value = style[key as keyof TStyleProps];
 
         if (value == null) {
           continue;
         }
 
-        if (!initial && this.props.transition?.[key]) {
-          this.animateStyle(key, value);
+        if (!initial && this.props.transition?.[key as keyof TStyleProps]) {
+          this.animateStyle(key as keyof TStyleProps, value);
         } else if (initial && key === 'initialDimensions') {
           const rect = value as NonNullable<TStyleProps['initialDimensions']>;
 
@@ -868,37 +876,34 @@ export class LightningViewElement<
   }
 
   // Setting any styling applied to the style attribute on an element
-  private _createStyleProxyHandler = (): ProxyHandler<Partial<TStyleProps>> => {
-    return {
-      get: (target, prop) => {
-        if (prop === AllStyleProps) {
-          return target;
-        }
+  private _styleProxyHandler: ProxyHandler<Partial<TStyleProps>> = {
+    get: (target, prop) => {
+      if (prop === AllStyleProps) {
+        return target;
+      }
 
-        return (
-          this._stagedUpdates?.style?.[
-            prop as keyof LightningViewElementStyle
-          ] ?? target[prop as keyof TStyleProps]
-        );
-      },
-      set: (target, prop, value) => {
-        const key = prop as keyof TStyleProps;
+      return (
+        this._stagedUpdates?.style?.[prop as keyof LightningViewElementStyle] ??
+        target[prop as keyof TStyleProps]
+      );
+    },
+    set: (target, prop, value) => {
+      const key = prop as keyof TStyleProps;
 
-        if (this.style[key] === value) {
-          return true;
-        }
-
-        target[key] = value;
-
-        this.setProps({
-          style: {
-            [key]: value,
-          },
-        } as Partial<TProps>);
-
+      if (this.style[key] === value) {
         return true;
-      },
-    };
+      }
+
+      target[key] = value;
+
+      this.setProps({
+        style: {
+          [key]: value,
+        },
+      } as Partial<TProps>);
+
+      return true;
+    },
   };
 
   private _transformProps(props: Partial<TProps>) {
