@@ -1,5 +1,18 @@
 # @plextv/react-native-lightning-example
 
+## 0.3.13
+
+### Patch Changes
+
+- 2968a78: Add support for reanimated animation builders
+- Updated dependencies [2968a78]
+  - @plextv/react-native-lightning@0.3.10
+  - @plextv/react-lightning-plugin-reanimated@0.3.3
+  - @plextv/react-lightning@0.3.8
+  - @plextv/react-lightning-plugin-flexbox@0.3.6
+  - @plextv/react-lightning-components@0.3.1
+  - @plextv/react-native-lightning-components@0.3.2
+
 ## 0.3.12
 
 ### Patch Changes

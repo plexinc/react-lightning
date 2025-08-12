@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.8
+
+### Patch Changes
+
+- 2968a78: Add support for reanimated animation builders
+
 ## 0.3.7
 
 ### Patch Changes
