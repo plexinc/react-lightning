@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.9
+
+### Patch Changes
+
+- 6425981: (focus) Do not pass in element to pushLayer
+
 ## 0.3.8
 
 ### Patch Changes
