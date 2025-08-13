@@ -281,12 +281,30 @@ describe('FocusManager', () => {
       expect(focusManager.focusPath).toEqual([mainElement]);
 
       // Push new layer with modal
-      focusManager.pushLayer(modalElement);
+      focusManager.pushLayer();
+      focusManager.addElement(modalElement);
       expect(focusManager.focusPath).toEqual([modalElement]);
 
       // Main element should still be focused on its layer, but modal takes precedence
       expect(mainElement.focused).toBe(false);
       expect(modalElement.focused).toBe(true);
+    });
+
+    it("should create a new layer when pushLayer is called, even if the layer doesn't have any elements added", () => {
+      const mainElement = createMockElement(1, 'main');
+
+      // Add element to main layer
+      focusManager.addElement(mainElement, null, { autoFocus: true });
+      expect(focusManager.focusPath).toEqual([mainElement]);
+
+      // Push new layer with modal
+      focusManager.pushLayer();
+      expect(focusManager.focusPath.length).toEqual(0);
+      expect(mainElement.focused).toBe(false);
+
+      focusManager.popLayer();
+      expect(focusManager.focusPath.length).toEqual(1);
+      expect(mainElement.focused).toBe(true);
     });
 
     it('should maintain separate focus paths for different layers', () => {
@@ -299,7 +317,8 @@ describe('FocusManager', () => {
       expect(focusManager.focusPath).toEqual([mainElement]);
 
       // Push modal layer
-      focusManager.pushLayer(modalElement);
+      focusManager.pushLayer();
+      focusManager.addElement(modalElement);
       expect(focusManager.focusPath).toEqual([modalElement]);
 
       // Add child to modal
@@ -316,7 +335,8 @@ describe('FocusManager', () => {
       expect(focusManager.focusPath).toEqual([mainElement]);
 
       // Push modal layer
-      focusManager.pushLayer(modalElement);
+      focusManager.pushLayer();
+      focusManager.addElement(modalElement);
       expect(focusManager.focusPath).toEqual([modalElement]);
 
       // Try to focus element from main layer - should be blocked
@@ -339,7 +359,8 @@ describe('FocusManager', () => {
       expect(mainElement.focused).toBe(true);
 
       // Push modal layer
-      focusManager.pushLayer(modalElement);
+      focusManager.pushLayer();
+      focusManager.addElement(modalElement);
       expect(focusManager.focusPath).toEqual([modalElement]);
       expect(mainElement.focused).toBe(false);
       expect(modalElement.focused).toBe(true);
@@ -360,11 +381,13 @@ describe('FocusManager', () => {
       focusManager.addElement(mainElement, null, { autoFocus: true });
 
       // Push first modal
-      focusManager.pushLayer(modal1Element);
+      focusManager.pushLayer();
+      focusManager.addElement(modal1Element);
       expect(focusManager.focusPath).toEqual([modal1Element]);
 
       // Push second modal
-      focusManager.pushLayer(modal2Element);
+      focusManager.pushLayer();
+      focusManager.addElement(modal2Element);
       expect(focusManager.focusPath).toEqual([modal2Element]);
 
       // Pop second modal
@@ -399,9 +422,12 @@ describe('FocusManager', () => {
       focusManager.addElement(mainElement, null, { autoFocus: true });
 
       // Push multiple modals
-      focusManager.pushLayer(modal1Element);
-      focusManager.pushLayer(modal2Element);
-      focusManager.pushLayer(modal3Element);
+      focusManager.pushLayer();
+      focusManager.addElement(modal1Element);
+      focusManager.pushLayer();
+      focusManager.addElement(modal2Element);
+      focusManager.pushLayer();
+      focusManager.addElement(modal3Element);
       expect(focusManager.focusPath).toEqual([modal3Element]);
 
       // Pop all layers
@@ -426,9 +452,10 @@ describe('FocusManager', () => {
       focusManager.addElement(mainElement, null, { autoFocus: true });
 
       // Push modal layer
-      focusManager.pushLayer(modalElement);
+      focusManager.pushLayer();
+      focusManager.addElement(modalElement);
       expect(modalOpenedSpy).toHaveBeenCalledWith(
-        modalElement,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -438,7 +465,7 @@ describe('FocusManager', () => {
       // Pop modal layer
       focusManager.popLayer();
       expect(modalClosedSpy).toHaveBeenCalledWith(
-        modalElement,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -459,7 +486,8 @@ describe('FocusManager', () => {
       expect(focusManager.focusPath).toEqual([mainParent, mainChild]);
 
       // Push modal with hierarchy
-      focusManager.pushLayer(modalParent);
+      focusManager.pushLayer();
+      focusManager.addElement(modalParent);
       focusManager.addElement(modalChild1, modalParent, { autoFocus: true });
       focusManager.addElement(modalChild2, modalParent, { autoFocus: false });
       expect(focusManager.focusPath).toEqual([modalParent, modalChild1]);
@@ -483,7 +511,8 @@ describe('FocusManager', () => {
       focusManager.addElement(mainElement, null, { autoFocus: true });
 
       // Push modal with children
-      focusManager.pushLayer(modalParent);
+      focusManager.pushLayer();
+      focusManager.addElement(modalParent);
       focusManager.addElement(modalChild1, modalParent, { autoFocus: true });
       focusManager.addElement(modalChild2, modalParent, { autoFocus: false });
       expect(focusManager.focusPath).toEqual([modalParent, modalChild1]);

@@ -14,13 +14,7 @@ export default {
   argTypes: {},
 } as Meta;
 
-const Modal = ({
-  visible,
-  dismissModal,
-}: {
-  visible: boolean;
-  dismissModal: () => void;
-}) => {
+const Modal = ({ dismissModal }: { dismissModal: () => void }) => {
   const focusManager = useFocusManager();
   const ref = useRef<LightningElement>(null);
   const handleKeyPress = (event: KeyEvent) => {
@@ -33,22 +27,18 @@ const Modal = ({
   };
 
   useEffect(() => {
-    if (visible && ref.current) {
-      focusManager.pushLayer(ref.current);
-    }
+    focusManager.pushLayer();
 
     return () => {
       focusManager.popLayer();
     };
-  }, [visible, focusManager]);
+  }, [focusManager]);
 
   return (
     <Column
       ref={ref}
       focusable
       style={{
-        // Alpha of 0 will hide the modal, but also prevent capturing focus
-        alpha: visible ? 1 : 0,
         color: 0xffffff05,
         border: { color: 0xff0000ff, width: 2 },
         width: 600,
@@ -89,10 +79,9 @@ export const ModalExample = () => {
           <Button onKeyPress={handleKeyPress}>Open Modal</Button>
           <Button>---</Button>
         </Row>
-        <Modal
-          visible={modalVisible}
-          dismissModal={() => setModalVisible(false)}
-        />
+        {modalVisible ? (
+          <Modal dismissModal={() => setModalVisible(false)} />
+        ) : null}
       </Column>
     </FocusGroup>
   );

@@ -51,10 +51,6 @@ export class FocusKeyManager<T extends LightningElement> {
     const focusNode = this._focusManager.getFocusNode(element);
 
     if (!focusNode) {
-      console.warn(
-        'FocusKeyManager: No focus node found for element. Was this element added to the Focus Manager?',
-        element,
-      );
       return true;
     }
 

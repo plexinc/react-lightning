@@ -32,8 +32,8 @@ type FocusEvents<T> = {
   blurred: (target: T) => void;
   focused: (target: T) => void;
   focusPathChanged: (focusPath: T[]) => void;
-  layerAdded: (element: T) => void;
-  layerRemoved: (element: T) => void;
+  layerAdded: () => void;
+  layerRemoved: () => void;
 };
 
 function isRootNode<T>(node: FocusNode<T> | RootNode<T>): node is RootNode<T> {
@@ -252,7 +252,7 @@ export class FocusManager<
     }
   }
 
-  public pushLayer(rootElement: T): void {
+  public pushLayer(): void {
     // Store the current layer before creating new one
     const previousLayer = this.activeLayer;
 
@@ -278,11 +278,9 @@ export class FocusManager<
 
     this._focusStack.push(newLayer);
 
-    this.addElement(rootElement);
-
     this._recalculateFocusPath();
 
-    this._eventEmitter.emit('layerAdded', rootElement);
+    this._eventEmitter.emit('layerAdded');
   }
 
   public popLayer(): void {
@@ -293,7 +291,6 @@ export class FocusManager<
 
     // Get current layer info before popping
     const currentLayer = this.activeLayer;
-    const rootElement = currentLayer.root.children[0]?.element;
 
     // Blur all elements in current layer
     for (const element of currentLayer.focusPath) {
@@ -306,9 +303,7 @@ export class FocusManager<
     // biome-ignore lint/style/noNonNullAssertion: Already checked above
     this._focusStack.pop()!;
 
-    if (rootElement) {
-      this._eventEmitter.emit('layerRemoved', rootElement);
-    }
+    this._eventEmitter.emit('layerRemoved');
 
     // Now restore focus to the previous layer (which is now active)
     const restoredLayer = this.activeLayer;
