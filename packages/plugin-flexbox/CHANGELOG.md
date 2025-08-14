@@ -1,5 +1,11 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.3.7
+
+### Patch Changes
+
+- 81db081: (flexbox) Prevent unserializable values being passed to worker"
+
 ## 0.3.6
 
 ### Patch Changes
