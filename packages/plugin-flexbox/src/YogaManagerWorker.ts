@@ -2,6 +2,7 @@ import type { LightningElementStyle } from '@plextv/react-lightning';
 import { EventEmitter } from 'tseep';
 import { NodeOperations } from './types/NodeOperations';
 import { SimpleDataView } from './util/SimpleDataView';
+import { toSerializableValue } from './util/toSerializableValue';
 import Worker from './worker?worker&inline';
 import type { YogaManager, YogaManagerEvents } from './YogaManager';
 
@@ -64,8 +65,6 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
   let _sizeRequestPromise: Promise<void> | null = null;
 
   function flushSendStyles() {
-    const needsRender = _needsRender;
-
     if (Object.keys(_stylesToSend).length === 0) {
       return;
     }
@@ -76,7 +75,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
 
     worker.postMessage({
       method: 'applyStyles',
-      args: [_stylesToSend, !needsRender],
+      args: [_stylesToSend, !_needsRender],
     });
 
     _needsRender = false;
@@ -92,14 +91,23 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     skipRender = false,
   ) {
     if (style) {
-      if (!_stylesToSend[elementId]) {
+      let styleToSend = _stylesToSend[elementId];
+
+      if (!styleToSend) {
         _numStylesToSend++;
+        styleToSend = {};
+        _stylesToSend[elementId] = styleToSend;
       }
 
-      _stylesToSend[elementId] = {
-        ..._stylesToSend[elementId],
-        ...style,
-      };
+      // Add style props if they're serializable
+      for (const [key, value] of Object.entries(style)) {
+        const serializedValue = toSerializableValue(key, value);
+
+        if (serializedValue != null) {
+          // @ts-expect-error
+          styleToSend[key] = serializedValue;
+        }
+      }
     } else {
       delete _stylesToSend[elementId];
       _numStylesToSend--;
