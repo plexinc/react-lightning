@@ -1,5 +1,12 @@
 # @plextv/react-native-lightning-example
 
+## 0.3.16
+
+### Patch Changes
+
+- @plextv/react-lightning-plugin-reanimated@0.3.3
+- @plextv/react-native-lightning@0.3.12
+
 ## 0.3.15
 
 ### Patch Changes

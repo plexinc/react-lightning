@@ -1,5 +1,11 @@
 # @plextv/react-lightning-plugin-css-transform
 
+## 0.3.3
+
+### Patch Changes
+
+- 021c531: fix(plugin-css): Fix a bug where zero value for transforms weren't working properly
+
 ## 0.3.2
 
 ### Patch Changes
