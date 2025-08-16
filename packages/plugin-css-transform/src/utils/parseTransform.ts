@@ -28,7 +28,7 @@ export function parseTransform(
     >;
 
     for (const t of Object.keys(originalTranform)) {
-      if (!originalTranform[t]) {
+      if (originalTranform[t] == null) {
         continue;
       }
 
