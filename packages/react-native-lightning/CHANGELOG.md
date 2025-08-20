@@ -1,5 +1,11 @@
 # @plextv/react-native-lightning
 
+## 0.3.14
+
+### Patch Changes
+
+- 9b7fa5e: fix(react-native-lightning): Fix package publishing issue
+
 ## 0.3.13
 
 ### Patch Changes
