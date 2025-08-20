@@ -1,5 +1,12 @@
 # @plextv/react-lightning-storybook
 
+## 0.3.18
+
+### Patch Changes
+
+- Updated dependencies [9b7fa5e]
+  - @plextv/react-native-lightning@0.3.14
+
 ## 0.3.17
 
 ### Patch Changes
