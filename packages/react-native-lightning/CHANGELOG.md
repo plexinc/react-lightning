@@ -1,5 +1,11 @@
 # @plextv/react-native-lightning
 
+## 0.3.13
+
+### Patch Changes
+
+- 1c600e1: fix(react-native-lightning): Don't set root in react-native.config
+
 ## 0.3.12
 
 ### Patch Changes
