@@ -22,7 +22,6 @@ module.exports = {
         const { createServer } = await import('vite');
 
         const server = await createServer({
-          root: config.root,
           configFile: getConfigFile(config, options),
         });
 
@@ -40,7 +39,6 @@ module.exports = {
         const { build } = await import('vite');
 
         await build({
-          root: config.root,
           configFile: getConfigFile(config, options),
         });
       },
@@ -53,7 +51,6 @@ module.exports = {
         const { preview } = await import('vite');
 
         const server = await preview({
-          root: config.root,
           configFile: getConfigFile(config, options),
         });
 
