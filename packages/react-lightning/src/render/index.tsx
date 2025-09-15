@@ -4,7 +4,6 @@ import {
   type RendererMainSettings,
   type Stage,
   type TextureMap,
-  type TrFontFace,
 } from '@lightningjs/renderer';
 import {
   CanvasCoreRenderer,
@@ -33,6 +32,9 @@ declare global {
 }
 
 type ShaderMap = string | Record<string, CoreShaderType>;
+type FontInfo = {
+  type: Parameters<Stage['loadFont']>[0];
+} & Parameters<Stage['loadFont']>[1];
 
 export type RenderOptions = Omit<
   Partial<RendererMainSettings>,
@@ -40,7 +42,7 @@ export type RenderOptions = Omit<
 > & {
   useCanvas?: boolean;
   includeCanvasFontRenderer?: boolean;
-  fonts: (stage: Stage) => TrFontFace[];
+  fonts: FontInfo[];
   isPrimaryRenderer?: boolean;
   plugins?: Plugin<LightningElement>[];
   debug?: boolean;
@@ -70,7 +72,7 @@ const defaultOptions: Partial<RenderOptions> = {
   clearColor: 0x000000ff,
   deviceLogicalPixelRatio: 1,
   devicePhysicalPixelRatio: 1,
-  fonts: () => [],
+  fonts: [],
   plugins: [],
   isPrimaryRenderer: true,
   debug: false,
@@ -126,8 +128,10 @@ export async function createRoot(
     };
   }
 
-  for (const font of fonts(renderer.stage)) {
-    renderer.stage.fontManager.addFontFace(font);
+  for (const font of fonts) {
+    const { type, ...options } = font;
+
+    renderer.stage.loadFont(type, options);
   }
 
   if (finalOptions.shaders) {

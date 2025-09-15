@@ -1,6 +1,6 @@
 import { Row } from '@plextv/react-lightning-components';
 import flexboxLitePlugin from '@plextv/react-lightning-plugin-flexbox-lite';
-import type { Meta } from '@storybook/react';
+import type { Meta } from '@storybook/react-vite';
 import { StorybookDecorator } from '../components/StorybookDecorator';
 import {
   ColorPalette,
@@ -16,7 +16,7 @@ type RowLayoutProps = {
 const ExampleBox = () => {
   const color = ColorPalette[Math.floor(Math.random() * ColorPalette.length)];
   return (
-    <lng-view style={{ width: 150, height: 150, color }}>
+    <lng-view style={{ w: 150, h: 150, color }}>
       <lng-text
         style={{
           fontSize: 20,
@@ -78,8 +78,8 @@ export const FlexStart = ({ flexType }: RowLayoutProps) => {
       style={{
         justifyContent: flexType ?? FlexTypes.FLEX_START,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >
@@ -101,8 +101,8 @@ export const FlexEnd = ({ flexType }: RowLayoutProps) => {
       style={{
         justifyContent: flexType ?? FlexTypes.FLEX_END,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >
@@ -124,8 +124,8 @@ export const SpaceEvenly = ({ flexType }: RowLayoutProps) => {
       style={{
         justifyContent: flexType ?? FlexTypes.SPACE_EVENLY,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >
@@ -147,8 +147,8 @@ export const SpaceBetween = ({ flexType }: RowLayoutProps) => {
       style={{
         justifyContent: flexType ?? FlexTypes.SPACE_BETWEEN,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >
@@ -170,8 +170,8 @@ export const SpaceAround = ({ flexType }: RowLayoutProps) => {
       style={{
         justifyContent: flexType ?? FlexTypes.SPACE_AROUND,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >

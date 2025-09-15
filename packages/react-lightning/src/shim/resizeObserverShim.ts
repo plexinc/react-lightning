@@ -44,27 +44,27 @@ class LightningResizeObserver extends window.ResizeObserver {
         return {
           borderBoxSize: [
             {
-              blockSize: dimensions.height,
-              inlineSize: dimensions.width,
+              blockSize: dimensions.h,
+              inlineSize: dimensions.w,
             },
           ],
           contentBoxSize: [
             {
-              blockSize: dimensions.height,
-              inlineSize: dimensions.width,
+              blockSize: dimensions.h,
+              inlineSize: dimensions.w,
             },
           ],
           devicePixelContentBoxSize: [
             {
-              blockSize: dimensions.height,
-              inlineSize: dimensions.width,
+              blockSize: dimensions.h,
+              inlineSize: dimensions.w,
             },
           ],
           contentRect: new DOMRectReadOnly(
             dimensions.x,
             dimensions.y,
-            dimensions.width,
-            dimensions.height,
+            dimensions.w,
+            dimensions.h,
           ),
           target: target as unknown as Element,
         };

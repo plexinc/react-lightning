@@ -1,6 +1,6 @@
 import { Row } from '@plextv/react-lightning-components';
 import FlashList from '@plextv/react-native-lightning-components/lists/FlashList';
-import type { Meta } from '@storybook/react';
+import type { Meta } from '@storybook/react-vite';
 import { useCallback, useRef } from 'react';
 import { View } from 'react-native';
 import ScrollItem from '../../components/ScrollItem';

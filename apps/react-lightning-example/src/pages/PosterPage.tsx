@@ -5,8 +5,8 @@ export const PosterPage = () => {
   return (
     <Column
       style={{
-        width: 1920,
-        height: 1080,
+        w: 1920,
+        h: 1080,
         justifyContent: 'space-evenly',
         alignItems: 'center',
       }}

@@ -14,8 +14,8 @@ const AnimatedImage = () => {
 
   useEffect(() => {
     const timeout = setInterval(() => {
-      setX(randomInt(1670 - (ref.current?.style.width ?? 0)));
-      setY(randomInt(1080 - (ref.current?.style.height ?? 0)));
+      setX(randomInt(1670 - (ref.current?.style.w ?? 0)));
+      setY(randomInt(1080 - (ref.current?.style.h ?? 0)));
     }, duration);
 
     return () => clearInterval(timeout);
@@ -25,8 +25,8 @@ const AnimatedImage = () => {
     <lng-view
       style={{
         position: 'absolute',
-        width: 300,
-        height: 300,
+        w: 300,
+        h: 300,
         x,
         y,
       }}
@@ -38,7 +38,7 @@ const AnimatedImage = () => {
       <lng-image
         ref={ref}
         src={`https://picsum.photos/200/300?seed=${seed}`}
-        style={{ width: 200, height: 300, borderRadius: 8 }}
+        style={{ w: 200, h: 300, borderRadius: 8 }}
       />
 
       <lng-text style={{ y: 300 }}>Hello Darkness My Old Frnd</lng-text>

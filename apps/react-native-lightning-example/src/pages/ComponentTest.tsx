@@ -21,7 +21,7 @@ const ComponentTest = () => {
 
   return (
     <Row focusable style={{ gap: 30 }}>
-      <Column focusable style={{ width: 700 }}>
+      <Column focusable style={{ w: 700 }}>
         <Text>ScrollView</Text>
         <ScrollView
           ref={ref as RefObject<ScrollView>}

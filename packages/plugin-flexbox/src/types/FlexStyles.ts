@@ -59,8 +59,8 @@ export type FlexLightningBaseElementStyle = {
   paddingVertical?: DimensionValue;
 
   aspectRatio?: number;
-  maxHeight?: DimensionValue;
-  maxWidth?: DimensionValue;
+  maxHeight?: number;
+  maxWidth?: number;
   minHeight?: DimensionValue;
   minWidth?: DimensionValue;
 

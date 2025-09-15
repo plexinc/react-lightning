@@ -40,8 +40,8 @@ const CellContainer = forwardRef<LightningElement, CellContainerProps>(
             initialDimensions: {
               x: lngStyle?.x ?? 0,
               y: lngStyle?.y ?? 0,
-              width: lngStyle?.width ?? estimatedSize ?? 2,
-              height: lngStyle?.height ?? estimatedSize ?? 2,
+              w: lngStyle?.w ?? estimatedSize ?? 2,
+              h: lngStyle?.h ?? estimatedSize ?? 2,
             },
           },
         ]}

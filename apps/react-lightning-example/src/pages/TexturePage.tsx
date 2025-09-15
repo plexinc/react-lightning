@@ -11,8 +11,8 @@ export const TexturePage = () => {
           position: 'absolute',
           top: 0,
           left: 0,
-          width: 1920,
-          height: 1080,
+          w: 1920,
+          h: 1080,
           justifyContent: 'center',
           alignItems: 'center',
         }}
@@ -21,12 +21,12 @@ export const TexturePage = () => {
           texture={{
             type: 'MyCustomTexture',
             props: {
-              percent: 5,
-              width: 300,
-              height: 300,
+              percent: 55,
+              w: 300,
+              h: 300,
             },
           }}
-          style={{ width: 300, height: 300, color: 0xe5a00dff }}
+          style={{ w: 300, h: 300, color: 0xe5a00dff }}
         />
       </Column>
     </>

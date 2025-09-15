@@ -25,8 +25,8 @@ const Poster: FC<Props> = ({ title, subtitle, seed, onFocus }) => {
       ref={ref}
       style={{
         clipping: true,
-        width: 250,
-        height: 400,
+        w: 250,
+        h: 400,
         scale: focused ? 1.3 : 1,
       }}
       transition={{

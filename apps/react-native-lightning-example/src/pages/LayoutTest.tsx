@@ -22,16 +22,16 @@ const LayoutTest = () => {
       focusable
       style={{
         justifyContent: 'space-between',
-        width: 1670,
-        height: 1080,
+        w: 1670,
+        h: 1080,
       }}
     >
       <Row
         focusable
         style={{
           justifyContent: 'space-between',
-          width: 1670,
-          height: 300,
+          w: 1670,
+          h: 300,
         }}
       >
         <RandomImage />
@@ -41,8 +41,8 @@ const LayoutTest = () => {
         focusable
         style={{
           justifyContent: 'center',
-          width: 1670,
-          height: 300,
+          w: 1670,
+          h: 300,
         }}
       >
         <RandomImage />
@@ -54,8 +54,8 @@ const LayoutTest = () => {
         focusable
         style={{
           justifyContent: 'space-evenly',
-          width: 1670,
-          height: 300,
+          w: 1670,
+          h: 300,
         }}
       >
         <RandomImage />

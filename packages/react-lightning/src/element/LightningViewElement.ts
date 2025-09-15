@@ -442,11 +442,11 @@ export class LightningViewElement<
       y: y,
       left: x,
       top: y,
-      right: x + this.node.width,
-      bottom: y + this.node.height,
+      right: x + this.node.w,
+      bottom: y + this.node.h,
       // TODO: Include padding + border in size
-      width: this.node.width,
-      height: this.node.height,
+      w: this.node.w,
+      h: this.node.h,
     };
   }
 
@@ -505,6 +505,13 @@ export class LightningViewElement<
         key as keyof TStyleProps,
         value as unknown as TStyleProps[keyof TStyleProps],
       );
+      // Map width and height to w and h. Even though typings only allow w/h,
+      // it's possible some weird combination of JSX props might enable the
+      // width/height props to be set, so this ensures they still work.
+    } else if ((key as string) === 'width' && value != null) {
+      this.node.w = value as number;
+    } else if ((key as string) === 'height' && value != null) {
+      this.node.h = value as number;
     } else {
       this.node[key] = value;
     }
@@ -516,8 +523,8 @@ export class LightningViewElement<
     const dimensions = {
       x: this.node.x,
       y: this.node.y,
-      height: this.node.height,
-      width: this.node.width,
+      h: this.node.h,
+      w: this.node.w,
     };
 
     this.emit('layout', dimensions);
@@ -798,11 +805,11 @@ export class LightningViewElement<
         } else if (initial && key === 'initialDimensions') {
           const rect = value as NonNullable<TStyleProps['initialDimensions']>;
 
-          if (!style.width) {
-            finalStyle.width = rect.width;
+          if (!style.w) {
+            finalStyle.w = rect.w;
           }
-          if (!style.height) {
-            finalStyle.height = rect.height;
+          if (!style.h) {
+            finalStyle.h = rect.h;
           }
           if (!style.x) {
             finalStyle.x = rect.x;

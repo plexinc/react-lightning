@@ -23,10 +23,10 @@ export const FocusableImage = forwardRef<LightningElement, FocusableImageProps>(
     return (
       <lng-image
         ref={combinedRef}
-        src={`https://picsum.photos/${style?.width ?? 100}/${style?.height ?? 150}`}
+        src={`https://picsum.photos/${style?.w ?? 100}/${style?.h ?? 150}`}
         style={{
-          width: style?.width ?? 100,
-          height: style?.height ?? 150,
+          w: style?.w ?? 100,
+          h: style?.h ?? 150,
           borderRadius: 8,
           alpha: disable ? 0.5 : hidden ? 0 : 1,
           scale: focused ? 1.1 : 1,

@@ -19,7 +19,7 @@ export const AnimationPage = () => {
         <lng-text style={{ color: 0xffffffff, fontSize: 50 }}>
           Poster Count: {numPosters}
         </lng-text>
-        <Column focusable style={{ width: 200, gap: 10 }}>
+        <Column focusable style={{ w: 200, gap: 10 }}>
           <Button onPress={addPoster}>Add image</Button>
           <Button onPress={removePoster}>Remove image</Button>
         </Column>

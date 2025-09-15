@@ -49,10 +49,13 @@
     "yoga-layout": "3.2.1"
   },
   "devDependencies": {
+    "@babel/plugin-transform-runtime": "^7.28.3",
     "@plextv/react-lightning": "workspace:*",
-    "@repo/vite-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/vite-config": "workspace:*",
+    "@rollup/plugin-babel": "^6.0.4",
     "copyfiles": "2.4.1",
+    "core-js": "^3.45.1",
     "react": "18.3.1"
   },
   "peerDependencies": {
@@ -61,5 +64,8 @@
   },
   "volta": {
     "extends": "../../package.json"
-  }
+  },
+  "browserslist": [
+    "chrome 56"
+  ]
 }

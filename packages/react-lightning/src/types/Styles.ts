@@ -54,7 +54,6 @@ export interface LightningTextElementStyle
   text?: string;
   textAlign?: 'center' | 'left' | 'right';
   textOverflow?: 'ellipsis' | 'clip';
-  contain?: 'both' | 'none' | 'width';
   scrollable?: boolean;
   scrollY?: number;
   offsetY?: number;

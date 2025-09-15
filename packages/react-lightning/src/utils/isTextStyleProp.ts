@@ -11,7 +11,8 @@ const textProps = {
 
   text: true,
   textAlign: true,
-  contain: true,
+  maxWidth: true,
+  maxHeight: true,
   scrollable: true,
   scrollY: true,
   offsetY: true,

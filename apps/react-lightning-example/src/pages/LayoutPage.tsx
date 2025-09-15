@@ -25,8 +25,8 @@ export const LayoutPage = () => {
     <Column
       style={{
         justifyContent: 'space-between',
-        width: 1920,
-        height: 1080,
+        w: 1920,
+        h: 1080,
       }}
     >
       <Row

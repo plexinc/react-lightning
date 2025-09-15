@@ -1,11 +1,16 @@
 import type { Rect } from '@plextv/react-lightning';
 import type { LayoutChangeEvent } from 'react-native';
 
-export function createLayoutEvent(dimensions: Rect): LayoutChangeEvent {
+export function createLayoutEvent({ x, y, w, h }: Rect): LayoutChangeEvent {
   return {
     // $FlowFixMe
     nativeEvent: {
-      layout: dimensions,
+      layout: {
+        width: w,
+        height: h,
+        x,
+        y,
+      },
     },
     bubbles: false,
     cancelable: false,

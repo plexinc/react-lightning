@@ -103,20 +103,20 @@ function buildTransitions(
     return null;
   }
 
-  const { x, y, width, height, globalX, globalY } = layout || {
+  const { x, y, w, h, globalX, globalY } = layout || {
     x: 0,
     y: 0,
     globalX: 0,
     globalY: 0,
-    width: 0,
-    height: 0,
+    w: 0,
+    h: 0,
   };
 
   const animation = builder({
     targetOriginX: x,
     targetOriginY: y,
-    targetWidth: width,
-    targetHeight: height,
+    targetWidth: w,
+    targetHeight: h,
     targetGlobalOriginX: globalX,
     targetGlobalOriginY: globalY,
     targetBorderRadius: 0,
@@ -124,8 +124,8 @@ function buildTransitions(
     windowHeight: 1080,
     currentOriginX: x,
     currentOriginY: y,
-    currentWidth: width,
-    currentHeight: height,
+    currentWidth: w,
+    currentHeight: h,
     currentGlobalOriginX: globalX,
     currentGlobalOriginY: globalY,
     currentBorderRadius: 0,
@@ -282,7 +282,7 @@ export function createAnimatedComponent<TProps extends {}>(
 
       const el = this._ref;
 
-      this._ref.measure((x, y, width, height) => {
+      this._ref.measure((x, y, w, h) => {
         const absRect = this._ref?.getBoundingClientRect();
 
         const layoutAnimation = buildTransitions(builder, {
@@ -290,8 +290,8 @@ export function createAnimatedComponent<TProps extends {}>(
           y,
           globalX: absRect?.left || 0,
           globalY: absRect?.top || 0,
-          width,
-          height,
+          w,
+          h,
         });
 
         if (!layoutAnimation) {

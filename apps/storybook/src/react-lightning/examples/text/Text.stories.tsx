@@ -1,6 +1,6 @@
 import type { ITextNode } from '@lightningjs/renderer';
 import type { LightningTextElementProps } from '@plextv/react-lightning';
-import type { Meta } from '@storybook/react';
+import type { Meta } from '@storybook/react-vite';
 import {
   DefaultStoryHeight,
   DefaultStoryWidth,
@@ -9,7 +9,7 @@ import {
 type Props = {
   text: string;
   maxLines: number;
-  contain: ITextNode['contain'];
+  maxWidth: ITextNode['maxWidth'];
 };
 
 export default {
@@ -29,23 +29,17 @@ export default {
         type: 'number',
       },
     },
-    contain: {
-      type: { name: 'string', required: false },
-      description: 'Text containment style for text wrapping',
-      options: ['none', 'both', 'width'],
+    maxWidth: {
+      type: { name: 'number', required: false },
+      description: 'Max width of the text container',
       control: {
-        type: 'select',
-        labels: {
-          none: 'none',
-          width: 'width',
-          both: 'both',
-        },
+        type: 'number',
       },
     },
   },
 } as Meta<LightningTextElementProps>;
 
-export const TextWrapping = ({ text, maxLines, contain }: Props) => {
+export const TextWrapping = ({ text, maxLines, maxWidth }: Props) => {
   return (
     <lng-text
       text={text}
@@ -53,7 +47,7 @@ export const TextWrapping = ({ text, maxLines, contain }: Props) => {
         color: 0xffff44ff,
         fontSize: 30,
         maxLines,
-        contain,
+        maxWidth,
         width: DefaultStoryWidth,
       }}
     />
@@ -63,10 +57,10 @@ export const TextWrapping = ({ text, maxLines, contain }: Props) => {
 TextWrapping.args = {
   text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed hendrerit vestibulum magna, eu tempor quam porta quis. Ut dignissim scelerisque luctus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla aliquet, velit eget bibendum laoreet, quam mi lobortis tortor, sit amet tristique nibh metus a lacus. Curabitur tristique egestas nunc. Sed quis mi a nisl placerat aliquam. Nunc suscipit sodales augue, sed pulvinar ex malesuada vitae. Ut posuere ultrices diam, cursus vulputate felis aliquam eget. Mauris et blandit mi.',
   maxLines: 3,
-  contain: 'width',
+  maxWidth: 400,
 };
 
-export const FlexTextWrapping = ({ text, maxLines, contain }: Props) => {
+export const FlexTextWrapping = ({ text, maxLines, maxWidth }: Props) => {
   return (
     <lng-view
       style={{
@@ -85,7 +79,7 @@ export const FlexTextWrapping = ({ text, maxLines, contain }: Props) => {
           style={{
             fontSize: 30,
             maxLines,
-            contain,
+            maxWidth,
             color: 0x000000ff,
           }}
         />
@@ -96,7 +90,7 @@ export const FlexTextWrapping = ({ text, maxLines, contain }: Props) => {
           style={{
             fontSize: 30,
             maxLines,
-            contain,
+            maxWidth,
             color: 0x000000ff,
           }}
         />
@@ -108,5 +102,5 @@ export const FlexTextWrapping = ({ text, maxLines, contain }: Props) => {
 FlexTextWrapping.args = {
   text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed hendrerit vestibulum magna, eu tempor quam porta quis. Ut dignissim scelerisque luctus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla aliquet, velit eget bibendum laoreet, quam mi lobortis tortor, sit amet tristique nibh metus a lacus. Curabitur tristique egestas nunc. Sed quis mi a nisl placerat aliquam. Nunc suscipit sodales augue, sed pulvinar ex malesuada vitae. Ut posuere ultrices diam, cursus vulputate felis aliquam eget. Mauris et blandit mi.',
   maxLines: 3,
-  contain: 'width',
+  maxWidth: 400,
 };

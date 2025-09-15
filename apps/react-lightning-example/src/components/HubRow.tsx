@@ -49,8 +49,8 @@ export const HubRow = (props: Props) => {
               initialDimensions: {
                 x: i * 240,
                 y: 0,
-                width: 240,
-                height: 360,
+                w: 240,
+                h: 360,
               },
             }}
           />

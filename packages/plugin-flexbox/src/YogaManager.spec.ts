@@ -352,8 +352,8 @@ describe('YogaManager', () => {
     it('should apply style to existing node', async () => {
       const elementId = 123;
       const style: Partial<LightningElementStyle> = {
-        width: 100,
-        height: 50,
+        w: 100,
+        h: 50,
       };
 
       yogaManager.addNode(elementId);
@@ -419,8 +419,8 @@ describe('YogaManager', () => {
 
     it('should apply multiple styles', async () => {
       const styles = {
-        123: { width: 100, height: 50 },
-        456: { width: 200, height: 100 },
+        123: { w: 100, h: 50 },
+        456: { w: 200, h: 100 },
       };
 
       yogaManager.addNode(123);

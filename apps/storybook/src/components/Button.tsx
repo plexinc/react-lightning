@@ -7,8 +7,8 @@ import { Keys, useFocus } from '@plextv/react-lightning';
 import { useCallback } from 'react';
 
 const containerStyles = {
-  width: 170,
-  height: 75,
+  w: 170,
+  h: 75,
   borderRadius: 15,
   display: 'flex' as const,
   justifyContent: 'center' as const,
@@ -17,7 +17,7 @@ const containerStyles = {
 
 const textStyle = {
   fontSize: 18,
-  lineHeight: containerStyles.height,
+  lineHeight: containerStyles.h,
   textAlign: 'center' as const,
   color: 0x3e3e3eff,
 };

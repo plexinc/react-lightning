@@ -44,7 +44,7 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "devDependencies": {
-    "@lightningjs/renderer": "3.0.0-beta9",
+    "@lightningjs/renderer": "3.0.0-beta14",
     "@plextv/react-lightning": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
     "@repo/vite-config": "workspace:*",
@@ -55,7 +55,7 @@
     "react-native": "0.77.2"
   },
   "peerDependencies": {
-    "@lightningjs/renderer": "^3.0.0-beta8",
+    "@lightningjs/renderer": "3.0.0-beta14",
     "@plextv/react-lightning": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
     "react-native": "^0.77.2"

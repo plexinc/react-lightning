@@ -28,6 +28,8 @@ export function convertCSSStyleToLightning(
     tintColor,
     fontWeight,
     transform,
+    width,
+    height,
     ...otherStyles
   } = flattenStyles(style);
   const finalStyle = {
@@ -139,6 +141,16 @@ export function convertCSSStyleToLightning(
     overflowY === 'hidden'
   ) {
     finalStyle.clipping = true;
+  }
+
+  if (width != null) {
+    finalStyle.w =
+      typeof width === 'number' ? width : Number.parseInt(width.toString());
+  }
+
+  if (height != null) {
+    finalStyle.h =
+      typeof height === 'number' ? height : Number.parseInt(height.toString());
   }
 
   // Drop all undefined styles

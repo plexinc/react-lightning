@@ -70,14 +70,7 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
           // Avoid going through the promise if we've already loaded
           if (this.__loaded) {
             const rect = this.getBoundingClientRect();
-            callback(
-              this.node.x,
-              this.node.y,
-              rect.width,
-              rect.height,
-              rect.x,
-              rect.y,
-            );
+            callback(this.node.x, this.node.y, rect.w, rect.h, rect.x, rect.y);
           } else {
             this.__loadPromise.then(() =>
               nativeMethods.measure.call(this, callback),
@@ -86,12 +79,7 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
         },
         measureInWindow(this: LightningNativeViewElement, callback) {
           if (this.__loaded) {
-            callback(
-              this.node.x,
-              this.node.y,
-              this.node.width,
-              this.node.height,
-            );
+            callback(this.node.x, this.node.y, this.node.w, this.node.h);
           } else {
             this.__loadPromise.then(() =>
               nativeMethods.measureInWindow.call(this, callback),
@@ -104,7 +92,7 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
               relative as unknown as LightningViewElement,
             );
 
-            onSuccess(x, y, this.node.width, this.node.height);
+            onSuccess(x, y, this.node.w, this.node.h);
           } else {
             this.__loadPromise.then(() =>
               nativeMethods.measureLayout.call(this, relative, onSuccess),

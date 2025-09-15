@@ -1,7 +1,6 @@
 import { Canvas, type RenderOptions } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
 import '@plextv/react-lightning-plugin-flexbox/jsx';
-import { SdfTrFontFace } from '@lightningjs/renderer';
 import type { LinkingOptions } from '@react-navigation/native';
 import {
   createNavigatorFactory,
@@ -79,8 +78,8 @@ const MainApp = () => {
       <Column
         focusable
         style={{
-          width: 250,
-          height: 1080,
+          w: 250,
+          h: 1080,
           gap: 5,
           color: 0x000022ff,
           clipping: true,
@@ -130,7 +129,7 @@ const MainApp = () => {
 
       <Column
         focusable
-        style={{ width: 1670, height: 1080, color: 0x000000ff, clipping: true }}
+        style={{ w: 1670, h: 1080, color: 0x000000ff, clipping: true }}
       >
         <CustomStack.Navigator
           initialRouteName="Layout"
@@ -176,23 +175,31 @@ AppRegistry.runApplication('plex', {
   renderOptions: {
     driver: 'normal',
     numImageWorkers: window.navigator.hardwareConcurrency - 1 || 2,
-    fonts: (stage) => [
-      new SdfTrFontFace('msdf', {
+    fonts: [
+      {
+        type: 'sdf',
         fontFamily: 'sans-serif',
-        descriptors: {
-          weight: 'bold',
-        },
         atlasUrl: '/fonts/Ubuntu-Bold.msdf.png',
         atlasDataUrl: '/fonts/Ubuntu-Bold.msdf.json',
-        stage,
-      }),
-      new SdfTrFontFace('msdf', {
+        metrics: {
+          ascender: 776,
+          descender: -185,
+          lineGap: 56,
+          unitsPerEm: 1000,
+        },
+      },
+      {
+        type: 'sdf',
         fontFamily: 'sans-serif',
-        descriptors: {},
         atlasUrl: '/fonts/Ubuntu-Regular.msdf.png',
         atlasDataUrl: '/fonts/Ubuntu-Regular.msdf.json',
-        stage,
-      }),
+        metrics: {
+          ascender: 776,
+          descender: -185,
+          lineGap: 56,
+          unitsPerEm: 1000,
+        },
+      },
     ],
     shaders: [
       'Border',

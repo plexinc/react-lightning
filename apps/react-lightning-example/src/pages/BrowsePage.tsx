@@ -10,7 +10,7 @@ export const BrowsePage = () => {
 
   const handleFocus = useCallback((element: LightningElement) => {
     setVerticalOffset(
-      Math.min(0, -element.node.y - element.node.height / 2 + 1080 / 2),
+      Math.min(0, -element.node.y - element.node.h / 2 + 1080 / 2),
     );
   }, []);
 
@@ -36,13 +36,13 @@ export const BrowsePage = () => {
           hub={hub}
           onFocus={handleFocus}
           style={{
-            height: 550,
-            width: 1920,
+            h: 550,
+            w: 1920,
             initialDimensions: {
               x: 0,
               y: i * 550,
-              width: 1920,
-              height: 550,
+              w: 1920,
+              h: 550,
             },
           }}
         />

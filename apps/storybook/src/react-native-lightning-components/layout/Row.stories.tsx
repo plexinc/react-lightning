@@ -1,5 +1,5 @@
 import { Row } from '@plextv/react-native-lightning-components';
-import type { Meta } from '@storybook/react';
+import type { Meta } from '@storybook/react-vite';
 import {
   ColorPalette,
   DefaultStoryHeight,
@@ -14,7 +14,7 @@ type RowLayoutProps = {
 const ExampleBox = () => {
   // Get random color from the ColorPalette.
   const color = ColorPalette[Math.floor(Math.random() * ColorPalette.length)];
-  return <lng-view style={{ width: 125, height: 125, color }} />;
+  return <lng-view style={{ w: 125, h: 125, color }} />;
 };
 
 export default {
@@ -60,8 +60,8 @@ export const FlexStart = ({
       style={{
         justifyContent,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >
@@ -85,8 +85,8 @@ export const FlexEnd = ({
       style={{
         justifyContent,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >
@@ -110,8 +110,8 @@ export const SpaceEvenly = ({
       style={{
         justifyContent,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >
@@ -135,8 +135,8 @@ export const SpaceBetween = ({
       style={{
         justifyContent,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >
@@ -160,8 +160,8 @@ export const SpaceAround = ({
       style={{
         justifyContent,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >

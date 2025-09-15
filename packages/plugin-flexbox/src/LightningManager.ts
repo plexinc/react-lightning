@@ -1,6 +1,9 @@
 import type {
   LightningElement,
   LightningElementStyle,
+  LightningTextElement,
+  RendererNode,
+  TextRendererNode,
 } from '@plextv/react-lightning';
 import type { YogaOptions } from './types/YogaOptions';
 import { SimpleDataView } from './util/SimpleDataView';
@@ -53,29 +56,19 @@ export class LightningManager {
         this.applyStyle(element.id, element.props.style);
       }),
 
-      element.on('textureLoaded', async (node, event) => {
-        // Text elements will already have its height and width set on the node
-        // before loaded event is fired, so we need to set it on the yoga node.
-        // If there's a maxWidth set, we should clamp the text to that size.
-        // TODO: Get a proper return type
-        if (element.isTextElement) {
-          const computedSize = await yoga.instance.getClampedSize(element.id);
-
-          if (
-            computedSize !== null &&
-            computedSize > 0 &&
-            event.dimensions.width > computedSize
-          ) {
-            node.contain = 'width';
-            node.width = computedSize;
-          }
-        }
-
-        this.applyStyle(element.id, {
-          width: node.width,
-          height: node.height,
-        });
-      }),
+      element.on(
+        'textureLoaded',
+        async (
+          node:
+            | RendererNode<LightningElement>
+            | TextRendererNode<LightningTextElement>,
+        ) => {
+          this.applyStyle(element.id, {
+            w: node.w,
+            h: node.h,
+          });
+        },
+      ),
     ];
   }
 
@@ -136,11 +129,11 @@ export class LightningManager {
       // If width is 0, we should not set it on the node, as it will cause
       // layout issues.
       if (width !== 0) {
-        dirty = el.setNodeProp('width', width) || dirty;
+        dirty = el.setNodeProp('w', width) || dirty;
       }
 
       if (height !== 0) {
-        dirty = el.setNodeProp('height', height) || dirty;
+        dirty = el.setNodeProp('h', height) || dirty;
       }
 
       if (dirty) {

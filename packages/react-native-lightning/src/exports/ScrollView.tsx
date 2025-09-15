@@ -26,8 +26,8 @@ type ScrollViewState = {
 type Rect = {
   x: number;
   y: number;
-  width: number;
-  height: number;
+  w: number;
+  h: number;
 };
 
 function getAxisOffset(
@@ -78,19 +78,19 @@ function getScrollInfo(
 
   const x = horizontal
     ? getAxisOffset(
-        viewport.width,
-        container.width,
+        viewport.w,
+        container.w,
         child.x,
-        child.width,
+        child.w,
         snapToAlignment ?? 'start',
       )
     : container.x;
   const y = !horizontal
     ? getAxisOffset(
-        viewport.height,
-        container.height,
+        viewport.h,
+        container.h,
         child.y,
-        child.height,
+        child.h,
         snapToAlignment ?? 'start',
       )
     : container.y;
@@ -98,8 +98,8 @@ function getScrollInfo(
   return {
     contentInset: { top: 0, left: 0, bottom: 0, right: 0 },
     contentOffset: { x, y },
-    contentSize: { width: container.width, height: container.height },
-    layoutMeasurement: { width: viewport.width, height: viewport.height },
+    contentSize: { width: container.w, height: container.h },
+    layoutMeasurement: { width: viewport.w, height: viewport.h },
     zoomScale: 1,
   };
 }
@@ -135,7 +135,7 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
       y = options.y ?? y;
     }
 
-    const newOffset = this._getChildOffset({ x, y, width: 0, height: 0 });
+    const newOffset = this._getChildOffset({ x, y, w: 0, h: 0 });
 
     if (newOffset) {
       this._doScroll(newOffset);
@@ -164,12 +164,8 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
 
     this.setState({
       offset: {
-        x: this.props.horizontal
-          ? containerBounds.width - viewportBounds.width
-          : x,
-        y: this.props.horizontal
-          ? y
-          : containerBounds.height - viewportBounds.height,
+        x: this.props.horizontal ? containerBounds.w - viewportBounds.w : x,
+        y: this.props.horizontal ? y : containerBounds.h - viewportBounds.h,
       },
     });
   };

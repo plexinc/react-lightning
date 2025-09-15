@@ -31,8 +31,8 @@ export const TransformsPage = () => {
         position: 'absolute',
         top: 0,
         left: 0,
-        width: 1920,
-        height: 1080,
+        w: 1920,
+        h: 1080,
         justifyContent: 'center',
         alignItems: 'center',
       }}
@@ -46,9 +46,16 @@ export const TransformsPage = () => {
       <lng-image
         src={img}
         style={{
-          width: 720,
-          zIndex: -1,
-          transform: [{ scale }, { rotate: `${rotation}deg` }],
+          transform: [
+            { scaleX: scale },
+            { scaleY: scale },
+            { rotate: `${rotation}deg` },
+          ],
+        }}
+        transition={{
+          scaleX: { duration: 350, easing: 'ease-out' },
+          scaleY: { duration: 350, easing: 'ease-out' },
+          rotation: { duration: 350, easing: 'ease-out' },
         }}
       />
     </Column>

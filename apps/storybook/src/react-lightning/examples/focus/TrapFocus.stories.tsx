@@ -1,6 +1,6 @@
 import { FocusGroup, type LightningElement } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
-import type { Meta } from '@storybook/react';
+import type { Meta } from '@storybook/react-vite';
 import {
   FocusableImage,
   type FocusableImageProps,
@@ -51,8 +51,8 @@ const TrappableImage = ({
   return (
     <FocusGroup
       style={{
-        width: width,
-        height: height,
+        w: width,
+        h: height,
         x: x,
         y: y,
       }}
@@ -61,7 +61,7 @@ const TrappableImage = ({
       trapFocusDown={trapFocusDown}
       trapFocusLeft={trapFocusLeft}
     >
-      <FocusableImage {...props} style={{ width, height, ...style }} />
+      <FocusableImage {...props} style={{ w: width, h: height, ...style }} />
     </FocusGroup>
   );
 };
@@ -191,13 +191,13 @@ export const TrapFocus = () => {
 
 export const TrapFocusGroups = () => {
   return (
-    <Column style={{ gap: 10, x: 10, y: 10, width: 475 }}>
+    <Column style={{ gap: 10, x: 10, y: 10, w: 475 }}>
       <Row focusable style={{ gap: 10 }}>
-        <FocusableImage style={{ width: 75, height: 75 }} />
-        <FocusableImage style={{ width: 75, height: 75 }} />
-        <FocusableImage style={{ width: 75, height: 75 }} />
-        <FocusableImage style={{ width: 75, height: 75 }} />
-        <FocusableImage style={{ width: 75, height: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
       </Row>
 
       <Row
@@ -205,19 +205,19 @@ export const TrapFocusGroups = () => {
         trapFocusDown
         style={{ gap: 10, paddingBottom: 10, ...trapDownStyle }}
       >
-        <FocusableImage style={{ width: 75, height: 75 }} />
-        <FocusableImage style={{ width: 75, height: 75 }} />
-        <FocusableImage style={{ width: 75, height: 75 }} />
-        <FocusableImage style={{ width: 75, height: 75 }} />
-        <FocusableImage style={{ width: 75, height: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
       </Row>
 
       <Row focusable style={{ gap: 10 }}>
-        <FocusableImage style={{ width: 75, height: 75 }} />
-        <FocusableImage style={{ width: 75, height: 75 }} />
-        <FocusableImage style={{ width: 75, height: 75 }} />
-        <FocusableImage style={{ width: 75, height: 75 }} />
-        <FocusableImage style={{ width: 75, height: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
+        <FocusableImage style={{ w: 75, h: 75 }} />
       </Row>
     </Column>
   );

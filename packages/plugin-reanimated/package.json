@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.27.4",
-    "@lightningjs/renderer": "3.0.0-beta9",
+    "@lightningjs/renderer": "3.0.0-beta14",
     "@plextv/react-lightning": "workspace:*",
     "@plextv/react-lightning-plugin-css-transform": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
@@ -54,7 +54,7 @@
     "react-native-reanimated": "3.16.7"
   },
   "peerDependencies": {
-    "@lightningjs/renderer": "^3.0.0-beta8",
+    "@lightningjs/renderer": "3.0.0-beta14",
     "@plextv/react-lightning": "workspace:^",
     "@plextv/react-lightning-plugin-css-transform": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",

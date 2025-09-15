@@ -43,8 +43,8 @@ export const flexProps = {
   maxWidth: true,
   minHeight: true,
   minWidth: true,
-  width: true,
-  height: true,
+  w: true,
+  h: true,
   aspectRatio: true,
 
   display: true,

@@ -19,8 +19,6 @@ const BASE_STYLE = {
   lineHeight: 24,
 };
 
-let wordWrapErrorShown = false;
-
 export type StyledTextProps = LightningViewElementProps & {
   /**
    * Input text with placeholders and custom tags.
@@ -37,7 +35,7 @@ export type StyledTextProps = LightningViewElementProps & {
   /**
    * Base style for all text elements. This style is applied to all text elements unless overridden by tagStyles.
    */
-  textStyle?: Omit<LightningTextElementStyle, 'contain'>;
+  textStyle?: LightningTextElementStyle;
   /**
    * Style for the container view element.
    */
@@ -175,7 +173,7 @@ const StyledText: React.FC<StyledTextProps> = ({
     for (const child of container.children) {
       const childNode = child.node;
       childNode.x = cumulativeWidth;
-      cumulativeWidth += childNode.width || 0;
+      cumulativeWidth += childNode.w || 0;
     }
   }, []);
 
@@ -209,14 +207,6 @@ const StyledText: React.FC<StyledTextProps> = ({
     }),
     [style],
   );
-
-  // TODO: Dev only warning. Remove in production.
-  if ('contain' in textStyle && !wordWrapErrorShown) {
-    console.error(
-      '[StyledText] Error: Word wrapping is not supported with this component. Please remove the "contain" property from the styles.',
-    );
-    wordWrapErrorShown = true;
-  }
 
   return (
     <lng-view ref={containerRef} style={containerFinalStyle}>

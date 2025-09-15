@@ -9,7 +9,7 @@ import {
   SlideOutUp,
 } from '@plextv/react-lightning-plugin-reanimated';
 import { Column } from '@plextv/react-native-lightning-components';
-import type { Meta } from '@storybook/react';
+import type { Meta } from '@storybook/react-vite';
 import { AnimationSampler } from './AnimationSampler';
 
 export default {

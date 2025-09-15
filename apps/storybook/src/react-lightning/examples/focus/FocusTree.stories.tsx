@@ -1,5 +1,5 @@
 import { Column, Row } from '@plextv/react-lightning-components';
-import type { Meta } from '@storybook/react';
+import type { Meta } from '@storybook/react-vite';
 import Button from '../../../components/Button';
 
 export default {

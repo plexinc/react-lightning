@@ -15,8 +15,8 @@ declare module '@lightningjs/renderer' {
 
 export interface MyCustomTextureProps {
   percent?: number;
-  width: number;
-  height: number;
+  w: number;
+  h: number;
 }
 
 export class MyCustomTexture extends Texture {
@@ -29,13 +29,13 @@ export class MyCustomTexture extends Texture {
     this.props = MyCustomTexture.resolveDefaults(props);
   }
 
-  override getTextureData(): Promise<TextureData> {
-    const { percent, width, height } = this.props;
-    const radius = Math.min(width, height) / 2;
+  override async getTextureSource(): Promise<TextureData> {
+    const { percent, w, h } = this.props;
+    const radius = Math.min(w, h) / 2;
     const angle = 2 * Math.PI * (percent / 100);
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = w;
+    canvas.height = h;
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       throw new Error('Could not initialize canvas for texture');
@@ -50,13 +50,15 @@ export class MyCustomTexture extends Texture {
     ctx.closePath();
     ctx.fillStyle = 'blue';
     ctx.fill();
-    return Promise.resolve({
-      data: ctx.getImageData(0, 0, canvas.width, canvas.height),
-    });
-  }
 
-  override getTextureSource(): Promise<TextureData> {
-    return this.getTextureData();
+    this.setState('fetched', {
+      w,
+      h,
+    });
+
+    return {
+      data: ctx.getImageData(0, 0, canvas.width, canvas.height),
+    };
   }
 
   static override makeCacheKey(_props: MyCustomTextureProps): string | false {
@@ -71,8 +73,8 @@ export class MyCustomTexture extends Texture {
   ): Required<MyCustomTextureProps> {
     return {
       percent: props.percent ?? 20,
-      width: props.width,
-      height: props.height,
+      w: props.w,
+      h: props.h,
     };
   }
 }

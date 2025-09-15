@@ -1,14 +1,15 @@
 import type {
   KeyEvent,
   LightningElement,
+  LightningElementStyle,
   LightningViewElementProps,
 } from '@plextv/react-lightning';
 import { Keys, useFocus } from '@plextv/react-lightning';
 import { useCallback } from 'react';
 
-const containerStyles = {
-  width: 330,
-  height: 100,
+const containerStyles: LightningElementStyle = {
+  w: 330,
+  h: 100,
   borderRadius: 15,
   border: { width: 3, color: 0xffffffff },
   display: 'flex' as const,
@@ -18,7 +19,7 @@ const containerStyles = {
 
 const textStyle = {
   fontSize: 32,
-  lineHeight: containerStyles.height,
+  lineHeight: containerStyles.h,
   textAlign: 'center' as const,
   color: 0x3e3e3eff,
 };

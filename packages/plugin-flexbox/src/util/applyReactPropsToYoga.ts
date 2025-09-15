@@ -198,8 +198,8 @@ export function applyFlexPropToYoga<K extends FlexProps>(
           mapDisplay(yoga, value as LightningViewElementStyle['display']),
         );
         return true;
-      case 'width':
-        node.setWidth(value as LightningViewElementStyle['width']);
+      case 'w':
+        node.setWidth(value as LightningViewElementStyle['w']);
         return true;
       case 'minWidth':
         node.setMinWidth(value as LightningViewElementStyle['minWidth']);
@@ -207,8 +207,8 @@ export function applyFlexPropToYoga<K extends FlexProps>(
       case 'maxWidth':
         node.setMaxWidth(formatSizeValue<'maxWidth'>(value));
         return true;
-      case 'height':
-        node.setHeight(value as LightningViewElementStyle['height']);
+      case 'h':
+        node.setHeight(value as LightningViewElementStyle['h']);
         return true;
       case 'minHeight':
         node.setMinHeight(value as LightningViewElementStyle['minHeight']);

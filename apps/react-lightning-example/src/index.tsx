@@ -1,4 +1,3 @@
-import { SdfTrFontFace } from '@lightningjs/renderer';
 import {
   Canvas,
   createRoot as createRootLng,
@@ -56,23 +55,19 @@ const router = createBrowserRouter([
 ]);
 
 const options: RenderOptions = {
-  fonts: (stage) => [
-    new SdfTrFontFace('msdf', {
+  fonts: [
+    {
+      type: 'sdf',
       fontFamily: 'sans-serif',
-      descriptors: {},
       atlasUrl: '/fonts/Ubuntu-Regular.msdf.png',
       atlasDataUrl: '/fonts/Ubuntu-Regular.msdf.json',
-      stage,
-    }),
-    new SdfTrFontFace('msdf', {
+    },
+    {
+      type: 'sdf',
       fontFamily: 'sans-serif',
-      descriptors: {
-        weight: 'bold',
-      },
       atlasUrl: '/fonts/Ubuntu-Bold.msdf.png',
       atlasDataUrl: '/fonts/Ubuntu-Bold.msdf.json',
-      stage,
-    }),
+    },
   ],
   numImageWorkers: window.navigator.hardwareConcurrency || 2,
   plugins: [cssTransformPlugin(), flexPlugin()],

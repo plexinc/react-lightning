@@ -1,5 +1,5 @@
 import { Column } from '@plextv/react-native-lightning-components';
-import type { Meta } from '@storybook/react';
+import type { Meta } from '@storybook/react-vite';
 import {
   ColorPalette,
   DefaultStoryHeight,
@@ -59,8 +59,8 @@ export const FlexStart = ({
       style={{
         justifyContent,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >
@@ -84,8 +84,8 @@ export const FlexEnd = ({
       style={{
         justifyContent,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >
@@ -109,8 +109,8 @@ export const SpaceEvenly = ({
       style={{
         justifyContent,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >
@@ -134,8 +134,8 @@ export const SpaceBetween = ({
       style={{
         justifyContent,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >
@@ -159,8 +159,8 @@ export const SpaceAround = ({
       style={{
         justifyContent,
         gap: 10,
-        width: DefaultStoryWidth,
-        height: DefaultStoryHeight,
+        w: DefaultStoryWidth,
+        h: DefaultStoryHeight,
         color: 0xcccc00ff,
       }}
     >

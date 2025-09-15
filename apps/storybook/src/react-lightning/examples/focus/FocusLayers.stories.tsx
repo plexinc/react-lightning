@@ -5,7 +5,7 @@ import {
   useFocusManager,
 } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
-import type { Meta } from '@storybook/react';
+import type { Meta } from '@storybook/react-vite';
 import { useEffect, useRef, useState } from 'react';
 import Button from '../../../components/Button';
 
@@ -41,8 +41,8 @@ const Modal = ({ dismissModal }: { dismissModal: () => void }) => {
       style={{
         color: 0xffffff05,
         border: { color: 0xff0000ff, width: 2 },
-        width: 600,
-        height: 200,
+        w: 600,
+        h: 200,
         x: 50,
         y: 200,
       }}
@@ -71,7 +71,7 @@ export const ModalExample = () => {
   };
 
   return (
-    <FocusGroup style={{ width: 400, height: 400 }}>
+    <FocusGroup style={{ w: 400, h: 400 }}>
       <lng-text>Focus Layers Example</lng-text>
       <Column>
         <Row focusable>

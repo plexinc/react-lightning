@@ -4,7 +4,7 @@ import {
   useCombinedRef,
   useFocus,
 } from '@plextv/react-lightning';
-import type { Meta, StoryFn } from '@storybook/react';
+import type { Meta, StoryFn } from '@storybook/react-vite';
 import { forwardRef, type ReactNode, useState } from 'react';
 import { FocusableImage } from '../../../components/FocusableImage';
 
@@ -51,44 +51,44 @@ export const FocusRedirect: StoryFn = () => {
 
   return (
     <>
-      <FocusableImage style={{ width: 95, height: 95, x: 10, y: 10 }} />
+      <FocusableImage style={{ w: 95, h: 95, x: 10, y: 10 }} />
       <FocusableImage
         ref={setElement1_2}
-        style={{ width: 95, height: 95, x: 180, y: 10 }}
+        style={{ w: 95, h: 95, x: 180, y: 10 }}
       />
       <Redirector
         destinations={[element1_2]}
-        style={{ width: 95, height: 95, x: 350, y: 10 }}
+        style={{ w: 95, h: 95, x: 350, y: 10 }}
       >
         <lng-text text={'←'} style={{ fontSize: 24 }} />
       </Redirector>
 
       <Redirector
         destinations={[element3_1]}
-        style={{ width: 95, height: 95, x: 10, y: 180 }}
+        style={{ w: 95, h: 95, x: 10, y: 180 }}
       >
         <lng-text text={'↓'} style={{ fontSize: 24 }} />
       </Redirector>
-      <FocusableImage style={{ width: 95, height: 95, x: 180, y: 180 }} />
+      <FocusableImage style={{ w: 95, h: 95, x: 180, y: 180 }} />
       <FocusableImage
         ref={setElement2_3}
-        style={{ width: 95, height: 95, x: 350, y: 180 }}
+        style={{ w: 95, h: 95, x: 350, y: 180 }}
       />
 
       <FocusableImage
         ref={setElement3_1}
-        style={{ width: 95, height: 95, x: 10, y: 350 }}
+        style={{ w: 95, h: 95, x: 10, y: 350 }}
       />
       <Redirector
         destinations={[element3_3]}
-        style={{ width: 95, height: 95, x: 180, y: 350 }}
+        style={{ w: 95, h: 95, x: 180, y: 350 }}
       >
         <lng-text text={'→'} style={{ fontSize: 24 }} />
       </Redirector>
       <Redirector
         ref={setElement3_3}
         destinations={[element2_3]}
-        style={{ width: 95, height: 95, x: 350, y: 350 }}
+        style={{ w: 95, h: 95, x: 350, y: 350 }}
       >
         <lng-text text={'↑'} style={{ fontSize: 24 }} />
       </Redirector>

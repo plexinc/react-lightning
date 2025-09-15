@@ -11,8 +11,8 @@ export const ShaderPage = () => {
           position: 'absolute',
           top: 0,
           left: 0,
-          width: 1920,
-          height: 1080,
+          w: 1920,
+          h: 1080,
           justifyContent: 'center',
           alignItems: 'center',
         }}
@@ -22,7 +22,7 @@ export const ShaderPage = () => {
             type: 'MyCustomShader',
             props: {},
           }}
-          style={{ width: 300, height: 300 }}
+          style={{ w: 300, h: 300 }}
         />
       </Column>
     </>

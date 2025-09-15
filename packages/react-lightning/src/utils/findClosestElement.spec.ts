@@ -32,16 +32,16 @@ function createMockElement(id: number, dimensions: Rect): LightningElement {
 }
 
 function createLayout(
-  width: number,
-  height: number,
+  w: number,
+  h: number,
   dimensions: Rect[],
 ): { root: LightningElement; [id: number]: LightningElement } {
   const result: { root: LightningElement; [id: number]: LightningElement } = {
     root: createMockElement(0, {
       x: 0,
       y: 0,
-      width,
-      height,
+      w,
+      h,
     }),
   };
 
@@ -97,11 +97,11 @@ suite('findClosestElement', () => {
      *   150      250
      */
     const elements = createLayout(400, 400, [
-      { x: 0, y: 0, width: 400, height: 100 },
-      { x: 0, y: 100, width: 150, height: 300 },
-      { x: 150, y: 100, width: 125, height: 200 },
-      { x: 275, y: 100, width: 125, height: 200 },
-      { x: 150, y: 300, width: 250, height: 100 },
+      { x: 0, y: 0, w: 400, h: 100 },
+      { x: 0, y: 100, w: 150, h: 300 },
+      { x: 150, y: 100, w: 125, h: 200 },
+      { x: 275, y: 100, w: 125, h: 200 },
+      { x: 150, y: 300, w: 250, h: 100 },
     ]);
     const tests: TestCases = [
       [1, Direction.Up, null],
@@ -144,14 +144,14 @@ suite('findClosestElement', () => {
      *          500
      */
     const elements = createLayout(500, 500, [
-      { x: 0, y: 0, width: 100, height: 100 },
-      { x: 100, y: 0, width: 100, height: 100 },
-      { x: 200, y: 0, width: 100, height: 100 },
-      { x: 300, y: 0, width: 100, height: 100 },
-      { x: 400, y: 0, width: 100, height: 100 },
-      { x: 0, y: 100, width: 250, height: 200 },
-      { x: 250, y: 100, width: 250, height: 200 },
-      { x: 0, y: 300, width: 500, height: 200 },
+      { x: 0, y: 0, w: 100, h: 100 },
+      { x: 100, y: 0, w: 100, h: 100 },
+      { x: 200, y: 0, w: 100, h: 100 },
+      { x: 300, y: 0, w: 100, h: 100 },
+      { x: 400, y: 0, w: 100, h: 100 },
+      { x: 0, y: 100, w: 250, h: 200 },
+      { x: 250, y: 100, w: 250, h: 200 },
+      { x: 0, y: 300, w: 500, h: 200 },
     ]);
     const tests: TestCases = [
       [1, Direction.Up, null],
@@ -206,11 +206,11 @@ suite('findClosestElement', () => {
      * └─────────────────┘
      */
     const elements = createLayout(600, 600, [
-      { x: 100, y: 100, width: 100, height: 100 },
-      { x: 500, y: 150, width: 100, height: 100 },
-      { x: 150, y: 250, width: 100, height: 100 },
-      { x: 125, y: 400, width: 100, height: 100 },
-      { x: 450, y: 300, width: 100, height: 100 },
+      { x: 100, y: 100, w: 100, h: 100 },
+      { x: 500, y: 150, w: 100, h: 100 },
+      { x: 150, y: 250, w: 100, h: 100 },
+      { x: 125, y: 400, w: 100, h: 100 },
+      { x: 450, y: 300, w: 100, h: 100 },
     ]);
     const tests: TestCases = [
       [1, Direction.Up, null],
@@ -253,10 +253,10 @@ suite('findClosestElement', () => {
      *     100
      */
     const elements = createLayout(500, 500, [
-      { x: 50, y: 50, width: 200, height: 100 },
-      { x: 150, y: 100, width: 200, height: 200 },
-      { x: 400, y: 250, width: 100, height: 100 },
-      { x: 100, y: 350, width: 100, height: 100 },
+      { x: 50, y: 50, w: 200, h: 100 },
+      { x: 150, y: 100, w: 200, h: 200 },
+      { x: 400, y: 250, w: 100, h: 100 },
+      { x: 100, y: 350, w: 100, h: 100 },
     ]);
     const tests: TestCases = [
       [1, Direction.Up, null],
@@ -295,9 +295,9 @@ suite('findClosestElement', () => {
      * └─────────────────┘
      */
     const elements = createLayout(500, 500, [
-      { height: 48, width: 243, x: 160, y: 24 },
-      { height: 96, width: 450, x: 160, y: 88 },
-      { height: 64, width: 150, x: 160, y: 264 },
+      { h: 48, w: 243, x: 160, y: 24 },
+      { h: 96, w: 450, x: 160, y: 88 },
+      { h: 64, w: 150, x: 160, y: 264 },
     ]);
     const tests: TestCases = [
       [1, Direction.Up, null],
@@ -320,12 +320,12 @@ suite('findClosestElement', () => {
 
 suite('getOverlap', () => {
   it('should return the correct overlap for two elements', () => {
-    const a = { x: 0, y: 0, width: 100, height: 100, centerX: 50, centerY: 50 };
+    const a = { x: 0, y: 0, w: 100, h: 100, centerX: 50, centerY: 50 };
     const b = {
       x: 75,
       y: 75,
-      width: 100,
-      height: 100,
+      w: 100,
+      h: 100,
       centerX: 50,
       centerY: 50,
     };

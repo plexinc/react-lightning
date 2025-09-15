@@ -1,5 +1,8 @@
 import type { Dimensions } from '@lightningjs/renderer';
-import type { LightningImageElement } from '@plextv/react-lightning';
+import type {
+  LightningElementStyle,
+  LightningImageElement,
+} from '@plextv/react-lightning';
 import { forwardRef, useCallback } from 'react';
 import type {
   ImageLoadEventData,
@@ -41,24 +44,24 @@ export const Image = forwardRef<LightningImageElement, ImageProps>(
     ref,
   ) => {
     const onImageLayout = useCallback(
-      (dimensions: { width: number; height: number }) => {
+      (dimensions: { w: number; h: number }) => {
         onLayout?.(createLayoutEvent({ ...dimensions, x: 0, y: 0 }));
       },
       [onLayout],
     );
 
     const handleImageLoaded = useCallback(
-      (dimensions: Dimensions) => {
+      ({ w, h }: Dimensions) => {
         onLoad?.(
           createNativeSyntheticEvent<ImageLoadEventData>({
             source: {
-              height: dimensions.height,
-              width: dimensions.width,
+              height: h,
+              width: w,
               uri: src as string,
             },
           }),
         );
-        onImageLoaded?.(dimensions);
+        onImageLoaded?.({ width: w, height: h });
       },
       [src, onLoad, onImageLoaded],
     );
@@ -86,19 +89,11 @@ export const Image = forwardRef<LightningImageElement, ImageProps>(
         {...otherProps}
         ref={ref}
         src={finalSource}
-        style={[
-          style,
-          width
-            ? {
-                width,
-              }
-            : undefined,
-          height
-            ? {
-                height,
-              }
-            : undefined,
-        ]}
+        style={{
+          ...(style as LightningElementStyle),
+          w: width,
+          h: height,
+        }}
         onTextureReady={handleImageLoaded}
         onLayout={onImageLayout}
       />

@@ -14,7 +14,6 @@ export type TextProps = AddMissingProps<ViewProps, RNTextProps> & {
 };
 
 const defaultTextStyle: Partial<LightningTextElementStyle> = {
-  // contain: 'width',
   fontWeight: 'normal',
 };
 
@@ -51,13 +50,13 @@ export const Text = forwardRef<LightningTextElement, TextProps>(
       const overflow: LightningTextElementStyle = {
         maxLines: numberOfLines,
       };
+
       if (ellipsizeMode === 'clip') {
         overflow.textOverflow = 'clip';
-        overflow.contain = 'width';
       } else if (ellipsizeMode === 'tail') {
         overflow.textOverflow = 'ellipsis';
-        overflow.contain = 'width';
       }
+
       return overflow;
     }, [ellipsizeMode, numberOfLines]);
 

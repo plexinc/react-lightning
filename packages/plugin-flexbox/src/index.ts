@@ -34,7 +34,12 @@ export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
       for (const key in styles) {
         const value = styles[key as keyof LightningElementStyle];
 
-        if (key === 'width' || key === 'height') {
+        if (
+          key === 'w' ||
+          key === 'h' ||
+          key === 'maxWidth' ||
+          key === 'maxHeight'
+        ) {
           // Width and height go to both flex and remaining styles
           flexStyles[key] = value;
           remainingStyles[key] = value;

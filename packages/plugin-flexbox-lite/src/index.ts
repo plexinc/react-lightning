@@ -3,7 +3,7 @@ import type { SetOptional } from 'type-fest';
 
 function getChildrenSize(
   children: LightningElement[],
-  dimensionProperty: 'width' | 'height',
+  dimensionProperty: 'w' | 'h',
 ) {
   let totalSize = 0;
 
@@ -16,7 +16,7 @@ function getChildrenSize(
 
     const dimensions = child.getBoundingClientRect();
 
-    totalSize += dimensions[dimensionProperty];
+    totalSize += dimensions[dimensionProperty] || 0;
   }
 
   return totalSize;
@@ -24,7 +24,7 @@ function getChildrenSize(
 
 function getAvailableSize(
   instance: LightningElement,
-  dimensionProperty: 'width' | 'height',
+  dimensionProperty: 'w' | 'h',
 ) {
   let size = instance.node[dimensionProperty];
 
@@ -61,7 +61,7 @@ function applyFlexLayout(instance: LightningElement) {
   const justifyContent = style.justifyContent || 'flex-start';
   const isHorizontal =
     flexDirection === 'row' || flexDirection === 'row-reverse';
-  const dimensionProperty = isHorizontal ? 'width' : 'height';
+  const dimensionProperty = isHorizontal ? 'w' : 'h';
   const axisProperty = isHorizontal ? 'x' : 'y';
 
   // Compute the total width/height of child elements
@@ -128,8 +128,8 @@ function applyFlexLayout(instance: LightningElement) {
     const dimensions = {
       x: 0,
       y: 0,
-      width: child.node.width,
-      height: child.node.height,
+      w: child.node.w,
+      h: child.node.h,
     };
 
     currentPosition += marginA;
@@ -180,7 +180,7 @@ function canFlexCanBeApplied(
   if (
     (style?.flexDirection === 'row' ||
       style?.flexDirection === 'row-reverse') &&
-    style.width
+    style.w
   ) {
     return true;
   }
@@ -188,7 +188,7 @@ function canFlexCanBeApplied(
   if (
     (style?.flexDirection === 'column' ||
       style?.flexDirection === 'column-reverse') &&
-    style.height
+    style.h
   ) {
     return true;
   }
@@ -296,8 +296,8 @@ export default function flexPlugin(): Plugin<LightningElement> {
 
           if (
             canFlexCanBeApplied(instance, true) &&
-            (event.dimensions.width !== instance.node.width ||
-              event.dimensions.height !== instance.node.height)
+            (event.dimensions.width !== instance.node.w ||
+              event.dimensions.height !== instance.node.h)
           ) {
             queueUpdate(instance);
           }

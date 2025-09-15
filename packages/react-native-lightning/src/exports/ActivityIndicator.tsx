@@ -37,8 +37,8 @@ export const ActivityIndicator: ForwardRefExoticComponent<ActivityIndicatorProps
         <lng-view
           ref={ref}
           style={{
-            width: actualSize,
-            height: actualSize,
+            w: actualSize,
+            h: actualSize,
             display: 'flex' as const,
             justifyContent: 'center' as const,
             alignItems: 'center' as const,
@@ -52,8 +52,8 @@ export const ActivityIndicator: ForwardRefExoticComponent<ActivityIndicatorProps
             src={activityImage}
             style={{
               color: actualColor,
-              width: actualSize,
-              height: actualSize,
+              w: actualSize,
+              h: actualSize,
             }}
           />
         </lng-view>

@@ -68,17 +68,17 @@ export class LightningImageElement<
   }
 
   protected override _handleTextureLoaded(event: NodeLoadedPayload): void {
-    const { width, height } = event.dimensions;
-    const originalWidth = this.props.style?.width;
-    const originalHeight = this.props.style?.height;
+    const { w, h } = event.dimensions;
+    const originalWidth = this.props.style?.w;
+    const originalHeight = this.props.style?.h;
 
     if (originalWidth == null && originalHeight == null) {
-      this.node.width = width;
-      this.node.height = height;
+      this.node.w = w;
+      this.node.h = h;
     } else if (originalWidth == null && originalHeight != null) {
-      this.node.width = (originalHeight / height) * width;
+      this.node.w = (originalHeight / h) * w;
     } else if (originalWidth != null && originalHeight == null) {
-      this.node.height = (originalWidth / width) * height;
+      this.node.h = (originalWidth / w) * h;
     }
   }
 

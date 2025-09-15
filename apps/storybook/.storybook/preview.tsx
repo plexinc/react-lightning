@@ -1,6 +1,4 @@
-import type { Preview } from '@storybook/react';
-// biome-ignore lint/correctness/noUnusedImports: React import needed for storybook
-import React from 'react';
+import type { Preview } from '@storybook/react-vite';
 import { StorybookDecorator } from '../src/components/StorybookDecorator';
 import theme from './theme';
 

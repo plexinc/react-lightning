@@ -1,4 +1,4 @@
-import type { Meta } from '@storybook/react';
+import type { Meta } from '@storybook/react-vite';
 import { createRef, useCallback } from 'react';
 import { View, VirtualizedList } from 'react-native';
 import ScrollItem from '../../components/ScrollItem';

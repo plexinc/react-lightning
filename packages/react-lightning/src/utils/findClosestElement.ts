@@ -2,8 +2,8 @@ import { Direction } from '../focus/Direction';
 import type { LightningElement } from '../types';
 
 type Dimensions = {
-  width: number;
-  height: number;
+  w: number;
+  h: number;
   x: number;
   y: number;
   centerX: number;
@@ -40,7 +40,7 @@ function getDistance(
   switch (direction) {
     case Direction.Up:
       targetX = target.centerX;
-      targetY = target.y + target.height;
+      targetY = target.y + target.h;
 
       if (targetY > source.centerY) {
         return null;
@@ -66,7 +66,7 @@ function getDistance(
 
       break;
     case Direction.Left:
-      targetX = target.x + target.width;
+      targetX = target.x + target.w;
       targetY = target.centerY;
 
       if (targetX > source.centerX) {
@@ -118,14 +118,14 @@ function getAlignment(
   overlap: number,
 ): number {
   const isHorizontal = direction & Direction.Horizontal;
-  const bias = overlap / (isHorizontal ? source.width : source.height);
+  const bias = overlap / (isHorizontal ? source.w : source.h);
 
   return bias * 5;
 }
 
 function getDisplacement(
   direction: Direction,
-  { width: w1, height: h1, centerX: cx1, centerY: cy1 }: Dimensions,
+  { w: w1, h: h1, centerX: cx1, centerY: cy1 }: Dimensions,
   { centerX: cx2, centerY: cy2 }: Dimensions,
 ) {
   const isHorizontal = direction & Direction.Horizontal;
@@ -138,8 +138,8 @@ function getDisplacement(
 
 export function getOverlap(
   direction: Direction,
-  { x: x1, y: y1, width: w1, height: h1 }: Dimensions,
-  { x: x2, y: y2, width: w2, height: h2 }: Dimensions,
+  { x: x1, y: y1, w: w1, h: h1 }: Dimensions,
+  { x: x2, y: y2, w: w2, h: h2 }: Dimensions,
 ): number {
   let length = 0;
 
@@ -162,8 +162,8 @@ export function getOverlap(
 }
 
 function isOverlap(
-  { x: x1, y: y1, width: w1, height: h1 }: Dimensions,
-  { x: x2, y: y2, width: w2, height: h2 }: Dimensions,
+  { x: x1, y: y1, w: w1, h: h1 }: Dimensions,
+  { x: x2, y: y2, w: w2, h: h2 }: Dimensions,
 ) {
   return {
     x: x1 < x2 + w2 && x1 + w1 > x2,
@@ -175,12 +175,12 @@ function getDimensions(
   element: LightningElement,
   relativeElement: LightningElement | null,
 ): Dimensions {
-  const { width, height } = element.node;
+  const { w, h } = element.node;
   const { x, y } = element.getRelativePosition(relativeElement);
-  const centerX = x + width / 2;
-  const centerY = y + height / 2;
+  const centerX = x + w / 2;
+  const centerY = y + h / 2;
 
-  return { width, height, x, y, centerX, centerY };
+  return { w, h, x, y, centerX, centerY };
 }
 
 export function findClosestElement(

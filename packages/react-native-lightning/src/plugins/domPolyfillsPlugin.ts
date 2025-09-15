@@ -33,19 +33,19 @@ export const domPolyfillsPlugin = (): Plugin => {
 
   const domAccessors = {
     clientWidth(this: LightningViewElement) {
-      return this.node.width;
+      return this.node.w;
     },
 
     clientHeight(this: LightningViewElement) {
-      return this.node.height;
+      return this.node.h;
     },
 
     offsetWidth(this: LightningViewElement) {
-      return this.node.width;
+      return this.node.w;
     },
 
     offsetHeight(this: LightningViewElement) {
-      return this.node.height;
+      return this.node.h;
     },
 
     offsetLeft(this: LightningViewElement) {

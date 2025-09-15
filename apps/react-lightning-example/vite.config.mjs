@@ -8,7 +8,9 @@ import tsconfigPaths from 'vite-tsconfig-paths';
  */
 const config = {
   plugins: [
-    tsconfigPaths(),
+    tsconfigPaths({
+      skip: (dir) => dir.includes('app-template'),
+    }),
     react(),
     fontGen({
       inputs: [
@@ -31,13 +33,6 @@ const config = {
   build: {
     outDir: 'dist',
     minify: false,
-  },
-  optimizeDeps: {
-    esbuildOptions: {
-      mainFields: ['module', 'main'],
-      tsconfig: './tsconfig.json',
-    },
-    force: true,
   },
 };
 
