@@ -28,13 +28,13 @@
     "@plextv/react-lightning-plugin-reanimated": "workspace:*",
     "@plextv/react-native-lightning": "workspace:*",
     "@plextv/react-native-lightning-components": "workspace:*",
-    "@storybook/addon-docs": "9.1.5",
-    "@storybook/addon-links": "9.1.5",
-    "@storybook/builder-vite": "9.1.5",
-    "@storybook/react-vite": "9.1.5",
+    "@storybook/addon-docs": "9.1.6",
+    "@storybook/addon-links": "9.1.6",
+    "@storybook/builder-vite": "9.1.6",
+    "@storybook/react-vite": "9.1.6",
     "react": "18.3.1",
     "react-native": "0.77.2",
-    "storybook": "9.1.5"
+    "storybook": "9.1.6"
   },
   "devDependencies": {
     "@plextv/vite-plugin-msdf-fontgen": "workspace:*",

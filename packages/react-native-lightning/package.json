@@ -51,14 +51,14 @@
     "@plextv/react-lightning": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/vite-config": "workspace:*",
-    "@types/node": "24.0.4",
+    "@types/node": "24.5.1",
     "@types/react": "18.3.14",
     "react": "18.3.1",
     "react-native": "0.77.2",
     "react-native-web": "0.19.13"
   },
   "peerDependencies": {
-    "@lightningjs/renderer": "3.0.0-beta14",
+    "@lightningjs/renderer": "^3.0.0-beta14",
     "@plextv/react-lightning": "workspace:^",
     "react": "^18.3.1",
     "react-native": "^0.77.2",

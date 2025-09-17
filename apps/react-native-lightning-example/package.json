@@ -29,14 +29,14 @@
     "@plextv/react-lightning-plugin-reanimated": "workspace:*",
     "@plextv/react-native-lightning": "workspace:*",
     "@plextv/react-native-lightning-components": "workspace:*",
-    "@react-navigation/native": "7.0.14",
+    "@react-navigation/native": "7.1.17",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.77.2",
     "react-native-reanimated": "3.16.7"
   },
   "devDependencies": {
-    "@babel/core": "7.27.4",
+    "@babel/core": "7.28.4",
     "@plextv/vite-plugin-msdf-fontgen": "workspace:*",
     "@plextv/vite-plugin-react-native-lightning": "workspace:*",
     "@plextv/vite-plugin-react-reanimated-lightning": "workspace:*",
@@ -44,8 +44,8 @@
     "@shopify/flash-list": "1.8.3",
     "@types/react": "18.3.14",
     "@types/react-dom": "18.3.1",
-    "@vitejs/plugin-legacy": "^7.0.0",
-    "typescript": "5.8.3"
+    "@vitejs/plugin-legacy": "7.2.1",
+    "typescript": "5.9.2"
   },
   "volta": {
     "extends": "../../package.json"

@@ -41,20 +41,20 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "devDependencies": {
-    "@babel/core": "7.27.4",
+    "@babel/core": "7.28.4",
     "@lightningjs/renderer": "3.0.0-beta14",
     "@plextv/react-lightning": "workspace:*",
     "@plextv/react-lightning-plugin-css-transform": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
-    "@repo/vite-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/vite-config": "workspace:*",
     "@types/react": "18.3.14",
     "react": "18.3.1",
     "react-native": "0.77.2",
     "react-native-reanimated": "3.16.7"
   },
   "peerDependencies": {
-    "@lightningjs/renderer": "3.0.0-beta14",
+    "@lightningjs/renderer": "^3.0.0-beta14",
     "@plextv/react-lightning": "workspace:^",
     "@plextv/react-lightning-plugin-css-transform": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",

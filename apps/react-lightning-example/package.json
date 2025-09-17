@@ -29,15 +29,15 @@
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-router-dom": "7.3.0",
-    "swr": "2.3.3"
+    "react-router-dom": "7.9.1",
+    "swr": "2.3.6"
   },
   "devDependencies": {
     "@plextv/vite-plugin-msdf-fontgen": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/react": "18.3.14",
     "@types/react-dom": "18.3.1",
-    "@vitejs/plugin-legacy": "^7.0.0",
+    "@vitejs/plugin-legacy": "7.2.1",
     "@vitejs/plugin-react": "4.6.0",
     "vite-tsconfig-paths": "5.1.4"
   },

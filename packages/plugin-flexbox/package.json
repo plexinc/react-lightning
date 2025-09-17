@@ -67,5 +67,11 @@
   },
   "browserslist": [
     "chrome 56"
-  ]
+  ],
+  "depcheck": {
+    "ignoreMatches": [
+      "@babel/plugin-transform-runtime",
+      "core-js"
+    ]
+  }
 }
