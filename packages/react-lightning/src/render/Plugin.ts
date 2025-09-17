@@ -3,6 +3,7 @@ import type { Fiber, Reconciler } from 'react-reconciler';
 import type { SetOptional } from 'type-fest';
 import type { LightningTextElement } from '../element/LightningTextElement';
 import type { LightningElement } from '../types';
+import type { ReconcilerContainer } from './createHostConfig';
 
 export type Plugin<T extends LightningElement = LightningElement> = {
   /**
@@ -10,7 +11,13 @@ export type Plugin<T extends LightningElement = LightningElement> = {
    */
   init?(
     renderer: RendererMain,
-    reconciler: Reconciler<RendererMain, T, LightningTextElement, null, T>,
+    reconciler: Reconciler<
+      ReconcilerContainer,
+      T,
+      LightningTextElement,
+      null,
+      T
+    >,
   ): Promise<void>;
 
   /**

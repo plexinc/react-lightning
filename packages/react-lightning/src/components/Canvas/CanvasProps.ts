@@ -3,9 +3,7 @@ import type { KeyMap } from '../../input/KeyMapContext';
 import type { RenderOptions } from '../../render';
 
 export interface CanvasProps {
-  w?: number;
-  h?: number;
   children: ReactNode;
   keyMap: KeyMap;
-  options?: RenderOptions;
+  options: RenderOptions;
 }

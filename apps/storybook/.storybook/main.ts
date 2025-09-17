@@ -4,10 +4,8 @@ const config: StorybookConfig = {
   staticDirs: ['../public'],
   stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
   addons: ['@storybook/addon-links', '@storybook/addon-docs'],
-  framework: {
-    name: '@storybook/react-vite',
-    options: {},
-  },
+  framework: '@storybook/react-vite',
+
   managerHead: (head) => `
     ${head}
     <style>

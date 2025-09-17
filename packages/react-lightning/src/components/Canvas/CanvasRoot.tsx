@@ -9,7 +9,9 @@ import { KeyPressHandler } from '../../input/KeyPressHandler';
 import type { LightningElement } from '../../types';
 import type { CanvasProps } from './CanvasProps';
 
-export const CanvasRoot = ({ children, keyMap, w, h }: CanvasProps) => {
+type Props = Omit<CanvasProps, 'options'> & { width?: number; height?: number };
+
+export const CanvasRoot = ({ width, height, children, keyMap }: Props) => {
   const ref = useRef<LightningElement>(null);
   const focusManager = useRef<FocusManager<LightningElement>>(
     new FocusManager(),
@@ -31,8 +33,8 @@ export const CanvasRoot = ({ children, keyMap, w, h }: CanvasProps) => {
             <FocusGroup
               ref={ref}
               style={{
-                w: w ?? 1920,
-                h: h ?? 1080,
+                w: width ?? 1920,
+                h: height ?? 1080,
                 clipping: true,
               }}
             >

@@ -34,10 +34,9 @@ export { VirtualizedList } from './exports/VirtualizedList';
 export { cssClassNameTransformPlugin } from './plugins/cssClassNameTransformPlugin';
 export { domPolyfillsPlugin } from './plugins/domPolyfillsPlugin';
 export { reactNativePolyfillsPlugin } from './plugins/reactNativePolyfillsPlugin';
-export {
-  AppRegistry,
-  getPlugins,
-  type PluginOptions,
-} from './render/AppRegistry';
 export { createLayoutEvent } from './utils/createLayoutEvent';
 export { createSyntheticEvent } from './utils/createSyntheticEvent';
+export {
+  getReactNativePlugins,
+  type PluginOptions,
+} from './utils/getReactNativePlugins';

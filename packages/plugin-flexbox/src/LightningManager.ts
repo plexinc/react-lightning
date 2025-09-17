@@ -7,7 +7,9 @@ import type {
 } from '@plextv/react-lightning';
 import type { YogaOptions } from './types/YogaOptions';
 import { SimpleDataView } from './util/SimpleDataView';
-import yoga from './yoga';
+import type { YogaManager } from './YogaManager';
+import type { Workerized } from './YogaManagerWorker';
+import loadYoga from './yoga';
 
 /**
  * Manages the lifecycle of Yoga nodes for Lightning elements. This can only be
@@ -15,10 +17,11 @@ import yoga from './yoga';
  */
 export class LightningManager {
   private _elements = new Map<number, LightningElement>();
+  private _yogaManager: YogaManager | Workerized<YogaManager> | undefined;
 
   public async init(yogaOptions?: YogaOptions) {
-    await yoga.load(yogaOptions);
-    yoga.instance.on('render', this._applyUpdates);
+    this._yogaManager = await loadYoga(yogaOptions);
+    this._yogaManager.on('render', this._applyUpdates);
   }
 
   public trackElement(element: LightningElement): void {
@@ -27,8 +30,14 @@ export class LightningManager {
       return;
     }
 
+    if (!this._yogaManager) {
+      throw new Error(
+        'YogaManager is not initialized. Make sure to call init() first.',
+      );
+    }
+
     this._elements.set(element.id, element);
-    yoga.instance.addNode(element.id);
+    this._yogaManager.addNode(element.id);
 
     const disposers = [
       element.on('destroy', async () => {
@@ -37,19 +46,25 @@ export class LightningManager {
         }
 
         this._elements.delete(element.id);
-        yoga.instance.applyStyle(element.id, null, true);
-        yoga.instance.removeNode(element.id);
+        // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. But avoiding the nullish operator for perf reasons
+        this._yogaManager!.applyStyle(element.id, null, true);
+        // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. See above
+        this._yogaManager!.removeNode(element.id);
       }),
 
       element.on('childAdded', async (child, index) => {
-        yoga.instance.addChildNode(element.id, child.id, index);
+        // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. See above
+        this._yogaManager!.addChildNode(element.id, child.id, index);
         this.applyStyle(element.id, element.style);
       }),
 
       element.on('childRemoved', async (child) => {
         // This will remove any pending worker style updates that haven't been sent
-        yoga.instance.applyStyle(child.id, null, true);
-        yoga.instance.removeNode(child.id);
+
+        // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. See above
+        this._yogaManager!.applyStyle(child.id, null, true);
+        // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. See above
+        this._yogaManager!.removeNode(child.id);
       }),
 
       element.on('stylesChanged', async () => {
@@ -62,11 +77,19 @@ export class LightningManager {
           node:
             | RendererNode<LightningElement>
             | TextRendererNode<LightningTextElement>,
+          event: { type: string; dimensions: { w: number; h: number } },
         ) => {
-          this.applyStyle(element.id, {
-            w: node.w,
-            h: node.h,
-          });
+          if (element.isTextElement) {
+            this.applyStyle(element.id, {
+              w: event.dimensions.w,
+              h: event.dimensions.h,
+            });
+          } else {
+            this.applyStyle(element.id, {
+              w: node.w,
+              h: node.h,
+            });
+          }
         },
       ),
     ];
@@ -82,7 +105,8 @@ export class LightningManager {
     }
 
     if (style) {
-      yoga.instance.applyStyle(elementId, style, skipRender);
+      // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. See above
+      this._yogaManager!.applyStyle(elementId, style, skipRender);
     }
   }
 

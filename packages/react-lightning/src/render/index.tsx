@@ -15,10 +15,11 @@ import {
 } from '@lightningjs/renderer/webgl';
 import type { ComponentType, ReactNode } from 'react';
 import { createContext, createElement } from 'react';
-import createReconciler from 'react-reconciler';
+import createReconciler, { type Reconciler } from 'react-reconciler';
+import type { LightningTextElement } from '../element/LightningTextElement';
 import type { LightningElement } from '../types';
 import { traceWrap } from '../utils/traceWrap';
-import { createHostConfig } from './createHostConfig';
+import { createHostConfig, type ReconcilerContainer } from './createHostConfig';
 import type { Plugin } from './Plugin';
 
 // https://github.com/lightning-js/devtools/blob/main/src/types/globals.d.ts
@@ -60,11 +61,18 @@ export type LightningRoot = {
   renderer: RendererMain;
 };
 
-export const LightningRootContext = createContext<LightningRoot | null>(null);
-
 const TRACE_ENABLED = false;
 const SKIP_STACK_TRACE = true;
 
+export const LightningRootContext = createContext<LightningRoot | null>(null);
+
+let reconciler: Reconciler<
+  ReconcilerContainer,
+  LightningElement,
+  LightningTextElement,
+  null,
+  LightningElement
+>;
 const defaultOptions: Partial<RenderOptions> = {
   fpsUpdateInterval: 500,
   appHeight: 1080,
@@ -166,18 +174,20 @@ export async function createRoot(
     }
   }
 
-  let hostConfig = createHostConfig(renderer, finalOptions.plugins ?? [], {
-    isPrimaryRenderer: finalOptions.isPrimaryRenderer ?? true,
-  });
-
-  if (finalOptions.debug && TRACE_ENABLED) {
-    hostConfig = traceWrap(hostConfig, SKIP_STACK_TRACE);
-  }
-
-  const reconciler = createReconciler(hostConfig);
-
   if (!renderer.root) {
     throw new Error('There was an error setting up the Lightning renderer');
+  }
+
+  if (!reconciler) {
+    let hostConfig = createHostConfig({
+      isPrimaryRenderer: finalOptions.isPrimaryRenderer ?? true,
+    });
+
+    if (finalOptions.debug && TRACE_ENABLED) {
+      hostConfig = traceWrap(hostConfig, SKIP_STACK_TRACE);
+    }
+
+    reconciler = createReconciler(hostConfig);
   }
 
   await Promise.all([
@@ -188,7 +198,10 @@ export async function createRoot(
   ]);
 
   const root = reconciler.createContainer(
-    renderer,
+    {
+      renderer,
+      plugins: finalOptions.plugins ?? [],
+    },
     1, // ConcurrentRoot
     null,
     false,

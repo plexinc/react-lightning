@@ -1,6 +1,7 @@
-import { Canvas, type RenderOptions } from '@plextv/react-lightning';
+import { Canvas } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
 import '@plextv/react-lightning-plugin-flexbox/jsx';
+import { getReactNativePlugins } from '@plextv/react-native-lightning';
 import type { LinkingOptions } from '@react-navigation/native';
 import {
   createNavigatorFactory,
@@ -10,7 +11,8 @@ import {
   useNavigation,
   useNavigationBuilder,
 } from '@react-navigation/native';
-import { AppRegistry, Button } from 'react-native';
+import { createRoot } from 'react-dom/client';
+import { Button } from 'react-native';
 import { ErrorBoundary } from './ErrorBoundary';
 import { keyMap } from './keyMap';
 import { AnimationBuilderTest } from './pages/AnimationBuilderTest';
@@ -160,7 +162,51 @@ const MainApp = () => {
 const App = () => {
   return (
     <ErrorBoundary>
-      <Canvas keyMap={keyMap}>
+      <Canvas
+        keyMap={keyMap}
+        options={{
+          numImageWorkers: window.navigator.hardwareConcurrency - 1 || 2,
+          fonts: [
+            {
+              type: 'sdf',
+              fontFamily: 'sans-serif',
+              atlasUrl: '/fonts/Ubuntu-Bold.msdf.png',
+              atlasDataUrl: '/fonts/Ubuntu-Bold.msdf.json',
+              metrics: {
+                ascender: 776,
+                descender: -185,
+                lineGap: 56,
+                unitsPerEm: 1000,
+              },
+            },
+            {
+              type: 'sdf',
+              fontFamily: 'sans-serif',
+              atlasUrl: '/fonts/Ubuntu-Regular.msdf.png',
+              atlasDataUrl: '/fonts/Ubuntu-Regular.msdf.json',
+              metrics: {
+                ascender: 776,
+                descender: -185,
+                lineGap: 56,
+                unitsPerEm: 1000,
+              },
+            },
+          ],
+          plugins: getReactNativePlugins([], {
+            flexbox: {
+              useWebWorker: true,
+            },
+          }),
+          shaders: [
+            'Border',
+            'Shadow',
+            'Rounded',
+            'RoundedWithBorder',
+            'RoundedWithShadow',
+            'RoundedWithBorderAndShadow',
+          ],
+        }}
+      >
         <NavigationContainer linking={linking} theme={DarkTheme}>
           <MainApp />
         </NavigationContainer>
@@ -169,50 +215,10 @@ const App = () => {
   );
 };
 
-AppRegistry.registerComponent('plex', () => App);
-AppRegistry.runApplication('plex', {
-  rootId: 'app',
-  renderOptions: {
-    driver: 'normal',
-    numImageWorkers: window.navigator.hardwareConcurrency - 1 || 2,
-    fonts: [
-      {
-        type: 'sdf',
-        fontFamily: 'sans-serif',
-        atlasUrl: '/fonts/Ubuntu-Bold.msdf.png',
-        atlasDataUrl: '/fonts/Ubuntu-Bold.msdf.json',
-        metrics: {
-          ascender: 776,
-          descender: -185,
-          lineGap: 56,
-          unitsPerEm: 1000,
-        },
-      },
-      {
-        type: 'sdf',
-        fontFamily: 'sans-serif',
-        atlasUrl: '/fonts/Ubuntu-Regular.msdf.png',
-        atlasDataUrl: '/fonts/Ubuntu-Regular.msdf.json',
-        metrics: {
-          ascender: 776,
-          descender: -185,
-          lineGap: 56,
-          unitsPerEm: 1000,
-        },
-      },
-    ],
-    shaders: [
-      'Border',
-      'Shadow',
-      'Rounded',
-      'RoundedWithBorder',
-      'RoundedWithShadow',
-      'RoundedWithBorderAndShadow',
-    ],
-  } as RenderOptions,
-  pluginOptions: {
-    flexbox: {
-      useWebWorker: true,
-    },
-  },
-});
+const appElement = document.getElementById('app');
+
+if (!appElement) {
+  throw new Error('No app element found');
+}
+
+createRoot(appElement).render(<App />);

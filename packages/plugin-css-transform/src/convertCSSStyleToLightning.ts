@@ -56,27 +56,27 @@ export function convertCSSStyleToLightning(
   if (border != null || borderWidth != null || borderColor != null) {
     if (typeof border === 'number') {
       finalStyle.border = {
-        width: border,
+        w: border,
         color: 0,
       };
     } else if (typeof border === 'string') {
       const [w, , c] = border.split(' ');
 
       finalStyle.border = {
-        width: w != null ? Number.parseInt(w) : 0,
+        w: w != null ? Number.parseInt(w, 10) : 0,
         color: htmlColorToLightningColor(c),
       };
     } else if (border) {
       finalStyle.border = border;
     } else {
       finalStyle.border = {
-        width: 0,
+        w: 0,
         color: 0,
       };
     }
 
     if (typeof borderWidth === 'number') {
-      finalStyle.border.width = borderWidth;
+      finalStyle.border.w = borderWidth;
     }
 
     if (borderColor) {
@@ -98,19 +98,19 @@ export function convertCSSStyleToLightning(
     finalStyle.x =
       typeof otherStyles.left === 'number'
         ? otherStyles.left
-        : Number.parseInt(otherStyles.left.toString());
+        : Number.parseInt(otherStyles.left.toString(), 10);
   }
 
   if (otherStyles.top != null) {
     finalStyle.y =
       typeof otherStyles.top === 'number'
         ? otherStyles.top
-        : Number.parseInt(otherStyles.top);
+        : Number.parseInt(otherStyles.top, 10);
   }
 
   if (fontWeight != null) {
     (finalStyle as LightningTextElementStyle).fontWeight =
-      fontWeight === 'bold' || Number.parseInt(fontWeight.toString()) >= 500
+      fontWeight === 'bold' || Number.parseInt(fontWeight.toString(), 10) >= 500
         ? 'bold'
         : 'normal';
   }
@@ -144,13 +144,11 @@ export function convertCSSStyleToLightning(
   }
 
   if (width != null) {
-    finalStyle.w =
-      typeof width === 'number' ? width : Number.parseInt(width.toString());
+    finalStyle.w = width as number;
   }
 
   if (height != null) {
-    finalStyle.h =
-      typeof height === 'number' ? height : Number.parseInt(height.toString());
+    finalStyle.h = height as number;
   }
 
   // Drop all undefined styles

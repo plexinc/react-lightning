@@ -1,6 +1,6 @@
 import { Canvas, type RenderOptions } from '@plextv/react-lightning';
 import { plugin as flexPlugin } from '@plextv/react-lightning-plugin-flexbox';
-import { getPlugins } from '@plextv/react-native-lightning';
+import { getReactNativePlugins } from '@plextv/react-native-lightning';
 import { useMemo } from 'react';
 import { keyMap } from '../../keyMap';
 import { DefaultStoryHeight, DefaultStoryWidth } from '../helpers/constants';
@@ -19,7 +19,6 @@ export function StorybookDecorator({
   const options: RenderOptions = useMemo(
     () => ({
       fpsUpdateInterval: 1000,
-      numImageWorkers: navigator.hardwareConcurrency - 1 || 2,
       clearColor: 0x000000d8,
       appWidth: DefaultStoryWidth,
       appHeight: DefaultStoryHeight,
@@ -44,7 +43,7 @@ export function StorybookDecorator({
         'RoundedWithBorderAndShadow',
       ],
       plugins: tags?.includes('reactNative')
-        ? getPlugins()
+        ? getReactNativePlugins([], { flexbox: { useWebWorker: true } })
         : [flexPlugin({ expandToAutoFlexBasis: true, useWebWorker: true })],
       ...canvasOptions,
     }),

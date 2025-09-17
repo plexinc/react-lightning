@@ -1,5 +1,5 @@
 declare module '@repo/vite-config/lib' {
-  import { UserConfigFnObject } from 'vite';
+  import type { UserConfigFnObject } from 'vite';
 
   declare const config: UserConfigFnObject;
 

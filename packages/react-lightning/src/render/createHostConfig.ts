@@ -14,16 +14,21 @@ import { simpleDiff } from '../utils/simpleDiff';
 import { mapReactPropsToLightning } from './mapReactPropsToLightning';
 import type { Plugin } from './Plugin';
 
+export type ReconcilerContainer = {
+  renderer: RendererMain;
+  plugins: Plugin<LightningElement>[];
+};
+
 export type LightningHostConfig = HostConfig<
   LightningElementType,
   LightningElementProps,
-  RendererMain,
+  ReconcilerContainer,
   LightningElement,
   LightningTextElement,
   null,
   null,
   LightningElement,
-  unknown,
+  ReconcilerContainer,
   LightningElementProps,
   unknown,
   unknown,
@@ -36,8 +41,6 @@ type LightningHostConfigOptions = Pick<
 >;
 
 export function createHostConfig(
-  renderer: RendererMain,
-  plugins: Plugin<LightningElement>[],
   options?: LightningHostConfigOptions,
 ): LightningHostConfig {
   function appendChild(
@@ -66,8 +69,8 @@ export function createHostConfig(
     afterActiveInstanceBlur: () => {},
     prepareScopeUpdate: () => {},
 
-    getRootHostContext() {
-      return renderer;
+    getRootHostContext(container) {
+      return container;
     },
 
     getChildHostContext(parentHostContext) {
@@ -82,9 +85,9 @@ export function createHostConfig(
     appendChild,
 
     appendChildToContainer(container, child) {
-      if (container.root) {
-        const root =
-          container.root as unknown as RendererNode<LightningElement>;
+      if (container.renderer.root) {
+        const root = container.renderer
+          .root as unknown as RendererNode<LightningElement>;
 
         child.setLightningNode(root);
 
@@ -93,21 +96,26 @@ export function createHostConfig(
       }
     },
 
-    createInstance(type, props, _rootContainerInstance, _hostContext, fiber) {
+    createInstance(type, props, _rootContainerInstance, container, fiber) {
       const lngProps = mapReactPropsToLightning(type, props);
       const instance = createLightningElement(
         type,
         lngProps,
-        renderer,
-        plugins,
+        container.renderer,
+        container.plugins,
         fiber,
       );
 
       return instance;
     },
 
-    createTextInstance(text, _rootContainerInstance, _hostContext, fiber) {
-      return new LightningTextElement({ text }, renderer, plugins, fiber);
+    createTextInstance(text, _rootContainerInstance, container, fiber) {
+      return new LightningTextElement(
+        { text },
+        container.renderer,
+        container.plugins,
+        fiber,
+      );
     },
 
     finalizeInitialChildren() {

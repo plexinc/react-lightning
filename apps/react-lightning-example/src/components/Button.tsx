@@ -11,7 +11,7 @@ const containerStyles: LightningElementStyle = {
   w: 330,
   h: 100,
   borderRadius: 15,
-  border: { width: 3, color: 0xffffffff },
+  border: { w: 3, color: 0xffffffff },
   display: 'flex' as const,
   justifyContent: 'center' as const,
   alignItems: 'center' as const,

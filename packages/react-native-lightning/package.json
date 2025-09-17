@@ -14,8 +14,7 @@
   "type": "commonjs",
   "files": [
     "config",
-    "dist",
-    "react-native.config.js"
+    "dist"
   ],
   "exports": {
     ".": "./src/index.ts"
@@ -61,7 +60,6 @@
   "peerDependencies": {
     "@lightningjs/renderer": "3.0.0-beta14",
     "@plextv/react-lightning": "workspace:^",
-    "@react-native-community/cli": "^15.1.3",
     "react": "^18.3.1",
     "react-native": "^0.77.2",
     "react-native-web": "^0.19.13"

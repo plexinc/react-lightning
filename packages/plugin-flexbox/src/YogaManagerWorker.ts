@@ -317,6 +317,9 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
           nodeOperation(prop, ...args);
       } else if (prop === 'getClampedSize') {
         return getClampedSize;
+      } else if (prop === 'then' || prop === 'catch' || prop === 'finally') {
+        // Ignore Promise methods
+        return undefined;
       }
 
       return (...args: unknown[]) =>
@@ -338,4 +341,4 @@ function getId(): number {
   return ++count;
 }
 
-export default wrapWorker<YogaManager>(new Worker());
+export default () => wrapWorker<YogaManager>(new Worker());

@@ -2,7 +2,7 @@ import type { INodeProps, ITextNodeProps } from '@lightningjs/renderer';
 import type { Rect } from './Geometry';
 
 interface BorderStyleObject {
-  width: number;
+  w: number;
   color: number;
 }
 

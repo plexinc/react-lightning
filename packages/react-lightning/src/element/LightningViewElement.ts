@@ -745,9 +745,9 @@ export class LightningViewElement<
 
     if (border) {
       if (typeof border === 'number') {
-        props[hasRounded ? 'border-width' : 'width'] = border;
+        props[hasRounded ? 'border-w' : 'w'] = border;
       } else if (typeof border === 'object') {
-        props[hasRounded ? 'border-width' : 'width'] = border.width;
+        props[hasRounded ? 'border-w' : 'w'] = border.w;
         props[hasRounded ? 'border-color' : 'color'] = border.color;
       }
     }

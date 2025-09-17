@@ -30,7 +30,7 @@ export const FocusableImage = forwardRef<LightningElement, FocusableImageProps>(
           borderRadius: 8,
           alpha: disable ? 0.5 : hidden ? 0 : 1,
           scale: focused ? 1.1 : 1,
-          border: { width: focused ? 2 : 0, color: 0xffffffff },
+          border: { w: focused ? 2 : 0, color: 0xffffffff },
           ...style,
         }}
         transition={{

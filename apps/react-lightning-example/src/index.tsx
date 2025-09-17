@@ -1,11 +1,7 @@
-import {
-  Canvas,
-  createRoot as createRootLng,
-  type RenderOptions,
-} from '@plextv/react-lightning';
+import { Canvas, type RenderOptions } from '@plextv/react-lightning';
 import { plugin as cssTransformPlugin } from '@plextv/react-lightning-plugin-css-transform';
 import { plugin as flexPlugin } from '@plextv/react-lightning-plugin-flexbox';
-import { createRoot as createRootDom } from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { keyMap } from './keyMap';
 import { AnimationPage } from './pages/AnimationPage';
@@ -70,7 +66,7 @@ const options: RenderOptions = {
     },
   ],
   numImageWorkers: window.navigator.hardwareConcurrency || 2,
-  plugins: [cssTransformPlugin(), flexPlugin()],
+  plugins: [cssTransformPlugin(), flexPlugin({ useWebWorker: true })],
   shaders: [
     'Border',
     'Shadow',
@@ -85,8 +81,6 @@ const options: RenderOptions = {
   },
 };
 
-const lngAsRoot = true;
-
 const App = () => (
   <Canvas keyMap={keyMap} options={options}>
     <RouterProvider router={router} />
@@ -99,14 +93,4 @@ if (!appElement) {
   throw new Error('No app element found');
 }
 
-if (lngAsRoot) {
-  createRootLng(appElement, options)
-    .then((root) => {
-      root.render(<App />);
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-} else {
-  createRootDom(appElement).render(<App />);
-}
+createRoot(appElement).render(<App />);

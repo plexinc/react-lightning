@@ -40,7 +40,7 @@ const Modal = ({ dismissModal }: { dismissModal: () => void }) => {
       focusable
       style={{
         color: 0xffffff05,
-        border: { color: 0xff0000ff, width: 2 },
+        border: { color: 0xff0000ff, w: 2 },
         w: 600,
         h: 200,
         x: 50,

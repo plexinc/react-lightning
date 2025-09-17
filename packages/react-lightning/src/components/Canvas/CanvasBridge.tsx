@@ -21,7 +21,8 @@ export const CanvasBridge = ({
     if (!initReady || !containerRef.current || !options) {
       return;
     }
-    createRoot(containerRef.current, { ...options, isPrimaryRenderer: false })
+
+    createRoot(containerRef.current, options)
       .then((newRoot) => {
         setRoot(newRoot);
       })
