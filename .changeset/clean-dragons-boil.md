@@ -1,0 +1,17 @@
+---
+"@plextv/react-lightning-example": patch
+"@plextv/react-native-lightning-example": patch
+"@plextv/react-lightning-storybook": patch
+"@plextv/react-lightning-plugin-css-transform": patch
+"@plextv/react-lightning-plugin-flexbox": patch
+"@plextv/react-lightning-plugin-flexbox-lite": patch
+"@plextv/react-lightning-plugin-reanimated": patch
+"@plextv/react-lightning": patch
+"@plextv/react-lightning-components": patch
+"@plextv/react-native-lightning": patch
+"@plextv/react-native-lightning-components": patch
+"@repo/vite-config": patch
+"@plextv/vite-plugin-msdf-fontgen": patch
+---
+
+Updated lightning and storybook packages
