@@ -1,5 +1,14 @@
 # @plextv/react-lightning-plugin-css-transform
 
+## 0.3.4
+
+### Patch Changes
+
+- ded4552: Updated lightning and storybook packages
+- Updated dependencies [ded4552]
+  - @plextv/react-lightning-plugin-flexbox@0.3.8
+  - @plextv/react-lightning@0.3.10
+
 ## 0.3.3
 
 ### Patch Changes

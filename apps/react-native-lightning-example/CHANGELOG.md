@@ -1,5 +1,18 @@
 # @plextv/react-native-lightning-example
 
+## 0.3.19
+
+### Patch Changes
+
+- ded4552: Updated lightning and storybook packages
+- Updated dependencies [ded4552]
+  - @plextv/react-lightning-plugin-flexbox@0.3.8
+  - @plextv/react-lightning-plugin-reanimated@0.3.4
+  - @plextv/react-lightning@0.3.10
+  - @plextv/react-lightning-components@0.3.2
+  - @plextv/react-native-lightning@0.3.15
+  - @plextv/react-native-lightning-components@0.3.3
+
 ## 0.3.18
 
 ### Patch Changes

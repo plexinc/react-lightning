@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.10
+
+### Patch Changes
+
+- ded4552: Updated lightning and storybook packages
+
 ## 0.3.9
 
 ### Patch Changes

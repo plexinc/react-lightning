@@ -1,5 +1,13 @@
 # @plextv/react-lightning-plugin-flexbox-lite
 
+## 0.3.2
+
+### Patch Changes
+
+- ded4552: Updated lightning and storybook packages
+- Updated dependencies [ded4552]
+  - @plextv/react-lightning@0.3.10
+
 ## 0.3.1
 
 ### Patch Changes
