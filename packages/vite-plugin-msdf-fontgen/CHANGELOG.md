@@ -1,5 +1,12 @@
 # @plextv/vite-plugin-msdf-fontgen
 
+## 1.3.2
+
+### Patch Changes
+
+- ded4552: Updated lightning and storybook packages
+- 65a90d4: chore: Package updates and dep cleanup
+
 ## 1.3.1
 
 ### Patch Changes
