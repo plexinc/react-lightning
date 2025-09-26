@@ -1,5 +1,5 @@
 {
-  "extends": "@repo/typescript-config/react-native-library.json",
+  "extends": "@repo/configs/tsconfig.react-native-library.json",
   "compilerOptions": {
     "jsx": "react-native",
     "outDir": "dist"

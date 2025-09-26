@@ -1,3 +1,3 @@
-import config from '@repo/vite-config/lib';
+import config from '@repo/configs/vite.config';
 
 export default config;

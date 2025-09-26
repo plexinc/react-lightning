@@ -1,0 +1,12 @@
+{
+  "name": "@repo/configs",
+  "version": "0.0.1",
+  "private": true,
+  "author": "Plex Inc.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {},
+  "volta": {
+    "extends": "../../package.json"
+  }
+}

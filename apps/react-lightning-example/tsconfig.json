@@ -1,5 +1,5 @@
 {
-  "extends": "@repo/typescript-config/react-library.json",
+  "extends": "@repo/configs/tsconfig.react-library.json",
   "compilerOptions": {
     "outDir": "dist",
     "types": ["node", "vite/client"]

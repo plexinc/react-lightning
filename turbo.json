@@ -7,6 +7,16 @@
       "outputs": ["dist/**"],
       "inputs": ["packages/**", "apps/**"]
     },
+    "build:vite": {
+      "dependsOn": ["^build:vite"],
+      "outputs": ["dist/**"],
+      "inputs": ["packages/**", "apps/**"]
+    },
+    "build:tsdown": {
+      "dependsOn": ["^build:tsdown"],
+      "outputs": ["dist/**"],
+      "inputs": ["packages/**", "apps/**"]
+    },
     "clean": {},
     "build:types": {
       "dependsOn": ["^build:types"]

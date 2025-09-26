@@ -10,7 +10,6 @@
 "@plextv/react-lightning-components": patch
 "@plextv/react-native-lightning": patch
 "@plextv/react-native-lightning-components": patch
-"@repo/vite-config": patch
 "@plextv/vite-plugin-msdf-fontgen": patch
 ---
 

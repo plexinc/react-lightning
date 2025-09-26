@@ -12,54 +12,48 @@
     "url": "https://github.com/plexinc/react-lightning/issues/new"
   },
   "type": "module",
-  "files": [
-    "dist"
-  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.cts",
   "exports": {
-    ".": "./src/exports/index.ts",
+    ".": "./src/index.ts",
     "./layout/Column": "./src/exports/layout/Column.tsx",
     "./layout/Row": "./src/exports/layout/Row.tsx",
     "./lists/CellContainer": "./src/exports/lists/CellContainer.tsx",
-    "./lists/FlashList": "./src/exports/lists/FlashList.tsx"
+    "./lists/FlashList": "./src/exports/lists/FlashList.tsx",
+    "./package.json": "./package.json"
   },
   "publishConfig": {
     "provenance": true,
     "access": "public",
     "exports": {
       ".": {
-        "default": "./dist/es/index.production.mjs",
-        "import": "./dist/es/index.production.mjs",
-        "require": "./dist/cjs/index.js",
-        "types": "./dist/types/exports/index.d.ts"
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
       },
       "./layout/Column": {
-        "default": "./dist/es/layout/Column.production.mjs",
-        "import": "./dist/es/layout/Column.production.mjs",
-        "require": "./dist/cjs/layout/Column.production.js",
-        "types": "./dist/types/exports/layout/Column.d.ts"
+        "import": "./dist/exports/layout/Column.js",
+        "require": "./dist/exports/layout/Column.cjs"
       },
       "./layout/Row": {
-        "default": "./dist/es/layout/Row.production.mjs",
-        "import": "./dist/es/layout/Row.production.mjs",
-        "require": "./dist/cjs/layout/Row.production.js",
-        "types": "./dist/types/exports/layout/Row.d.ts"
+        "import": "./dist/exports/layout/Row.js",
+        "require": "./dist/exports/layout/Row.cjs"
       },
       "./lists/CellContainer": {
-        "default": "./dist/es/lists/CellContainer.production.mjs",
-        "import": "./dist/es/lists/CellContainer.production.mjs",
-        "require": "./dist/cjs/lists/CellContainer.production.js",
-        "types": "./dist/types/exports/lists/CellContainer.d.ts"
+        "import": "./dist/exports/lists/CellContainer.js",
+        "require": "./dist/exports/lists/CellContainer.cjs"
       },
       "./lists/FlashList": {
-        "default": "./dist/es/lists/FlashList.production.mjs",
-        "import": "./dist/es/lists/FlashList.production.mjs",
-        "require": "./dist/cjs/lists/FlashList.production.js",
-        "types": "./dist/types/exports/lists/FlashList.d.ts"
-      }
+        "import": "./dist/exports/lists/FlashList.js",
+        "require": "./dist/exports/lists/FlashList.cjs"
+      },
+      "./package.json": "./package.json"
     }
   },
   "scripts": {
-    "build": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
+    "build": "pnpm run build:tsdown",
+    "build:vite": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
+    "build:tsdown": "tsdown",
     "build:bundle": "pnpm run build:prod && pnpm run build:dev",
     "build:prod": "vite build --mode=production",
     "build:dev": "vite build --mode=development",
@@ -68,15 +62,12 @@
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
-    "@plextv/react-lightning": "workspace:*",
-    "@plextv/react-lightning-components": "workspace:^",
-    "@plextv/react-lightning-plugin-flexbox": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@repo/vite-config": "workspace:*",
-    "@types/react": "18.3.14",
-    "react": "18.3.1",
-    "react-native": "0.77.2"
+    "@repo/configs": "workspace:*",
+    "@types/react": "18.3.14"
   },
   "peerDependencies": {
     "@plextv/react-lightning": "workspace:^",

@@ -12,12 +12,11 @@
     "url": "https://github.com/plexinc/react-lightning/issues/new"
   },
   "type": "module",
-  "files": [
-    "dist"
-  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "exports": {
     ".": "./src/index.ts",
-    "./worker": "./src/worker.ts",
+    "./package.json": "./package.json",
     "./jsx": "./src/types/jsx.d.ts"
   },
   "publishConfig": {
@@ -25,16 +24,18 @@
     "access": "public",
     "exports": {
       ".": {
-        "default": "./dist/es/index.production.mjs",
-        "import": "./dist/es/index.production.mjs",
-        "require": "./dist/cjs/index.js",
-        "types": "./dist/types/index.d.ts"
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
       },
+      "./package.json": "./package.json",
       "./jsx": "./dist/types/types/jsx.d.ts"
     }
   },
   "scripts": {
-    "build": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
+    "build": "pnpm run build:vite",
+    "build:vite": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
+    "build:tsdown": "pnpm run build:worker && tsdown --config ./tsdown.lib.ts && pnpm run build:copy-dts",
+    "build:worker": "tsdown --config ./tsdown.worker.ts",
     "build:bundle": "pnpm run build:prod && pnpm run build:dev",
     "build:prod": "vite build --mode=production",
     "build:dev": "vite build --mode=development",
@@ -42,21 +43,22 @@
     "build:copy-dts": "copyfiles -f src/types/jsx.d.ts dist/types/types",
     "clean": "del ./dist",
     "check:types": "tsc --noEmit",
+    "postinstall": "pnpm run build:worker",
     "test:unit": "vitest run --passWithNoTests"
   },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "tseep": "1.3.1",
     "yoga-layout": "3.2.1"
   },
   "devDependencies": {
     "@babel/plugin-transform-runtime": "^7.28.3",
-    "@plextv/react-lightning": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@repo/vite-config": "workspace:*",
+    "@repo/configs": "workspace:*",
     "@rollup/plugin-babel": "^6.0.4",
     "copyfiles": "2.4.1",
-    "core-js": "^3.45.1",
-    "react": "18.3.1"
+    "core-js": "^3.45.1"
   },
   "peerDependencies": {
     "@plextv/react-lightning": "workspace:^",
@@ -73,5 +75,6 @@
       "@babel/plugin-transform-runtime",
       "core-js"
     ]
-  }
+  },
+  "types": "./dist/index.d.cts"
 }

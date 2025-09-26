@@ -17,27 +17,33 @@
     "lightning-js"
   ],
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "source": "src/index.ts",
-  "files": [
-    "dist"
-  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
   "publishConfig": {
     "provenance": true,
     "access": "public"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "pnpm run build:tsdown",
+    "build:vite": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
+    "build:tsdown": "tsdown",
     "prepare": "pnpm run build",
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "@vitejs/plugin-react": "4.6.0"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*"
+    "@repo/configs": "workspace:*"
   },
   "peerDependencies": {
     "@plextv/react-native-lightning": "workspace:^"

@@ -1,6 +1,7 @@
 // Default export react-native-web for any exports we don't override
 
 export { useRef as usePlatformMethods } from 'react';
+export type * from 'react-native-web';
 export * from 'react-native-web';
 
 // Override RN exports with our own

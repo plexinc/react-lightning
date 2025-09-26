@@ -12,11 +12,12 @@
     "url": "https://github.com/plexinc/react-lightning/issues/new"
   },
   "type": "module",
-  "files": [
-    "dist"
-  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.cts",
   "exports": {
     ".": "./src/index.ts",
+    "./package.json": "./package.json",
     "./jsx": "./src/types/jsx.d.ts"
   },
   "publishConfig": {
@@ -24,16 +25,17 @@
     "access": "public",
     "exports": {
       ".": {
-        "default": "./dist/es/index.production.mjs",
-        "import": "./dist/es/index.production.mjs",
-        "require": "./dist/cjs/index.js",
-        "types": "./dist/types/index.d.ts"
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
       },
+      "./package.json": "./package.json",
       "./jsx": "./dist/types/types/jsx.d.ts"
     }
   },
   "scripts": {
-    "build": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
+    "build": "pnpm run build:tsdown",
+    "build:vite": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
+    "build:tsdown": "tsdown && pnpm run build:copy-dts",
     "build:bundle": "pnpm run build:prod && pnpm run build:dev",
     "build:prod": "vite build --mode=production",
     "build:dev": "vite build --mode=development",
@@ -43,10 +45,11 @@
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
-    "@plextv/react-lightning": "workspace:*",
-    "@repo/vite-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
+    "@repo/configs": "workspace:*",
     "copyfiles": "2.4.1"
   },
   "peerDependencies": {

@@ -11,28 +11,29 @@
   "bugs": {
     "url": "https://github.com/plexinc/react-lightning/issues/new"
   },
-  "type": "commonjs",
-  "files": [
-    "config",
-    "dist"
-  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
   },
   "publishConfig": {
     "provenance": true,
     "access": "public",
     "exports": {
       ".": {
-        "default": "./dist/es/index.production.mjs",
-        "import": "./dist/es/index.production.mjs",
-        "require": "./dist/cjs/index.js",
-        "types": "./dist/types/index.d.ts"
-      }
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
+      },
+      "./package.json": "./package.json"
     }
   },
   "scripts": {
-    "build": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
+    "build": "pnpm run build:tsdown",
+    "build:vite": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
+    "build:tsdown": "tsdown",
     "build:bundle": "pnpm run build:prod && pnpm run build:dev",
     "build:prod": "vite build --mode=production",
     "build:dev": "vite build --mode=development",
@@ -41,28 +42,25 @@
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "@plextv/react-lightning-plugin-css-transform": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
-    "its-fine": "^2.0.0"
+    "its-fine": "^2.0.0",
+    "react-native-web": "0.19.13"
   },
   "devDependencies": {
-    "@lightningjs/renderer": "3.0.0-beta14",
-    "@plextv/react-lightning": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@repo/vite-config": "workspace:*",
+    "@repo/configs": "workspace:*",
     "@types/node": "24.5.1",
-    "@types/react": "18.3.14",
-    "react": "18.3.1",
-    "react-native": "0.77.2",
-    "react-native-web": "0.19.13"
+    "@types/react": "18.3.14"
   },
   "peerDependencies": {
     "@lightningjs/renderer": "^3.0.0-beta14",
     "@plextv/react-lightning": "workspace:^",
     "react": "^18.3.1",
-    "react-native": "^0.77.2",
-    "react-native-web": "^0.19.13"
+    "react-native": "^0.77.2"
   },
   "peerDependencyRules": {
     "allowedVersions": {

@@ -40,7 +40,7 @@
     "@plextv/vite-plugin-msdf-fontgen": "workspace:*",
     "@plextv/vite-plugin-react-native-lightning": "workspace:*",
     "@plextv/vite-plugin-react-reanimated-lightning": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
+    "@repo/configs": "workspace:*",
     "@types/react": "18.3.14"
   },
   "volta": {
