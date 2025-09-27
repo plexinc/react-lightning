@@ -1,5 +1,11 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.3.11
+
+### Patch Changes
+
+- 62f280f: chore(flexbox): One more package.json fix
+
 ## 0.3.10
 
 ### Patch Changes
