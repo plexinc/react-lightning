@@ -1,5 +1,11 @@
 # @plextv/react-lightning-plugin-reanimated
 
+## 0.3.6
+
+### Patch Changes
+
+- 1932178: chore(reanimated): Add missing dependency
+
 ## 0.3.5
 
 ### Patch Changes
