@@ -1,5 +1,11 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.3.10
+
+### Patch Changes
+
+- 461defb: chore(flexbox): Fix bad exports in package.json
+
 ## 0.3.9
 
 ### Patch Changes
