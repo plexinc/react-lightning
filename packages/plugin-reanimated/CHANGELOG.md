@@ -1,5 +1,17 @@
 # @plextv/react-lightning-plugin-reanimated
 
+## 0.3.4
+
+### Patch Changes
+
+- ded4552: Updated lightning and storybook packages
+- 65a90d4: chore: Package updates and dep cleanup
+- Updated dependencies [ded4552]
+- Updated dependencies [65a90d4]
+  - @plextv/react-lightning-plugin-css-transform@0.3.4
+  - @plextv/react-lightning-plugin-flexbox@0.3.8
+  - @plextv/react-lightning@0.3.10
+
 ## 0.3.3
 
 ### Patch Changes
