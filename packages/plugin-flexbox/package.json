@@ -14,6 +14,7 @@
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/es/index.production.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": "./src/index.ts",
     "./package.json": "./package.json",
@@ -25,7 +26,8 @@
     "exports": {
       ".": {
         "import": "./dist/es/index.production.js",
-        "require": "./dist/cjs/index.js"
+        "require": "./dist/cjs/index.js",
+        "types": "./dist/types/index.d.ts"
       },
       "./package.json": "./package.json",
       "./jsx": "./dist/types/types/jsx.d.ts"
@@ -43,7 +45,6 @@
     "build:copy-dts": "copyfiles -f src/types/jsx.d.ts dist/types/types",
     "clean": "del ./dist",
     "check:types": "tsc --noEmit",
-    "postinstall": "pnpm run build:worker",
     "test:unit": "vitest run --passWithNoTests"
   },
   "files": [
@@ -75,6 +76,5 @@
       "@babel/plugin-transform-runtime",
       "core-js"
     ]
-  },
-  "types": "./dist/index.d.cts"
+  }
 }
