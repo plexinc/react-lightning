@@ -1,7 +1,7 @@
 {
   "name": "@plextv/vite-plugin-react-native-lightning",
   "description": "Vite plugin for adding react-native-lightning support",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {

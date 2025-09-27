@@ -1,5 +1,14 @@
 # @plextv/vite-plugin-react-native-lightning
 
+## 0.3.3
+
+### Patch Changes
+
+- 65a90d4: chore: Package updates and dep cleanup
+- Updated dependencies [ded4552]
+- Updated dependencies [65a90d4]
+  - @plextv/react-native-lightning@0.3.15
+
 ## 0.3.2
 
 ### Patch Changes
