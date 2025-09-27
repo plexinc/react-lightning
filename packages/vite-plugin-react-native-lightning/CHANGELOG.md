@@ -1,5 +1,12 @@
 # @plextv/vite-plugin-react-native-lightning
 
+## 0.3.5
+
+### Patch Changes
+
+- 6b98299: chore(react-native): Fix RN not loading properly
+  - @plextv/react-native-lightning@0.3.19
+
 ## 0.3.4
 
 ### Patch Changes
