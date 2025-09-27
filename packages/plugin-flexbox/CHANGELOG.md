@@ -1,5 +1,11 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.3.12
+
+### Patch Changes
+
+- 6b98299: chore(react-native): Fix RN not loading properly
+
 ## 0.3.11
 
 ### Patch Changes
