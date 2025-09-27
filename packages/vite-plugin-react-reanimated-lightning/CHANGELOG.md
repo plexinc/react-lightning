@@ -1,5 +1,13 @@
 # @plextv/vite-plugin-react-reanimated-lightning
 
+## 0.3.4
+
+### Patch Changes
+
+- 774d679: chore: Force package version bump
+- Updated dependencies [774d679]
+  - @plextv/react-lightning-plugin-reanimated@0.3.5
+
 ## 0.3.3
 
 ### Patch Changes

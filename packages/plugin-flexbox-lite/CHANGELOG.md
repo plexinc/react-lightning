@@ -1,5 +1,13 @@
 # @plextv/react-lightning-plugin-flexbox-lite
 
+## 0.3.3
+
+### Patch Changes
+
+- 774d679: chore: Force package version bump
+- Updated dependencies [774d679]
+  - @plextv/react-lightning@0.3.11
+
 ## 0.3.2
 
 ### Patch Changes
