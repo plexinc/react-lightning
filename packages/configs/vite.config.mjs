@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite';
 
+const esmExt = 'js';
+const cjsExt = 'cjs';
 const createEntryCode = (fileName) => `'use strict';
 if (process.env.NODE_ENV === 'production') {
-  module.exports = require('./${fileName}.production.min.js');
+  module.exports = require('./${fileName}.production.${cjsExt}');
 } else {
-  module.exports = require('./${fileName}.development.js');
+  module.exports = require('./${fileName}.development.${cjsExt}');
 }`;
 
 /**
@@ -29,7 +31,7 @@ const generateEntryFile = {
 
     this.emitFile({
       type: 'asset',
-      fileName: `cjs/${name}.js`,
+      fileName: `cjs/${name}.${cjsExt}`,
       source: createEntryCode(name),
     });
   },
@@ -41,7 +43,7 @@ export default defineConfig(({ mode }) => ({
       entry: 'src/index.ts',
       name: 'index',
       fileName: (format, entryName) =>
-        `${format}/${entryName}.${mode}.${format === 'es' ? 'mjs' : 'js'}`,
+        `${format}/${entryName}.${mode}.${format === 'es' ? esmExt : cjsExt}`,
       formats: ['es', 'cjs'],
     },
     minify: mode === 'production',

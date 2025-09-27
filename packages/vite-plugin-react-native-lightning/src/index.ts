@@ -1,4 +1,3 @@
-import { createRequire } from 'node:module';
 import react from '@vitejs/plugin-react';
 import type { PluginOption } from 'vite';
 
@@ -24,11 +23,6 @@ type Options = {
 };
 
 const vitePlugin = (options?: Options): PluginOption => {
-  const require = createRequire(options?.cwd ?? process.cwd());
-  const reactNativeLightningPath = require.resolve(
-    '@plextv/react-native-lightning',
-  );
-
   return [
     react(options?.reactOptions),
     {
@@ -43,7 +37,7 @@ const vitePlugin = (options?: Options): PluginOption => {
         resolve: {
           extensions,
           alias: {
-            'react-native': reactNativeLightningPath,
+            'react-native': '@plextv/react-native-lightning',
           },
         },
       }),
