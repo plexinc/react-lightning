@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.11
+
+### Patch Changes
+
+- 774d679: chore: Force package version bump
+
 ## 0.3.10
 
 ### Patch Changes

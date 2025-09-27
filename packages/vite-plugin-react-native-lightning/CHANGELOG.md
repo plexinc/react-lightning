@@ -1,5 +1,13 @@
 # @plextv/vite-plugin-react-native-lightning
 
+## 0.3.4
+
+### Patch Changes
+
+- 774d679: chore: Force package version bump
+- Updated dependencies [774d679]
+  - @plextv/react-native-lightning@0.3.16
+
 ## 0.3.3
 
 ### Patch Changes

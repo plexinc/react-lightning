@@ -1,5 +1,15 @@
 # @plextv/react-lightning-plugin-reanimated
 
+## 0.3.5
+
+### Patch Changes
+
+- 774d679: chore: Force package version bump
+- Updated dependencies [774d679]
+  - @plextv/react-lightning-plugin-css-transform@0.3.5
+  - @plextv/react-lightning@0.3.11
+  - @plextv/react-lightning-plugin-flexbox@0.3.9
+
 ## 0.3.4
 
 ### Patch Changes

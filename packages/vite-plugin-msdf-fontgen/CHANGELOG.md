@@ -1,5 +1,11 @@
 # @plextv/vite-plugin-msdf-fontgen
 
+## 1.3.3
+
+### Patch Changes
+
+- 774d679: chore: Force package version bump
+
 ## 1.3.2
 
 ### Patch Changes
