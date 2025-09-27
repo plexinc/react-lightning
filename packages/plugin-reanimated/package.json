@@ -55,6 +55,7 @@
     "@plextv/react-lightning": "workspace:^",
     "@plextv/react-lightning-plugin-css-transform": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
+    "@plextv/react-native-lightning": "workspace:^",
     "react": "^18.3.1",
     "react-native": "^0.77.2",
     "react-native-reanimated": "^3.16.7"

@@ -337,6 +337,9 @@ importers:
       '@plextv/react-lightning-plugin-flexbox':
         specifier: workspace:^
         version: link:../plugin-flexbox
+      '@plextv/react-native-lightning':
+        specifier: workspace:^
+        version: link:../react-native-lightning
       react:
         specifier: ^18.3.1
         version: 18.3.1
