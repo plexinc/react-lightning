@@ -1,5 +1,11 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.3.13
+
+### Patch Changes
+
+- 976b1a8: chore(flexbox): Fix worker builds for legacy targets
+
 ## 0.3.12
 
 ### Patch Changes

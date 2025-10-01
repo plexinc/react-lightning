@@ -1,5 +1,12 @@
 # @plextv/react-lightning-example
 
+## 0.3.20
+
+### Patch Changes
+
+- Updated dependencies [976b1a8]
+  - @plextv/react-lightning-plugin-flexbox@0.3.13
+
 ## 0.3.19
 
 ### Patch Changes
