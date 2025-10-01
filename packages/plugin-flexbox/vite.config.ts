@@ -1,27 +1,23 @@
 import config from '@repo/configs/vite.config';
-import babel from '@rollup/plugin-babel';
 import { defineConfig, mergeConfig, type UserConfig } from 'vite';
 import { externalizeDeps } from 'vite-plugin-externalize-deps';
+
+const buildTarget = 'chrome56';
 
 export default defineConfig((env) =>
   mergeConfig<UserConfig, UserConfig>(config(env), {
     base: './',
-    plugins: [
-      externalizeDeps(),
-      // Use babel to transpile workers too
-      babel({
-        babelHelpers: 'runtime',
-        presets: [
-          [
-            '@babel/env',
-            {
-              useBuiltIns: 'usage',
-              corejs: 3,
-            },
-          ],
-        ],
-        plugins: ['@babel/plugin-transform-runtime'],
-      }),
-    ],
+    plugins: [externalizeDeps()],
+    esbuild: {
+      target: buildTarget,
+    },
+    optimizeDeps: {
+      esbuildOptions: {
+        target: buildTarget,
+      },
+    },
+    build: {
+      target: buildTarget,
+    },
   }),
 );

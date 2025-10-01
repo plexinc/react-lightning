@@ -34,7 +34,7 @@
     }
   },
   "scripts": {
-    "build": "pnpm run build:vite",
+    "build": "pnpm run build:worker && pnpm run build:vite",
     "build:vite": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
     "build:tsdown": "pnpm run build:worker && tsdown --config ./tsdown.lib.ts && pnpm run build:copy-dts",
     "build:worker": "tsdown --config ./tsdown.worker.ts",
@@ -55,11 +55,8 @@
     "yoga-layout": "3.2.1"
   },
   "devDependencies": {
-    "@babel/plugin-transform-runtime": "^7.28.3",
     "@repo/configs": "workspace:*",
-    "@rollup/plugin-babel": "^6.0.4",
-    "copyfiles": "2.4.1",
-    "core-js": "^3.45.1"
+    "copyfiles": "2.4.1"
   },
   "peerDependencies": {
     "@plextv/react-lightning": "workspace:^",
@@ -67,14 +64,5 @@
   },
   "volta": {
     "extends": "../../package.json"
-  },
-  "browserslist": [
-    "chrome 56"
-  ],
-  "depcheck": {
-    "ignoreMatches": [
-      "@babel/plugin-transform-runtime",
-      "core-js"
-    ]
   }
 }
