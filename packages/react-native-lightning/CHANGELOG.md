@@ -1,5 +1,11 @@
 # @plextv/react-native-lightning
 
+## 0.3.23
+
+### Patch Changes
+
+- 056a741: chore(react-native-lightning): One more typings fix
+
 ## 0.3.22
 
 ### Patch Changes
