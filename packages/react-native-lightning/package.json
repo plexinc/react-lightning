@@ -14,7 +14,7 @@
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
-  "types": "./dist/types/index.d.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": "./src/index.ts",
     "./package.json": "./package.json"
@@ -33,7 +33,7 @@
   "scripts": {
     "build": "tsdown && pnpm run build:types",
     "build:watch": "tsdown -w",
-    "build:types": "tsc --outDir dist/lib --declarationDir dist/types --declaration true --emitDeclarationOnly true",
+    "build:types": "tsc --outDir dist/lib --declarationDir dist --declaration true --emitDeclarationOnly true",
     "clean": "del ./dist",
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
