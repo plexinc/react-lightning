@@ -1,7 +1,7 @@
 {
   "name": "@plextv/react-native-lightning",
   "description": "@plextv/react-lightning implementation for react-native",
-  "version": "0.3.21",
+  "version": "0.3.22",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {

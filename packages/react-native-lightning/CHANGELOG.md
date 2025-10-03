@@ -1,5 +1,11 @@
 # @plextv/react-native-lightning
 
+## 0.3.22
+
+### Patch Changes
+
+- 6bf5879: fix(react-native-lightning): Add back accidentally removed typings
+
 ## 0.3.21
 
 ### Patch Changes
