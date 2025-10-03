@@ -16,13 +16,13 @@
   },
   "dependencies": {
     "@lightningjs/renderer": "3.0.0-beta14",
-    "@plextv/react-lightning": "0.3.11",
+    "@plextv/react-lightning": "0.3.12",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-router-dom": "7.3.0"
   },
   "devDependencies": {
-    "@plextv/vite-plugin-msdf-fontgen": "1.3.0",
+    "@plextv/vite-plugin-msdf-fontgen": "1.3.3",
     "@tsconfig/vite-react": "6.3.6",
     "@types/node": "24.0.4",
     "@types/react": "18.3.14",
