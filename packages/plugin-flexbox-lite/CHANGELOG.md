@@ -1,5 +1,13 @@
 # @plextv/react-lightning-plugin-flexbox-lite
 
+## 0.3.4
+
+### Patch Changes
+
+- 10332b7: chore: Clean up some package typings
+- Updated dependencies [10332b7]
+  - @plextv/react-lightning@0.3.12
+
 ## 0.3.3
 
 ### Patch Changes
