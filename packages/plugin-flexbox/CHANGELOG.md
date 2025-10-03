@@ -1,5 +1,14 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.3.14
+
+### Patch Changes
+
+- 10332b7: chore: Clean up some package typings
+- 10332b7: fix(flexbox): Fix worker not working in dev mode
+- Updated dependencies [10332b7]
+  - @plextv/react-lightning@0.3.12
+
 ## 0.3.13
 
 ### Patch Changes

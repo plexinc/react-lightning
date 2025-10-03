@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.12
+
+### Patch Changes
+
+- 10332b7: chore: Clean up some package typings
+
 ## 0.3.11
 
 ### Patch Changes
