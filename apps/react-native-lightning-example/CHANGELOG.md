@@ -1,5 +1,12 @@
 # @plextv/react-native-lightning-example
 
+## 0.3.28
+
+### Patch Changes
+
+- Updated dependencies [056a741]
+  - @plextv/react-native-lightning@0.3.23
+
 ## 0.3.27
 
 ### Patch Changes
