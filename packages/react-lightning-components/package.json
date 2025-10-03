@@ -51,13 +51,8 @@
     }
   },
   "scripts": {
-    "build": "pnpm run build:tsdown",
-    "build:vite": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
-    "build:tsdown": "tsdown",
-    "build:bundle": "pnpm run build:prod && pnpm run build:dev",
-    "build:prod": "vite build --mode=production",
-    "build:dev": "vite build --mode=development",
-    "build:types": "tsc --outDir dist/lib --declarationDir dist/types --declaration true --emitDeclarationOnly true",
+    "build": "tsdown",
+    "build:watch": "tsdown -w",
     "clean": "del ./dist",
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"

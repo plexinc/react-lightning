@@ -30,9 +30,9 @@
     "access": "public"
   },
   "scripts": {
-    "build": "pnpm run build:tsdown",
-    "build:vite": "pnpm run clean && pnpm run build:types && pnpm run build:bundle",
-    "build:tsdown": "tsdown",
+    "build": "tsdown",
+    "build:watch": "tsdown -w",
+    "clean": "del ./dist",
     "prepare": "pnpm run build",
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"

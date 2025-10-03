@@ -1,9 +1,5 @@
-import { SdfTrFontFace } from '@lightningjs/renderer';
-import {
-  Canvas,
-  createRoot,
-  type RenderOptions,
-} from '@plextv/react-lightning';
+import { Canvas, type RenderOptions } from '@plextv/react-lightning';
+import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { App } from './App';
 import { keyMap } from './keyMap';
@@ -28,14 +24,13 @@ const router = createBrowserRouter([
 ]);
 
 const options: RenderOptions = {
-  fonts: (stage) => [
-    new SdfTrFontFace('msdf', {
+  fonts: [
+    {
+      type: 'sdf',
       fontFamily: 'sans-serif',
-      descriptors: {},
       atlasUrl: '/fonts/Ubuntu-Regular.msdf.png',
       atlasDataUrl: '/fonts/Ubuntu-Regular.msdf.json',
-      stage,
-    }),
+    },
   ],
 };
 
@@ -45,9 +40,7 @@ if (!appElement) {
   throw new Error('No app element found');
 }
 
-const root = await createRoot(appElement, options);
-
-root.render(
+createRoot(appElement).render(
   <Canvas keyMap={keyMap} options={options}>
     <RouterProvider router={router} />
   </Canvas>,

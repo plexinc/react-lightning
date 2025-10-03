@@ -8,8 +8,8 @@ export const Nav = () => {
   return (
     <FocusGroup
       style={{
-        width: 1800,
-        height: 80,
+        w: 1800,
+        h: 80,
         x: 60,
         y: 40,
         color: 0xffffff22,
@@ -20,13 +20,13 @@ export const Nav = () => {
         autoFocus
         label="Index"
         variant="accent"
-        style={{ width: 200, height: 40, x: 1800 / 2 - 250, y: 20 }}
+        style={{ w: 200, h: 40, x: 1800 / 2 - 250, y: 20 }}
         onPress={() => navigate('/')}
       />
       <Button
         label="Browse"
         variant="accent"
-        style={{ width: 200, height: 40, x: 1800 / 2 + 50, y: 20 }}
+        style={{ w: 200, h: 40, x: 1800 / 2 + 50, y: 20 }}
         onPress={() => navigate('/browse')}
       />
     </FocusGroup>

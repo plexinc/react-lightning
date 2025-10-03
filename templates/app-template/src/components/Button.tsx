@@ -70,16 +70,14 @@ export const Button = ({
         ...style,
         color: focused ? active : 0,
         borderRadius: 16,
-        border: focused
-          ? { width: 0, color: active }
-          : { width: 2, color: inactive },
+        border: focused ? { w: 0, color: active } : { w: 2, color: inactive },
       }}
       onKeyUp={handleOnKeyUp}
     >
       <Text
         style={{
-          x: (style?.width ?? 0) / 2,
-          y: (style?.height ?? 0) / 2,
+          x: (style?.w ?? 0) / 2,
+          y: (style?.h ?? 0) / 2,
           mount: 0.5,
           color: focused ? activeText : inactiveText,
         }}

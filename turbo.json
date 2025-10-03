@@ -5,21 +5,18 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"],
-      "inputs": ["packages/**", "apps/**"]
+      "inputs": [
+        "src/**",
+        "public/**",
+        "index.html",
+        "package.json",
+        "vite.config.*",
+        "tsconfig.config.*",
+        "tsdown.config.*"
+      ]
     },
-    "build:vite": {
-      "dependsOn": ["^build:vite"],
-      "outputs": ["dist/**"],
-      "inputs": ["packages/**", "apps/**"]
-    },
-    "build:tsdown": {
-      "dependsOn": ["^build:tsdown"],
-      "outputs": ["dist/**"],
-      "inputs": ["packages/**", "apps/**"]
-    },
-    "clean": {},
-    "build:types": {
-      "dependsOn": ["^build:types"]
+    "clean": {
+      "cache": false
     },
     "test:unit": {
       "dependsOn": ["^@plextv/vite-plugin-msdf-fontgen#build"]

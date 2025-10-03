@@ -3,6 +3,7 @@ import { EventEmitter } from 'tseep';
 import { NodeOperations } from './types/NodeOperations';
 import { SimpleDataView } from './util/SimpleDataView';
 import { toSerializableValue } from './util/toSerializableValue';
+import Worker from './worker?worker&inline';
 import type { YogaManager, YogaManagerEvents } from './YogaManager';
 
 const DELAY_DURATION = 1;
@@ -340,7 +341,4 @@ function getId(): number {
   return ++count;
 }
 
-export default () =>
-  wrapWorker<YogaManager>(
-    new Worker(new URL('_generated/worker.cjs', import.meta.url)),
-  );
+export default () => wrapWorker<YogaManager>(new Worker());

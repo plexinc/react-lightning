@@ -24,9 +24,7 @@ const Image = ({ x, y, autoFocus }: ImageProps) => {
       style={{
         x,
         y,
-        border: focused
-          ? { width: 2, color: 0xffffffff }
-          : { width: 0, color: 0 },
+        border: focused ? { w: 2, color: 0xffffffff } : { w: 0, color: 0 },
         scale: focused ? 1.1 : 1,
       }}
       transition={{
@@ -38,7 +36,7 @@ const Image = ({ x, y, autoFocus }: ImageProps) => {
 
 export const BrowsePage = () => {
   return (
-    <FocusGroup style={{ x: 110, y: 400 }}>
+    <FocusGroup style={{ x: 110, y: 400, w: 1700, h: 300 }}>
       <Image x={0} />
       <Image x={250} />
       <Image x={500} />
