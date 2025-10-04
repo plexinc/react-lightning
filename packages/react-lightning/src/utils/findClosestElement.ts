@@ -195,32 +195,39 @@ export function findClosestElement(
   const sourceDimensions = getDimensions(sourceElement, parentElement);
 
   for (const otherElement of elementsToCheck) {
-    if (otherElement.focusable && otherElement !== sourceElement) {
-      const otherDimensions = getDimensions(otherElement, parentElement);
-      const { x: isOverlappedX, y: isOverlappedY } = isOverlap(
-        sourceDimensions,
-        otherDimensions,
-      );
+    if (
+      otherElement === sourceElement ||
+      otherElement.node.w === 0 ||
+      otherElement.node.h === 0 ||
+      !otherElement.focusable
+    ) {
+      continue;
+    }
 
-      const distance = calculateShortestDistance(
-        direction,
-        sourceDimensions,
-        otherDimensions,
-      );
+    const otherDimensions = getDimensions(otherElement, parentElement);
+    const { x: isOverlappedX, y: isOverlappedY } = isOverlap(
+      sourceDimensions,
+      otherDimensions,
+    );
 
-      if (distance === null) {
-        continue;
-      }
+    const distance = calculateShortestDistance(
+      direction,
+      sourceDimensions,
+      otherDimensions,
+    );
 
-      const isHorizontal = direction & Direction.Horizontal;
-      const isOverlapped = isHorizontal ? isOverlappedY : isOverlappedX;
+    if (distance === null) {
+      continue;
+    }
 
-      if (distance < closestDistance && isOverlapped) {
-        closest = [otherElement];
-        closestDistance = distance;
-      } else if (distance === closestDistance) {
-        closest?.push(otherElement);
-      }
+    const isHorizontal = direction & Direction.Horizontal;
+    const isOverlapped = isHorizontal ? isOverlappedY : isOverlappedX;
+
+    if (distance < closestDistance && isOverlapped) {
+      closest = [otherElement];
+      closestDistance = distance;
+    } else if (distance === closestDistance) {
+      closest?.push(otherElement);
     }
   }
 
