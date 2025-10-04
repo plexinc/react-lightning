@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.3.13
+
+### Patch Changes
+
+- e56cc1d: fix(focus): Don't attempt to focus elements with no size
+
 ## 0.3.12
 
 ### Patch Changes
