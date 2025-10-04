@@ -5,6 +5,7 @@ export default defineConfig({
   ...baseConfig,
   format: 'esm',
   target: 'node22',
+  external: [/^node:.*/],
   exports: {
     devExports: false,
   },
