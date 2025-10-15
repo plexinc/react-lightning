@@ -16,6 +16,7 @@ export type Plugin<T extends LightningElement = LightningElement> = {
       T,
       LightningTextElement,
       null,
+      null,
       T
     >,
   ): Promise<void>;

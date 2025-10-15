@@ -1,4 +1,7 @@
 const REACT_ELEMENT_TYPE = Symbol.for('react.element');
+const REACT_TRANSITIONAL_ELEMENT_TYPE = Symbol.for(
+  'react.transitional.element',
+);
 
 // This is a list of properties that should be deeply compared, specifically for
 // React elements.
@@ -14,7 +17,8 @@ function isReactElement(value: unknown): value is ReactElement {
   return (
     typeof value === 'object' &&
     value !== null &&
-    (value as ReactElement).$$typeof === REACT_ELEMENT_TYPE
+    ((value as ReactElement).$$typeof === REACT_ELEMENT_TYPE ||
+      (value as ReactElement).$$typeof === REACT_TRANSITIONAL_ELEMENT_TYPE)
   );
 }
 

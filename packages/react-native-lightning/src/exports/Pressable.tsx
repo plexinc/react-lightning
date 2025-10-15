@@ -1,13 +1,10 @@
-import type {
-  KeyEvent,
-  LightningElement,
-  LightningViewElement,
-  Rect,
-} from '@plextv/react-lightning';
-import { focusable, Keys } from '@plextv/react-lightning';
+import type { KeyEvent, LightningElement, Rect } from '@plextv/react-lightning';
+import { focusable, Keys, LightningViewElement } from '@plextv/react-lightning';
 import type { DependencyList, RefAttributes } from 'react';
 import { useCallback, useState } from 'react';
 import type {
+  BlurEvent,
+  FocusEvent,
   LayoutChangeEvent,
   PressableProps as RNPressableProps,
 } from 'react-native';
@@ -56,15 +53,19 @@ export const Pressable = focusable<PressableProps, LightningViewElement>(
     const [state, setState] = useState({ pressed: false });
 
     const handleFocus = useCallback(
-      (target: LightningElement) => {
-        onFocus?.(createNativeSyntheticEvent({ target: target.id }, target));
+      (target: FocusEvent | LightningElement) => {
+        if (target instanceof LightningViewElement) {
+          onFocus?.(createNativeSyntheticEvent({ target: target.id }, target));
+        }
       },
       [onFocus],
     );
 
     const handleBlur = useCallback(
-      (target: LightningElement) => {
-        onBlur?.(createNativeSyntheticEvent({ target: target.id }, target));
+      (target: BlurEvent | LightningElement) => {
+        if (target instanceof LightningViewElement) {
+          onBlur?.(createNativeSyntheticEvent({ target: target.id }, target));
+        }
       },
       [onBlur],
     );

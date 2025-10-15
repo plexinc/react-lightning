@@ -45,18 +45,19 @@
     "@plextv/react-lightning-plugin-css-transform": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
     "its-fine": "^2.0.0",
-    "react-native-web": "0.19.13"
+    "react-native-web": "0.21.1"
   },
   "devDependencies": {
     "@repo/configs": "workspace:*",
-    "@types/node": "24.5.1",
-    "@types/react": "18.3.14"
+    "@types/node": "24.7.2",
+    "@types/react": "19.2.2",
+    "@types/react-reconciler": "0.32.1"
   },
   "peerDependencies": {
     "@lightningjs/renderer": "^3.0.0-beta14",
     "@plextv/react-lightning": "workspace:^",
-    "react": "^18.3.1",
-    "react-native": "^0.77.2"
+    "react": "^19.2.0",
+    "react-native": "^0.82.0"
   },
   "peerDependencyRules": {
     "allowedVersions": {

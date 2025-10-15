@@ -45,6 +45,6 @@
   },
   "peerDependencies": {
     "@plextv/react-lightning-plugin-reanimated": "workspace:^",
-    "react-native-reanimated": "^3.16.7"
+    "react-native-reanimated": "^4.1.3"
   }
 }

@@ -100,7 +100,7 @@ export const FocusGroup = forwardRef<LightningElement, FocusGroupProps>(
       if (viewElement) {
         focusManager.setTraps(viewElement, traps);
       }
-    }, [focusManager.setTraps, viewElement, traps]);
+    }, [focusManager, viewElement, traps]);
 
     useEffect(() => {
       if (viewRef.current) {

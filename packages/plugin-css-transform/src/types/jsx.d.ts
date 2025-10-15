@@ -5,7 +5,7 @@ import type {
 } from '@plextv/react-lightning';
 import type { AllStyleProps } from './ReactStyle';
 
-declare global {
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       'lng-view': LightningViewElementProps & {

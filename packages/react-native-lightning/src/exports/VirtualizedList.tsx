@@ -1,4 +1,4 @@
-import { type FC, forwardRef, type LegacyRef, type Ref } from 'react';
+import { type FC, forwardRef, type Ref } from 'react';
 import {
   VirtualizedList as RNVirtualizedList,
   type VirtualizedListProps as RNVirtualizedListProps,
@@ -17,7 +17,7 @@ interface ForwardRef extends FC<VirtualizedListProps<unknown>> {
 export const VirtualizedList: ForwardRef = forwardRef(
   <T,>(
     { renderScrollComponent, ...props }: VirtualizedListProps<T>,
-    ref: LegacyRef<VirtualizedList<T>>,
+    ref: Ref<VirtualizedList<T>>,
   ) => (
     <RNVirtualizedList
       {...props}

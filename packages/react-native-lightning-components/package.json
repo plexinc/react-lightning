@@ -62,7 +62,7 @@
   ],
   "devDependencies": {
     "@repo/configs": "workspace:*",
-    "@types/react": "18.3.14"
+    "@types/react": "19.2.2"
   },
   "peerDependencies": {
     "@plextv/react-lightning": "workspace:^",
@@ -71,8 +71,8 @@
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
     "@plextv/react-native-lightning": "workspace:^",
     "@shopify/flash-list": "^1.8.3",
-    "react": "^18.3.1",
-    "react-native": "^0.77.2"
+    "react": "^19.2.0",
+    "react-native": "^0.82.0"
   },
   "peerDependenciesMeta": {
     "@shopify/flash-list": {
