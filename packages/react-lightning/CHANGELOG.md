@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.4.0-alpha.0
+
+### Minor Changes
+
+- 63ec701: Move everything to React 19 and React Native 0.82
+
 ## 0.3.13
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "mode": "pre",
-  "tag": "react19",
+  "tag": "alpha",
   "initialVersions": {
     "@plextv/react-lightning-example": "0.3.22",
     "@plextv/react-native-lightning-example": "0.3.29",
@@ -18,5 +18,5 @@
     "@plextv/vite-plugin-react-native-lightning": "0.3.5",
     "@plextv/vite-plugin-react-reanimated-lightning": "0.3.4"
   },
-  "changesets": []
+  "changesets": ["chatty-horses-taste"]
 }
