@@ -11,7 +11,8 @@ import type {
 } from 'react-native';
 import { createNativeSyntheticEvent } from '../utils/createNativeSyntheticEvent';
 import { FocusGroup } from './FocusGroup';
-import { defaultViewStyle, View } from './View';
+import { Pressable } from './Pressable';
+import { defaultViewStyle } from './View';
 
 type ScrollViewProps = RNScrollViewProps & {
   animated?: boolean;
@@ -200,7 +201,7 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
     const flexDirection = horizontal ? 'row' : 'column';
 
     return (
-      <View
+      <Pressable
         ref={this._viewportRef}
         style={[
           defaultViewStyle,
@@ -229,7 +230,7 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
         >
           {children}
         </FocusGroup>
-      </View>
+      </Pressable>
     );
   }
 

@@ -1,13 +1,16 @@
 import type { RendererMain } from '@lightningjs/renderer';
-import type { HostConfig } from 'react-reconciler';
-import { DiscreteEventPriority } from 'react-reconciler/constants';
+import { createContext } from 'react';
+import type { EventPriority, HostConfig } from 'react-reconciler';
+import {
+  DefaultEventPriority,
+  NoEventPriority,
+} from 'react-reconciler/constants';
 import { createLightningElement } from '../element/createLightningElement';
 import { LightningTextElement } from '../element/LightningTextElement';
 import {
   type LightningElement,
   type LightningElementProps,
   LightningElementType,
-  type LightningTextElementProps,
   type RendererNode,
 } from '../types';
 import { simpleDiff } from '../utils/simpleDiff';
@@ -27,9 +30,10 @@ export type LightningHostConfig = HostConfig<
   LightningTextElement,
   null,
   null,
+  null,
   LightningElement,
   ReconcilerContainer,
-  LightningElementProps,
+  unknown,
   unknown,
   unknown,
   unknown
@@ -43,6 +47,9 @@ type LightningHostConfigOptions = Pick<
 export function createHostConfig(
   options?: LightningHostConfigOptions,
 ): LightningHostConfig {
+  const HostTransitionContext = createContext(null);
+  let currentUpdatePriority: EventPriority = NoEventPriority;
+
   function appendChild(
     parentInstance: LightningElement,
     child: LightningElement,
@@ -68,6 +75,29 @@ export function createHostConfig(
     beforeActiveInstanceBlur: () => {},
     afterActiveInstanceBlur: () => {},
     prepareScopeUpdate: () => {},
+    resetFormInstance: () => {},
+    requestPostPaintCallback: () => {},
+    shouldAttemptEagerTransition: () => false,
+    trackSchedulerEvent: () => {},
+    resolveEventType: () => null,
+    resolveEventTimeStamp: () => -1.1,
+    maySuspendCommit: () => false,
+    startSuspendingCommit: () => {},
+    suspendInstance: () => {},
+    preloadInstance: () => true,
+    waitForCommitToBeReady: () => null,
+
+    NotPendingTransition: null,
+    HostTransitionContext: {
+      $$typeof: HostTransitionContext.$$typeof,
+      // biome-ignore lint/suspicious/noExplicitAny: Needs to be null
+      Provider: null as any,
+      // biome-ignore lint/suspicious/noExplicitAny: Needs to be null
+      Consumer: null as any,
+      _currentValue: null,
+      _currentValue2: null,
+      _threadCount: 0,
+    },
 
     getRootHostContext(container) {
       return container;
@@ -136,15 +166,6 @@ export function createHostConfig(
       }
     },
 
-    prepareUpdate(_instance, type, oldProps, newProps) {
-      const diffedProps: Partial<LightningElementProps> | null = simpleDiff(
-        oldProps,
-        newProps,
-      );
-
-      return diffedProps ? mapReactPropsToLightning(type, diffedProps) : null;
-    },
-
     getInstanceFromScope(instance) {
       return instance as LightningElement;
     },
@@ -153,8 +174,20 @@ export function createHostConfig(
       return type === LightningElementType.Text;
     },
 
-    getCurrentEventPriority() {
-      return DiscreteEventPriority;
+    setCurrentUpdatePriority(newPriority: EventPriority): void {
+      currentUpdatePriority = newPriority;
+    },
+
+    getCurrentUpdatePriority(): EventPriority {
+      return currentUpdatePriority;
+    },
+
+    resolveUpdatePriority() {
+      if (currentUpdatePriority !== NoEventPriority) {
+        return currentUpdatePriority;
+      }
+
+      return DefaultEventPriority;
     },
 
     insertBefore(parentInstance, child, beforeChild) {
@@ -181,12 +214,23 @@ export function createHostConfig(
       instance.destroy();
     },
 
-    commitUpdate(instance, updatePayload) {
-      if (Object.keys(updatePayload).length === 0) {
+    commitUpdate(instance, type, oldProps, newProps) {
+      const diffedProps: Partial<LightningElementProps> | null = simpleDiff(
+        oldProps,
+        newProps,
+      );
+
+      if (!diffedProps) {
         return null;
       }
 
-      instance.setProps(updatePayload as LightningTextElementProps);
+      const updatePayload = mapReactPropsToLightning(type, diffedProps);
+
+      if (!updatePayload || Object.keys(updatePayload).length === 0) {
+        return null;
+      }
+
+      instance.setProps(updatePayload);
     },
 
     commitTextUpdate(instance, oldText, newText) {

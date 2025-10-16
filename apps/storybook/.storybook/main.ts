@@ -6,6 +6,10 @@ const config: StorybookConfig = {
   addons: ['@storybook/addon-links', '@storybook/addon-docs'],
   framework: '@storybook/react-vite',
 
+  typescript: {
+    reactDocgen: 'react-docgen-typescript',
+  },
+
   managerHead: (head) => `
     ${head}
     <style>

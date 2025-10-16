@@ -5,6 +5,18 @@ import {
 } from '../types';
 import { isValidTextChild } from './isValidTextChild';
 
+function isIntlObject(
+  obj: unknown,
+): obj is { props: { defaultMessage?: string } } {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'props' in obj &&
+    !!obj.props &&
+    'defaultMessage' in (obj.props as { defaultMessage?: string })
+  );
+}
+
 /**
  * Converts React props to work with LightningElements
  */
@@ -38,11 +50,7 @@ export function mapReactPropsToLightning(
               (acc, child) => acc + String(child),
               '',
             );
-          } else if (
-            children &&
-            'props' in children &&
-            children.props?.defaultMessage
-          ) {
+          } else if (isIntlObject(children)) {
             textProps.text = children.props.defaultMessage;
           } else if (children) {
             console.error('Unsupported child type found for text element');

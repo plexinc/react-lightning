@@ -18,6 +18,10 @@ const plugin = (options?: Options): Plugin => {
     config: () => ({
       resolve: {
         alias: {
+          'react-native-reanimated/scripts/validate-worklets-version':
+            require.resolve(
+              'react-native-reanimated/scripts/validate-worklets-version',
+            ),
           'react-native-reanimated': reactNativeLightningReanimatedPath,
           'react-native-reanimated-original': reactReanimatedPath,
         },

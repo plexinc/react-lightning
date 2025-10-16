@@ -1,5 +1,22 @@
 # @plextv/react-lightning-storybook
 
+## 0.4.0-alpha.0
+
+### Minor Changes
+
+- 63ec701: Move everything to React 19 and React Native 0.82
+
+### Patch Changes
+
+- Updated dependencies [63ec701]
+  - @plextv/react-native-lightning-components@0.4.0-alpha.0
+  - @plextv/react-lightning-components@0.4.0-alpha.0
+  - @plextv/react-native-lightning@0.4.0-alpha.0
+  - @plextv/react-lightning-plugin-reanimated@0.4.0-alpha.0
+  - @plextv/react-lightning@0.4.0-alpha.0
+  - @plextv/react-lightning-plugin-flexbox@0.4.0-alpha.0
+  - @plextv/react-lightning-plugin-flexbox-lite@0.4.0-alpha.0
+
 ## 0.3.29
 
 ### Patch Changes

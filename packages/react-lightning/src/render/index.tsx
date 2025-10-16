@@ -71,6 +71,7 @@ let reconciler: Reconciler<
   LightningElement,
   LightningTextElement,
   null,
+  null,
   LightningElement
 >;
 const defaultOptions: Partial<RenderOptions> = {
@@ -212,8 +213,8 @@ export async function createRoot(
   );
 
   const lngRoot: LightningRoot = {
-    render(componentOrElement, callback) {
-      let reactElement: ReactNode;
+    async render(componentOrElement, callback) {
+      let reactElement: ReactNode | Promise<ReactNode>;
 
       if (componentOrElement instanceof Function) {
         reactElement = createElement(componentOrElement);
@@ -223,7 +224,7 @@ export async function createRoot(
 
       reconciler.updateContainer(
         <LightningRootContext.Provider value={lngRoot}>
-          {reactElement}
+          {await reactElement}
         </LightningRootContext.Provider>,
         root,
         null,

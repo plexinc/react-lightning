@@ -34,7 +34,7 @@ export function useFocus<T extends LightningElement>(
 
   // We need to keep a copy of the ref around for when this hook is unmounted,
   // so we can properly remove the child element.
-  const elementRef = useRef<T>();
+  const elementRef = useRef<T>(null);
 
   /* biome-ignore lint/correctness/useExhaustiveDependencies: We purposely leave
     out the autoFocus/focusRedirect/destinations dependencies here. This will
@@ -61,19 +61,19 @@ export function useFocus<T extends LightningElement>(
     if (ref.current) {
       focusManager.setAutoFocus(ref.current, autoFocus);
     }
-  }, [focusManager.setAutoFocus, autoFocus]);
+  }, [focusManager, autoFocus]);
 
   useEffect(() => {
     if (ref.current) {
       focusManager.setFocusRedirect(ref.current, focusRedirect);
     }
-  }, [focusManager.setFocusRedirect, focusRedirect]);
+  }, [focusManager, focusRedirect]);
 
   useEffect(() => {
     if (ref.current) {
       focusManager.setDestinations(ref.current, destinations);
     }
-  }, [focusManager.setDestinations, destinations]);
+  }, [focusManager, destinations]);
 
   useEffect(() => {
     if (ref.current) {

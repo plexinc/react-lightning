@@ -4,8 +4,9 @@ import {
   type Plugin,
 } from '@plextv/react-lightning';
 import { flattenStyles } from '@plextv/react-lightning-plugin-css-transform';
-import { type Fiber, traverseFiber } from 'its-fine';
+import { type Fiber as ItsFineFiber, traverseFiber } from 'its-fine';
 import type { NativeMethods } from 'react-native';
+import type { Fiber } from 'react-reconciler';
 
 type LightningNativeViewElement = NativeMethods &
   LightningViewElement & {
@@ -19,11 +20,11 @@ type LightningNativeViewElement = NativeMethods &
 // fiber tree to find the focus manager though, so we can set destinations for
 // focusable elements.
 function tryFindFocusManager(
-  fiber: Fiber<LightningNativeViewElement>,
+  fiber: Fiber,
 ): FocusManager<LightningViewElement> | null {
   try {
     const context = traverseFiber(
-      fiber,
+      fiber as ItsFineFiber,
       true,
       (f) =>
         f.type?.$$typeof?.toString() === 'Symbol(react.provider)' &&

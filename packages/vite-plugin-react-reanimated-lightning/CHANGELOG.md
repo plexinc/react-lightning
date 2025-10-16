@@ -1,5 +1,16 @@
 # @plextv/vite-plugin-react-reanimated-lightning
 
+## 0.4.0-alpha.0
+
+### Minor Changes
+
+- 63ec701: Move everything to React 19 and React Native 0.82
+
+### Patch Changes
+
+- Updated dependencies [63ec701]
+  - @plextv/react-lightning-plugin-reanimated@0.4.0-alpha.0
+
 ## 0.3.4
 
 ### Patch Changes

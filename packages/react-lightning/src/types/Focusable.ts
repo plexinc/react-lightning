@@ -19,6 +19,6 @@ export interface FocusEvents<T> {
 
 export interface FocusableProps {
   onFocusCapture?: (element: LightningElement) => void;
-  onFocus?: (element: LightningElement) => void;
-  onBlur?: (element: LightningElement) => void;
+  onFocus?: null | ((element: LightningElement) => void);
+  onBlur?: null | ((element: LightningElement) => void);
 }

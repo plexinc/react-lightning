@@ -1,6 +1,6 @@
 import type { LightningJSXIntrinsicElements } from './Intrinsics';
 
-declare global {
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements extends LightningJSXIntrinsicElements {}
   }

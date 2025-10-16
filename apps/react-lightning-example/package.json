@@ -1,7 +1,7 @@
 {
   "name": "@plextv/react-lightning-example",
   "description": "Sample implementation of @plextv/react-lightning in a React app",
-  "version": "0.3.22",
+  "version": "0.4.0-alpha.0",
   "author": "Plex Inc.",
   "license": "MIT",
   "repository": {
@@ -27,18 +27,18 @@
     "@plextv/react-lightning-components": "workspace:*",
     "@plextv/react-lightning-plugin-css-transform": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "react-router-dom": "7.9.1",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-router-dom": "7.9.4",
     "swr": "2.3.6"
   },
   "devDependencies": {
     "@plextv/vite-plugin-msdf-fontgen": "workspace:*",
     "@repo/configs": "workspace:*",
-    "@types/react": "18.3.14",
-    "@types/react-dom": "18.3.1",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
     "@vitejs/plugin-legacy": "7.2.1",
-    "@vitejs/plugin-react": "4.6.0",
+    "@vitejs/plugin-react": "5.0.4",
     "vite-tsconfig-paths": "5.1.4"
   },
   "volta": {

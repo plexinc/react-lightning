@@ -1,5 +1,19 @@
 # @plextv/react-lightning-example
 
+## 0.4.0-alpha.0
+
+### Minor Changes
+
+- 63ec701: Move everything to React 19 and React Native 0.82
+
+### Patch Changes
+
+- Updated dependencies [63ec701]
+  - @plextv/react-lightning-components@0.4.0-alpha.0
+  - @plextv/react-lightning-plugin-css-transform@0.4.0-alpha.0
+  - @plextv/react-lightning@0.4.0-alpha.0
+  - @plextv/react-lightning-plugin-flexbox@0.4.0-alpha.0
+
 ## 0.3.22
 
 ### Patch Changes
