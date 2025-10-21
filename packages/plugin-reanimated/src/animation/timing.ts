@@ -14,7 +14,7 @@ export function createTimingAnimation(
   return {
     duration: config?.duration ?? DefaultTimingConfig.duration,
     easing: 'linear',
-    delay: 0,
+    delay: config?.delay ?? 0,
     loop: false,
     repeat: 0,
     repeatDelay: 0,
