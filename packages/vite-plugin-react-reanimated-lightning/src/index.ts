@@ -7,24 +7,32 @@ type Options = {
 
 const plugin = (options?: Options): Plugin => {
   const require = createRequire(options?.cwd ?? process.cwd());
-  const reactNativeLightningReanimatedPath = require.resolve(
+
+  const alias: Record<string, string> = {};
+
+  // This needs to be first
+  try {
+    alias['react-native-reanimated/scripts/validate-worklets-version'] =
+      require.resolve(
+        'react-native-reanimated/scripts/validate-worklets-version',
+      );
+  } catch {
+    // Do nothing
+  }
+
+  alias['react-native-reanimated'] = require.resolve(
     '@plextv/react-lightning-plugin-reanimated',
   );
-  const reactReanimatedPath = require.resolve('react-native-reanimated');
+  alias['react-native-reanimated-original'] = require.resolve(
+    'react-native-reanimated',
+  );
 
   return {
     name: 'vite-react-reanimated-lightning',
     enforce: 'pre',
     config: () => ({
       resolve: {
-        alias: {
-          'react-native-reanimated/scripts/validate-worklets-version':
-            require.resolve(
-              'react-native-reanimated/scripts/validate-worklets-version',
-            ),
-          'react-native-reanimated': reactNativeLightningReanimatedPath,
-          'react-native-reanimated-original': reactReanimatedPath,
-        },
+        alias,
       },
     }),
   };
