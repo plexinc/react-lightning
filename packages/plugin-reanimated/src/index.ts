@@ -46,8 +46,10 @@ export {
   SlideOutUp,
 } from './builders/Slide';
 
+export { useAnimatedScrollHandler } from './exports/useAnimatedScrollHandler';
 export { useAnimatedStyle } from './exports/useAnimatedStyle';
 export { useComposedEventHandler } from './exports/useComposedEventHandler';
+export { withDelay } from './exports/withDelay';
 export { withRepeat } from './exports/withRepeat';
 export { withSpring } from './exports/withSpring';
 export { withTiming } from './exports/withTiming';

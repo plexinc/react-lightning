@@ -139,7 +139,7 @@ export function createSpringAnimation(
   const animation = {
     duration: 350,
     easing: `cubic-bezier(${1 / 3}, ${p1_y}, ${2 / 3}, ${p2_y})`,
-    delay: 0,
+    delay: config?.delay ?? 0,
     loop: false,
     repeat: 0,
     repeatDelay: 0,
