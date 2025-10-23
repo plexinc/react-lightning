@@ -9,6 +9,7 @@
       "**/*.jsx",
       "**/*.json",
       "!.vscode",
+      "!.changeset",
       "!**/public"
     ],
     "ignoreUnknown": true
