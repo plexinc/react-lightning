@@ -1,5 +1,11 @@
 # @plextv/vite-plugin-react-reanimated-lightning
 
+## 0.4.0-alpha.1
+
+### Patch Changes
+
+- 76874a0: fix(vite-plugin-react-reanimated-lightning): Fix worklet script alias for older versions
+
 ## 0.4.0-alpha.0
 
 ### Minor Changes
