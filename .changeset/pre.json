@@ -19,6 +19,9 @@
     "@plextv/vite-plugin-react-reanimated-lightning": "0.3.4"
   },
   "changesets": [
-    "brown-jeans-knock"
+    "brown-jeans-knock",
+    "every-towns-find",
+    "quiet-kids-melt",
+    "tall-sloths-fix"
   ]
 }
