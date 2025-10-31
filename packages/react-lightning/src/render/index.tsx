@@ -32,6 +32,7 @@ declare global {
   }
 }
 
+type TextRenderer = RendererMainSettings['fontEngines'][number];
 type ShaderMap = string | Record<string, CoreShaderType>;
 type FontInfo = {
   type: Parameters<Stage['loadFont']>[0];
@@ -108,7 +109,8 @@ export async function createRoot(
 
   if (useCanvas) {
     renderEngine = CanvasCoreRenderer;
-    fontEngines.push(CanvasTextRenderer);
+    // Temporary cast until CanvasTextRenderer is typed properly
+    fontEngines.push(CanvasTextRenderer as unknown as TextRenderer);
     shaders = await import('@lightningjs/renderer/canvas/shaders');
   } else {
     renderEngine = WebGlCoreRenderer;
@@ -116,7 +118,8 @@ export async function createRoot(
     shaders = await import('@lightningjs/renderer/webgl/shaders');
 
     if (includeCanvasFontRenderer) {
-      fontEngines.push(CanvasTextRenderer);
+      // Temporary cast until CanvasTextRenderer is typed properly
+      fontEngines.push(CanvasTextRenderer as unknown as TextRenderer);
     }
   }
 
@@ -209,6 +212,9 @@ export async function createRoot(
     null,
     '',
     (error) => console.error(error),
+    (error) => console.error(error),
+    (error) => console.error(error),
+    () => {},
     null,
   );
 
