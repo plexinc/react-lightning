@@ -1,6 +1,6 @@
 # @plextv/vite-plugin-react-reanimated-lightning
 
-## 1.0.0-alpha.2
+## 0.4.0-alpha.2
 
 ### Patch Changes
 
