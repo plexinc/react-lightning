@@ -3,6 +3,7 @@ import { Button, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -25,14 +26,16 @@ const AnimationTest = () => {
 
   const animatedStyles = useAnimatedStyle(
     () => ({
-      top: withTiming(translateY.value),
       backgroundColor: withTiming(animColor.value),
+      left: withSpring(translateX.value, {
+        stiffness: 2000,
+        damping: 200,
+        mass: 50,
+      }),
+      top: withSpring(translateY.value, { duration: 500 }),
       transform: [
         {
           scale: withTiming(scale.value),
-        },
-        {
-          translateX: withTiming(translateX.value),
         },
       ],
     }),

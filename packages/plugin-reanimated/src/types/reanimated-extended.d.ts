@@ -1,19 +1,14 @@
-import type {
-  WithSpringConfig as BaseSpringConfig,
-  WithTimingConfig as BaseTimingConfig,
-} from 'react-native-reanimated';
+declare module 'react-native-reanimated-original' {
+  import type {
+    WithSpringConfig as BaseSpringConfig,
+    WithTimingConfig as BaseTimingConfig,
+  } from 'react-native-reanimated';
 
-declare module 'react-native-reanimated' {
-  interface WithTimingConfig extends BaseTimingConfig {
+  export type WithTimingConfig = BaseTimingConfig & {
     delay?: number;
-  }
+  };
 
-  interface WithSpringConfig extends BaseSpringConfig {
+  export type WithSpringConfig = BaseSpringConfig & {
     delay?: number;
-  }
+  };
 }
-
-export type {
-  WithSpringConfig as SpringConfig,
-  WithTimingConfig as TimingConfig,
-} from 'react-native-reanimated';

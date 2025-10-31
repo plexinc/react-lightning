@@ -1,150 +1,147 @@
+// Extracted and adapted from Reanimated's spring implementation
+// See: https://github.com/software-mansion/react-native-reanimated/tree/main/packages/react-native-reanimated/src/animation/spring
 import type { AnimationSettings } from '@lightningjs/renderer';
-import type { WithSpringConfig } from 'react-native-reanimated-original';
-import { ReduceMotion } from 'react-native-reanimated-original';
-
-const MAX_SIM_FRAMES = 600; // ~2 seconds @ 60 FPS
-const TARGET_FPS = 1 / 60;
-const _SPRING_LENGTH = 0.2;
+import {
+  GentleSpringConfig,
+  GentleSpringConfigWithDuration,
+  ReduceMotion,
+  type WithSpringConfig,
+} from 'react-native-reanimated-original';
+import {
+  calculateNewStiffnessToMatchDuration,
+  checkIfConfigIsValid,
+  criticallyDampedSpringCalculations,
+  type DefaultSpringConfig,
+  getEnergy,
+  getEstimatedDuration,
+  initialCalculations,
+  isAnimationTerminatingCalculation,
+  underDampedSpringCalculations,
+} from './springUtils';
 
 const cache = new Map<string, AnimationSettings>();
-const timingFunctionCache = new Map<string, (delta: number) => number>();
 
-const DefaultSpringConfig = {
-  damping: 10,
-  mass: 1,
-  stiffness: 100,
+const DefaultConfig: DefaultSpringConfig = {
+  ...GentleSpringConfig,
+  ...GentleSpringConfigWithDuration,
   overshootClamping: false,
-  restDisplacementThreshold: 0.01,
-  restSpeedThreshold: 2,
+  energyThreshold: 6e-9,
   velocity: 0,
-  dampingRatio: 0.5,
-  reduceMotion: ReduceMotion.System,
+  reduceMotion: undefined,
+  delay: 0,
+  clamp: undefined,
 };
 
-export function createSpringTimingFunction(
-  config?: WithSpringConfig,
-): (delta: number) => number {
-  const {
-    mass,
-    stiffness,
-    damping,
-    velocity: _velocity,
-    restDisplacementThreshold,
-    restSpeedThreshold,
-    overshootClamping,
-  } = { ...DefaultSpringConfig, ...config };
+export function createSpringAnimation(
+  userConfig?: WithSpringConfig,
+): AnimationSettings {
+  const key = JSON.stringify(userConfig);
+  const cached = cache.get(key);
 
-  const key = JSON.stringify({
-    mass,
-    stiffness,
-    damping,
-    velocity: _velocity,
-    restDisplacementThreshold,
-    restSpeedThreshold,
-    overshootClamping,
-  });
-
-  const cachedResult = timingFunctionCache.get(key);
-  if (cachedResult) {
-    return cachedResult;
+  if (cached) {
+    return cached;
   }
 
-  const SPRING_TARGET = 1;
-  let position = 0;
-  let velocity = _velocity;
-  const positions: number[] = [];
-  let frame = 0;
-
-  while (frame < MAX_SIM_FRAMES) {
-    const springAmount = -stiffness * (position - SPRING_TARGET);
-    const dampingAmount = -damping * velocity;
-    const acceleration = (springAmount + dampingAmount) / mass;
-
-    velocity += acceleration * TARGET_FPS;
-    position += velocity * TARGET_FPS;
-
-    if (overshootClamping && position > 1) {
-      position = 1;
-      velocity = 0;
-    }
-
-    positions.push(position);
-    frame++;
-
-    const isAtRest =
-      Math.abs(position - SPRING_TARGET) < restDisplacementThreshold &&
-      Math.abs(velocity) < restSpeedThreshold;
-
-    if (isAtRest) {
-      break;
-    }
-  }
-
-  const timingFunction = (delta: number): number => {
-    if (delta < 0) {
-      delta = 0;
-    }
-
-    if (delta > 1) {
-      delta = 1;
-    }
-
-    const index = Math.round(delta * (positions.length - 1));
-
-    return positions[index] ?? 0;
+  const config: DefaultSpringConfig = {
+    ...DefaultConfig,
+    ...userConfig,
   };
 
-  timingFunctionCache.set(key, timingFunction);
-  return timingFunction;
-}
+  if (
+    config.reduceMotion === ReduceMotion.Always ||
+    config.duration === 0 ||
+    !checkIfConfigIsValid(config)
+  ) {
+    const instant: AnimationSettings = {
+      duration: config.duration,
+      easing: 'ease-out',
+      delay: config.delay,
+      loop: false,
+      repeat: 0,
+      repeatDelay: 0,
+      stopMethod: false,
+    };
 
-// Temporary until https://github.com/lightning-js/renderer/pull/639 is landed in a beta
-export function createSpringAnimation(
-  config?: WithSpringConfig,
-): AnimationSettings {
-  const {
-    mass,
-    stiffness,
-    damping,
-    velocity: _velocity,
-    restDisplacementThreshold,
-    restSpeedThreshold,
-    overshootClamping,
-  } = { ...DefaultSpringConfig, ...config };
+    cache.set(key, instant);
 
-  const key = JSON.stringify({
-    mass,
-    stiffness,
-    damping,
-    velocity: _velocity,
-    restDisplacementThreshold,
-    restSpeedThreshold,
-    overshootClamping,
-  });
-
-  const cachedResult = cache.get(key);
-  if (cachedResult) {
-    return cachedResult;
+    return instant;
   }
 
-  const timingFn = createSpringTimingFunction(config);
+  const startValue = 0;
+  const toValue = 1;
+  const x0 = startValue - toValue;
+  const useDuration =
+    userConfig?.dampingRatio != null || userConfig?.duration != null;
 
-  // Find the four points for the cubic bezier
-  const y1 = timingFn(1 / 3);
-  const y2 = timingFn(2 / 3);
+  let current = startValue;
+  let velocity = config.velocity;
 
-  const p1_y = (9 * y1 - 3 * y2) / 4;
-  const p2_y = (6 * y2 - 3 * y1) / 4;
+  const { zeta, omega0, omega1 } = initialCalculations(useDuration, config);
 
-  const animation = {
-    duration: 350,
-    easing: `cubic-bezier(${1 / 3}, ${p1_y}, ${2 / 3}, ${p2_y})`,
-    delay: config?.delay ?? 0,
+  if (useDuration) {
+    config.stiffness = calculateNewStiffnessToMatchDuration(x0, config);
+  } else {
+    config.duration = getEstimatedDuration(zeta, omega0);
+  }
+
+  const initialEnergy = getEnergy(
+    x0,
+    config.velocity,
+    config.stiffness,
+    config.mass,
+  );
+
+  function easing(progress: number): number {
+    const t = (progress * config.duration) / 1000;
+    const v0 = velocity;
+    const x0 = progress - toValue;
+
+    const { position: newPosition, velocity: newVelocity } =
+      zeta < 1
+        ? underDampedSpringCalculations({
+            zeta,
+            v0,
+            x0,
+            omega0,
+            omega1,
+            t,
+          })
+        : criticallyDampedSpringCalculations({
+            v0,
+            x0,
+            omega0,
+            t,
+          });
+
+    current = newPosition;
+    velocity = newVelocity;
+
+    if (
+      isAnimationTerminatingCalculation(
+        startValue,
+        toValue,
+        current,
+        velocity,
+        initialEnergy,
+        config,
+      )
+    ) {
+      velocity = 0;
+      current = toValue;
+    }
+
+    return current;
+  }
+
+  const animation: AnimationSettings = {
+    duration: config.duration,
+    easing,
+    delay: config.delay,
     loop: false,
     repeat: 0,
     repeatDelay: 0,
     stopMethod: false,
-  } satisfies AnimationSettings;
+  };
 
   cache.set(key, animation);
 
