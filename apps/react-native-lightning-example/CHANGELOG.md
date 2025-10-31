@@ -1,5 +1,17 @@
 # @plextv/react-native-lightning-example
 
+## 0.4.0-alpha.1
+
+### Patch Changes
+
+- b5e7254: chore: Update lightning packages
+- Updated dependencies [99c54a1]
+- Updated dependencies [b5e7254]
+- Updated dependencies [56845cc]
+  - @plextv/react-lightning-plugin-reanimated@0.4.0-alpha.1
+  - @plextv/react-native-lightning@0.4.0-alpha.1
+  - @plextv/react-lightning@0.4.0-alpha.1
+
 ## 0.4.0-alpha.0
 
 ### Minor Changes
