@@ -1,5 +1,14 @@
 # @plextv/react-lightning-storybook
 
+## 0.4.0-alpha.2
+
+### Patch Changes
+
+- Updated dependencies [410d0ac]
+- Updated dependencies [43bf756]
+  - @plextv/react-lightning-plugin-reanimated@0.4.0-alpha.2
+  - @plextv/react-native-lightning@0.4.0-alpha.2
+
 ## 0.4.0-alpha.1
 
 ### Patch Changes
