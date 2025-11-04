@@ -2,8 +2,6 @@
 // See: https://github.com/software-mansion/react-native-reanimated/tree/main/packages/react-native-reanimated/src/animation/spring
 import type { AnimationSettings } from '@lightningjs/renderer';
 import {
-  GentleSpringConfig,
-  GentleSpringConfigWithDuration,
   ReduceMotion,
   type WithSpringConfig,
 } from 'react-native-reanimated-original';
@@ -22,8 +20,11 @@ import {
 const cache = new Map<string, AnimationSettings>();
 
 const DefaultConfig: DefaultSpringConfig = {
-  ...GentleSpringConfig,
-  ...GentleSpringConfigWithDuration,
+  damping: 120,
+  mass: 4,
+  stiffness: 900,
+  duration: 550,
+  dampingRatio: 1,
   overshootClamping: false,
   energyThreshold: 6e-9,
   velocity: 0,
