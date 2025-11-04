@@ -1,5 +1,13 @@
 # @plextv/react-lightning-plugin-reanimated
 
+## 0.4.0-alpha.2
+
+### Patch Changes
+
+- 410d0ac: fix(plugin-reanimated): Use constants for gentle spring configs instead of importing from reanimated for backwards compat
+- Updated dependencies [43bf756]
+  - @plextv/react-native-lightning@0.4.0-alpha.2
+
 ## 0.4.0-alpha.1
 
 ### Minor Changes

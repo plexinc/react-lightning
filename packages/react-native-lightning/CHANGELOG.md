@@ -1,5 +1,11 @@
 # @plextv/react-native-lightning
 
+## 0.4.0-alpha.2
+
+### Patch Changes
+
+- 43bf756: fix(scrollview): Fix issue with focusable elements inside a scrollview
+
 ## 0.4.0-alpha.1
 
 ### Patch Changes
