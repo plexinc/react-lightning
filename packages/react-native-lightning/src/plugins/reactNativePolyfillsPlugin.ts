@@ -27,7 +27,8 @@ function tryFindFocusManager(
       fiber as ItsFineFiber,
       true,
       (f) =>
-        f.type?.$$typeof?.toString() === 'Symbol(react.provider)' &&
+        (f.type?.$$typeof === Symbol.for('react.provider') ||
+          f.type?.$$typeof === Symbol.for('react.context')) &&
         !!f.memoizedProps.value?.focusManager,
     );
 

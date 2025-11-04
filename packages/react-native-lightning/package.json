@@ -54,7 +54,7 @@
     "@types/react-reconciler": "0.32.1"
   },
   "peerDependencies": {
-    "@lightningjs/renderer": "^3.0.0-beta15",
+    "@lightningjs/renderer": "3.0.0-beta15",
     "@plextv/react-lightning": "workspace:^",
     "react": "^19.2.0",
     "react-native": "^0.82.0"

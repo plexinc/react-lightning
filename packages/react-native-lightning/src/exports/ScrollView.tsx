@@ -9,9 +9,9 @@ import type {
   ScrollView as RNScrollView,
   ScrollViewProps as RNScrollViewProps,
 } from 'react-native';
+import { View } from 'react-native';
 import { createNativeSyntheticEvent } from '../utils/createNativeSyntheticEvent';
 import { FocusGroup } from './FocusGroup';
-import { Pressable } from './Pressable';
 import { defaultViewStyle } from './View';
 
 type ScrollViewProps = RNScrollViewProps & {
@@ -201,8 +201,8 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
     const flexDirection = horizontal ? 'row' : 'column';
 
     return (
-      <Pressable
-        ref={this._viewportRef}
+      <View
+        ref={this._setViewRef}
         style={[
           defaultViewStyle,
           style,
@@ -230,7 +230,7 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
         >
           {children}
         </FocusGroup>
-      </Pressable>
+      </View>
     );
   }
 
@@ -252,6 +252,12 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
       isElement ? this.props.snapToAlignment : 'start',
       this.props.horizontal,
     );
+  };
+
+  private _setViewRef = (ref: View | null) => {
+    this._viewportRef.current = ref
+      ? (ref as unknown as LightningViewElement)
+      : null;
   };
 
   private _doScroll(newOffset: NativeScrollEvent) {
