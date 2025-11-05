@@ -40,7 +40,7 @@ export class LightningManager {
     this._yogaManager.addNode(element.id);
 
     const disposers = [
-      element.on('destroy', async () => {
+      element.on('destroy', () => {
         for (const dispose of disposers) {
           dispose();
         }
@@ -52,13 +52,13 @@ export class LightningManager {
         this._yogaManager!.removeNode(element.id);
       }),
 
-      element.on('childAdded', async (child, index) => {
+      element.on('childAdded', (child, index) => {
         // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. See above
         this._yogaManager!.addChildNode(element.id, child.id, index);
         this.applyStyle(element.id, element.style);
       }),
 
-      element.on('childRemoved', async (child) => {
+      element.on('childRemoved', (child) => {
         // This will remove any pending worker style updates that haven't been sent
 
         // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. See above
@@ -67,13 +67,19 @@ export class LightningManager {
         this._yogaManager!.removeNode(child.id);
       }),
 
-      element.on('stylesChanged', async () => {
+      element.on('inViewport', () => {
+        if (!element.isTextElement && !element.isImageElement) {
+          this.applyStyle(element.id, element.props.style);
+        }
+      }),
+
+      element.on('stylesChanged', () => {
         this.applyStyle(element.id, element.props.style);
       }),
 
       element.on(
         'textureLoaded',
-        async (
+        (
           node:
             | RendererNode<LightningElement>
             | TextRendererNode<LightningTextElement>,
