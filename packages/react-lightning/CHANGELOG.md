@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.4.0-alpha.2
+
+### Patch Changes
+
+- 1c9a5ac: feat(react-lightning): Add inViewport event from Lightning
+
 ## 0.4.0-alpha.1
 
 ### Patch Changes
