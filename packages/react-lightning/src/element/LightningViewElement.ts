@@ -7,6 +7,7 @@ import type {
   NodeFailedEventHandler,
   NodeLoadedEventHandler,
   NodeLoadedPayload,
+  NodeRenderStateEventHandler,
   RendererMain,
   Texture,
 } from '@lightningjs/renderer';
@@ -280,6 +281,7 @@ export class LightningViewElement<
     }
 
     this.node.__reactFiber = fiber;
+    this.node.on('inViewport', this._onInViewport);
     this.node.on('loaded', this._onTextureLoaded);
     this.node.on('failed', this._onTextureFailed);
 
@@ -289,6 +291,7 @@ export class LightningViewElement<
   }
 
   public destroy() {
+    this.node.off('inViewport', this._onInViewport);
     this.node.off('loaded', this._onTextureLoaded);
     this.node.off('failed', this._onTextureFailed);
 
@@ -333,9 +336,11 @@ export class LightningViewElement<
   public setLightningNode(node: RendererNode<LightningElement>) {
     const oldNode = this.node;
 
+    oldNode.off('inViewport', this._onInViewport);
     oldNode.off('loaded', this._onTextureLoaded);
     oldNode.off('failed', this._onTextureFailed);
 
+    node.on('inViewport', this._onInViewport);
     node.on('loaded', this._onTextureLoaded);
     node.on('failed', this._onTextureFailed);
 
@@ -673,6 +678,10 @@ export class LightningViewElement<
   protected _handleTextureLoaded(_event: NodeLoadedPayload): void {
     // override as necessary
   }
+
+  private _onInViewport: NodeRenderStateEventHandler = (node, renderState) => {
+    this._eventEmitter.emit('inViewport', node, renderState);
+  };
 
   private _onTextureLoaded: NodeLoadedEventHandler = (node, event) => {
     this._handleTextureLoaded(event);

@@ -2,6 +2,7 @@ import type {
   IAnimationController,
   NodeFailedEventHandler,
   NodeLoadedEventHandler,
+  NodeRenderStateEventHandler,
 } from '@lightningjs/renderer';
 import type { LightningElement } from './Element';
 import type { FocusEvents } from './Focusable';
@@ -20,6 +21,7 @@ export interface LightningElementEvents extends FocusEvents<LightningElement> {
   childRemoved: (child: LightningElement, index: number) => void;
   beforeRender: () => void;
   layout: (dimensions: Rect) => void;
+  inViewport: NodeRenderStateEventHandler;
   textureLoaded: NodeLoadedEventHandler;
   textureFailed: NodeFailedEventHandler;
   textLoaded: NodeLoadedEventHandler;
