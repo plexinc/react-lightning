@@ -1,5 +1,13 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.4.0-alpha.1
+
+### Patch Changes
+
+- 8c5ce17: fix(flexbox): Fix Flexbox not applying translate transforms to non-text/image elements
+- Updated dependencies [1c9a5ac]
+  - @plextv/react-lightning@0.4.0-alpha.2
+
 ## 0.4.0-alpha.0
 
 ### Minor Changes
