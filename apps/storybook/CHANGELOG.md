@@ -1,5 +1,16 @@
 # @plextv/react-lightning-storybook
 
+## 0.4.0-alpha.4
+
+### Patch Changes
+
+- 8d1ac42: chore: Update lightning versions
+- Updated dependencies [8d1ac42]
+- Updated dependencies [8d1ac42]
+  - @plextv/react-native-lightning@0.4.0-alpha.4
+  - @plextv/react-lightning-plugin-reanimated@0.4.0-alpha.3
+  - @plextv/react-lightning@0.4.0-alpha.3
+
 ## 0.4.0-alpha.3
 
 ### Patch Changes

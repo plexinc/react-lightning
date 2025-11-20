@@ -1,5 +1,12 @@
 # @plextv/react-lightning
 
+## 0.4.0-alpha.3
+
+### Patch Changes
+
+- 8d1ac42: chore: Update lightning versions
+- 8d1ac42: fix(focus): Fix case where FocusGroups sometimes get added to the wrong layer
+
 ## 0.4.0-alpha.2
 
 ### Patch Changes

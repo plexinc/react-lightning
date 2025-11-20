@@ -1,5 +1,11 @@
 # @plextv/vite-plugin-msdf-fontgen
 
+## 1.3.4-alpha.0
+
+### Patch Changes
+
+- 8d1ac42: chore: Update lightning versions
+
 ## 1.3.3
 
 ### Patch Changes
