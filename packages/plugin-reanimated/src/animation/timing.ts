@@ -17,7 +17,6 @@ export function createTimingAnimation(
     delay: config?.delay ?? 0,
     loop: false,
     repeat: 0,
-    repeatDelay: 0,
     stopMethod: false,
   };
 }

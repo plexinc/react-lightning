@@ -104,11 +104,13 @@ export const FocusGroup = forwardRef<LightningElement, FocusGroupProps>(
 
     useEffect(() => {
       if (viewRef.current) {
+        viewRef.current.isFocusGroup = true;
         setViewElement(viewRef.current);
       }
 
       return () => {
         if (viewRef.current) {
+          viewRef.current.isFocusGroup = false;
           setViewElement(null);
         }
       };

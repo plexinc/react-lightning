@@ -59,7 +59,6 @@ export function createSpringAnimation(
       delay: config.delay,
       loop: false,
       repeat: 0,
-      repeatDelay: 0,
       stopMethod: false,
     };
 
@@ -140,7 +139,6 @@ export function createSpringAnimation(
     delay: config.delay,
     loop: false,
     repeat: 0,
-    repeatDelay: 0,
     stopMethod: false,
   };
 

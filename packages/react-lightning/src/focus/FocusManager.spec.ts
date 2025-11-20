@@ -271,6 +271,30 @@ describe('FocusManager', () => {
     expect(focusManager.focusPath).toEqual([parent, child]);
   });
 
+  it('should handle lazily created elements', () => {
+    const parent = createMockElement(1, 'parent');
+    const modal = createMockElement(2, 'modal');
+    const modalChild = createMockElement(3, 'modalChild');
+    const modalGrandChild = createMockElement(4, 'modalGrandChild');
+
+    focusManager.addElement(parent);
+
+    // Simulate react creating elements bottom-up
+    focusManager.addElement(modal, parent);
+
+    focusManager.pushLayer();
+
+    focusManager.addElement(modalGrandChild, modalChild);
+    focusManager.addElement(modalChild, modal);
+
+    expect(focusManager.focusPath).toEqual([
+      parent,
+      modal,
+      modalChild,
+      modalGrandChild,
+    ]);
+  });
+
   describe('Layer Management (Modal Support)', () => {
     it('should create a new layer when pushLayer is called', () => {
       const mainElement = createMockElement(1, 'main');
@@ -454,6 +478,7 @@ describe('FocusManager', () => {
       // Push modal layer
       focusManager.pushLayer();
       focusManager.addElement(modalElement);
+
       expect(modalOpenedSpy).toHaveBeenCalledWith(
         undefined,
         undefined,

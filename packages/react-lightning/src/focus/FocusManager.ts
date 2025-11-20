@@ -62,7 +62,11 @@ function hasExternalRedirect<T extends { parent?: T | null }>(
 }
 
 export class FocusManager<
-  T extends Focusable & { id: number; parent?: T | null },
+  T extends Focusable & {
+    id: number;
+    parent?: T | null;
+    isFocusGroup?: boolean;
+  },
 > implements EventNotifier<FocusEvents<T>>
 {
   private _disposers: Map<T, (() => void)[]> = new Map();
@@ -122,11 +126,10 @@ export class FocusManager<
     options?: {
       autoFocus?: boolean;
       focusRedirect?: boolean;
-      destinations?: (T | null)[];
+      destinations?: (T | null)[] | null;
       traps?: Traps;
     },
   ) {
-    let parentNode: FocusNode<T> | RootNode<T>;
     const autoFocus = options?.autoFocus ?? false;
     const focusRedirect = options?.focusRedirect ?? false;
     const destinations = options?.destinations ?? null;
@@ -137,17 +140,38 @@ export class FocusManager<
       left: false,
     };
     const { elements, root } = this.activeLayer;
+    let parentNode: FocusNode<T> | RootNode<T> | null = null;
 
     if (parent) {
       const storedNode = elements.get(parent);
 
       if (!storedNode) {
-        parentNode = this._createFocusNode(parent, root);
+        // Check if the parent exists in the previous layer. Sometimes this
+        // happens because of the way React creates elements; components and
+        // their hooks are run before getting attached to the tree. This causes
+        // the component to get added to the old layer before the new layer's
+        // created.
+        const parentNodeInPreviousLayer:
+          | RootNode<T>
+          | FocusNode<T>
+          | undefined = this._focusStack.at(-2)?.elements?.get?.(parent);
+
+        if (
+          parentNodeInPreviousLayer &&
+          !isRootNode(parentNodeInPreviousLayer)
+        ) {
+          parentNode = this._addMissingParentsToCurrentLayer(
+            parentNodeInPreviousLayer,
+          );
+        }
+
+        if (!parentNode) {
+          parentNode = this._createFocusNode(parent, root);
+        }
 
         if (!root.focusedElement) {
           root.focusedElement = parentNode;
         }
-        elements.set(parent, parentNode);
       } else {
         parentNode = storedNode;
       }
@@ -375,6 +399,33 @@ export class FocusManager<
     return path
       .map((id) => (id === node.element.id.toString() ? `[${id}]` : id))
       .join(' > ');
+  }
+
+  private _addMissingParentsToCurrentLayer(nodeFromAnotherLayer: FocusNode<T>) {
+    let curr: FocusNode<T> | RootNode<T> = nodeFromAnotherLayer;
+
+    const stack: FocusNode<T>[] = [];
+
+    // First build a stack of nodes to create
+    while (!isRootNode(curr)) {
+      stack.push(curr);
+      curr = curr.parent;
+    }
+
+    let prevNode: FocusNode<T> | null = null;
+
+    while (stack.length > 0) {
+      // biome-ignore lint/style/noNonNullAssertion: Already asserted stack is not empty
+      const nodeToCreate = stack.pop()!;
+      const parentNode = prevNode === null ? this.activeLayer.root : prevNode;
+      const newNode = this._createFocusNode(nodeToCreate.element, parentNode);
+
+      parentNode.focusedElement = newNode;
+
+      prevNode = newNode;
+    }
+
+    return prevNode;
   }
 
   private _createFocusNode(

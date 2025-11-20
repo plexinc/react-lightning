@@ -46,7 +46,7 @@
     "@types/react": "19.2.2"
   },
   "peerDependencies": {
-    "@lightningjs/renderer": "3.0.0-beta15",
+    "@lightningjs/renderer": "3.0.0-beta16",
     "@plextv/react-lightning": "workspace:^",
     "@plextv/react-lightning-plugin-css-transform": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
