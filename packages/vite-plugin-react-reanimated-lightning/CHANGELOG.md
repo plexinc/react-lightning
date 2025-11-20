@@ -1,5 +1,13 @@
 # @plextv/vite-plugin-react-reanimated-lightning
 
+## 0.4.0-alpha.3
+
+### Patch Changes
+
+- 8d1ac42: chore: Update lightning versions
+- Updated dependencies [8d1ac42]
+  - @plextv/react-lightning-plugin-reanimated@0.4.0-alpha.3
+
 ## 0.4.0-alpha.2
 
 ### Patch Changes
