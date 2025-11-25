@@ -1,9 +1,6 @@
 {
   "extends": "@repo/configs/tsconfig.react-library.json",
   "compilerOptions": {
-    "rootDir": "src",
-    "declaration": false,
-    "declarationMap": false,
     "lib": ["es2022", "DOM", "DOM.Iterable", "WebWorker"]
   },
   "include": ["src", "../../types/*.d.ts"],

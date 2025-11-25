@@ -3,7 +3,7 @@ import type {
   LightningElementStyle,
   LightningImageElement,
 } from '@plextv/react-lightning';
-import { forwardRef, useCallback } from 'react';
+import { type ForwardRefExoticComponent, forwardRef, useCallback } from 'react';
 import type {
   ImageLoadEventData,
   ImageSourcePropType,
@@ -28,7 +28,10 @@ function isImageURISource(
 
 export type Image = RNImage & LightningImageElement;
 
-export const Image = forwardRef<LightningImageElement, ImageProps>(
+export const Image: ForwardRefExoticComponent<RNImageProps> = forwardRef<
+  LightningImageElement,
+  ImageProps
+>(
   (
     {
       onLoad,

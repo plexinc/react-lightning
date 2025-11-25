@@ -7,7 +7,7 @@ export async function ensureConfigsExist({
   charsetFile,
   overrides,
   overridesFile,
-}: OptionsInput) {
+}: OptionsInput): Promise<() => Promise<unknown[]>> {
   const cleanupFiles: string[] = [];
 
   console.info(`Looking for charset file at ${charsetFile}`);
@@ -42,7 +42,6 @@ export async function ensureConfigsExist({
 
   return () => {
     console.log('Cleaning up...');
-
     return Promise.all(
       cleanupFiles.map((file) => {
         console.info(`  Removing ${file}`);

@@ -1,6 +1,10 @@
 import type { KeyEvent, LightningElement, Rect } from '@plextv/react-lightning';
 import { focusable, Keys, LightningViewElement } from '@plextv/react-lightning';
-import type { DependencyList, RefAttributes } from 'react';
+import type {
+  DependencyList,
+  ForwardRefExoticComponent,
+  RefAttributes,
+} from 'react';
 import { useCallback, useState } from 'react';
 import type {
   BlurEvent,
@@ -33,7 +37,10 @@ function useEnterKeyHandler(
   );
 }
 
-export const Pressable = focusable<PressableProps, LightningViewElement>(
+export const Pressable: ForwardRefExoticComponent<PressableProps> = focusable<
+  PressableProps,
+  LightningViewElement
+>(
   function Pressable(
     {
       style,

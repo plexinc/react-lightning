@@ -1,4 +1,5 @@
 import {
+  type ForwardRefExoticComponent,
   forwardRef,
   useCallback,
   useEffect,
@@ -33,100 +34,101 @@ export interface FocusGroupProps
   onChildFocused?: (child: LightningElement) => void;
 }
 
-export const FocusGroup = forwardRef<LightningElement, FocusGroupProps>(
-  (
-    {
-      autoFocus = false,
-      disable,
-      focusRedirect,
-      destinations,
-      trapFocusUp,
-      trapFocusRight,
-      trapFocusDown,
-      trapFocusLeft,
-      style,
-      onKeyDown,
-      onChildFocused,
-      ...otherProps
-    },
-    ref,
-  ) => {
-    const focusManager = useFocusManager();
-    const focusKeyManager = useFocusKeyManager();
-    const { ref: focusRef, focused } = useFocus({
-      autoFocus,
-      active: !disable,
-      focusRedirect,
-      destinations,
-    });
-    const [viewElement, setViewElement] = useState<LightningElement | null>(
-      null,
-    );
-    const viewRef = useRef<LightningElement>(null);
-    const combinedRef = useCombinedRef(ref, focusRef, viewRef);
-
-    const traps = useMemo(
-      () => ({
-        up: trapFocusUp ?? false,
-        right: trapFocusRight ?? false,
-        down: trapFocusDown ?? false,
-        left: trapFocusLeft ?? false,
-      }),
-      [trapFocusUp, trapFocusRight, trapFocusDown, trapFocusLeft],
-    );
-
-    const handleFocusKeyDown = useCallback(
-      (event: KeyEvent) => {
-        if (!viewRef.current) {
-          return onKeyDown?.(event);
-        }
-
-        const result = focusKeyManager.handleKeyDown(
-          viewRef.current,
-          event.remoteKey,
-        );
-
-        return result === false ? false : onKeyDown?.(event);
+export const FocusGroup: ForwardRefExoticComponent<FocusGroupProps> =
+  forwardRef<LightningElement, FocusGroupProps>(
+    (
+      {
+        autoFocus = false,
+        disable,
+        focusRedirect,
+        destinations,
+        trapFocusUp,
+        trapFocusRight,
+        trapFocusDown,
+        trapFocusLeft,
+        style,
+        onKeyDown,
+        onChildFocused,
+        ...otherProps
       },
-      [focusKeyManager, onKeyDown],
-    );
+      ref,
+    ) => {
+      const focusManager = useFocusManager();
+      const focusKeyManager = useFocusKeyManager();
+      const { ref: focusRef, focused } = useFocus({
+        autoFocus,
+        active: !disable,
+        focusRedirect,
+        destinations,
+      });
+      const [viewElement, setViewElement] = useState<LightningElement | null>(
+        null,
+      );
+      const viewRef = useRef<LightningElement>(null);
+      const combinedRef = useCombinedRef(ref, focusRef, viewRef);
 
-    const finalStyle = useMemo(
-      () => (typeof style === 'function' ? style(focused) : style),
-      [style, focused],
-    );
+      const traps = useMemo(
+        () => ({
+          up: trapFocusUp ?? false,
+          right: trapFocusRight ?? false,
+          down: trapFocusDown ?? false,
+          left: trapFocusLeft ?? false,
+        }),
+        [trapFocusUp, trapFocusRight, trapFocusDown, trapFocusLeft],
+      );
 
-    useEffect(() => {
-      if (viewElement) {
-        focusManager.setTraps(viewElement, traps);
-      }
-    }, [focusManager, viewElement, traps]);
+      const handleFocusKeyDown = useCallback(
+        (event: KeyEvent) => {
+          if (!viewRef.current) {
+            return onKeyDown?.(event);
+          }
 
-    useEffect(() => {
-      if (viewRef.current) {
-        viewRef.current.isFocusGroup = true;
-        setViewElement(viewRef.current);
-      }
+          const result = focusKeyManager.handleKeyDown(
+            viewRef.current,
+            event.remoteKey,
+          );
 
-      return () => {
-        if (viewRef.current) {
-          viewRef.current.isFocusGroup = false;
-          setViewElement(null);
+          return result === false ? false : onKeyDown?.(event);
+        },
+        [focusKeyManager, onKeyDown],
+      );
+
+      const finalStyle = useMemo(
+        () => (typeof style === 'function' ? style(focused) : style),
+        [style, focused],
+      );
+
+      useEffect(() => {
+        if (viewElement) {
+          focusManager.setTraps(viewElement, traps);
         }
-      };
-    }, []);
+      }, [focusManager, viewElement, traps]);
 
-    return (
-      <FocusGroupContext.Provider value={viewElement}>
-        <lng-view
-          {...otherProps}
-          ref={combinedRef}
-          style={finalStyle}
-          onKeyDown={handleFocusKeyDown}
-        />
-      </FocusGroupContext.Provider>
-    );
-  },
-);
+      useEffect(() => {
+        if (viewRef.current) {
+          viewRef.current.isFocusGroup = true;
+          setViewElement(viewRef.current);
+        }
+
+        return () => {
+          if (viewRef.current) {
+            viewRef.current.isFocusGroup = false;
+            setViewElement(null);
+          }
+        };
+      }, []);
+
+      return (
+        <FocusGroupContext.Provider value={viewElement}>
+          <lng-view
+            {...otherProps}
+            ref={combinedRef}
+            style={finalStyle}
+            onKeyDown={handleFocusKeyDown}
+          />
+        </FocusGroupContext.Provider>
+      );
+    },
+  );
 
 FocusGroup.displayName = 'FocusGroup';

@@ -1,6 +1,6 @@
 export function create(
   stylesObject: Record<string, Partial<CSSStyleDeclaration>>,
-) {
+): Record<string, Partial<CSSStyleDeclaration>> {
   return stylesObject;
 }
 
@@ -13,14 +13,14 @@ export function flatten<T>(...args: T[]): Exclude<T, false | null | undefined> {
   );
 }
 
-export function compose<T>(style1: T, style2: T) {
+export function compose<T>(style1: T, style2: T): T | NonNullable<T>[] {
   if (style1 && style2) {
     return [style1, style2];
   }
   return style1 || style2;
 }
 
-export function setStyleAttributePreprocessor(...args: unknown[]) {
+export function setStyleAttributePreprocessor(...args: unknown[]): void {
   console.log('>> setStyleAttributePreprocessor', args);
 }
 

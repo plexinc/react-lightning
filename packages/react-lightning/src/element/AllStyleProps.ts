@@ -1,1 +1,1 @@
-export const AllStyleProps = Symbol('debug');
+export const AllStyleProps: unique symbol = Symbol('debug');

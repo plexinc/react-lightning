@@ -11,7 +11,7 @@ export class FocusKeyManager<T extends LightningElement> {
     this._focusManager = focusManager;
   }
 
-  public handleKeyDown = (element: T, key: Keys | Keys[]) => {
+  public handleKeyDown = (element: T, key: Keys | Keys[]): boolean => {
     const direction = Array.isArray(key)
       ? key.map((k) => this._getKeyDirection(k)).find((dir) => dir != null)
       : this._getKeyDirection(key);

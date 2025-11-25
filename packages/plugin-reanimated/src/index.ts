@@ -12,14 +12,15 @@ export * from 'react-native-reanimated-original';
 
 // Overrides
 export default {
-  createAnimatedComponent,
-  addWhitelistedUIProps: Noop,
-  addWhitelistedNativeProps: Noop,
-  Image,
-  FlatList,
-  ScrollView,
-  Text,
-  View,
+  createAnimatedComponent:
+    createAnimatedComponent as typeof createAnimatedComponent,
+  addWhitelistedUIProps: Noop as () => null,
+  addWhitelistedNativeProps: Noop as () => null,
+  Image: Image as typeof Image,
+  FlatList: FlatList as typeof FlatList,
+  ScrollView: ScrollView as typeof ScrollView,
+  Text: Text as typeof Text,
+  View: View as typeof View,
 };
 
 export {

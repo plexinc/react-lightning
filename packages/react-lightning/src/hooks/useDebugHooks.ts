@@ -37,6 +37,12 @@ function wrapHook<T extends DebuggableHook>(hook: T, name: string): T {
   }) as T;
 }
 
-export const useEffectDebug = wrapHook(useEffect, 'useEffectDebug');
-export const useCallbackDebug = wrapHook(useCallback, 'useCallbackDebug');
-export const useMemoDebug = wrapHook(useMemo, 'useMemoDebug');
+export const useEffectDebug: typeof useEffect = wrapHook(
+  useEffect,
+  'useEffectDebug',
+);
+export const useCallbackDebug: typeof useCallback = wrapHook(
+  useCallback,
+  'useCallbackDebug',
+);
+export const useMemoDebug: typeof useMemo = wrapHook(useMemo, 'useMemoDebug');

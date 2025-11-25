@@ -1,3 +1,3 @@
-import baseConfig from '@repo/configs/tsdown.withExports.config';
+import baseConfig from '../configs/tsdown.withExports.config';
 
 export default baseConfig;

@@ -1,9 +1,12 @@
-import { createContext } from 'react';
+import { type Context, createContext } from 'react';
 import type { LightningElement } from '../types';
 import type { FocusKeyManager } from './FocusKeyManager';
 import type { FocusManager } from './FocusManager';
 
-export const FocusManagerContext = createContext<{
+type ContextType = {
   focusManager: FocusManager<LightningElement>;
   focusKeyManager: FocusKeyManager<LightningElement>;
-} | null>(null);
+} | null;
+
+export const FocusManagerContext: Context<ContextType> =
+  createContext<ContextType>(null);

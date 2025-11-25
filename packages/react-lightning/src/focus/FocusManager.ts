@@ -107,8 +107,11 @@ export class FocusManager<
 
     return () => this._eventEmitter.off(...args);
   };
-  public off = this._eventEmitter.off.bind(this._eventEmitter);
-  public emit = this._eventEmitter.emit.bind(this._eventEmitter);
+  public off: EventEmitter<FocusEvents<T>>['off'] = this._eventEmitter.off.bind(
+    this._eventEmitter,
+  );
+  public emit: EventEmitter<FocusEvents<T>>['emit'] =
+    this._eventEmitter.emit.bind(this._eventEmitter);
 
   public getFocusNode(element: T): FocusNode<T> | null {
     const node = this.activeLayer.elements.get(element);
@@ -129,7 +132,7 @@ export class FocusManager<
       destinations?: (T | null)[] | null;
       traps?: Traps;
     },
-  ) {
+  ): void {
     const autoFocus = options?.autoFocus ?? false;
     const focusRedirect = options?.focusRedirect ?? false;
     const destinations = options?.destinations ?? null;
@@ -234,7 +237,7 @@ export class FocusManager<
     this._recalculateFocusPath();
   }
 
-  public removeElement(element: T) {
+  public removeElement(element: T): void {
     const node = this.activeLayer.elements.get(element);
 
     if (!node) {
@@ -244,7 +247,7 @@ export class FocusManager<
     this._removeNode(node, true);
   }
 
-  public setTraps(element: T, traps: Traps) {
+  public setTraps(element: T, traps: Traps): void {
     const node = this.activeLayer.elements.get(element);
 
     if (node) {
@@ -252,7 +255,7 @@ export class FocusManager<
     }
   }
 
-  public setAutoFocus(element: T, autoFocus?: boolean) {
+  public setAutoFocus(element: T, autoFocus?: boolean): void {
     const node = this.activeLayer.elements.get(element);
 
     if (node) {
@@ -260,7 +263,7 @@ export class FocusManager<
     }
   }
 
-  public setFocusRedirect(element: T, focusRedirect?: boolean) {
+  public setFocusRedirect(element: T, focusRedirect?: boolean): void {
     const node = this.activeLayer.elements.get(element);
 
     if (node) {

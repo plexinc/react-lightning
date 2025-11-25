@@ -1,6 +1,7 @@
 import type {
   AnimationSettings,
   CoreShaderNode,
+  IAnimationController,
   INode,
   INodeAnimateProps,
   INodeProps,
@@ -126,11 +127,11 @@ export class LightningViewElement<
     this._eventEmitter.emit('focusableChanged', this, this._focusable);
   }
 
-  public get focused() {
+  public get focused(): boolean {
     return this._focused;
   }
 
-  public get type() {
+  public get type(): LightningElementType {
     return LightningElementType.View;
   }
 
@@ -146,7 +147,7 @@ export class LightningViewElement<
     }
   }
 
-  public get parent() {
+  public get parent(): LightningElement | null {
     return this._parent;
   }
 
@@ -219,7 +220,7 @@ export class LightningViewElement<
     return false;
   }
 
-  public get hasChildren() {
+  public get hasChildren(): boolean {
     return this.children.length > 0;
   }
 
@@ -233,7 +234,7 @@ export class LightningViewElement<
     return root;
   }
 
-  public get isRoot() {
+  public get isRoot(): boolean {
     return this.node.id === 1;
   }
 
@@ -290,7 +291,7 @@ export class LightningViewElement<
     this._eventEmitter.emit('initialized');
   }
 
-  public destroy() {
+  public destroy(): void {
     this.node.off('inViewport', this._onInViewport);
     this.node.off('loaded', this._onTextureLoaded);
     this.node.off('failed', this._onTextureFailed);
@@ -333,7 +334,7 @@ export class LightningViewElement<
   public emit: IEventEmitter<LightningElementEvents>['emit'] = (...args) =>
     this._eventEmitter.emit(...args);
 
-  public setLightningNode(node: RendererNode<LightningElement>) {
+  public setLightningNode(node: RendererNode<LightningElement>): void {
     const oldNode = this.node;
 
     oldNode.off('inViewport', this._onInViewport);
@@ -361,7 +362,7 @@ export class LightningViewElement<
   public insertChild(
     child: LightningElement,
     beforeChild?: LightningElement | null,
-  ) {
+  ): void {
     if (child.parent === this && child.parent.node === this.node) {
       return;
     }
@@ -385,7 +386,7 @@ export class LightningViewElement<
     this._eventEmitter.emit('childAdded', child, index);
   }
 
-  public removeChild(child: LightningElement) {
+  public removeChild(child: LightningElement): void {
     const index = this.children.indexOf(child);
 
     if (index >= 0) {
@@ -420,7 +421,10 @@ export class LightningViewElement<
     this._scheduleUpdate();
   }
 
-  public getRelativePosition(ancestor?: LightningElement | null) {
+  public getRelativePosition(ancestor?: LightningElement | null): {
+    x: number;
+    y: number;
+  } {
     let totalX = 0;
     let totalY = 0;
 
@@ -439,7 +443,17 @@ export class LightningViewElement<
     };
   }
 
-  public getBoundingClientRect(ancestor?: LightningElement | null) {
+  public getBoundingClientRect(ancestor?: LightningElement | null): {
+    x: number;
+    y: number;
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+    // TODO: Include padding + border in size
+    w: number;
+    h: number;
+  } {
     const { x, y } = this.getRelativePosition(ancestor);
 
     return {
@@ -459,7 +473,7 @@ export class LightningViewElement<
    * Updates existing props with the payload, keeping other unspecified props
    * unchanged.
    */
-  public setProps(payload: Partial<TProps>) {
+  public setProps(payload: Partial<TProps>): void {
     const { style, transition, ...otherProps } = payload;
 
     Object.assign(this._stagedUpdates, otherProps);
@@ -524,7 +538,7 @@ export class LightningViewElement<
     return true;
   }
 
-  public emitLayoutEvent() {
+  public emitLayoutEvent(): void {
     const dimensions = {
       x: this.node.x,
       y: this.node.y,
@@ -536,7 +550,7 @@ export class LightningViewElement<
     this._onLayout(dimensions);
   }
 
-  public recalculateVisibility = () => {
+  public recalculateVisibility = (): void => {
     const prevFocusable = this.focusable;
     const prevVisible = this._visible;
 
@@ -562,7 +576,7 @@ export class LightningViewElement<
   public animateStyle<K extends keyof TStyleProps>(
     key: K,
     value: TStyleProps[K],
-  ) {
+  ): IAnimationController {
     return this._createAnimation(
       {
         [key]: value,
@@ -571,7 +585,9 @@ export class LightningViewElement<
     ).start();
   }
 
-  public animateShader(props: Partial<CoreShaderNode['props']>) {
+  public animateShader(
+    props: Partial<CoreShaderNode['props']>,
+  ): IAnimationController {
     return this._createAnimation(
       {
         shaderProps: props,
@@ -618,7 +634,7 @@ export class LightningViewElement<
     });
   }
 
-  protected _doUpdate() {
+  protected _doUpdate(): boolean {
     const payload = this._stagedUpdates;
 
     this._stagedUpdates = {};

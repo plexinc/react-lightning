@@ -5,7 +5,9 @@ import crc32 from 'crc-32';
 
 const CHECKSUM_FILENAME = 'hash.json';
 
-export async function readFileChecksum(filePath: string) {
+export async function readFileChecksum(
+  filePath: string,
+): Promise<number | null> {
   try {
     const fileData = await readFile(filePath);
 
@@ -41,7 +43,7 @@ export async function readChecksumCache(
 export async function writeChecksumCache(
   checksums: Record<string, number | null>,
   checksumFolder: string,
-) {
+): Promise<void> {
   try {
     if (!existsSync(checksumFolder)) {
       console.info(

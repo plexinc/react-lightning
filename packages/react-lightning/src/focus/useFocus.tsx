@@ -1,4 +1,10 @@
-import { useContext, useEffect, useRef, useSyncExternalStore } from 'react';
+import {
+  type RefObject,
+  useContext,
+  useEffect,
+  useRef,
+  useSyncExternalStore,
+} from 'react';
 import type { LightningElement } from '../types';
 import { FocusGroupContext } from './FocusGroupContext';
 import { useFocusManager } from './useFocusManager';
@@ -16,7 +22,10 @@ export function useFocus<T extends LightningElement>(
     autoFocus: false,
     focusRedirect: false,
   },
-) {
+): {
+  ref: RefObject<T | null>;
+  focused: boolean;
+} {
   const ref = useRef<T>(null);
   const focusManager = useFocusManager();
   const parentFocusable = useContext(FocusGroupContext);

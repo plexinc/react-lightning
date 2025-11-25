@@ -1,7 +1,8 @@
 import type { Plugin } from '@plextv/react-lightning';
+
 // Necessary for the declaration merging to work below, since we don't import
 // the `react-native-web` typings.
-import '../types/react-native-web.d.ts';
+// import '../types/react-native-web.d.ts';
 
 declare module 'react-native-web' {
   namespace StyleSheet {

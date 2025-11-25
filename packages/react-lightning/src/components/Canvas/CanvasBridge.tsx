@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { type FC, useEffect, useRef, useState } from 'react';
 import { createRoot, type LightningRoot } from '../../render';
 import type { CanvasProps } from './CanvasProps';
 
-export const CanvasBridge = ({
+export const CanvasBridge: FC<Pick<CanvasProps, 'options' | 'children'>> = ({
   options,
   children,
-}: Pick<CanvasProps, 'options' | 'children'>) => {
+}) => {
   const [root, setRoot] = useState<LightningRoot | undefined>();
   const [initReady, setInitReady] = useState(false);
   const containerRef = useRef(null);

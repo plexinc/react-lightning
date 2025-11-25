@@ -1,4 +1,8 @@
-import { Text as RNText } from 'react-native';
-import { createAnimatedComponent } from './createAnimatedComponent';
+import { Text as RNText, type TextProps } from 'react-native';
+import {
+  type AnimatedComponent,
+  createAnimatedComponent,
+} from './createAnimatedComponent';
 
-export const Text = createAnimatedComponent(RNText);
+export const Text: AnimatedComponent<TextProps> =
+  createAnimatedComponent(RNText);

@@ -23,7 +23,9 @@ const textProps = {
   fontStyle: true,
   fontStretch: true,
   fontSize: true,
-} as const satisfies Partial<Record<keyof LightningTextElementStyle, boolean>>;
+} as const;
+
+textProps satisfies Partial<Record<keyof LightningTextElementStyle, boolean>>;
 
 export type TextProps = keyof typeof textProps;
 

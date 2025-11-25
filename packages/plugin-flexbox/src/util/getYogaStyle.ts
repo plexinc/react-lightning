@@ -3,7 +3,7 @@ import { isFlexStyleProp } from './isFlexStyleProp';
 
 export function getYogaStyle(
   style: Partial<LightningViewElementStyle> | null = {},
-) {
+): Partial<LightningViewElementStyle> {
   const yogaStyles: typeof style = {};
 
   for (const key in style) {

@@ -18,7 +18,7 @@ export default function mergeRefs(...refs: any[]) {
     args[_key] = refs[_key];
   }
 
-  return function forwardRef(node: any) {
+  return function forwardRef(node: any): void {
     for (const ref of args) {
       if (ref == null) {
         continue;
@@ -38,7 +38,7 @@ export default function mergeRefs(...refs: any[]) {
   };
 }
 
-export function useMergeRefs(...refs: any[]) {
+export function useMergeRefs(...refs: any[]): (node: any) => void {
   const _len = refs.length;
   const args = Array.from({ length: _len });
   for (let _key = 0; _key < _len; _key++) {

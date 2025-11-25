@@ -1,16 +1,17 @@
-import { defineConfig } from 'tsdown';
+import { defineConfig, type UserConfig } from 'tsdown';
 
-export default defineConfig({
+const config: UserConfig = defineConfig({
   entry: ['src/index.ts'],
   format: ['cjs', 'esm'],
   target: 'chrome56',
   platform: 'browser',
   sourcemap: true,
-  dts: true,
+  dts: {
+    oxc: true,
+  },
   loader: {
     '.png': 'asset',
   },
-  // minify: false,
   exports: {
     devExports: true,
   },
@@ -20,3 +21,5 @@ export default defineConfig({
     },
   },
 });
+
+export default config;

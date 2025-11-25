@@ -1,4 +1,4 @@
-export function convertRotationValue(value: string) {
+export function convertRotationValue(value: string): number {
   if (value.endsWith('deg')) {
     return (Number.parseFloat(value) * Math.PI) / 180;
   }

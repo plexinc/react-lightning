@@ -1,4 +1,8 @@
-import { View as RNView } from 'react-native';
-import { createAnimatedComponent } from './createAnimatedComponent';
+import { View as RNView, type ViewProps } from 'react-native';
+import {
+  type AnimatedComponent,
+  createAnimatedComponent,
+} from './createAnimatedComponent';
 
-export const View = createAnimatedComponent(RNView);
+export const View: AnimatedComponent<ViewProps> =
+  createAnimatedComponent(RNView);

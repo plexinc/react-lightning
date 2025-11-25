@@ -54,10 +54,13 @@ export class YogaManager {
   private _eventEmitter: EventEmitter<YogaManagerEvents> = new EventEmitter();
   private _dataView: SimpleDataView;
 
-  public on = this._eventEmitter.on.bind(this._eventEmitter);
-  public off = this._eventEmitter.off.bind(this._eventEmitter);
+  public on: EventEmitter<YogaManagerEvents>['on'] = this._eventEmitter.on.bind(
+    this._eventEmitter,
+  );
+  public off: EventEmitter<YogaManagerEvents>['off'] =
+    this._eventEmitter.off.bind(this._eventEmitter);
 
-  public get initialized() {
+  public get initialized(): boolean {
     return this._initialized;
   }
 
@@ -69,7 +72,7 @@ export class YogaManager {
     );
   }
 
-  public async init(yogaOptions?: YogaOptions) {
+  public async init(yogaOptions?: YogaOptions): Promise<void> {
     Object.assign(this._yogaOptions, yogaOptions);
 
     this._yoga = await loadYoga();
@@ -104,7 +107,7 @@ export class YogaManager {
     this._initialized = true;
   }
 
-  public addNode(elementId: number) {
+  public addNode(elementId: number): ManagerNode {
     if (this._elementMap.has(elementId)) {
       // biome-ignore lint/style/noNonNullAssertion: Already checked
       return this._elementMap.get(elementId)!;
@@ -117,7 +120,7 @@ export class YogaManager {
     return node;
   }
 
-  public removeNode(elementId: number) {
+  public removeNode(elementId: number): void {
     const yogaNode = this._elementMap.get(elementId);
 
     if (yogaNode) {
@@ -136,7 +139,7 @@ export class YogaManager {
     }
   }
 
-  public addChildNode(parentId: number, childId: number, index?: number) {
+  public addChildNode(parentId: number, childId: number, index?: number): void {
     const parentYogaNode = this._elementMap.get(parentId);
     const childYogaNode = this._elementMap.get(childId);
 
@@ -153,7 +156,7 @@ export class YogaManager {
     childYogaNode.parent = parentYogaNode;
   }
 
-  public queueRender(elementId: number, force = false) {
+  public queueRender(elementId: number, force = false): void {
     if (!this._initialized || !this._yoga) {
       throw new Error('Yoga is not initialized! Did you call `init()`?');
     }
@@ -199,7 +202,7 @@ export class YogaManager {
   public applyStyles(
     styles: Record<number, Partial<LightningElementStyle>>,
     skipRender = false,
-  ) {
+  ): void {
     if (!this._initialized) {
       throw new Error('Yoga was not initialized! Did you call `init()`?');
     }
@@ -215,7 +218,7 @@ export class YogaManager {
     elementId: number,
     style: Partial<LightningElementStyle> | null,
     skipRender = false,
-  ) {
+  ): void {
     if (!style) {
       return;
     }

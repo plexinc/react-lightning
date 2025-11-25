@@ -4,7 +4,7 @@ import {
   type LightningViewElementProps,
   type LightningViewElementStyle,
 } from '@plextv/react-lightning';
-import { forwardRef } from 'react';
+import { type ForwardRefExoticComponent, forwardRef } from 'react';
 
 export interface ColumnProps extends LightningViewElementProps {
   focusable?: boolean;
@@ -16,7 +16,10 @@ export interface ColumnProps extends LightningViewElementProps {
   trapFocusLeft?: boolean;
 }
 
-const Column = forwardRef<LightningViewElement, ColumnProps>(
+const Column: ForwardRefExoticComponent<ColumnProps> = forwardRef<
+  LightningViewElement,
+  ColumnProps
+>(
   (
     {
       style,

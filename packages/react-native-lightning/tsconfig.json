@@ -1,10 +1,6 @@
 {
   "extends": "@repo/configs/tsconfig.react-library.json",
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist",
-    "declaration": false,
-    "declarationMap": false,
     "types": [
       "node",
       "@plextv/react-lightning-plugin-css-transform/jsx",

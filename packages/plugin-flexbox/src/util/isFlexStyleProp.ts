@@ -53,7 +53,9 @@ export const flexProps = {
   left: true,
   right: true,
   bottom: true,
-} as const satisfies Partial<Record<keyof LightningViewElementStyle, boolean>>;
+} as const;
+
+flexProps satisfies Partial<Record<keyof LightningViewElementStyle, boolean>>;
 
 export type FlexProps = keyof typeof flexProps;
 

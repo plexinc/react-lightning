@@ -13,7 +13,7 @@ export default async function generateFonts(
   checksums: Record<string, number | null>,
   cacheFolder: string,
   copyOriginalToDestDir: boolean,
-) {
+): Promise<void> {
   const cleanup = await ensureConfigsExist(options);
   const { charsetFile, types } = options;
 

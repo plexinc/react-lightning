@@ -12,10 +12,11 @@ import {
   FadeOutRight as ReanimatedFadeOutRight,
   FadeOutUp as ReanimatedFadeOutUp,
 } from 'react-native-reanimated-original';
+import type { Class } from 'type-fest';
 import { withTiming } from '../exports/withTiming';
 import { createBuilderWrapper } from './createBuilderWrapper';
 
-export const FadeIn = createBuilderWrapper(
+export const FadeIn: Class<ReanimatedFadeIn> = createBuilderWrapper(
   ReanimatedFadeIn,
   function (this: ReanimatedFadeIn) {
     return () => ({
@@ -33,7 +34,7 @@ export const FadeIn = createBuilderWrapper(
   },
 );
 
-export const FadeInRight = createBuilderWrapper(
+export const FadeInRight: Class<ReanimatedFadeInRight> = createBuilderWrapper(
   ReanimatedFadeInRight,
   function (this: ReanimatedFadeInRight) {
     return (values: EntryAnimationsValues) => ({
@@ -56,7 +57,7 @@ export const FadeInRight = createBuilderWrapper(
   },
 );
 
-export const FadeInLeft = createBuilderWrapper(
+export const FadeInLeft: Class<ReanimatedFadeInLeft> = createBuilderWrapper(
   ReanimatedFadeInLeft,
   function (this: ReanimatedFadeInLeft) {
     return (values: EntryAnimationsValues) => ({
@@ -79,7 +80,7 @@ export const FadeInLeft = createBuilderWrapper(
   },
 );
 
-export const FadeInUp = createBuilderWrapper(
+export const FadeInUp: Class<ReanimatedFadeInUp> = createBuilderWrapper(
   ReanimatedFadeInUp,
   function (this: ReanimatedFadeInUp) {
     return (values: EntryAnimationsValues) => ({
@@ -102,7 +103,7 @@ export const FadeInUp = createBuilderWrapper(
   },
 );
 
-export const FadeInDown = createBuilderWrapper(
+export const FadeInDown: Class<ReanimatedFadeInDown> = createBuilderWrapper(
   ReanimatedFadeInDown,
   function (this: ReanimatedFadeInDown) {
     return (values: EntryAnimationsValues) => ({
@@ -125,7 +126,7 @@ export const FadeInDown = createBuilderWrapper(
   },
 );
 
-export const FadeOut = createBuilderWrapper(
+export const FadeOut: Class<ReanimatedFadeOut> = createBuilderWrapper(
   ReanimatedFadeOut,
   function (this: ReanimatedFadeOut) {
     return () => ({
@@ -143,7 +144,7 @@ export const FadeOut = createBuilderWrapper(
   },
 );
 
-export const FadeOutRight = createBuilderWrapper(
+export const FadeOutRight: Class<ReanimatedFadeOutRight> = createBuilderWrapper(
   ReanimatedFadeOutRight,
   function (this: ReanimatedFadeOutRight) {
     return (values: ExitAnimationsValues) => ({
@@ -166,7 +167,7 @@ export const FadeOutRight = createBuilderWrapper(
   },
 );
 
-export const FadeOutLeft = createBuilderWrapper(
+export const FadeOutLeft: Class<ReanimatedFadeOutLeft> = createBuilderWrapper(
   ReanimatedFadeOutLeft,
   function (this: ReanimatedFadeOutLeft) {
     return (values: ExitAnimationsValues) => ({
@@ -189,7 +190,7 @@ export const FadeOutLeft = createBuilderWrapper(
   },
 );
 
-export const FadeOutUp = createBuilderWrapper(
+export const FadeOutUp: Class<ReanimatedFadeOutUp> = createBuilderWrapper(
   ReanimatedFadeOutUp,
   function (this: ReanimatedFadeOutUp) {
     return (values: ExitAnimationsValues) => ({
@@ -212,7 +213,7 @@ export const FadeOutUp = createBuilderWrapper(
   },
 );
 
-export const FadeOutDown = createBuilderWrapper(
+export const FadeOutDown: Class<ReanimatedFadeOutDown> = createBuilderWrapper(
   ReanimatedFadeOutDown,
   function (this: ReanimatedFadeOutDown) {
     return (values: ExitAnimationsValues) => ({
