@@ -1,15 +1,18 @@
 import {
   type LightningElement,
   LightningViewElement,
+  type LightningViewElementProps,
   simpleDiff,
 } from '@plextv/react-lightning';
 import { Component, createRef } from 'react';
+import type { JSX } from 'react/jsx-runtime';
 import type {
   NativeScrollEvent,
   ScrollView as RNScrollView,
   ScrollViewProps as RNScrollViewProps,
 } from 'react-native';
 import { View } from 'react-native';
+import type { LightningViewElementStyle } from '../../../react-lightning/src/types';
 import { createNativeSyntheticEvent } from '../utils/createNativeSyntheticEvent';
 import { FocusGroup } from './FocusGroup';
 import { defaultViewStyle } from './View';
@@ -143,7 +146,7 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
     }
   };
 
-  public scrollToElement = (el: LightningElement) => {
+  public scrollToElement = (el: LightningElement): void => {
     const offset = this._getChildOffset(el);
 
     if (offset) {
@@ -171,25 +174,31 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
     });
   };
 
-  public getScrollableNode() {
+  public getScrollableNode(): LightningViewElement<
+    LightningViewElementStyle,
+    LightningViewElementProps<LightningViewElementStyle>
+  > | null {
     return this._viewportRef.current;
   }
 
   // Undocumented
-  public getInnerViewNode() {
+  public getInnerViewNode(): LightningViewElement<
+    LightningViewElementStyle,
+    LightningViewElementProps<LightningViewElementStyle>
+  > | null {
     return this._containerRef.current;
   }
 
   public shouldComponentUpdate(
     nextProps: ScrollViewProps,
     nextState: ScrollViewState,
-  ) {
+  ): boolean {
     return (
       !!simpleDiff(this.props, nextProps) || !!simpleDiff(this.state, nextState)
     );
   }
 
-  public render() {
+  public render(): JSX.Element {
     const {
       children,
       style,

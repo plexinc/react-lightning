@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { FC, ReactNode } from 'react';
 import { useCallback, useContext, useEffect, useRef } from 'react';
 import { KeyEventContext } from './KeyEventProvider';
 import type { KeyMap } from './KeyMapContext';
@@ -7,7 +7,7 @@ import { Keys } from './Keys';
 
 const LONG_PRESS_THRESHOLD = 500;
 
-export const KeyPressHandler = ({ children }: { children: ReactNode }) => {
+export const KeyPressHandler: FC<{ children: ReactNode }> = ({ children }) => {
   const keyMap = useContext(KeyMapContext);
   const keyEvents = useContext(KeyEventContext);
   const keyDownTime = useRef<number>(0);

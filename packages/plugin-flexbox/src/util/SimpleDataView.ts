@@ -37,23 +37,23 @@ export class SimpleDataView {
     this._overflowHandler = overflowHandler;
   }
 
-  get buffer() {
+  get buffer(): ArrayBuffer {
     return this._buffer.slice(0, this._offset);
   }
 
-  get fullBuffer() {
+  get fullBuffer(): ArrayBuffer {
     return this._buffer;
   }
 
-  get dataView() {
+  get dataView(): DataView<ArrayBufferLike> {
     return this._view;
   }
 
-  get offset() {
+  get offset(): number {
     return this._offset;
   }
 
-  public reset() {
+  public reset(): void {
     this._buffer = new ArrayBuffer(this._maxSize);
     this._view = new DataView(this._buffer);
     this._offset = 0;
@@ -66,7 +66,7 @@ export class SimpleDataView {
   }
 
   // Shifts the offset back by the specified size.
-  public shift(size: number) {
+  public shift(size: number): void {
     if (this._offset < size) {
       throw new Error('Cannot shift more than current offset');
     }
@@ -74,7 +74,7 @@ export class SimpleDataView {
     this._offset -= size;
   }
 
-  public moveTo(offset: number) {
+  public moveTo(offset: number): void {
     if (offset < 0 || offset >= this._maxSize) {
       throw new Error('Offset out of bounds');
     }
@@ -82,7 +82,7 @@ export class SimpleDataView {
     this._offset = offset;
   }
 
-  public moveBy(delta: number) {
+  public moveBy(delta: number): void {
     if (!this.hasSpace(delta)) {
       throw new Error('Offset out of bounds');
     }
@@ -90,59 +90,71 @@ export class SimpleDataView {
     this._offset += delta;
   }
 
-  public readUint8 = () => this._readInt(1, true);
-  public readUint8At = (offset: number) => this._readIntAt(offset, 1, true);
-  public readInt8 = () => this._readInt(1, false);
-  public readInt8At = (offset: number) => this._readIntAt(offset, 1, false);
-  public writeUint8 = (value: number) => this._writeInt(1, value, true);
-  public writeUint8At = (offset: number, value: number) =>
+  public readUint8 = (): number => this._readInt(1, true);
+  public readUint8At = (offset: number): number =>
+    this._readIntAt(offset, 1, true);
+  public readInt8 = (): number => this._readInt(1, false);
+  public readInt8At = (offset: number): number =>
+    this._readIntAt(offset, 1, false);
+  public writeUint8 = (value: number): void => this._writeInt(1, value, true);
+  public writeUint8At = (offset: number, value: number): void =>
     this._writeIntAt(offset, value, 1, true);
-  public writeInt8 = (value: number) => this._writeInt(1, value, false);
-  public writeInt8At = (offset: number, value: number) =>
+  public writeInt8 = (value: number): void => this._writeInt(1, value, false);
+  public writeInt8At = (offset: number, value: number): void =>
     this._writeIntAt(offset, value, 1, false);
 
-  public readUint16 = () => this._readInt(2, true);
-  public readUint16At = (offset: number) => this._readIntAt(offset, 2, true);
-  public readInt16 = () => this._readInt(2, false);
-  public readInt16At = (offset: number) => this._readIntAt(offset, 2, false);
-  public writeUint16 = (value: number) => this._writeInt(2, value, true);
-  public writeUint16At = (offset: number, value: number) =>
+  public readUint16 = (): number => this._readInt(2, true);
+  public readUint16At = (offset: number): number =>
+    this._readIntAt(offset, 2, true);
+  public readInt16 = (): number => this._readInt(2, false);
+  public readInt16At = (offset: number): number =>
+    this._readIntAt(offset, 2, false);
+  public writeUint16 = (value: number): void => this._writeInt(2, value, true);
+  public writeUint16At = (offset: number, value: number): void =>
     this._writeIntAt(offset, value, 2, true);
-  public writeInt16 = (value: number) => this._writeInt(2, value, false);
-  public writeInt16At = (offset: number, value: number) =>
+  public writeInt16 = (value: number): void => this._writeInt(2, value, false);
+  public writeInt16At = (offset: number, value: number): void =>
     this._writeIntAt(offset, value, 2, false);
 
-  public readUint32 = () => this._readInt(4, true);
-  public readUint32At = (offset: number) => this._readIntAt(offset, 4, true);
-  public readInt32 = () => this._readInt(4, false);
-  public readInt32At = (offset: number) => this._readIntAt(offset, 4, false);
-  public writeUint32 = (value: number) => this._writeInt(4, value, true);
-  public writeUint32At = (offset: number, value: number) =>
+  public readUint32 = (): number => this._readInt(4, true);
+  public readUint32At = (offset: number): number =>
+    this._readIntAt(offset, 4, true);
+  public readInt32 = (): number => this._readInt(4, false);
+  public readInt32At = (offset: number): number =>
+    this._readIntAt(offset, 4, false);
+  public writeUint32 = (value: number): void => this._writeInt(4, value, true);
+  public writeUint32At = (offset: number, value: number): void =>
     this._writeIntAt(offset, value, 4, true);
-  public writeInt32 = (value: number) => this._writeInt(4, value, false);
-  public writeInt32At = (offset: number, value: number) =>
+  public writeInt32 = (value: number): void => this._writeInt(4, value, false);
+  public writeInt32At = (offset: number, value: number): void =>
     this._writeIntAt(offset, value, 4, false);
 
-  public readBigUint64 = () => this._readInt(8, true);
-  public readBigUint64At = (offset: number) => this._readIntAt(offset, 8, true);
-  public readBigInt64 = () => this._readInt(8, false);
-  public readBigInt64At = (offset: number) => this._readIntAt(offset, 8, false);
-  public writeBigUint64 = (value: bigint) => this._writeInt(8, value, true);
-  public writeBigUint64At = (offset: number, value: bigint) =>
+  public readBigUint64 = (): bigint => this._readInt(8, true);
+  public readBigUint64At = (offset: number): bigint =>
+    this._readIntAt(offset, 8, true);
+  public readBigInt64 = (): bigint => this._readInt(8, false);
+  public readBigInt64At = (offset: number): bigint =>
+    this._readIntAt(offset, 8, false);
+  public writeBigUint64 = (value: bigint): void =>
+    this._writeInt(8, value, true);
+  public writeBigUint64At = (offset: number, value: bigint): void =>
     this._writeIntAt(offset, value, 8, true);
-  public writeBigInt64 = (value: bigint) => this._writeInt(8, value, false);
-  public writeBigInt64At = (offset: number, value: bigint) =>
+  public writeBigInt64 = (value: bigint): void =>
+    this._writeInt(8, value, false);
+  public writeBigInt64At = (offset: number, value: bigint): void =>
     this._writeIntAt(offset, value, 8, false);
 
-  public readFloat32 = () => this._readFloat(4);
-  public readFloat32At = (offset: number) => this._readFloatAt(offset, 4);
-  public readFloat64 = () => this._readFloat(8);
-  public readFloat64At = (offset: number) => this._readFloatAt(offset, 8);
-  public writeFloat32 = (value: number) => this._writeFloat(4, value);
-  public writeFloat32At = (offset: number, value: number) =>
+  public readFloat32 = (): number => this._readFloat(4);
+  public readFloat32At = (offset: number): number =>
+    this._readFloatAt(offset, 4);
+  public readFloat64 = (): number => this._readFloat(8);
+  public readFloat64At = (offset: number): number =>
+    this._readFloatAt(offset, 8);
+  public writeFloat32 = (value: number): void => this._writeFloat(4, value);
+  public writeFloat32At = (offset: number, value: number): void =>
     this._writeFloatAt(offset, value, 4);
-  public writeFloat64 = (value: number) => this._writeFloat(8, value);
-  public writeFloat64At = (offset: number, value: number) =>
+  public writeFloat64 = (value: number): void => this._writeFloat(8, value);
+  public writeFloat64At = (offset: number, value: number): void =>
     this._writeFloatAt(offset, value, 8);
 
   private _checkOverflow(size: number) {

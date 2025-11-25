@@ -12,7 +12,7 @@ export class LightningTextElement extends LightningViewElement<
   LightningTextElementStyle,
   LightningTextElementProps
 > {
-  public override get type() {
+  public override get type(): LightningElementType {
     return LightningElementType.Text;
   }
 
@@ -46,7 +46,7 @@ export class LightningTextElement extends LightningViewElement<
     return finalProps;
   }
 
-  protected override _doUpdate() {
+  protected override _doUpdate(): boolean {
     const payload = this._stagedUpdates;
     let changed = super._doUpdate();
 

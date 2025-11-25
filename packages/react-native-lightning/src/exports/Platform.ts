@@ -7,7 +7,7 @@ export const isLightning = true;
 export const isTesting = true;
 export const Version = '0.1.0';
 export const constants = {
-  isTesting,
+  isTesting: isTesting as boolean,
   reactNativeVersion: {
     major: 0,
     minor: 73,

@@ -1,7 +1,7 @@
-import baseConfig from '@repo/configs/tsdown.config';
-import { defineConfig } from 'tsdown';
+import { defineConfig, type UserConfig } from 'tsdown';
+import baseConfig from '../configs/tsdown.config';
 
-export default defineConfig({
+const config: UserConfig = defineConfig({
   ...baseConfig,
   entry: ['./src/index.ts', './src/types/jsx.d.ts'],
   exports: {
@@ -17,3 +17,5 @@ export default defineConfig({
     },
   },
 });
+
+export default config;

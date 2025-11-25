@@ -2,7 +2,7 @@ import {
   LightningRootContext,
   type LightningTextElementStyle,
 } from '@plextv/react-lightning';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { type FC, useCallback, useContext, useEffect, useState } from 'react';
 
 export interface FPSMonitorProps {
   prefix?: string;
@@ -14,7 +14,7 @@ export interface FPSMonitorProps {
   lowCutoff?: number;
 }
 
-const FPSMonitor = ({
+const FPSMonitor: FC<FPSMonitorProps> = ({
   style,
   prefix = 'FPS:',
   highColor = 0x00ff00ff,
@@ -22,7 +22,7 @@ const FPSMonitor = ({
   mediumCutoff = 30,
   lowColor = 0xff0000ff,
   lowCutoff = 15,
-}: FPSMonitorProps) => {
+}) => {
   const lngContext = useContext(LightningRootContext);
   const [fps, setFps] = useState(0);
   const [color, setColor] = useState(0);

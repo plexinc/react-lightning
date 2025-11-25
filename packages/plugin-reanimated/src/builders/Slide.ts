@@ -10,10 +10,11 @@ import {
   SlideOutRight as ReanimatedSlideOutRight,
   SlideOutUp as ReanimatedSlideOutUp,
 } from 'react-native-reanimated-original';
+import type { Class } from 'type-fest';
 import { withTiming } from '../exports/withTiming';
 import { createBuilderWrapper } from './createBuilderWrapper';
 
-export const SlideInRight = createBuilderWrapper(
+export const SlideInRight: Class<ReanimatedSlideInRight> = createBuilderWrapper(
   ReanimatedSlideInRight,
   function (this: ReanimatedSlideInRight) {
     return (values: EntryAnimationsValues) => ({
@@ -31,7 +32,7 @@ export const SlideInRight = createBuilderWrapper(
   },
 );
 
-export const SlideInLeft = createBuilderWrapper(
+export const SlideInLeft: Class<ReanimatedSlideInLeft> = createBuilderWrapper(
   ReanimatedSlideInLeft,
   function (this: ReanimatedSlideInLeft) {
     return (values: EntryAnimationsValues) => ({
@@ -49,7 +50,7 @@ export const SlideInLeft = createBuilderWrapper(
   },
 );
 
-export const SlideInUp = createBuilderWrapper(
+export const SlideInUp: Class<ReanimatedSlideInUp> = createBuilderWrapper(
   ReanimatedSlideInUp,
   function (this: ReanimatedSlideInUp) {
     return (values: EntryAnimationsValues) => ({
@@ -67,7 +68,7 @@ export const SlideInUp = createBuilderWrapper(
   },
 );
 
-export const SlideInDown = createBuilderWrapper(
+export const SlideInDown: Class<ReanimatedSlideInDown> = createBuilderWrapper(
   ReanimatedSlideInDown,
   function (this: ReanimatedSlideInDown) {
     return (values: EntryAnimationsValues) => ({
@@ -85,31 +86,32 @@ export const SlideInDown = createBuilderWrapper(
   },
 );
 
-export const SlideOutRight = createBuilderWrapper(
-  ReanimatedSlideOutRight,
-  function (this: ReanimatedSlideOutRight) {
-    return (values: ExitAnimationsValues) => ({
-      animations: {
-        x: withTiming(
-          Math.max(
-            values.currentOriginX + values.windowWidth,
-            values.windowWidth,
+export const SlideOutRight: Class<ReanimatedSlideOutRight> =
+  createBuilderWrapper(
+    ReanimatedSlideOutRight,
+    function (this: ReanimatedSlideOutRight) {
+      return (values: ExitAnimationsValues) => ({
+        animations: {
+          x: withTiming(
+            Math.max(
+              values.currentOriginX + values.windowWidth,
+              values.windowWidth,
+            ),
+            {
+              duration: this.durationV,
+              easing: this.easingV,
+            },
           ),
-          {
-            duration: this.durationV,
-            easing: this.easingV,
-          },
-        ),
-      },
-      initialValues: {
-        x: values.currentOriginX,
-      },
-      callback: this.callbackV,
-    });
-  },
-);
+        },
+        initialValues: {
+          x: values.currentOriginX,
+        },
+        callback: this.callbackV,
+      });
+    },
+  );
 
-export const SlideOutLeft = createBuilderWrapper(
+export const SlideOutLeft: Class<ReanimatedSlideOutLeft> = createBuilderWrapper(
   ReanimatedSlideOutLeft,
   function (this: ReanimatedSlideOutLeft) {
     return (values: ExitAnimationsValues) => ({
@@ -133,7 +135,7 @@ export const SlideOutLeft = createBuilderWrapper(
   },
 );
 
-export const SlideOutUp = createBuilderWrapper(
+export const SlideOutUp: Class<ReanimatedSlideOutUp> = createBuilderWrapper(
   ReanimatedSlideOutUp,
   function (this: ReanimatedSlideOutUp) {
     return (values: ExitAnimationsValues) => ({
@@ -157,7 +159,7 @@ export const SlideOutUp = createBuilderWrapper(
   },
 );
 
-export const SlideOutDown = createBuilderWrapper(
+export const SlideOutDown: Class<ReanimatedSlideOutDown> = createBuilderWrapper(
   ReanimatedSlideOutDown,
   function (this: ReanimatedSlideOutDown) {
     return (values: ExitAnimationsValues) => ({

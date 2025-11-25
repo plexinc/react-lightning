@@ -161,7 +161,7 @@ export default function applyReactPropsToYoga(
   config: YogaOptions,
   node: Node,
   style: Partial<LightningViewElementStyle>,
-) {
+): void {
   for (const [prop, value] of Object.entries(style)) {
     if (isFlexStyleProp(prop)) {
       applyFlexPropToYoga(

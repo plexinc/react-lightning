@@ -9,7 +9,10 @@ import {
   Component,
   type ComponentType,
   type ForwardedRef,
+  type ForwardRefExoticComponent,
   forwardRef,
+  type PropsWithoutRef,
+  type RefAttributes,
 } from 'react';
 import type { NativeMethods, StyleProp, ViewStyle } from 'react-native';
 import type {
@@ -139,10 +142,14 @@ function buildTransitions(
   return animation;
 }
 
+export type AnimatedComponent<TProps extends {}> = ForwardRefExoticComponent<
+  PropsWithoutRef<AnimatedProps<TProps>> & RefAttributes<NativeLightningElement>
+>;
+
 export function createAnimatedComponent<TProps extends {}>(
   ComponentToAnimate: ComponentType<AnimatedProps<TProps>>,
-) {
-  class AnimatedComponent extends Component<AnimatedProps<TProps>> {
+): AnimatedComponent<TProps> {
+  class AnimatedComponentInternal extends Component<AnimatedProps<TProps>> {
     static displayName =
       `LightningAnimated(${ComponentToAnimate.displayName || ComponentToAnimate.name || 'Component'})`;
 
@@ -331,7 +338,7 @@ export function createAnimatedComponent<TProps extends {}>(
   return forwardRef<NativeLightningElement, AnimatedProps<TProps>>(
     (props, forwardedRef) => {
       return (
-        <AnimatedComponent
+        <AnimatedComponentInternal
           {...(props as AnimatedProps<TProps>)}
           forwardedRef={forwardedRef}
         />

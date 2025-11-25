@@ -1,4 +1,8 @@
-import { FlatList as RNFlatList } from 'react-native';
-import { createAnimatedComponent } from './createAnimatedComponent';
+import { type FlatListProps, FlatList as RNFlatList } from 'react-native';
+import {
+  type AnimatedComponent,
+  createAnimatedComponent,
+} from './createAnimatedComponent';
 
-export const FlatList = createAnimatedComponent(RNFlatList);
+export const FlatList: AnimatedComponent<FlatListProps<unknown>> =
+  createAnimatedComponent(RNFlatList);

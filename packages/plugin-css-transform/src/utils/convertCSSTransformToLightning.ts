@@ -47,7 +47,7 @@ export function convertCSSTransformToLightning(
     | number
     | number[]
     | Record<string, number | string | number[]>,
-) {
+): Transform {
   const transformResult: Transform = {};
 
   if (typeof transformValue === 'object') {

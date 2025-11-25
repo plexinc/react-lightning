@@ -4,14 +4,21 @@ import type {
   LightningTextElementStyle,
   Rect,
 } from '@plextv/react-lightning';
-import { forwardRef, useCallback, useMemo } from 'react';
+import {
+  type ForwardRefExoticComponent,
+  forwardRef,
+  type RefAttributes,
+  useCallback,
+  useMemo,
+} from 'react';
 import type { Text as RNText, TextProps as RNTextProps } from 'react-native';
 import { createLayoutEvent } from '../utils/createLayoutEvent';
 import type { ViewProps } from './View';
 
-export type TextProps = AddMissingProps<ViewProps, RNTextProps> & {
-  onLoaded?: (dimensions: Rect) => void;
-};
+export type TextProps = Omit<AddMissingProps<ViewProps, RNTextProps>, 'ref'> &
+  RefAttributes<LightningTextElement> & {
+    onLoaded?: (dimensions: Rect) => void;
+  };
 
 const defaultTextStyle: Partial<LightningTextElementStyle> = {
   fontWeight: 'normal',
@@ -19,7 +26,10 @@ const defaultTextStyle: Partial<LightningTextElementStyle> = {
 
 export type Text = RNText & LightningTextElement;
 
-export const Text = forwardRef<LightningTextElement, TextProps>(
+export const Text: ForwardRefExoticComponent<TextProps> = forwardRef<
+  LightningTextElement,
+  TextProps
+>(
   (
     {
       onLoaded,

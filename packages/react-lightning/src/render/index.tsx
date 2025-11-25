@@ -13,7 +13,7 @@ import {
   SdfTextRenderer,
   WebGlCoreRenderer,
 } from '@lightningjs/renderer/webgl';
-import type { ComponentType, ReactNode } from 'react';
+import type { ComponentType, Context, ReactNode } from 'react';
 import { createContext, createElement } from 'react';
 import createReconciler, { type Reconciler } from 'react-reconciler';
 import type { LightningTextElement } from '../element/LightningTextElement';
@@ -65,7 +65,8 @@ export type LightningRoot = {
 const TRACE_ENABLED = false;
 const SKIP_STACK_TRACE = true;
 
-export const LightningRootContext = createContext<LightningRoot | null>(null);
+export const LightningRootContext: Context<LightningRoot | null> =
+  createContext<LightningRoot | null>(null);
 
 let reconciler: Reconciler<
   ReconcilerContainer,

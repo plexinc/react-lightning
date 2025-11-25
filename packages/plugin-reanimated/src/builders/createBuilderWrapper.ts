@@ -13,7 +13,7 @@ export function createBuilderWrapper<
 >(
   OriginalClass: TClass,
   buildFn: (this: T, originalBuildFn: T['build']) => ReturnType<T['build']>,
-) {
+): TClass {
   class LightningAnimationBuilder extends (OriginalClass as Constructor<BaseAnimationBuilder>) {
     private _buildFn: T['build'];
 

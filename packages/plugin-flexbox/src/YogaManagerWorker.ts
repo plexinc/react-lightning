@@ -341,4 +341,5 @@ function getId(): number {
   return ++count;
 }
 
-export default () => wrapWorker<YogaManager>(new Worker());
+export default (): Workerized<YogaManager> =>
+  wrapWorker<YogaManager>(new Worker());

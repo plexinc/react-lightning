@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { type FC, useRef } from 'react';
 import { FocusGroup } from '../../focus/FocusGroup';
 import { FocusKeyManager } from '../../focus/FocusKeyManager';
 import { FocusManager } from '../../focus/FocusManager';
@@ -11,7 +11,7 @@ import type { CanvasProps } from './CanvasProps';
 
 type Props = Omit<CanvasProps, 'options'> & { width?: number; height?: number };
 
-export const CanvasRoot = ({ width, height, children, keyMap }: Props) => {
+export const CanvasRoot: FC<Props> = ({ width, height, children, keyMap }) => {
   const ref = useRef<LightningElement>(null);
   const focusManager = useRef<FocusManager<LightningElement>>(
     new FocusManager(),

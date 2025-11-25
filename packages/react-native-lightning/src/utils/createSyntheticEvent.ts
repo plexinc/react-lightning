@@ -6,14 +6,16 @@ const defaultEventProps = {
   cancelable: false,
   defaultPrevented: false,
   eventPhase: 0,
-  isDefaultPrevented: () => false,
-  isPropagationStopped: () => false,
+  isDefaultPrevented: (): false => false,
+  isPropagationStopped: (): false => false,
   isTrusted: false,
-  persist: () => {},
-  preventDefault: () => {},
-  stopPropagation: () => {},
-  timeStamp: Date.now(),
-} satisfies Partial<
+  persist: (): void => {},
+  preventDefault: (): void => {},
+  stopPropagation: (): void => {},
+  timeStamp: Date.now() as number,
+} as const;
+
+defaultEventProps satisfies Partial<
   BaseSyntheticEvent<unknown, LightningViewElement, LightningViewElement>
 >;
 

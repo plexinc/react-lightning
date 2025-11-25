@@ -1,11 +1,5 @@
 {
   "extends": "@repo/configs/tsconfig.json",
-  "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "dist",
-    "declaration": false,
-    "declarationMap": false
-  },
   "include": ["src", "../../types/*.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -1,7 +1,9 @@
 import { useContext } from 'react';
+import type { LightningElement } from '../types';
+import type { FocusKeyManager } from './FocusKeyManager';
 import { FocusManagerContext } from './FocusManagerContext';
 
-export const useFocusKeyManager = () => {
+export const useFocusKeyManager = (): FocusKeyManager<LightningElement> => {
   const focusContext = useContext(FocusManagerContext);
 
   if (!focusContext) {

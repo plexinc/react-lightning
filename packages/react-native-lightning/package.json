@@ -14,7 +14,7 @@
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/index.d.cts",
   "exports": {
     ".": "./src/index.ts",
     "./package.json": "./package.json"
@@ -31,9 +31,8 @@
     }
   },
   "scripts": {
-    "build": "tsdown && pnpm run build:types",
-    "build:watch": "tsdown -w",
-    "build:types": "tsc --outDir dist/lib --declarationDir dist --declaration true --emitDeclarationOnly true",
+    "build": "tsdown",
+    "watch": "tsdown -w",
     "clean": "del ./dist",
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
@@ -44,7 +43,7 @@
   "dependencies": {
     "@plextv/react-lightning-plugin-css-transform": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
-    "its-fine": "^2.0.0",
+    "its-fine": "2.0.0",
     "react-native-web": "0.21.1"
   },
   "devDependencies": {

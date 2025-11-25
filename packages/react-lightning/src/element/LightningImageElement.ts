@@ -32,7 +32,7 @@ export class LightningImageElement<
   TProps extends
     LightningImageElementProps<TStyleProps> = LightningImageElementProps<TStyleProps>,
 > extends LightningViewElement<TStyleProps, TProps> {
-  public override get type() {
+  public override get type(): LightningElementType {
     return LightningElementType.Image;
   }
 
@@ -98,7 +98,7 @@ export class LightningImageElement<
     return finalProps;
   }
 
-  protected override _doUpdate() {
+  protected override _doUpdate(): boolean {
     const payload = this._stagedUpdates;
     let changed = super._doUpdate();
 

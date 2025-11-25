@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { Context, FC, ReactNode } from 'react';
 import { createContext, useCallback } from 'react';
 import { useFocusManager } from '../focus/useFocusManager';
 import type { KeyEvent, LightningElement } from '../types';
@@ -8,11 +8,12 @@ type BubbleEventFn = (
   event: Omit<KeyEvent, 'target'>,
 ) => void;
 
-export const KeyEventContext = createContext<{ bubbleEvent: BubbleEventFn }>({
-  bubbleEvent: () => {},
-});
+export const KeyEventContext: Context<{ bubbleEvent: BubbleEventFn }> =
+  createContext<{ bubbleEvent: BubbleEventFn }>({
+    bubbleEvent: () => {},
+  });
 
-export const KeyEventProvider = ({ children }: { children: ReactNode }) => {
+export const KeyEventProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const focusManager = useFocusManager();
 
   const bubbleEvent = useCallback<BubbleEventFn>(

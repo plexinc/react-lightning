@@ -31,13 +31,13 @@ export class MockElement implements Focusable, EventNotifier {
     this._focusable = value;
   }
 
-  public get focused() {
+  public get focused(): boolean {
     return this._focused;
   }
-  public focus() {
+  public focus(): void {
     this._focused = true;
   }
-  public blur() {
+  public blur(): void {
     this._focused = false;
   }
 
@@ -46,6 +46,10 @@ export class MockElement implements Focusable, EventNotifier {
   }
 }
 
-export function createMockElement(id: number, name: string, visible = true) {
+export function createMockElement(
+  id: number,
+  name: string,
+  visible = true,
+): MockElement {
   return new MockElement(id, name, visible);
 }

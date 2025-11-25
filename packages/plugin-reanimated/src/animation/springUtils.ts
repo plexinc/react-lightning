@@ -109,7 +109,7 @@ export function getEnergy(
   velocity: number,
   stiffness: number,
   mass: number,
-) {
+): number {
   const potentialEnergy = 0.5 * stiffness * displacement ** 2;
   const kineticEnergy = 0.5 * mass * velocity ** 2;
 
@@ -119,7 +119,7 @@ export function getEnergy(
 export function calculateNewStiffnessToMatchDuration(
   x0: number,
   config: DefaultSpringConfig,
-) {
+): number {
   /**
    * Use this formula:
    * https://phys.libretexts.org/Bookshelves/University_Physics/Book%3A_University_Physics_(OpenStax)/Book%3A_University_Physics_I_-_Mechanics_Sound_Oscillations_and_Waves_(OpenStax)/15%3A_Oscillations/15.06%3A_Damped_Oscillations

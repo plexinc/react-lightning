@@ -19,7 +19,7 @@ export class LightningManager {
   private _elements = new Map<number, LightningElement>();
   private _yogaManager: YogaManager | Workerized<YogaManager> | undefined;
 
-  public async init(yogaOptions?: YogaOptions) {
+  public async init(yogaOptions?: YogaOptions): Promise<void> {
     this._yogaManager = await loadYoga(yogaOptions);
     this._yogaManager.on('render', this._applyUpdates);
   }
@@ -105,7 +105,7 @@ export class LightningManager {
     elementId: number,
     style?: Partial<LightningElementStyle> | null,
     skipRender = false,
-  ) {
+  ): void {
     if (!this._elements.has(elementId)) {
       return;
     }

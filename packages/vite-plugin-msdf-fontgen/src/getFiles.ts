@@ -24,7 +24,7 @@ export default async function getFiles(
   { src, dest, charsetFile, types, extensions }: OptionsInput,
   force: boolean,
   checksums: Record<string, number | null>,
-) {
+): Promise<FontInfo[]> {
   const fontFiles: Record<string, FontInfo> = {};
   const extensionGlob =
     extensions.length > 1 ? `{${extensions.join(',')}}` : extensions[0];

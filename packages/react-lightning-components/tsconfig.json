@@ -1,9 +1,6 @@
 {
   "extends": "@repo/configs/tsconfig.react-library.json",
   "compilerOptions": {
-    "rootDir": "src",
-    "declaration": false,
-    "declarationMap": false,
     "types": [
       "node",
       "@plextv/react-lightning-plugin-flexbox/jsx",

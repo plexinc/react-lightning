@@ -1,4 +1,4 @@
-export function traceWrap<T extends object>(obj: T, skipTrace = false) {
+export function traceWrap<T extends object>(obj: T, skipTrace = false): T {
   const copy = { ...obj };
 
   for (const key in copy) {

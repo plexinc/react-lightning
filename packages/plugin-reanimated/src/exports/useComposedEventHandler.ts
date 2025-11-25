@@ -2,7 +2,7 @@
 type EventHandler = (...args: any[]) => void;
 
 export function useComposedEventHandler(...handlers: EventHandler[]) {
-  return (...args: any[]) => {
+  return (...args: any[]): void => {
     for (const handler of handlers) {
       handler(...args);
     }
