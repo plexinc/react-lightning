@@ -1,5 +1,16 @@
 # @plextv/react-lightning-plugin-css-transform
 
+## 0.4.0-alpha.3
+
+### Patch Changes
+
+- 451dddd: chore: More build and package fixes
+- a7a4885: fix: Fix builds and enable isolated declarations
+- Updated dependencies [451dddd]
+- Updated dependencies [a7a4885]
+  - @plextv/react-lightning@0.4.0-alpha.4
+  - @plextv/react-lightning-plugin-flexbox@0.4.0-alpha.2
+
 ## 0.4.0-alpha.2
 
 ### Patch Changes

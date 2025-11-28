@@ -1,5 +1,19 @@
 # @plextv/react-native-lightning-example
 
+## 0.4.0-alpha.5
+
+### Patch Changes
+
+- 451dddd: chore: More build and package fixes
+- Updated dependencies [451dddd]
+- Updated dependencies [a7a4885]
+  - @plextv/react-native-lightning-components@0.4.0-alpha.1
+  - @plextv/react-lightning-components@0.4.0-alpha.1
+  - @plextv/react-native-lightning@0.4.0-alpha.5
+  - @plextv/react-lightning-plugin-reanimated@0.4.0-alpha.4
+  - @plextv/react-lightning@0.4.0-alpha.4
+  - @plextv/react-lightning-plugin-flexbox@0.4.0-alpha.2
+
 ## 0.4.0-alpha.4
 
 ### Patch Changes

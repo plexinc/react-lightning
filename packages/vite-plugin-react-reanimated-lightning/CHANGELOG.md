@@ -1,5 +1,15 @@
 # @plextv/vite-plugin-react-reanimated-lightning
 
+## 0.4.0-alpha.4
+
+### Patch Changes
+
+- 451dddd: chore: More build and package fixes
+- a7a4885: fix: Fix builds and enable isolated declarations
+- Updated dependencies [451dddd]
+- Updated dependencies [a7a4885]
+  - @plextv/react-lightning-plugin-reanimated@0.4.0-alpha.4
+
 ## 0.4.0-alpha.3
 
 ### Patch Changes
