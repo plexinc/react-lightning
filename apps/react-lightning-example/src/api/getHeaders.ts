@@ -3,7 +3,7 @@ import { getClientIdentifier } from './getClientIdentifier';
 const getScreenResolution = () =>
   `${window.innerWidth}x${window.innerHeight},${window.screen.width}x${window.screen.height}`;
 
-export const getHeaders = (token?: string) => {
+export const getHeaders = (token?: string): Record<string, string> => {
   const headers: Record<string, string> = {
     Accept: 'application/json',
     'X-Plex-Product': 'Plex Web',

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { type FC, useCallback } from 'react';
 import { Button, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -11,7 +11,7 @@ function randomColor() {
   return `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`;
 }
 
-const AnimationTest = () => {
+const AnimationTest: FC = () => {
   const translateX = useSharedValue(200);
   const translateY = useSharedValue(200);
   const scale = useSharedValue(1);

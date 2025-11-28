@@ -1,7 +1,7 @@
 import { Canvas, type RenderOptions } from '@plextv/react-lightning';
 import { plugin as flexPlugin } from '@plextv/react-lightning-plugin-flexbox';
 import { getReactNativePlugins } from '@plextv/react-native-lightning';
-import { useMemo } from 'react';
+import { type JSX, useMemo } from 'react';
 import { keyMap } from '../../keyMap';
 import { DefaultStoryHeight, DefaultStoryWidth } from '../helpers/constants';
 

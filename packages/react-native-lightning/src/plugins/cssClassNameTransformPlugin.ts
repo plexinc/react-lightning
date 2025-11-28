@@ -1,15 +1,5 @@
 import type { Plugin } from '@plextv/react-lightning';
 
-// Necessary for the declaration merging to work below, since we don't import
-// the `react-native-web` typings.
-// import '../types/react-native-web.d.ts';
-
-declare module 'react-native-web' {
-  namespace StyleSheet {
-    export function getSheet(): { id: string; textContent: string };
-  }
-}
-
 function camelize(text: string) {
   return text.trim().replace(/-(.)/g, (_, letter) => letter.toUpperCase());
 }

@@ -1,3 +1,5 @@
+import { Column } from '@plextv/react-native-lightning-components';
+import type { Meta } from '@storybook/react-vite';
 import {
   FadeIn,
   FadeInDown,
@@ -9,9 +11,7 @@ import {
   FadeOutLeft,
   FadeOutRight,
   FadeOutUp,
-} from '@plextv/react-lightning-plugin-reanimated';
-import { Column } from '@plextv/react-native-lightning-components';
-import type { Meta } from '@storybook/react-vite';
+} from 'react-native-reanimated';
 import { AnimationSampler } from './AnimationSampler';
 
 export default {

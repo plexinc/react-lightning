@@ -1,24 +1,13 @@
-import type { Dimensions } from '@lightningjs/renderer';
 import type {
   LightningTextElement,
   LightningTextElementStyle,
-  Rect,
 } from '@plextv/react-lightning';
-import {
-  type ForwardRefExoticComponent,
-  forwardRef,
-  type RefAttributes,
-  useCallback,
-  useMemo,
-} from 'react';
+import { type ForwardRefExoticComponent, forwardRef, useMemo } from 'react';
 import type { Text as RNText, TextProps as RNTextProps } from 'react-native';
-import { createLayoutEvent } from '../utils/createLayoutEvent';
-import type { ViewProps } from './View';
+import { useLayoutHandler } from '../hooks/useLayoutHandler';
+import { useTextLayoutHandler } from '../hooks/useTextLayoutHandler';
 
-export type TextProps = Omit<AddMissingProps<ViewProps, RNTextProps>, 'ref'> &
-  RefAttributes<LightningTextElement> & {
-    onLoaded?: (dimensions: Rect) => void;
-  };
+export type TextProps = RNTextProps;
 
 const defaultTextStyle: Partial<LightningTextElementStyle> = {
   fontWeight: 'normal',
@@ -26,14 +15,19 @@ const defaultTextStyle: Partial<LightningTextElementStyle> = {
 
 export type Text = RNText & LightningTextElement;
 
-export const Text: ForwardRefExoticComponent<TextProps> = forwardRef<
+export const Text: ForwardRefExoticComponent<RNTextProps> = forwardRef<
   LightningTextElement,
-  TextProps
+  RNTextProps
 >(
   (
     {
-      onLoaded,
       onLayout,
+      onTextLayout,
+      // Press events ignored on purpose in lightning
+      onLongPress,
+      onPress,
+      onPressIn,
+      onPressOut,
       children,
       ellipsizeMode,
       numberOfLines,
@@ -42,19 +36,8 @@ export const Text: ForwardRefExoticComponent<TextProps> = forwardRef<
     },
     ref,
   ) => {
-    const onTextLoaded = useCallback(
-      (dimensions: Dimensions) => {
-        onLoaded?.({ ...dimensions, x: 0, y: 0 });
-      },
-      [onLoaded],
-    );
-
-    const onTextLayout = useCallback(
-      (dimensions: Rect) => {
-        onLayout?.(createLayoutEvent(dimensions));
-      },
-      [onLayout],
-    );
+    const handleTextLayout = useTextLayoutHandler(onTextLayout);
+    const handleLayout = useLayoutHandler(onLayout);
 
     const overflowStyle = useMemo(() => {
       const overflow: LightningTextElementStyle = {
@@ -79,8 +62,8 @@ export const Text: ForwardRefExoticComponent<TextProps> = forwardRef<
           overflowStyle,
           style as LightningTextElementStyle,
         ]}
-        onLayout={onTextLayout}
-        onTextureReady={onTextLoaded}
+        onLayout={handleLayout}
+        onTextureReady={handleTextLayout}
       >
         {children}
       </lng-text>

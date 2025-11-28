@@ -34,7 +34,7 @@
     "build": "tsdown",
     "build:watch": "tsdown -w",
     "clean": "del ./dist",
-    "check:types": "tsc --noEmit",
+    "check:types": "tsc --noEmit -p tsconfig.json",
     "test:unit": "vitest run --passWithNoTests"
   },
   "files": [

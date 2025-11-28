@@ -5,7 +5,7 @@ import type {
   LightningViewElementProps,
 } from '@plextv/react-lightning';
 import { Keys, useFocus } from '@plextv/react-lightning';
-import { useCallback } from 'react';
+import { type FC, useCallback } from 'react';
 
 const containerStyles: LightningElementStyle = {
   w: 330,
@@ -29,7 +29,7 @@ type Props = LightningViewElementProps & {
   onPress?: () => void;
 };
 
-const Button = (props: Props) => {
+const Button: FC<Props> = (props) => {
   const { autoFocus, onPress, ...otherProps } = props;
   const { ref, focused } = useFocus<LightningElement>({ autoFocus });
 

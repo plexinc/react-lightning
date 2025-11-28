@@ -98,7 +98,7 @@ const LibraryView = ({ items }: { items: PosterItem[] }) => {
   );
 };
 
-export const LibraryTest = () => {
+export const LibraryTest: FC = () => {
   const items = useMemo(
     () =>
       Array.from({ length: ITEM_COUNT })

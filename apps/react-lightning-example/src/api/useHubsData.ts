@@ -1,4 +1,4 @@
-import useSWR from 'swr';
+import useSWR, { type SWRResponse } from 'swr';
 import { getHeaders } from './getHeaders';
 import { getToken } from './getToken';
 import type { HubRoot } from './types/Hubs';
@@ -11,7 +11,7 @@ const args = {
   count: '4',
 };
 
-export const useHubsData = () => {
+export const useHubsData = (): SWRResponse<HubRoot> => {
   return useSWR<HubRoot>(
     baseUrl,
     async () => {

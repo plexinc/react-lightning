@@ -1,7 +1,10 @@
 // Default export react-native-web for any exports we don't override
 
 export { useRef as usePlatformMethods } from 'react';
-export type * from 'react-native-web';
+// @ts-expect-error: We're only using web for re-exports so we don't want the
+// types. If we include the types, the react-native types gets augmented with
+// extra props that we don't want. For example, the 'Image' component receiving
+// focus events.
 export * from 'react-native-web';
 
 // Override RN exports with our own
@@ -32,6 +35,13 @@ export {
 } from './exports/TouchableWithoutFeedback';
 export { View, type ViewProps } from './exports/View';
 export { VirtualizedList } from './exports/VirtualizedList';
+
+export { useBlurHandler, useFocusHandler } from './hooks/useFocusHandler';
+export { useImageLoadedHandler } from './hooks/useImageLoadedHandler';
+export { useKeyEventHandler } from './hooks/useKeyEventHandler';
+export { useLayoutHandler } from './hooks/useLayoutHandler';
+export { useTextLayoutHandler } from './hooks/useTextLayoutHandler';
+
 export { cssClassNameTransformPlugin } from './plugins/cssClassNameTransformPlugin';
 export { domPolyfillsPlugin } from './plugins/domPolyfillsPlugin';
 export { reactNativePolyfillsPlugin } from './plugins/reactNativePolyfillsPlugin';

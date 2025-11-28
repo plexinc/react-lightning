@@ -1,6 +1,7 @@
 {
   "extends": "@tsconfig/vite-react/tsconfig.json",
   "compilerOptions": {
+    "isolatedDeclarations": false,
     "types": ["@plextv/react-lightning/jsx"]
   }
 }

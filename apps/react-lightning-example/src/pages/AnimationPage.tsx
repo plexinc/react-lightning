@@ -1,9 +1,9 @@
 import { Column } from '@plextv/react-lightning-components';
-import { useCallback, useState } from 'react';
+import { type FC, useCallback, useState } from 'react';
 import Button from '../components/Button';
 import { PosterCollection } from '../components/PosterCollection';
 
-export const AnimationPage = () => {
+export const AnimationPage: FC = () => {
   const [numPosters, setNumPosters] = useState(1);
 
   const addPoster = useCallback(() => {

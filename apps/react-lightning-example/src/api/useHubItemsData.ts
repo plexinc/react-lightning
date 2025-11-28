@@ -1,4 +1,4 @@
-import useSWR from 'swr';
+import useSWR, { type SWRResponse } from 'swr';
 import { getHeaders } from './getHeaders';
 import { getToken } from './getToken';
 import type { HubItemsRoot } from './types/HubItems';
@@ -13,7 +13,7 @@ const args = {
   includeDetails: '1',
 };
 
-export const useHubItemsData = (hubKey: string) => {
+export const useHubItemsData = (hubKey: string): SWRResponse<HubItemsRoot> => {
   return useSWR<HubItemsRoot>(
     baseUrl + hubKey,
     async () => {

@@ -7,14 +7,14 @@ export default {
   argTypes: {},
 } as Meta;
 
-const focusedBorder = { color: 0xffffffff, width: 3 };
+const focusedBorder = { color: 0xffffffff, w: 3 };
 
 export const SimpleFocusTree = () => {
   const getStyle = (color: number) => ({
     gap: 16,
     padding: 16,
     color,
-    border: { color: 0, width: 0 },
+    border: { color: 0, w: 0 },
   });
   const getFocusedStyle = (color: number) => ({ color, border: focusedBorder });
   const textStyle = {

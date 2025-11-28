@@ -1,11 +1,11 @@
 import { Column, Row } from '@plextv/react-lightning-components';
-import { useCallback, useState } from 'react';
+import { type FC, useCallback, useState } from 'react';
 import Button from '../components/Button';
 
 const img =
   'https://images.plex.tv/photo?size=large-720&scale=2&url=https://image.tmdb.org/t/p/original/65firYWt2FoK18KuYxnmHmVaEsL.jpg';
 
-export const TransformsPage = () => {
+export const TransformsPage: FC = () => {
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
 

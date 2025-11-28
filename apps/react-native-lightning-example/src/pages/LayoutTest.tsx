@@ -1,6 +1,6 @@
 import { focusable, type LightningImageElement } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
-import type { ForwardedRef } from 'react';
+import type { FC, ForwardedRef } from 'react';
 import { useMemo } from 'react';
 
 const RandomImage = focusable<{ autoFocus?: boolean }>(({ focused }, ref) => {
@@ -16,7 +16,7 @@ const RandomImage = focusable<{ autoFocus?: boolean }>(({ focused }, ref) => {
   );
 });
 
-const LayoutTest = () => {
+const LayoutTest: FC = () => {
   return (
     <Column
       focusable

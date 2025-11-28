@@ -1,10 +1,11 @@
+import type { FC } from 'react';
 import AnimatedImage from './AnimatedImage';
 
 interface Props {
   posterCount: number;
 }
 
-const PosterCollection = ({ posterCount }: Props) => {
+const PosterCollection: FC<Props> = ({ posterCount }) => {
   const posters = [];
 
   for (let i = 0; i < posterCount; i++) {

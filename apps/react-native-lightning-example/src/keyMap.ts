@@ -1,6 +1,6 @@
 import { Keys } from '@plextv/react-lightning';
 
-const keyMap = {
+const keyMap: Record<number, Keys | Keys[]> = {
   37: Keys.Left,
   38: Keys.Up,
   39: Keys.Right,

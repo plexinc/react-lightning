@@ -1,20 +1,19 @@
-import type { KeyEvent, LightningElement, Rect } from '@plextv/react-lightning';
-import { focusable, Keys, LightningViewElement } from '@plextv/react-lightning';
+import type { KeyEvent } from '@plextv/react-lightning';
+import {
+  focusable,
+  Keys,
+  type LightningViewElement,
+} from '@plextv/react-lightning';
 import type {
   DependencyList,
   ForwardRefExoticComponent,
   RefAttributes,
 } from 'react';
 import { useCallback, useState } from 'react';
-import type {
-  BlurEvent,
-  FocusEvent,
-  LayoutChangeEvent,
-  PressableProps as RNPressableProps,
-} from 'react-native';
+import type { PressableProps as RNPressableProps } from 'react-native';
+import { useBlurHandler, useFocusHandler } from '../hooks/useFocusHandler';
+import { useLayoutHandler } from '../hooks/useLayoutHandler';
 import { createGestureResponderEvent } from '../utils/createGestureResponderEvent';
-import { createLayoutEvent } from '../utils/createLayoutEvent';
-import { createNativeSyntheticEvent } from '../utils/createNativeSyntheticEvent';
 import { View, type ViewProps } from './View';
 
 export type PressableProps = RNPressableProps &
@@ -59,34 +58,9 @@ export const Pressable: ForwardRefExoticComponent<PressableProps> = focusable<
   ) {
     const [state, setState] = useState({ pressed: false });
 
-    const handleFocus = useCallback(
-      (target: FocusEvent | LightningElement) => {
-        if (target instanceof LightningViewElement) {
-          onFocus?.(createNativeSyntheticEvent({ target: target.id }, target));
-        }
-      },
-      [onFocus],
-    );
-
-    const handleBlur = useCallback(
-      (target: BlurEvent | LightningElement) => {
-        if (target instanceof LightningViewElement) {
-          onBlur?.(createNativeSyntheticEvent({ target: target.id }, target));
-        }
-      },
-      [onBlur],
-    );
-
-    const handleLayout = useCallback(
-      (event: LayoutChangeEvent | Rect) => {
-        if ('nativeEvent' in event) {
-          onLayout?.(event);
-        } else {
-          onLayout?.(createLayoutEvent(event));
-        }
-      },
-      [onLayout],
-    );
+    const handleFocus = useFocusHandler(onFocus);
+    const handleBlur = useBlurHandler(onBlur);
+    const handleLayout = useLayoutHandler(onLayout);
 
     const handleKeyDown = useEnterKeyHandler(
       (e) => {

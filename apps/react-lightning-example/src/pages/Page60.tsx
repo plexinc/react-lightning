@@ -1,18 +1,15 @@
 import { type LightningElement, useFocus } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
-import { useCallback, useState } from 'react';
+import { type FC, useCallback, useState } from 'react';
 import Button from '../components/Button';
 
 const TEXT_WIDTH = 1076;
 const TEXT_HEIGHT = 160;
 
-export const Question = ({
-  text,
-  w = TEXT_WIDTH,
-}: {
+export const Question: FC<{
   text: string;
   w?: number;
-}) => {
+}> = ({ text, w = TEXT_WIDTH }) => {
   const { ref, focused } = useFocus<LightningElement>();
 
   return (
@@ -42,7 +39,7 @@ export const Question = ({
   );
 };
 
-export const Page60 = () => {
+export const Page60: FC = () => {
   const [text, setText] = useState('This is a single line test.');
   const [w, setW] = useState(TEXT_WIDTH);
 

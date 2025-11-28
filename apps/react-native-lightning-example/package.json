@@ -19,6 +19,7 @@
     "clean": "del ./dist",
     "dev": "vite --host",
     "preview": "vite preview --host --port 3333",
+    "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
   "dependencies": {

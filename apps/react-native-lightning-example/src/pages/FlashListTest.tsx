@@ -1,10 +1,10 @@
 import Row from '@plextv/react-lightning-components/layout/Row';
 import FlashList from '@plextv/react-native-lightning-components/lists/FlashList';
-import { useCallback, useRef } from 'react';
+import { type FC, useCallback, useRef } from 'react';
 import { View } from 'react-native';
 import ScrollItem from '../components/ScrollItem';
 
-export const FlashListTest = () => {
+export const FlashListTest: FC = () => {
   const buttons = new Array(50).fill(null).map((_, i) => `Flash Button ${i}`);
   const verticalRef = useRef<FlashList<string>>(null);
   const horizontalRef = useRef<FlashList<string>>(null);

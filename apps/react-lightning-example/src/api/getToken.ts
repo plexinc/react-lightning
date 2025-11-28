@@ -2,7 +2,7 @@ import { getHeaders } from './getHeaders';
 
 const baseUrl = 'https://clients.plex.tv/api/v2/users/anonymous';
 
-export const getToken = async () => {
+export const getToken = async (): Promise<string> => {
   const token = localStorage.getItem('authToken');
 
   if (token) {

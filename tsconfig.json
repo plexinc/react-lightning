@@ -1,6 +1,7 @@
 {
   "extends": "@repo/configs/tsconfig.json",
   "compilerOptions": {
-    "rootDir": "."
+    "rootDir": ".",
+    "isolatedDeclarations": false
   }
 }

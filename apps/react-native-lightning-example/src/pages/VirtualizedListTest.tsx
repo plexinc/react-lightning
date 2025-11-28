@@ -1,10 +1,10 @@
-import { createRef, useCallback } from 'react';
+import { createRef, type FC, useCallback } from 'react';
 import { VirtualizedList } from 'react-native';
 import ScrollItem from '../components/ScrollItem';
 
 const getItem = (_data: string[], index: number) => `Button ${index}`;
 
-export const VirtualizedListTest = () => {
+export const VirtualizedListTest: FC = () => {
   const ref = createRef<VirtualizedList<string>>();
 
   const handleFocus = useCallback(

@@ -20,11 +20,11 @@ class ErrorBoundary extends Component<Props, State> {
     return { hasError: true };
   }
 
-  public componentDidCatch(error: Error, info: React.ErrorInfo) {
+  public componentDidCatch(error: Error, info: React.ErrorInfo): void {
     console.error(error, info.componentStack);
   }
 
-  public render() {
+  public render(): ReactNode {
     if (this.state.hasError) {
       // You can render any custom fallback UI
       return this.props.fallback;

@@ -1,10 +1,10 @@
 import type { LightningElement } from '@plextv/react-lightning';
 import { Column } from '@plextv/react-lightning-components';
-import { useCallback, useState } from 'react';
+import { type FC, useCallback, useState } from 'react';
 import { useHubsData } from '../api/useHubsData';
 import { HubRow } from '../components/HubRow';
 
-export const BrowsePage = () => {
+export const BrowsePage: FC = () => {
   const { data, error, isLoading } = useHubsData();
   const [verticalOffset, setVerticalOffset] = useState(0);
 

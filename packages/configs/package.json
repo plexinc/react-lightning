@@ -5,6 +5,14 @@
   "author": "Plex Inc.",
   "license": "MIT",
   "type": "module",
+  "exports": {
+    "./tsconfig.json": "./tsconfig.json",
+    "./tsconfig.react-library.json": "./tsconfig.react-library.json",
+    "./tsconfig.react-native-library.json": "./tsconfig.react-native-library.json",
+    "./tsdown.config": "./tsdown.config.ts",
+    "./tsdown.withExports.config": "./tsdown.withExports.config.ts",
+    "./vite.config": "./vite.config.mjs"
+  },
   "scripts": {},
   "volta": {
     "extends": "../../package.json"

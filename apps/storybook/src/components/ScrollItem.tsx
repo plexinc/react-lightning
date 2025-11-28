@@ -1,5 +1,5 @@
 import { focusable } from '@plextv/react-lightning';
-import { Image, View } from '@plextv/react-native-lightning';
+import { View } from '@plextv/react-native-lightning';
 import { type ReactNode, useEffect, useMemo } from 'react';
 import { type ColorValue, Text } from 'react-native';
 
@@ -64,7 +64,7 @@ const ScrollItem = focusable<ScrollItemProps, View>(
         }}
       >
         {image ? (
-          <Image
+          <lng-image
             src={imageSrc}
             style={{
               opacity: focused ? 1 : 0.25,

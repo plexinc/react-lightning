@@ -1,12 +1,9 @@
 {
-  "extends": "@repo/configs/tsconfig.react-library.json",
+  "extends": "@repo/configs/tsconfig.react-native-library.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "types": [
-      "node",
-      "vite/client",
-      "@plextv/react-lightning-plugin-flexbox/jsx"
-    ]
+    "jsx": "react-native",
+    "isolatedDeclarations": false,
+    "outDir": "dist"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

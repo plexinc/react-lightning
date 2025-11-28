@@ -4,13 +4,12 @@ import type {
   LightningElementEventProps,
   LightningViewElement,
   LightningViewElementProps,
-  Rect,
 } from '@plextv/react-lightning';
 import type { AllStyleProps } from '@plextv/react-lightning-plugin-css-transform';
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';
-import { forwardRef, useCallback } from 'react';
+import { forwardRef } from 'react';
 import type { View as RNView, ViewProps as RNViewProps } from 'react-native';
-import { createLayoutEvent } from '../utils/createLayoutEvent';
+import { useLayoutHandler } from '../hooks/useLayoutHandler';
 
 type CombinedProps = RNViewProps &
   LightningViewElementProps &
@@ -39,12 +38,7 @@ export const View: ForwardRefExoticComponent<ViewProps> = forwardRef<
   LightningViewElement,
   ViewProps
 >(({ onLayout, ...props }, ref) => {
-  const handleLayout = useCallback(
-    (dimensions: Rect) => {
-      onLayout?.(createLayoutEvent(dimensions));
-    },
-    [onLayout],
-  );
+  const handleLayout = useLayoutHandler(onLayout);
 
   return (
     <lng-view ref={ref} {...(props as CombinedProps)} onLayout={handleLayout} />

@@ -1,7 +1,7 @@
 import type { LightningElement } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
 import { ScrollView } from '@plextv/react-native-lightning';
-import { type RefObject, useCallback, useRef } from 'react';
+import { type FC, type RefObject, useCallback, useRef } from 'react';
 import {
   ActivityIndicator,
   Button,
@@ -12,8 +12,8 @@ import {
   View,
 } from 'react-native';
 
-const ComponentTest = () => {
-  const ref = useRef<ScrollView>();
+const ComponentTest: FC = () => {
+  const ref = useRef<ScrollView>(null);
 
   const handleChildFocused = useCallback((child: LightningElement) => {
     ref.current?.scrollToElement(child);

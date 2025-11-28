@@ -60,7 +60,7 @@
   },
   "peerDependencyRules": {
     "allowedVersions": {
-      "react": "^18"
+      "react": "^19"
     }
   },
   "volta": {

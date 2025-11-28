@@ -2,7 +2,7 @@ import { type FC, forwardRef, type Ref } from 'react';
 import {
   VirtualizedList as RNVirtualizedList,
   type VirtualizedListProps as RNVirtualizedListProps,
-} from 'react-native-web';
+} from 'react-native';
 import { ScrollView } from './ScrollView';
 
 export type VirtualizedListProps<T> = RNVirtualizedListProps<T>;

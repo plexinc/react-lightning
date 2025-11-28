@@ -1,24 +1,18 @@
-import type { Dimensions } from '@lightningjs/renderer';
 import type {
   LightningElementStyle,
   LightningImageElement,
 } from '@plextv/react-lightning';
-import { type ForwardRefExoticComponent, forwardRef, useCallback } from 'react';
+import { type ForwardRefExoticComponent, forwardRef } from 'react';
 import type {
-  ImageLoadEventData,
   ImageSourcePropType,
   ImageURISource,
   Image as RNImage,
   ImageProps as RNImageProps,
 } from 'react-native';
-import { createLayoutEvent } from '../utils/createLayoutEvent';
-import { createNativeSyntheticEvent } from '../utils/createNativeSyntheticEvent';
-import type { ViewProps } from './View';
+import { useImageLoadedHandler } from '../hooks/useImageLoadedHandler';
+import { useLayoutHandler } from '../hooks/useLayoutHandler';
 
-export type ImageProps = RNImageProps &
-  Omit<ViewProps, 'style'> & {
-    onImageLoaded?: (dimensions: { width: number; height: number }) => void;
-  };
+export type ImageProps = RNImageProps;
 
 function isImageURISource(
   source: ImageSourcePropType,
@@ -30,44 +24,14 @@ export type Image = RNImage & LightningImageElement;
 
 export const Image: ForwardRefExoticComponent<RNImageProps> = forwardRef<
   LightningImageElement,
-  ImageProps
+  RNImageProps
 >(
   (
-    {
-      onLoad,
-      onImageLoaded,
-      onLayout,
-      width,
-      height,
-      src,
-      source,
-      style,
-      ...otherProps
-    },
+    { onLoad, onLayout, width, height, src, source, style, ...otherProps },
     ref,
   ) => {
-    const onImageLayout = useCallback(
-      (dimensions: { w: number; h: number }) => {
-        onLayout?.(createLayoutEvent({ ...dimensions, x: 0, y: 0 }));
-      },
-      [onLayout],
-    );
-
-    const handleImageLoaded = useCallback(
-      ({ w, h }: Dimensions) => {
-        onLoad?.(
-          createNativeSyntheticEvent<ImageLoadEventData>({
-            source: {
-              height: h,
-              width: w,
-              uri: src as string,
-            },
-          }),
-        );
-        onImageLoaded?.({ width: w, height: h });
-      },
-      [src, onLoad, onImageLoaded],
-    );
+    const handleImageLayout = useLayoutHandler(onLayout);
+    const handleImageLoaded = useImageLoadedHandler(src as string, onLoad);
 
     let finalSource: string | undefined;
 
@@ -98,7 +62,7 @@ export const Image: ForwardRefExoticComponent<RNImageProps> = forwardRef<
           h: height,
         }}
         onTextureReady={handleImageLoaded}
-        onLayout={onImageLayout}
+        onLayout={handleImageLayout}
       />
     );
   },

@@ -1,6 +1,7 @@
 import { Column } from '@plextv/react-lightning-components';
+import type { FC } from 'react';
 
-export const TexturePage = () => {
+export const TexturePage: FC = () => {
   return (
     <Column
       focusable

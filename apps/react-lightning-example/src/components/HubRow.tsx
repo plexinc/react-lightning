@@ -3,7 +3,7 @@ import type {
   LightningViewElementProps,
 } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
-import { useCallback, useState } from 'react';
+import { type FC, useCallback, useState } from 'react';
 import type { Hub } from '../api/types/Hubs';
 import { useHubItemsData } from '../api/useHubItemsData';
 import { HubItem } from './HubItem';
@@ -12,7 +12,7 @@ type Props = LightningViewElementProps & {
   hub: Hub;
 };
 
-export const HubRow = (props: Props) => {
+export const HubRow: FC<Props> = (props) => {
   const { hub, style, ...rest } = props;
   const { data, isLoading, error } = useHubItemsData(hub.key);
   const [horizontalOffset, setHorizontalOffset] = useState(0);

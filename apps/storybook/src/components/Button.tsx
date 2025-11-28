@@ -43,9 +43,7 @@ const Button = (props: Props) => {
   );
 
   const color = focused ? 0xcccc44ff : 0xcccc44aa;
-  const border = focused
-    ? { width: 3, color: 0xffffffff }
-    : { width: 0, color: 0 };
+  const border = focused ? { w: 3, color: 0xffffffff } : { w: 0, color: 0 };
 
   return (
     <lng-view

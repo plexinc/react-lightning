@@ -1,6 +1,6 @@
 const baseUrl = 'https://images.plex.tv/photo';
 
-export const getImageUrl = (url?: string) => {
+export const getImageUrl = (url?: string): string => {
   if (!url) {
     return '';
   }

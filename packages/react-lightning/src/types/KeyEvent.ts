@@ -7,4 +7,5 @@ export type KeyEvent = {
   keyCode: number;
   remoteKey: Keys | Keys[];
   target: LightningElement;
+  repeat: boolean;
 };

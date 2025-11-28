@@ -1,4 +1,8 @@
+import { Button } from '@plextv/react-native-lightning';
+import { Column, Row } from '@plextv/react-native-lightning-components';
+import { type FC, useMemo, useState } from 'react';
 import Animated, {
+  type EntryOrExitLayoutType,
   FadeIn as FadeInBuilder,
   FadeInDown as FadeInDownBuilder,
   FadeInLeft as FadeInLeftBuilder,
@@ -9,7 +13,6 @@ import Animated, {
   FadeOutLeft as FadeOutLeftBuilder,
   FadeOutRight as FadeOutRightBuilder,
   FadeOutUp as FadeOutUpBuilder,
-  type ReanimatedAnimation,
   SlideInDown as SlideInDownBuilder,
   SlideInLeft as SlideInLeftBuilder,
   SlideInRight as SlideInRightBuilder,
@@ -18,15 +21,12 @@ import Animated, {
   SlideOutLeft as SlideOutLeftBuilder,
   SlideOutRight as SlideOutRightBuilder,
   SlideOutUp as SlideOutUpBuilder,
-} from '@plextv/react-lightning-plugin-reanimated';
-import { Button } from '@plextv/react-native-lightning';
-import { Column, Row } from '@plextv/react-native-lightning-components';
-import { type FC, useMemo, useState } from 'react';
+} from 'react-native-reanimated';
 
 type AnimatedProps = {
   visible: boolean;
-  entering?: ReanimatedAnimation;
-  exiting?: ReanimatedAnimation;
+  entering?: EntryOrExitLayoutType;
+  exiting?: EntryOrExitLayoutType;
 };
 
 function randomColor() {
@@ -52,8 +52,8 @@ const AnimatedBox: FC<AnimatedProps> = ({ visible, ...props }) => {
 const AnimationExample: FC<{
   buttonPrefix: string;
   buttonSuffix?: string;
-  entering?: ReanimatedAnimation;
-  exiting?: ReanimatedAnimation;
+  entering?: EntryOrExitLayoutType;
+  exiting?: EntryOrExitLayoutType;
 }> = ({ buttonPrefix, buttonSuffix = '', entering, exiting }) => {
   const [visible, setVisible] = useState(true);
 
@@ -74,7 +74,7 @@ const AnimationExample: FC<{
   );
 };
 
-const AnimationBuilderTest = () => {
+const AnimationBuilderTest: FC = () => {
   return (
     <Row style={{ gap: 25 }}>
       <Column style={{ gap: 15 }}>

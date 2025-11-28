@@ -1,11 +1,11 @@
 import type { LightningImageElement } from '@plextv/react-lightning';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type FC, useEffect, useMemo, useRef, useState } from 'react';
 
 function randomInt(max: number): number {
   return Math.round(Math.random() * max);
 }
 
-const AnimatedImage = () => {
+const AnimatedImage: FC = () => {
   const duration = useMemo(() => randomInt(2000) + 500, []);
   const ref = useRef<LightningImageElement>(null);
   const [x, setX] = useState(randomInt(1670));

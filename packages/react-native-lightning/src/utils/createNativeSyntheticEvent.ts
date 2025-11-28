@@ -1,10 +1,14 @@
 import type { LightningElement } from '@plextv/react-lightning';
 import type { NativeSyntheticEvent } from 'react-native';
 
+type TypeFromEventOrEventHandler<T> = T extends NativeSyntheticEvent<infer U>
+  ? U
+  : T;
+
 export function createNativeSyntheticEvent<T>(
-  event: T,
+  event: TypeFromEventOrEventHandler<T>,
   target?: LightningElement | null,
-): NativeSyntheticEvent<T> {
+): NativeSyntheticEvent<TypeFromEventOrEventHandler<T>> {
   return {
     bubbles: true,
     cancelable: false,

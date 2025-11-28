@@ -5,6 +5,7 @@ import {
   useFocus,
 } from '@plextv/react-lightning';
 import { Column } from '@plextv/react-lightning-components';
+import type { FC } from 'react';
 import { getImageUrl } from '../api/getImageUrl';
 import type { Metadata } from '../api/types/Metadata';
 
@@ -13,7 +14,7 @@ interface Props extends LightningViewElementProps {
   style?: LightningViewElementStyle;
 }
 
-export const HubItem = ({ metadata, style, ...rest }: Props) => {
+export const HubItem: FC<Props> = ({ metadata, style, ...rest }) => {
   const poster = metadata.Image?.find((image) => image.type === 'coverPoster');
   const { ref, focused } = useFocus<LightningViewElement>();
 
