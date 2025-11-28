@@ -1,5 +1,15 @@
 # @plextv/vite-plugin-react-native-lightning
 
+## 0.4.0-alpha.2
+
+### Patch Changes
+
+- 451dddd: chore: More build and package fixes
+- a7a4885: fix: Fix builds and enable isolated declarations
+- Updated dependencies [451dddd]
+- Updated dependencies [a7a4885]
+  - @plextv/react-native-lightning@0.4.0-alpha.5
+
 ## 0.4.0-alpha.1
 
 ### Patch Changes

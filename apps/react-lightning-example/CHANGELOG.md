@@ -1,5 +1,17 @@
 # @plextv/react-lightning-example
 
+## 0.4.0-alpha.4
+
+### Patch Changes
+
+- 451dddd: chore: More build and package fixes
+- Updated dependencies [451dddd]
+- Updated dependencies [a7a4885]
+  - @plextv/react-lightning-components@0.4.0-alpha.1
+  - @plextv/react-lightning-plugin-css-transform@0.4.0-alpha.3
+  - @plextv/react-lightning@0.4.0-alpha.4
+  - @plextv/react-lightning-plugin-flexbox@0.4.0-alpha.2
+
 ## 0.4.0-alpha.3
 
 ### Patch Changes

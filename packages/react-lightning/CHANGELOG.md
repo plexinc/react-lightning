@@ -1,5 +1,12 @@
 # @plextv/react-lightning
 
+## 0.4.0-alpha.4
+
+### Patch Changes
+
+- 451dddd: chore: More build and package fixes
+- a7a4885: fix: Fix builds and enable isolated declarations
+
 ## 0.4.0-alpha.3
 
 ### Patch Changes
