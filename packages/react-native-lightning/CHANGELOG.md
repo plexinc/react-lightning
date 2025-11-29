@@ -1,5 +1,11 @@
 # @plextv/react-native-lightning
 
+## 0.4.0-alpha.6
+
+### Patch Changes
+
+- 34ddeb8: fix: Fix some typings with the FocusGroup and removed FocusableView
+
 ## 0.4.0-alpha.5
 
 ### Patch Changes
