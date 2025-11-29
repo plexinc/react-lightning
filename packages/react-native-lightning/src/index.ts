@@ -13,7 +13,6 @@ export {
   type ActivityIndicatorProps,
 } from './exports/ActivityIndicator';
 export { Button, type ButtonProps } from './exports/Button';
-export { FocusableView } from './exports/FocusableView';
 export { FocusGroup, type FocusGroupProps } from './exports/FocusGroup';
 export { Image, type ImageProps } from './exports/Image';
 export * as Platform from './exports/Platform';

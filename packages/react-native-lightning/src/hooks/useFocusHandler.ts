@@ -6,20 +6,24 @@ import { useCallback } from 'react';
 import type {
   BlurEvent,
   FocusEvent,
+  NativeSyntheticEvent,
   TargetedEvent,
   ViewProps,
 } from 'react-native';
 import { createNativeSyntheticEvent } from '../utils/createNativeSyntheticEvent';
 
-type Handler<T extends 'focus' | 'blur'> = (
-  target: (T extends 'focus' ? FocusEvent : BlurEvent) | LightningElement,
-) => void;
+export type FocusHandler<T extends 'focus' | 'blur', TEvent> = (
+  target:
+    | (T extends 'focus' ? FocusEvent : BlurEvent)
+    | NativeSyntheticEvent<TEvent>
+    | LightningElement,
+) => void | Promise<void>;
 
 function useHandler<T extends 'focus' | 'blur'>(
   _eventType: T,
   onEvent?: ViewProps[`on${Capitalize<T>}`],
-): Handler<T> | undefined {
-  const handler = useCallback<Handler<T>>(
+): FocusHandler<T, TargetedEvent> | undefined {
+  const handler = useCallback<FocusHandler<T, TargetedEvent>>(
     (element) => {
       if (element instanceof LightningViewElement) {
         onEvent?.(
@@ -38,12 +42,12 @@ function useHandler<T extends 'focus' | 'blur'>(
 
 export function useFocusHandler(
   onFocus?: ViewProps['onFocus'],
-): Handler<'focus'> | undefined {
+): FocusHandler<'focus', TargetedEvent> | undefined {
   return useHandler('focus', onFocus);
 }
 
 export function useBlurHandler(
   onBlur?: ViewProps['onBlur'],
-): Handler<'blur'> | undefined {
+): FocusHandler<'blur', TargetedEvent> | undefined {
   return useHandler('blur', onBlur);
 }
