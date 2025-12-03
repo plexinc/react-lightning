@@ -24,14 +24,14 @@ jobs:
       published: ${{ steps.changesets.outputs.published }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.0
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4.2.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6.0.0
         with:
           node-version-file: package.json
           cache: "pnpm"
@@ -43,7 +43,7 @@ jobs:
 
       - name: Create release pull request or publish
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@v1.5.3
         with:
           version: pnpm run ci:version
           commit: "chore: Update versions"
