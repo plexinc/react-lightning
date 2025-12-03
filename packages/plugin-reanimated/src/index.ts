@@ -52,6 +52,7 @@ export { useAnimatedStyle } from './exports/useAnimatedStyle';
 export { useComposedEventHandler } from './exports/useComposedEventHandler';
 export { withDelay } from './exports/withDelay';
 export { withRepeat } from './exports/withRepeat';
+export { withSequence } from './exports/withSequence';
 export { withSpring } from './exports/withSpring';
 export { withTiming } from './exports/withTiming';
 
