@@ -1,5 +1,11 @@
 # @plextv/react-lightning-plugin-reanimated
 
+## 0.4.0-alpha.5
+
+### Patch Changes
+
+- 80c96e3: feat: Add a placeholder withSequence
+
 ## 0.4.0-alpha.4
 
 ### Patch Changes
