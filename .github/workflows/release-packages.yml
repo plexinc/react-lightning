@@ -55,3 +55,5 @@ jobs:
           # This means that checks won't run on the release PRs. We work around
           # this by using our own GH_TOKEN_REPO_ACCESS organization secret.
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN_REPO_ACCESS }}
+          # Use OIDC for npm authentication instead of NPM_TOKEN
+          NPM_TOKEN: ''
