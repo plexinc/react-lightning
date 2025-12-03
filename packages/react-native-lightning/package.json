@@ -31,7 +31,7 @@
     }
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown --config-loader unrun",
     "watch": "tsdown -w",
     "clean": "del ./dist",
     "check:types": "tsc --noEmit",
