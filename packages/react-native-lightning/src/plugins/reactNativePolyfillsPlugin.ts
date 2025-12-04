@@ -150,9 +150,9 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
     onCreateInstance(instance) {
       const nativeInstance = instance as LightningNativeViewElement;
 
-      // Initialize the load promise to resolve when the instance is laid out
+      // Initialize the load promise to resolve when the instance is available
       nativeInstance.__loadPromise = new Promise<void>((resolve) => {
-        nativeInstance.once('layout', () => {
+        nativeInstance.once('inViewport', () => {
           nativeInstance.__loaded = true;
           resolve();
         });
