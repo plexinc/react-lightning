@@ -54,18 +54,6 @@ export class FocusKeyManager<T extends LightningElement> {
       return true;
     }
 
-    const { traps } = focusNode;
-
-    if (
-      (direction === Direction.Left && traps.left) ||
-      (direction === Direction.Right && traps.right) ||
-      (direction === Direction.Up && traps.up) ||
-      (direction === Direction.Down && traps.down)
-    ) {
-      // Don't bubble up
-      return false;
-    }
-
     if (!element.focusable || !focusNode.focusedElement) {
       return true;
     }
@@ -79,6 +67,18 @@ export class FocusKeyManager<T extends LightningElement> {
 
     if (closestElement) {
       this._focusManager.focus(closestElement as T);
+      return false;
+    }
+
+    const { traps } = focusNode;
+
+    if (
+      (direction === Direction.Left && traps.left) ||
+      (direction === Direction.Right && traps.right) ||
+      (direction === Direction.Up && traps.up) ||
+      (direction === Direction.Down && traps.down)
+    ) {
+      // Don't bubble up
       return false;
     }
 
