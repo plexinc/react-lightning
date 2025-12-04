@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.4.0-alpha.5
+
+### Patch Changes
+
+- 01d5f33: fix(focus): Fix traps not working properly in some cases
+
 ## 0.4.0-alpha.4
 
 ### Patch Changes

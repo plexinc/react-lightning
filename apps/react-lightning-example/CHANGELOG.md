@@ -1,5 +1,12 @@
 # @plextv/react-lightning-example
 
+## 0.4.0-alpha.5
+
+### Patch Changes
+
+- Updated dependencies [01d5f33]
+  - @plextv/react-lightning@0.4.0-alpha.5
+
 ## 0.4.0-alpha.4
 
 ### Patch Changes

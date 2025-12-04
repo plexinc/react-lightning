@@ -19,8 +19,10 @@
     "@plextv/vite-plugin-react-reanimated-lightning": "0.3.4"
   },
   "changesets": [
+    "beige-wings-smoke",
     "brown-jeans-knock",
     "cold-phones-drive",
+    "dirty-drinks-bathe",
     "every-towns-find",
     "free-ducks-film",
     "honest-facts-help",
