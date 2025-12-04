@@ -1,5 +1,13 @@
 # @plextv/react-native-lightning
 
+## 0.4.0-alpha.7
+
+### Patch Changes
+
+- b57bb68: fix: Fix measure function not returning in some cases
+- Updated dependencies [01d5f33]
+  - @plextv/react-lightning@0.4.0-alpha.5
+
 ## 0.4.0-alpha.6
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @plextv/react-native-lightning-example
 
+## 0.4.0-alpha.8
+
+### Patch Changes
+
+- Updated dependencies [01d5f33]
+- Updated dependencies [b57bb68]
+  - @plextv/react-lightning@0.4.0-alpha.5
+  - @plextv/react-native-lightning@0.4.0-alpha.7
+
 ## 0.4.0-alpha.7
 
 ### Patch Changes
