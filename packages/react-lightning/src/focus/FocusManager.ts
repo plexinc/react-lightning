@@ -237,33 +237,41 @@ export class FocusManager<
     this._recalculateFocusPath();
   }
 
-  public removeElement(element: T): void {
-    const node = this.activeLayer.elements.get(element);
+  private _forAllNodes(
+    element: T,
+    callback: (node: FocusNode<T>) => void,
+  ): void {
+    for (let i = this._focusStack.length - 1; i >= 0; i--) {
+      const layer = this._focusStack[i];
+      // biome-ignore lint/style/noNonNullAssertion: Already asserted layer exists
+      const node = layer!.elements.get(element);
 
-    if (!node) {
-      return;
+      if (node) {
+        callback(node);
+      }
     }
+  }
 
-    this._removeNode(node, true);
+  public removeElement(element: T): void {
+    this._forAllNodes(element, (node) => {
+      this._removeNode(node, true);
+    });
   }
 
   public setTraps(element: T, traps: Traps): void {
-    const node = this.activeLayer.elements.get(element);
-
-    if (node) {
+    this._forAllNodes(element, (node) => {
       node.traps = traps;
-    }
+    });
   }
 
   public setAutoFocus(element: T, autoFocus?: boolean): void {
-    const node = this.activeLayer.elements.get(element);
-
-    if (node) {
+    this._forAllNodes(element, (node) => {
       node.autoFocus = !!autoFocus;
-    }
+    });
   }
 
   public setFocusRedirect(element: T, focusRedirect?: boolean): void {
+    // Only apply redirect to the active layer, as redirects are likely to be layer-specific
     const node = this.activeLayer.elements.get(element);
 
     if (node) {
@@ -272,11 +280,9 @@ export class FocusManager<
   }
 
   public setDestinations(element: T, destinations?: (T | null)[]): void {
-    const node = this.activeLayer.elements.get(element);
-
-    if (node) {
+    this._forAllNodes(element, (node) => {
       node.destinations = destinations ?? null;
-    }
+    });
   }
 
   public pushLayer(): void {
