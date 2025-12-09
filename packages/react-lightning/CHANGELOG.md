@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.4.0-alpha.6
+
+### Patch Changes
+
+- 589da1b: fix(focus): Fix removing elements not applying across focus layers
+
 ## 0.4.0-alpha.5
 
 ### Patch Changes

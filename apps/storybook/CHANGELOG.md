@@ -1,5 +1,12 @@
 # @plextv/react-lightning-storybook
 
+## 0.4.0-alpha.9
+
+### Patch Changes
+
+- Updated dependencies [589da1b]
+  - @plextv/react-lightning@0.4.0-alpha.6
+
 ## 0.4.0-alpha.8
 
 ### Patch Changes
