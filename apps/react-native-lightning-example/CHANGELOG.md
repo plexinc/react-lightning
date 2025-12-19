@@ -1,5 +1,17 @@
 # @plextv/react-native-lightning-example
 
+## 0.4.0-alpha.10
+
+### Patch Changes
+
+- Updated dependencies [f9a9cab]
+- Updated dependencies [0b91ada]
+- Updated dependencies [b23e312]
+- Updated dependencies [f9a9cab]
+  - @plextv/react-lightning@0.4.0-alpha.7
+  - @plextv/react-lightning-plugin-reanimated@0.4.0-alpha.6
+  - @plextv/react-native-lightning@0.4.0-alpha.8
+
 ## 0.4.0-alpha.9
 
 ### Patch Changes

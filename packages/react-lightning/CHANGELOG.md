@@ -1,5 +1,12 @@
 # @plextv/react-lightning
 
+## 0.4.0-alpha.7
+
+### Patch Changes
+
+- f9a9cab: fix: support preventDefault() api for events
+- f9a9cab: fix: onChildFocused event now works on FocusGroups and useFocus
+
 ## 0.4.0-alpha.6
 
 ### Patch Changes
