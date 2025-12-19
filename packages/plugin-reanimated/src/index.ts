@@ -36,6 +36,8 @@ export {
   FadeOutUp,
 } from './builders/Fade';
 
+export { LinearTransition } from './builders/LinearTransition';
+
 export {
   SlideInDown,
   SlideInLeft,

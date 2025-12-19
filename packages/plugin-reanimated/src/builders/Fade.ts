@@ -13,18 +13,24 @@ import {
   FadeOutUp as ReanimatedFadeOutUp,
 } from 'react-native-reanimated-original';
 import type { Class } from 'type-fest';
+import { withDelay } from '../exports/withDelay';
 import { withTiming } from '../exports/withTiming';
 import { createBuilderWrapper } from './createBuilderWrapper';
 
 export const FadeIn: Class<ReanimatedFadeIn> = createBuilderWrapper(
   ReanimatedFadeIn,
   function (this: ReanimatedFadeIn) {
+    const delay = this.getDelay();
+
     return () => ({
       animations: {
-        alpha: withTiming(1, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
+        alpha: withDelay(
+          delay,
+          withTiming(1, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
       },
       initialValues: {
         alpha: 0.00001,
@@ -37,16 +43,24 @@ export const FadeIn: Class<ReanimatedFadeIn> = createBuilderWrapper(
 export const FadeInRight: Class<ReanimatedFadeInRight> = createBuilderWrapper(
   ReanimatedFadeInRight,
   function (this: ReanimatedFadeInRight) {
+    const delay = this.getDelay();
+
     return (values: EntryAnimationsValues) => ({
       animations: {
-        alpha: withTiming(1, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
-        x: withTiming(values.targetOriginX, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
+        alpha: withDelay(
+          delay,
+          withTiming(1, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
+        x: withDelay(
+          delay,
+          withTiming(values.targetOriginX, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
       },
       initialValues: {
         alpha: 0.00001,
@@ -60,16 +74,24 @@ export const FadeInRight: Class<ReanimatedFadeInRight> = createBuilderWrapper(
 export const FadeInLeft: Class<ReanimatedFadeInLeft> = createBuilderWrapper(
   ReanimatedFadeInLeft,
   function (this: ReanimatedFadeInLeft) {
+    const delay = this.getDelay();
+
     return (values: EntryAnimationsValues) => ({
       animations: {
-        alpha: withTiming(1, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
-        x: withTiming(values.targetOriginX, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
+        alpha: withDelay(
+          delay,
+          withTiming(1, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
+        x: withDelay(
+          delay,
+          withTiming(values.targetOriginX, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
       },
       initialValues: {
         alpha: 0.00001,
@@ -83,16 +105,24 @@ export const FadeInLeft: Class<ReanimatedFadeInLeft> = createBuilderWrapper(
 export const FadeInUp: Class<ReanimatedFadeInUp> = createBuilderWrapper(
   ReanimatedFadeInUp,
   function (this: ReanimatedFadeInUp) {
+    const delay = this.getDelay();
+
     return (values: EntryAnimationsValues) => ({
       animations: {
-        alpha: withTiming(1, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
-        y: withTiming(values.targetOriginY, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
+        alpha: withDelay(
+          delay,
+          withTiming(1, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
+        y: withDelay(
+          delay,
+          withTiming(values.targetOriginY, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
       },
       initialValues: {
         alpha: 0.00001,
@@ -106,16 +136,24 @@ export const FadeInUp: Class<ReanimatedFadeInUp> = createBuilderWrapper(
 export const FadeInDown: Class<ReanimatedFadeInDown> = createBuilderWrapper(
   ReanimatedFadeInDown,
   function (this: ReanimatedFadeInDown) {
+    const delay = this.getDelay();
+
     return (values: EntryAnimationsValues) => ({
       animations: {
-        alpha: withTiming(1, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
-        y: withTiming(values.targetOriginY, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
+        alpha: withDelay(
+          delay,
+          withTiming(1, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
+        y: withDelay(
+          delay,
+          withTiming(values.targetOriginY, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
       },
       initialValues: {
         alpha: 0.00001,
@@ -129,12 +167,17 @@ export const FadeInDown: Class<ReanimatedFadeInDown> = createBuilderWrapper(
 export const FadeOut: Class<ReanimatedFadeOut> = createBuilderWrapper(
   ReanimatedFadeOut,
   function (this: ReanimatedFadeOut) {
+    const delay = this.getDelay();
+
     return () => ({
       animations: {
-        alpha: withTiming(0, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
+        alpha: withDelay(
+          delay,
+          withTiming(0, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
       },
       initialValues: {
         alpha: 1,
@@ -147,16 +190,24 @@ export const FadeOut: Class<ReanimatedFadeOut> = createBuilderWrapper(
 export const FadeOutRight: Class<ReanimatedFadeOutRight> = createBuilderWrapper(
   ReanimatedFadeOutRight,
   function (this: ReanimatedFadeOutRight) {
+    const delay = this.getDelay();
+
     return (values: ExitAnimationsValues) => ({
       animations: {
-        alpha: withTiming(0, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
-        x: withTiming(values.currentOriginX + 25, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
+        alpha: withDelay(
+          delay,
+          withTiming(0, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
+        x: withDelay(
+          delay,
+          withTiming(values.currentOriginX + 25, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
       },
       initialValues: {
         alpha: 1,
@@ -170,16 +221,24 @@ export const FadeOutRight: Class<ReanimatedFadeOutRight> = createBuilderWrapper(
 export const FadeOutLeft: Class<ReanimatedFadeOutLeft> = createBuilderWrapper(
   ReanimatedFadeOutLeft,
   function (this: ReanimatedFadeOutLeft) {
+    const delay = this.getDelay();
+
     return (values: ExitAnimationsValues) => ({
       animations: {
-        alpha: withTiming(0, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
-        x: withTiming(values.currentOriginX - 25, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
+        alpha: withDelay(
+          delay,
+          withTiming(0, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
+        x: withDelay(
+          delay,
+          withTiming(values.currentOriginX - 25, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
       },
       initialValues: {
         alpha: 1,
@@ -193,16 +252,24 @@ export const FadeOutLeft: Class<ReanimatedFadeOutLeft> = createBuilderWrapper(
 export const FadeOutUp: Class<ReanimatedFadeOutUp> = createBuilderWrapper(
   ReanimatedFadeOutUp,
   function (this: ReanimatedFadeOutUp) {
+    const delay = this.getDelay();
+
     return (values: ExitAnimationsValues) => ({
       animations: {
-        alpha: withTiming(0, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
-        y: withTiming(values.currentOriginY - 25, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
+        alpha: withDelay(
+          delay,
+          withTiming(0, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
+        y: withDelay(
+          delay,
+          withTiming(values.currentOriginY - 25, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
       },
       initialValues: {
         alpha: 1,
@@ -216,16 +283,24 @@ export const FadeOutUp: Class<ReanimatedFadeOutUp> = createBuilderWrapper(
 export const FadeOutDown: Class<ReanimatedFadeOutDown> = createBuilderWrapper(
   ReanimatedFadeOutDown,
   function (this: ReanimatedFadeOutDown) {
+    const delay = this.getDelay();
+
     return (values: ExitAnimationsValues) => ({
       animations: {
-        alpha: withTiming(0, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
-        y: withTiming(values.currentOriginY + 25, {
-          duration: this.durationV,
-          easing: this.easingV,
-        }),
+        alpha: withDelay(
+          delay,
+          withTiming(0, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
+        y: withDelay(
+          delay,
+          withTiming(values.currentOriginY + 25, {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
       },
       initialValues: {
         alpha: 1,
