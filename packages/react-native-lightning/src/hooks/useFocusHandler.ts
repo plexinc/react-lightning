@@ -19,35 +19,45 @@ export type FocusHandler<T extends 'focus' | 'blur', TEvent> = (
     | LightningElement,
 ) => void | Promise<void>;
 
+function handleEvent<T extends 'focus' | 'blur'>(
+  element: Parameters<FocusHandler<T, TargetedEvent>>[0],
+  onEvent: ViewProps[`on${Capitalize<T>}`] | undefined,
+): void {
+  if (element instanceof LightningViewElement) {
+    onEvent?.(
+      createNativeSyntheticEvent<TargetedEvent>(
+        { target: element.id },
+        element,
+      ),
+    );
+  }
+}
+
 function useHandler<T extends 'focus' | 'blur'>(
-  _eventType: T,
   onEvent?: ViewProps[`on${Capitalize<T>}`],
 ): FocusHandler<T, TargetedEvent> | undefined {
   const handler = useCallback<FocusHandler<T, TargetedEvent>>(
-    (element) => {
-      if (element instanceof LightningViewElement) {
-        onEvent?.(
-          createNativeSyntheticEvent<TargetedEvent>(
-            { target: element.id },
-            element,
-          ),
-        );
-      }
-    },
+    (element) => handleEvent(element, onEvent),
     [onEvent],
   );
 
   return onEvent ? handler : undefined;
 }
 
+export function createHandler<T extends 'focus' | 'blur'>(
+  onEvent?: ViewProps[`on${Capitalize<T>}`],
+): FocusHandler<T, TargetedEvent> | undefined {
+  return (element) => handleEvent(element, onEvent);
+}
+
 export function useFocusHandler(
   onFocus?: ViewProps['onFocus'],
 ): FocusHandler<'focus', TargetedEvent> | undefined {
-  return useHandler('focus', onFocus);
+  return useHandler(onFocus);
 }
 
 export function useBlurHandler(
   onBlur?: ViewProps['onBlur'],
 ): FocusHandler<'blur', TargetedEvent> | undefined {
-  return useHandler('blur', onBlur);
+  return useHandler(onBlur);
 }

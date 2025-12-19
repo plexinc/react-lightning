@@ -2,24 +2,21 @@ import {
   type LightningElement,
   LightningViewElement,
   type LightningViewElementProps,
-  simpleDiff,
 } from '@plextv/react-lightning';
-import { Component, createRef } from 'react';
+import { createRef, PureComponent } from 'react';
 import type { JSX } from 'react/jsx-runtime';
 import type {
   NativeScrollEvent,
   ScrollView as RNScrollView,
   ScrollViewProps as RNScrollViewProps,
 } from 'react-native';
-import { View } from 'react-native';
 import type { LightningViewElementStyle } from '../../../react-lightning/src/types';
+import { createHandler } from '../hooks/useFocusHandler';
 import { createNativeSyntheticEvent } from '../utils/createNativeSyntheticEvent';
-import { FocusGroup } from './FocusGroup';
-import { defaultViewStyle } from './View';
+import { defaultViewStyle, View } from './View';
 
 type ScrollViewProps = RNScrollViewProps & {
   animated?: boolean;
-  onChildFocused?: (el: LightningElement) => void;
 };
 
 type ScrollViewState = {
@@ -108,7 +105,10 @@ function getScrollInfo(
   };
 }
 
-export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
+export class ScrollView extends PureComponent<
+  ScrollViewProps,
+  ScrollViewState
+> {
   private _containerRef = createRef<LightningViewElement>();
   private _viewportRef = createRef<LightningViewElement>();
 
@@ -189,24 +189,9 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
     return this._containerRef.current;
   }
 
-  public shouldComponentUpdate(
-    nextProps: ScrollViewProps,
-    nextState: ScrollViewState,
-  ): boolean {
-    return (
-      !!simpleDiff(this.props, nextProps) || !!simpleDiff(this.state, nextState)
-    );
-  }
-
   public render(): JSX.Element {
-    const {
-      children,
-      style,
-      contentContainerStyle,
-      horizontal,
-      onChildFocused,
-      ...props
-    } = this.props;
+    const { children, style, contentContainerStyle, horizontal, ...props } =
+      this.props;
     const flexDirection = horizontal ? 'row' : 'column';
 
     return (
@@ -218,8 +203,10 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
           { overflow: 'hidden', flexDirection, flexGrow: 1, flexShrink: 1 },
         ]}
         {...props}
+        onFocus={createHandler(this.props.onFocus)}
+        onBlur={createHandler(this.props.onBlur)}
       >
-        <FocusGroup
+        <View
           ref={this._containerRef}
           transition={
             this.state.animated
@@ -229,7 +216,6 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
                 }
               : undefined
           }
-          onChildFocused={onChildFocused}
           style={[
             defaultViewStyle,
             { display: 'flex', flexDirection },
@@ -238,7 +224,7 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
           ]}
         >
           {children}
-        </FocusGroup>
+        </View>
       </View>
     );
   }
@@ -264,9 +250,7 @@ export class ScrollView extends Component<ScrollViewProps, ScrollViewState> {
   };
 
   private _setViewRef = (ref: View | null) => {
-    this._viewportRef.current = ref
-      ? (ref as unknown as LightningViewElement)
-      : null;
+    this._viewportRef.current = ref ?? null;
   };
 
   private _doScroll(newOffset: NativeScrollEvent) {
