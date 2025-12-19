@@ -8,4 +8,6 @@ export type KeyEvent = {
   remoteKey: Keys | Keys[];
   target: LightningElement;
   repeat: boolean;
+
+  preventDefault(): void;
 };

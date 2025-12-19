@@ -37,6 +37,9 @@ export const KeyPressHandler: FC<{ children: ReactNode }> = ({ children }) => {
                 code: event.code,
                 remoteKey,
                 repeat: event.repeat,
+                preventDefault: () => {
+                  event.preventDefault();
+                },
               },
             );
           }
@@ -47,6 +50,9 @@ export const KeyPressHandler: FC<{ children: ReactNode }> = ({ children }) => {
             code: event.code,
             remoteKey,
             repeat: event.repeat,
+            preventDefault: () => {
+              event.preventDefault();
+            },
           });
 
           if (remoteKey !== Keys.Unknown) {

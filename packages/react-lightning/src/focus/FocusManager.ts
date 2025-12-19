@@ -70,6 +70,8 @@ export class FocusManager<
 > implements EventNotifier<FocusEvents<T>>
 {
   private _disposers: Map<T, (() => void)[]> = new Map();
+  private _childFocusEventHandlers: Map<T, ((child: T) => void) | undefined> =
+    new Map();
   private _focusStack: FocusLayer<T>[] = [];
   private _eventEmitter = new EventEmitter<FocusEvents<T>>();
 
@@ -285,6 +287,17 @@ export class FocusManager<
     });
   }
 
+  public setOnChildFocused(
+    element: T,
+    onChildFocused?: (child: T) => void,
+  ): void {
+    if (onChildFocused) {
+      this._childFocusEventHandlers.set(element, onChildFocused);
+    } else {
+      this._childFocusEventHandlers.delete(element);
+    }
+  }
+
   public pushLayer(): void {
     // Store the current layer before creating new one
     const previousLayer = this.activeLayer;
@@ -485,6 +498,7 @@ export class FocusManager<
       element.on('focusChanged', (_, isFocused) => {
         if (isFocused && !element.focused) {
           this.focus(element);
+          this._tryEmitChildFocusedEvent(node);
         }
       }),
     ]);
@@ -538,6 +552,21 @@ export class FocusManager<
     }
 
     this._recalculateFocusPath();
+    this._tryEmitChildFocusedEvent(childNode);
+  }
+
+  private _tryEmitChildFocusedEvent(node: FocusNode<T>) {
+    if (!node.parent.element) {
+      return;
+    }
+
+    const onChildFocused = this._childFocusEventHandlers.get(
+      node.parent.element,
+    );
+
+    if (onChildFocused) {
+      onChildFocused(node.element);
+    }
   }
 
   private _removeNode(node: FocusNode<T>, isTopMostParentNode: boolean) {
@@ -560,6 +589,10 @@ export class FocusManager<
 
     if (isTopMostParentNode) {
       this._recalculateFocusPath();
+    }
+
+    if (this._childFocusEventHandlers.has(node.element)) {
+      this._childFocusEventHandlers.delete(node.element);
     }
 
     this._removeEventListeners(node);

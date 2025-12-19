@@ -60,6 +60,7 @@ export const FocusGroup: ForwardRefExoticComponent<FocusGroupProps> =
         active: !disable,
         focusRedirect,
         destinations,
+        onChildFocused,
       });
       const [viewElement, setViewElement] = useState<LightningElement | null>(
         null,

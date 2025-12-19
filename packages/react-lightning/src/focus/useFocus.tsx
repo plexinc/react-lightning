@@ -14,10 +14,17 @@ export type FocusOptions = {
   autoFocus?: boolean;
   focusRedirect?: boolean;
   destinations?: (LightningElement | null)[];
+  onChildFocused?: (child: LightningElement) => void;
 };
 
 export function useFocus<T extends LightningElement>(
-  { active, autoFocus, focusRedirect, destinations }: FocusOptions = {
+  {
+    active,
+    autoFocus,
+    focusRedirect,
+    destinations,
+    onChildFocused,
+  }: FocusOptions = {
     active: true,
     autoFocus: false,
     focusRedirect: false,
@@ -83,6 +90,12 @@ export function useFocus<T extends LightningElement>(
       focusManager.setDestinations(ref.current, destinations);
     }
   }, [focusManager, destinations]);
+
+  useEffect(() => {
+    if (ref.current) {
+      focusManager.setOnChildFocused(ref.current, onChildFocused);
+    }
+  }, [focusManager, onChildFocused]);
 
   useEffect(() => {
     if (ref.current) {
