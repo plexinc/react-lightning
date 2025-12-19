@@ -1,5 +1,14 @@
 # @plextv/react-native-lightning
 
+## 0.4.0-alpha.8
+
+### Patch Changes
+
+- b23e312: fix: Remove FocusGroup in ScrollView
+- Updated dependencies [f9a9cab]
+- Updated dependencies [f9a9cab]
+  - @plextv/react-lightning@0.4.0-alpha.7
+
 ## 0.4.0-alpha.7
 
 ### Patch Changes

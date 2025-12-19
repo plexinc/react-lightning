@@ -1,5 +1,16 @@
 # @plextv/react-lightning-plugin-reanimated
 
+## 0.4.0-alpha.6
+
+### Patch Changes
+
+- 0b91ada: feat: Added LinearTransition support
+- Updated dependencies [f9a9cab]
+- Updated dependencies [b23e312]
+- Updated dependencies [f9a9cab]
+  - @plextv/react-lightning@0.4.0-alpha.7
+  - @plextv/react-native-lightning@0.4.0-alpha.8
+
 ## 0.4.0-alpha.5
 
 ### Patch Changes
