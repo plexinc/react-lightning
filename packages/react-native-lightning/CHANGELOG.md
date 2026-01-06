@@ -1,5 +1,14 @@
 # @plextv/react-native-lightning
 
+## 0.4.0-alpha.9
+
+### Patch Changes
+
+- dbaa0ed: fix(polyfill): Set loaded flags for elements on layout event, rather than inViewport
+- dbaa0ed: feat(polyfill): Add requestTVFocus polyfill
+- Updated dependencies [dbaa0ed]
+  - @plextv/react-lightning@0.4.0-alpha.8
+
 ## 0.4.0-alpha.8
 
 ### Patch Changes

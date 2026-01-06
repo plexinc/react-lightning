@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.4.0-alpha.8
+
+### Patch Changes
+
+- dbaa0ed: fix(focus): Fix focusability of items not getting reset when element parent changes
+
 ## 0.4.0-alpha.7
 
 ### Patch Changes
