@@ -111,7 +111,7 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
 
             if (!focusManager) {
               console.warn(
-                '>> FocusManager not found, cannot set destinations',
+                '[react-native-lightning polyfills] FocusManager not found, cannot set destinations',
               );
               return;
             }
@@ -119,8 +119,19 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
 
           focusManager.setDestinations(this, destinations);
         },
-        requestTVFocus(): void {
-          // No-op
+        requestTVFocus(this: LightningNativeViewElement): void {
+          if (!focusManager) {
+            focusManager = tryFindFocusManager(this.node.__reactFiber);
+
+            if (!focusManager) {
+              console.warn(
+                '[react-native-lightning polyfills] FocusManager not found, failed to request focus',
+              );
+              return;
+            }
+          }
+
+          focusManager.focus(this);
         },
       } satisfies Partial<LightningNativeViewElement>;
 
@@ -152,7 +163,7 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
 
       // Initialize the load promise to resolve when the instance is available
       nativeInstance.__loadPromise = new Promise<void>((resolve) => {
-        nativeInstance.once('inViewport', () => {
+        nativeInstance.once('layout', () => {
           nativeInstance.__loaded = true;
           resolve();
         });

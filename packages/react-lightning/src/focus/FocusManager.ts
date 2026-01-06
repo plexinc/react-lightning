@@ -205,9 +205,16 @@ export class FocusManager<
 
         if (index !== -1) {
           childNode.parent.children.splice(index, 1);
+          this._checkFocusableChildren(childNode.parent);
         }
 
         childNode.parent = parentNode;
+
+        // If we weren't focusable before, assume we can be now and then check again
+        if (!childNode.element.focusable) {
+          childNode.element.focusable = true;
+          this._checkFocusableChildren(parentNode);
+        }
       }
     } else {
       // If the child node doesn't exist, we need to create it
@@ -521,6 +528,10 @@ export class FocusManager<
     let currParent = childNode.parent;
     let currChild: FocusNode<T> | RootNode<T> = childNode;
     const elements = this.activeLayer.elements;
+
+    if (currChild.children.length && !currChild.focusedElement) {
+      this._findNextBestFocus(currChild);
+    }
 
     while (currChild && !isRootNode(currChild) && currParent) {
       if (currChild.focusRedirect && currChild.destinations) {
