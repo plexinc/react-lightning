@@ -3,7 +3,6 @@ import { FocusGroup } from '../../focus/FocusGroup';
 import { FocusKeyManager } from '../../focus/FocusKeyManager';
 import { FocusManager } from '../../focus/FocusManager';
 import { FocusManagerContext } from '../../focus/FocusManagerContext';
-import { KeyEventProvider } from '../../input/KeyEventProvider';
 import { KeyMapContext } from '../../input/KeyMapContext';
 import { KeyPressHandler } from '../../input/KeyPressHandler';
 import type { LightningElement } from '../../types';
@@ -28,20 +27,18 @@ export const CanvasRoot: FC<Props> = ({ width, height, children, keyMap }) => {
           focusKeyManager: focusKeyManager.current,
         }}
       >
-        <KeyEventProvider>
-          <KeyPressHandler>
-            <FocusGroup
-              ref={ref}
-              style={{
-                w: width ?? 1920,
-                h: height ?? 1080,
-                clipping: true,
-              }}
-            >
-              {children}
-            </FocusGroup>
-          </KeyPressHandler>
-        </KeyEventProvider>
+        <KeyPressHandler>
+          <FocusGroup
+            ref={ref}
+            style={{
+              w: width ?? 1920,
+              h: height ?? 1080,
+              clipping: true,
+            }}
+          >
+            {children}
+          </FocusGroup>
+        </KeyPressHandler>
       </FocusManagerContext.Provider>
     </KeyMapContext.Provider>
   );

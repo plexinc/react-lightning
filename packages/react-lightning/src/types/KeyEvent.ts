@@ -8,6 +8,7 @@ export type KeyEvent = {
   remoteKey: Keys | Keys[];
   target: LightningElement;
   repeat: boolean;
+  stopFocusHandling: boolean;
 
   preventDefault(): void;
 };

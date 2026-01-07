@@ -1,5 +1,5 @@
 import { Keys } from '../input/Keys';
-import type { LightningElement } from '../types';
+import type { KeyEvent, LightningElement } from '../types';
 import { findClosestElement } from '../utils/findClosestElement';
 import { Direction } from './Direction';
 import type { FocusManager } from './FocusManager';
@@ -11,7 +11,12 @@ export class FocusKeyManager<T extends LightningElement> {
     this._focusManager = focusManager;
   }
 
-  public handleKeyDown = (element: T, key: Keys | Keys[]): boolean => {
+  public handleKeyDown = (element: T, event: KeyEvent): boolean => {
+    if (event.stopFocusHandling) {
+      return true;
+    }
+
+    const key = event.remoteKey;
     const direction = Array.isArray(key)
       ? key.map((k) => this._getKeyDirection(k)).find((dir) => dir != null)
       : this._getKeyDirection(key);
@@ -20,7 +25,7 @@ export class FocusKeyManager<T extends LightningElement> {
       return true;
     }
 
-    return this._tryFocusNext(element, direction);
+    return this._tryFocusNext(element, event, direction);
   };
 
   private _getKeyDirection = (key: Keys): Direction | null => {
@@ -47,7 +52,11 @@ export class FocusKeyManager<T extends LightningElement> {
   // Returns false if focus works, to stop the propagation of the key event.
   // If there's nothing to navigate to, return true and let the event bubble
   // up to be handled by the next focus group.
-  private _tryFocusNext = (element: T, direction: Direction): boolean => {
+  private _tryFocusNext = (
+    element: T,
+    event: KeyEvent,
+    direction: Direction,
+  ): boolean => {
     const focusNode = this._focusManager.getFocusNode(element);
 
     if (!focusNode) {
@@ -78,8 +87,9 @@ export class FocusKeyManager<T extends LightningElement> {
       (direction === Direction.Up && traps.up) ||
       (direction === Direction.Down && traps.down)
     ) {
-      // Don't bubble up
-      return false;
+      // Don't allow focus handling anymore, but key event
+      // should still propagate.
+      event.stopFocusHandling = true;
     }
 
     return true;

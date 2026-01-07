@@ -84,10 +84,7 @@ export const FocusGroup: ForwardRefExoticComponent<FocusGroupProps> =
             return onKeyDown?.(event);
           }
 
-          const result = focusKeyManager.handleKeyDown(
-            viewRef.current,
-            event.remoteKey,
-          );
+          const result = focusKeyManager.handleKeyDown(viewRef.current, event);
 
           return result === false ? false : onKeyDown?.(event);
         },

@@ -1,4 +1,4 @@
-import { FocusGroup, type LightningElement } from '@plextv/react-lightning';
+import { FocusGroup } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
 import type { Meta } from '@storybook/react-vite';
 import {
@@ -9,23 +9,6 @@ import {
 export default {
   title: 'react-lightning/Examples/Focus/TrapFocus',
 } as Meta;
-
-const trapUpStyle: LightningElement['style'] = {
-  borderColor: 0xff0000ff,
-  borderTop: 5,
-};
-const trapRightStyle: LightningElement['style'] = {
-  borderColor: 0xff0000ff,
-  borderRight: 5,
-};
-const trapDownStyle: LightningElement['style'] = {
-  borderColor: 0xff0000ff,
-  borderBottom: 5,
-};
-const trapLeftStyle: LightningElement['style'] = {
-  borderColor: 0xff0000ff,
-  borderLeft: 5,
-};
 
 const TrappableImage = ({
   trapFocusUp,
@@ -61,7 +44,19 @@ const TrappableImage = ({
       trapFocusDown={trapFocusDown}
       trapFocusLeft={trapFocusLeft}
     >
-      <FocusableImage {...props} style={{ w: width, h: height, ...style }} />
+      <FocusableImage
+        {...props}
+        style={{
+          w: width,
+          h: height,
+          borderColor: 0xff0000ff,
+          borderRight: trapFocusRight ? 5 : 0,
+          borderBottom: trapFocusDown ? 5 : 0,
+          borderLeft: trapFocusLeft ? 5 : 0,
+          borderTop: trapFocusUp ? 5 : 0,
+          ...style,
+        }}
+      />
     </FocusGroup>
   );
 };
@@ -78,66 +73,20 @@ export const TrapFocus = () => {
         y={10}
         trapFocusRight
         trapFocusDown
-        style={{
-          ...trapRightStyle,
-          ...trapDownStyle,
-        }}
       />
-      <TrappableImage
-        width={75}
-        height={75}
-        x={265}
-        y={10}
-        trapFocusDown
-        style={trapDownStyle}
-      />
+      <TrappableImage width={75} height={75} x={265} y={10} trapFocusDown />
       <TrappableImage width={75} height={75} x={350} y={10} />
 
       <TrappableImage width={75} height={75} x={10} y={95} />
       <TrappableImage width={75} height={75} x={95} y={95} />
-      <TrappableImage
-        width={75}
-        height={75}
-        x={180}
-        y={95}
-        trapFocusLeft
-        style={trapLeftStyle}
-      />
+      <TrappableImage width={75} height={75} x={180} y={95} trapFocusLeft />
       <TrappableImage width={75} height={75} x={265} y={95} autoFocus />
-      <TrappableImage
-        width={75}
-        height={75}
-        x={350}
-        y={95}
-        trapFocusLeft
-        style={trapLeftStyle}
-      />
+      <TrappableImage width={75} height={75} x={350} y={95} trapFocusLeft />
 
-      <TrappableImage
-        width={75}
-        height={75}
-        x={10}
-        y={180}
-        trapFocusUp
-        style={trapUpStyle}
-      />
-      <TrappableImage
-        width={75}
-        height={75}
-        x={95}
-        y={180}
-        trapFocusRight
-        style={trapRightStyle}
-      />
+      <TrappableImage width={75} height={75} x={10} y={180} trapFocusUp />
+      <TrappableImage width={75} height={75} x={95} y={180} trapFocusRight />
       <TrappableImage width={75} height={75} x={180} y={180} />
-      <TrappableImage
-        width={75}
-        height={75}
-        x={265}
-        y={180}
-        trapFocusUp
-        style={trapUpStyle}
-      />
+      <TrappableImage width={75} height={75} x={265} y={180} trapFocusUp />
       <TrappableImage width={75} height={75} x={350} y={180} />
 
       <TrappableImage width={75} height={75} x={10} y={265} />
@@ -146,45 +95,19 @@ export const TrapFocus = () => {
         height={75}
         x={95}
         y={265}
-        style={{
-          ...trapUpStyle,
-          ...trapRightStyle,
-          ...trapDownStyle,
-        }}
         trapFocusUp
         trapFocusRight
         trapFocusDown
       />
       <TrappableImage width={75} height={75} x={180} y={265} />
-      <TrappableImage
-        width={75}
-        height={75}
-        x={265}
-        y={265}
-        trapFocusRight
-        style={trapRightStyle}
-      />
+      <TrappableImage width={75} height={75} x={265} y={265} trapFocusRight />
       <TrappableImage width={75} height={75} x={350} y={265} />
 
       <TrappableImage width={75} height={75} x={10} y={350} />
       <TrappableImage width={75} height={75} x={95} y={350} />
-      <TrappableImage
-        width={75}
-        height={75}
-        x={180}
-        y={350}
-        trapFocusRight
-        style={trapRightStyle}
-      />
+      <TrappableImage width={75} height={75} x={180} y={350} trapFocusRight />
       <TrappableImage width={75} height={75} x={265} y={350} />
-      <TrappableImage
-        width={75}
-        height={75}
-        x={350}
-        y={350}
-        trapFocusUp
-        style={trapUpStyle}
-      />
+      <TrappableImage width={75} height={75} x={350} y={350} trapFocusUp />
     </>
   );
 };
@@ -203,7 +126,12 @@ export const TrapFocusGroups = () => {
       <Row
         focusable
         trapFocusDown
-        style={{ gap: 10, paddingBottom: 10, ...trapDownStyle }}
+        style={{
+          gap: 10,
+          paddingBottom: 10,
+          borderColor: 0xff0000ff,
+          borderBottom: 5,
+        }}
       >
         <FocusableImage style={{ w: 75, h: 75 }} />
         <FocusableImage style={{ w: 75, h: 75 }} />

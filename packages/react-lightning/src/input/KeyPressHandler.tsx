@@ -1,6 +1,7 @@
 import type { FC, ReactNode } from 'react';
 import { useCallback, useContext, useEffect, useRef } from 'react';
-import { KeyEventContext } from './KeyEventProvider';
+import { useFocusManager } from '../focus/useFocusManager';
+import { bubbleEvent } from './bubbleEvent';
 import type { KeyMap } from './KeyMapContext';
 import { KeyMapContext } from './KeyMapContext';
 import { Keys } from './Keys';
@@ -9,13 +10,19 @@ const LONG_PRESS_THRESHOLD = 500;
 
 export const KeyPressHandler: FC<{ children: ReactNode }> = ({ children }) => {
   const keyMap = useContext(KeyMapContext);
-  const keyEvents = useContext(KeyEventContext);
+  const focusManager = useFocusManager();
   const keyDownTime = useRef<number>(0);
 
   const createKeyHandler = useCallback(
     (handler: 'onKeyDown' | 'onKeyUp', keyMap: KeyMap) => {
       return (event: KeyboardEvent) => {
         if (event.repeat) {
+          return;
+        }
+
+        const element = focusManager.focusPath.at(-1);
+
+        if (!element) {
           return;
         }
 
@@ -29,7 +36,7 @@ export const KeyPressHandler: FC<{ children: ReactNode }> = ({ children }) => {
 
             keyDownTime.current = 0;
 
-            keyEvents.bubbleEvent(
+            bubbleEvent(
               duration > LONG_PRESS_THRESHOLD ? 'onLongPress' : 'onKeyPress',
               {
                 keyCode: event.keyCode,
@@ -37,22 +44,24 @@ export const KeyPressHandler: FC<{ children: ReactNode }> = ({ children }) => {
                 code: event.code,
                 remoteKey,
                 repeat: event.repeat,
-                preventDefault: () => {
-                  event.preventDefault();
-                },
+                target: element,
+                currentTarget: element,
+                stopFocusHandling: false,
+                preventDefault: event.preventDefault,
               },
             );
           }
 
-          keyEvents.bubbleEvent(handler, {
+          bubbleEvent(handler, {
             keyCode: event.keyCode,
             key: event.key,
             code: event.code,
             remoteKey,
             repeat: event.repeat,
-            preventDefault: () => {
-              event.preventDefault();
-            },
+            target: element,
+            currentTarget: element,
+            stopFocusHandling: false,
+            preventDefault: event.preventDefault,
           });
 
           if (remoteKey !== Keys.Unknown) {
@@ -62,7 +71,7 @@ export const KeyPressHandler: FC<{ children: ReactNode }> = ({ children }) => {
         }
       };
     },
-    [keyEvents],
+    [focusManager],
   );
 
   useEffect(() => {
