@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.4.0-alpha.9
+
+### Patch Changes
+
+- 264488a: fix(focus): Allow key propagation even when focus handling was cancelled
+
 ## 0.4.0-alpha.8
 
 ### Patch Changes
