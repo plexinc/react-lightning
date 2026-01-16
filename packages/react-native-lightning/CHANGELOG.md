@@ -1,5 +1,13 @@
 # @plextv/react-native-lightning
 
+## 0.4.0-alpha.10
+
+### Patch Changes
+
+- 8d4ef27: fix(polyfill): Add missing dom functions needed by flashlist v2
+- Updated dependencies [8d4ef27]
+  - @plextv/react-lightning-plugin-flexbox@0.4.0-alpha.3
+
 ## 0.4.0-alpha.9
 
 ### Patch Changes
