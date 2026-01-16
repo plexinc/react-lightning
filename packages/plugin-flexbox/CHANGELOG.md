@@ -1,5 +1,11 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.4.0-alpha.3
+
+### Patch Changes
+
+- 8d4ef27: fix: Minor optimization
+
 ## 0.4.0-alpha.2
 
 ### Patch Changes

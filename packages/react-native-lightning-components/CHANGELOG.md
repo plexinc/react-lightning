@@ -1,5 +1,15 @@
 # @plextv/react-native-lightning-components
 
+## 0.4.0-alpha.2
+
+### Patch Changes
+
+- 8d4ef27: feat(FlashList): Update FlashList to v2.2.0
+- Updated dependencies [8d4ef27]
+- Updated dependencies [8d4ef27]
+  - @plextv/react-lightning-plugin-flexbox@0.4.0-alpha.3
+  - @plextv/react-native-lightning@0.4.0-alpha.10
+
 ## 0.4.0-alpha.1
 
 ### Patch Changes
