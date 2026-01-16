@@ -1,33 +1,32 @@
 import type { LightningElement } from '@plextv/react-lightning';
 import { ScrollView } from '@plextv/react-native-lightning';
 import {
-  type FlashListProps,
+  type FlashListRef,
   FlashList as ShopifyFlashList,
+  type FlashListProps as ShopifyFlashListProps,
 } from '@shopify/flash-list';
-import {
-  forwardRef,
-  type LegacyRef,
-  type ReactElement,
-  type Ref,
-  useMemo,
-} from 'react';
+import { forwardRef, type ReactElement, type Ref, useMemo } from 'react';
 import CellContainer from './CellContainer';
 
-type FlashList<T> = ShopifyFlashList<T>;
+type FlashList<T> = FlashListRef<T>;
+type FlashListProps<T> = ShopifyFlashListProps<T> & {
+  estimatedItemSize?: number;
+  estimatedListSize?: { width: number; height: number };
+};
 
 function FlashListImpl<T>(
   { CellRendererComponent, renderScrollComponent, ...props }: FlashListProps<T>,
-  ref: Ref<T>,
+  ref: Ref<FlashListRef<T>>,
 ) {
   const CellComponent = useMemo(
     () =>
-      forwardRef((componentProps, ref) => {
+      forwardRef((componentProps, cellRef) => {
         const Component = CellRendererComponent ?? CellContainer;
 
         return (
           <Component
             {...componentProps}
-            ref={ref as LegacyRef<LightningElement>}
+            ref={cellRef as Ref<LightningElement>}
             estimatedSize={props.estimatedItemSize}
           />
         );
@@ -38,9 +37,13 @@ function FlashListImpl<T>(
 
   return (
     <ShopifyFlashList
+      ref={ref}
       CellRendererComponent={CellComponent}
-      renderScrollComponent={renderScrollComponent ?? ScrollView}
-      ref={ref as LegacyRef<ShopifyFlashList<T>>}
+      renderScrollComponent={
+        // If a renderScrollComponent was not provided, make sure we use our
+        // own ScrollView since the RN one doesn't work in Lightning
+        renderScrollComponent ?? ((props) => <ScrollView {...props} />)
+      }
       {...props}
     />
   );

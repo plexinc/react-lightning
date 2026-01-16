@@ -1,6 +1,5 @@
 import type {
   FocusableProps,
-  LightningElement,
   LightningElementEventProps,
   LightningViewElement,
   LightningViewElementProps,
@@ -10,6 +9,7 @@ import type { ForwardRefExoticComponent, RefAttributes } from 'react';
 import { forwardRef } from 'react';
 import type { View as RNView, ViewProps as RNViewProps } from 'react-native';
 import { useLayoutHandler } from '../hooks/useLayoutHandler';
+import type { NativeLightningViewElement } from '../types/NativeLightningViewElement';
 
 type CombinedProps = RNViewProps &
   LightningViewElementProps &
@@ -32,7 +32,7 @@ export const defaultViewStyle = {
   zIndex: 0,
 };
 
-export type View = RNView & LightningElement;
+export type View = RNView & NativeLightningViewElement;
 
 export const View: ForwardRefExoticComponent<ViewProps> = forwardRef<
   LightningViewElement,

@@ -27,11 +27,6 @@ const CellContainer: ForwardRefExoticComponent<CellContainerProps> = forwardRef<
     },
     [onLayout],
   );
-  if (!estimatedSize && import.meta.env.DEV) {
-    console.error(
-      'FlashList: estimatedItemSize is required when using CellRendererComponent. Defaulting to 2.',
-    );
-  }
 
   // We need to not set overflow: 'hidden' on the cell view, otherwise the
   // FlashList will not render the items correctly.
@@ -47,8 +42,8 @@ const CellContainer: ForwardRefExoticComponent<CellContainerProps> = forwardRef<
           initialDimensions: {
             x: lngStyle?.x ?? 0,
             y: lngStyle?.y ?? 0,
-            w: lngStyle?.w ?? estimatedSize ?? 2,
-            h: lngStyle?.h ?? estimatedSize ?? 2,
+            w: lngStyle?.w ?? estimatedSize ?? 400,
+            h: lngStyle?.h ?? estimatedSize ?? 400,
           },
         },
       ]}

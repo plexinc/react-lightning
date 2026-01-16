@@ -1,6 +1,7 @@
 import type { LightningElementStyle, Rect } from '@plextv/react-lightning';
 import { EventEmitter } from 'tseep';
-import { type Config, loadYoga, type Node, type Yoga } from 'yoga-layout/load';
+import { type Config, loadYoga, type Yoga } from 'yoga-layout/load';
+import type { ManagerNode } from './types/ManagerNode';
 import type { YogaOptions } from './types/YogaOptions';
 import applyReactPropsToYoga, {
   applyFlexPropToYoga,
@@ -8,13 +9,6 @@ import applyReactPropsToYoga, {
 import { SimpleDataView } from './util/SimpleDataView';
 
 export type BatchedUpdate = Record<number, Partial<Rect>>;
-
-type ManagerNode = {
-  id: number;
-  parent?: ManagerNode;
-  node: Node;
-  children: ManagerNode[];
-};
 
 export type YogaManagerEvents = {
   // Updates are sent in an array. This is because when working with web
@@ -234,7 +228,7 @@ export class YogaManager {
       return;
     }
 
-    applyReactPropsToYoga(this._yoga, this._yogaOptions, yogaNode.node, style);
+    applyReactPropsToYoga(this._yoga, this._yogaOptions, yogaNode, style);
 
     if (style.transform) {
       const { x, y, transform } = style;
@@ -337,6 +331,7 @@ export class YogaManager {
       id: elementId,
       node,
       children: [],
+      props: {},
     };
 
     this._elementMap.set(elementId, yogaNode);

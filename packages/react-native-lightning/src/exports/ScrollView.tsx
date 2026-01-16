@@ -12,12 +12,14 @@ import type {
 } from 'react-native';
 import type { LightningViewElementStyle } from '../../../react-lightning/src/types';
 import { createHandler } from '../hooks/useFocusHandler';
+import type { NativeLightningViewElement } from '../types/NativeLightningViewElement';
 import { createNativeSyntheticEvent } from '../utils/createNativeSyntheticEvent';
-import { defaultViewStyle, View } from './View';
+import { defaultViewStyle, View, type ViewProps } from './View';
 
-type ScrollViewProps = RNScrollViewProps & {
-  animated?: boolean;
-};
+export type ScrollViewProps = Omit<RNScrollViewProps, 'style'> &
+  Pick<ViewProps, 'style'> & {
+    animated?: boolean;
+  };
 
 type ScrollViewState = {
   offset: { x: number; y: number };
@@ -110,7 +112,7 @@ export class ScrollView extends PureComponent<
   ScrollViewState
 > {
   private _containerRef = createRef<LightningViewElement>();
-  private _viewportRef = createRef<LightningViewElement>();
+  private _viewportRef = createRef<NativeLightningViewElement>();
 
   public static displayName = 'LightningScrollView';
 
@@ -264,6 +266,11 @@ export class ScrollView extends PureComponent<
       const clampedY = newOffset.layoutMeasurement.height ? y : 0;
 
       this.setState({ offset: { x: clampedX, y: clampedY } });
+
+      if (this._viewportRef.current) {
+        this._viewportRef.current.scrollLeft = -clampedX;
+        this._viewportRef.current.scrollTop = -clampedY;
+      }
 
       this.props.onScroll?.(
         createNativeSyntheticEvent({

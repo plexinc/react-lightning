@@ -11,6 +11,7 @@ import type {
 import type { Yoga } from 'yoga-layout/load';
 import type { YogaOptions } from '../types';
 import type { AutoDimensionValue, Transform } from '../types/FlexStyles';
+import type { ManagerNode } from '../types/ManagerNode';
 import type { FlexProps } from './isFlexStyleProp';
 import { isFlexStyleProp } from './isFlexStyleProp';
 import { parseFlexValue } from './parseFlexValue';
@@ -159,15 +160,17 @@ function applyFlex(
 export default function applyReactPropsToYoga(
   yoga: Yoga,
   config: YogaOptions,
-  node: Node,
+  managerNode: ManagerNode,
   style: Partial<LightningViewElementStyle>,
 ): void {
   for (const [prop, value] of Object.entries(style)) {
-    if (isFlexStyleProp(prop)) {
+    if (isFlexStyleProp(prop) && managerNode.props[prop] !== value) {
+      managerNode.props[prop] = value;
+
       applyFlexPropToYoga(
         yoga,
         config,
-        node,
+        managerNode.node,
         prop,
         value as LightningViewElementStyle[typeof prop],
       );

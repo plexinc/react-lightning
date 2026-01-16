@@ -17,7 +17,7 @@ export { FocusGroup, type FocusGroupProps } from './exports/FocusGroup';
 export { Image, type ImageProps } from './exports/Image';
 export * as Platform from './exports/Platform';
 export { Pressable, type PressableProps } from './exports/Pressable';
-export { ScrollView } from './exports/ScrollView';
+export { ScrollView, type ScrollViewProps } from './exports/ScrollView';
 export * as StyleSheet from './exports/StyleSheet';
 export { Text, type TextProps } from './exports/Text';
 export {

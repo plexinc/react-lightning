@@ -366,7 +366,12 @@ describe('YogaManager', () => {
       expect(applyReactPropsToYoga).toHaveBeenCalledWith(
         mockYoga,
         mockYogaOptions,
-        mockNode,
+        {
+          children: [],
+          id: elementId,
+          node: mockNode,
+          props: {},
+        },
         style,
       );
     });

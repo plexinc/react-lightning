@@ -42,7 +42,7 @@
     "@plextv/vite-plugin-react-native-lightning": "workspace:*",
     "@plextv/vite-plugin-react-reanimated-lightning": "workspace:*",
     "@repo/configs": "workspace:*",
-    "@shopify/flash-list": "1.8.3",
+    "@shopify/flash-list": "2.2.0",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "@vitejs/plugin-legacy": "7.2.1",

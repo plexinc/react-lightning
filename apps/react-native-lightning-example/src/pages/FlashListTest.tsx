@@ -38,7 +38,6 @@ export const FlashListTest: FC = () => {
               {item}
             </ScrollItem>
           )}
-          estimatedItemSize={75}
           drawDistance={75}
           snapToAlignment="center"
         />
@@ -66,7 +65,6 @@ export const FlashListTest: FC = () => {
               {item}
             </ScrollItem>
           )}
-          estimatedItemSize={75}
           drawDistance={75}
           snapToAlignment="center"
         />

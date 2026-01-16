@@ -157,7 +157,7 @@ export function createHostConfig(
     },
 
     resetAfterCommit() {
-      // Noop
+      return {};
     },
 
     resetTextContent(instance) {

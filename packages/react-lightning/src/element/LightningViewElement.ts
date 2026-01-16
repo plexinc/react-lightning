@@ -453,6 +453,8 @@ export class LightningViewElement<
     // TODO: Include padding + border in size
     w: number;
     h: number;
+    width: number;
+    height: number;
   } {
     const { x, y } = this.getRelativePosition(ancestor);
 
@@ -466,6 +468,8 @@ export class LightningViewElement<
       // TODO: Include padding + border in size
       w: this.node.w,
       h: this.node.h,
+      width: this.node.w,
+      height: this.node.h,
     };
   }
 

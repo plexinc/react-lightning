@@ -142,9 +142,11 @@ export class LightningManager {
       if (el.parent?.style.display !== 'flex') {
         skipX =
           el.style.x !== undefined &&
+          el.rawProps.style?.x !== undefined &&
           el.style.transform?.translateX === undefined;
         skipY =
           el.style.y !== undefined &&
+          el.rawProps.style?.y !== undefined &&
           el.style.transform?.translateY === undefined;
       }
 

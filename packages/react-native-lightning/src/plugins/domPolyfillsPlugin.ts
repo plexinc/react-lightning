@@ -1,8 +1,10 @@
 import {
   type LightningElementEvents,
+  type LightningElementProps,
   LightningViewElement,
   type Plugin,
 } from '@plextv/react-lightning';
+import type { NativeLightningViewElement } from '../types/NativeLightningViewElement';
 
 const ELEMENT_NODE = 1;
 
@@ -29,45 +31,97 @@ export const domPolyfillsPlugin = (): Plugin => {
     ): void {
       this.off(type, listener);
     },
+
+    getAttribute<K extends keyof LightningElementProps>(
+      this: LightningViewElement,
+      name: K,
+    ): LightningElementProps[K] {
+      return this.props[name];
+    },
+
+    __scrollLeft: 0,
+    __scrollTop: 0,
   };
 
   const domAccessors = {
-    clientWidth(this: LightningViewElement) {
-      return this.node.w;
+    clientWidth: {
+      get(this: LightningViewElement) {
+        return this.node.w;
+      },
     },
 
-    clientHeight(this: LightningViewElement) {
-      return this.node.h;
+    clientHeight: {
+      get(this: LightningViewElement) {
+        return this.node.h;
+      },
     },
 
-    offsetWidth(this: LightningViewElement) {
-      return this.node.w;
+    offsetWidth: {
+      get(this: LightningViewElement) {
+        return this.node.w;
+      },
     },
 
-    offsetHeight(this: LightningViewElement) {
-      return this.node.h;
+    offsetHeight: {
+      get(this: LightningViewElement) {
+        return this.node.h;
+      },
     },
 
-    offsetLeft(this: LightningViewElement) {
-      return this.node.x;
+    offsetLeft: {
+      get(this: LightningViewElement) {
+        return this.node.x;
+      },
     },
 
-    offsetTop(this: LightningViewElement) {
-      return this.node.y;
+    offsetTop: {
+      get(this: LightningViewElement) {
+        return this.node.y;
+      },
     },
 
-    isConnected(this: LightningViewElement) {
-      return !!this.parent;
+    isConnected: {
+      get(this: LightningViewElement) {
+        return !!this.parent;
+      },
     },
 
-    parentNode(this: LightningViewElement) {
-      return this.parent;
+    parentNode: {
+      get(this: LightningViewElement) {
+        return this.parent;
+      },
     },
 
-    nodeType(this: LightningViewElement) {
-      return ELEMENT_NODE;
+    parentElement: {
+      get(this: LightningViewElement) {
+        return this.parent;
+      },
     },
-  };
+
+    nodeType: {
+      get(this: LightningViewElement) {
+        return ELEMENT_NODE;
+      },
+    },
+
+    scrollLeft: {
+      get(this: NativeLightningViewElement) {
+        return this.__scrollLeft;
+      },
+      set(this: NativeLightningViewElement, value: number) {
+        this.__scrollLeft = value;
+      },
+    },
+
+    scrollTop: {
+      get(this: NativeLightningViewElement) {
+        return this.__scrollTop;
+      },
+      set(this: NativeLightningViewElement, value: number) {
+        this.__scrollTop = value;
+      },
+    },
+  } satisfies Record<string, PropertyDescriptor>;
 
   return {
     init() {
@@ -82,7 +136,7 @@ export const domPolyfillsPlugin = (): Plugin => {
             value,
             configurable: false,
             enumerable: false,
-            writable: false,
+            writable: typeof value !== 'function',
           };
 
           return acc;
@@ -93,9 +147,9 @@ export const domPolyfillsPlugin = (): Plugin => {
         LightningViewElement.prototype,
         Object.entries(domAccessors).reduce((acc, [key, value]) => {
           acc[key] = {
-            get: value,
             configurable: false,
             enumerable: false,
+            ...value,
           };
 
           return acc;

@@ -70,7 +70,7 @@
     "@plextv/react-lightning-plugin-css-transform": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
     "@plextv/react-native-lightning": "workspace:^",
-    "@shopify/flash-list": "^1.8.3",
+    "@shopify/flash-list": "^2.2.0",
     "react": "^19.2.0",
     "react-native": "^0.82.0"
   },

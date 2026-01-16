@@ -47,7 +47,6 @@ export const FlashListExample = () => {
               {item}
             </ScrollItem>
           )}
-          estimatedItemSize={50}
           drawDistance={50}
         />
       </View>
@@ -76,7 +75,6 @@ export const FlashListExample = () => {
               {item}
             </ScrollItem>
           )}
-          estimatedItemSize={50}
           drawDistance={50}
         />
       </View>
