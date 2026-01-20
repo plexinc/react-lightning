@@ -99,6 +99,7 @@ export class LightningViewElement<
   private _focusable = false;
   private _visible = true;
   private _hasStagedUpdates = false;
+  private _hasLayout = false;
   private _eventEmitter = new EventEmitter<LightningElementEvents>();
   private _deferTarget: LightningElement | null = null;
   private _deferNodeRemovalHandler: ((destroy: () => void) => void) | null =
@@ -236,6 +237,10 @@ export class LightningViewElement<
 
   public get isRoot(): boolean {
     return this.node.id === 1;
+  }
+
+  public get hasLayout(): boolean {
+    return this._hasLayout;
   }
 
   public constructor(
@@ -714,6 +719,7 @@ export class LightningViewElement<
   };
 
   private _onLayout = (dimensions: Rect) => {
+    this._hasLayout = true;
     this.props.onLayout?.(dimensions);
   };
 
@@ -823,6 +829,11 @@ export class LightningViewElement<
     if (style !== undefined && style !== null) {
       // Optimize by using for...in loop instead of Object.entries()
       for (const key in style) {
+        // Lightning doesn't allow setting w/h on text nodes
+        if (this.isTextElement && (key === 'w' || key === 'h')) {
+          continue;
+        }
+
         const value = style[key as keyof TStyleProps];
 
         if (value == null) {

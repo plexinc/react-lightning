@@ -159,16 +159,17 @@ export class LightningManager {
       }
 
       // If width is 0, we should not set it on the node, as it will cause
-      // layout issues.
-      if (width !== 0) {
+      // layout issues. We also ignore setting width/height for text elements,
+      // as their size is handled by lightning.
+      if (width !== 0 && !el.isTextElement) {
         dirty = el.setNodeProp('w', width) || dirty;
       }
 
-      if (height !== 0) {
+      if (height !== 0 && !el.isTextElement) {
         dirty = el.setNodeProp('h', height) || dirty;
       }
 
-      if (dirty) {
+      if (dirty || !el.hasLayout) {
         el.emitLayoutEvent();
       }
     }

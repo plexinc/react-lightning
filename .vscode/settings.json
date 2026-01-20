@@ -10,6 +10,7 @@
     "threadx"
   ],
   "biome.enabled": true,
+  "biome.lsp.bin": "./node_modules/.bin/biome",
   "json.schemas": [
     {
       "fileMatch": [

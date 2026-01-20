@@ -2,7 +2,7 @@ import { defineConfig, type UserConfig } from 'tsdown';
 
 const config: UserConfig = defineConfig({
   entry: ['src/index.ts'],
-  format: ['cjs', 'esm'],
+  format: ['esm', 'cjs'],
   target: 'chrome56',
   platform: 'browser',
   sourcemap: true,

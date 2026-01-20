@@ -15,7 +15,7 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@lightningjs/renderer": "3.0.0-beta16",
+    "@lightningjs/renderer": "3.0.0-beta20",
     "@plextv/react-lightning": "0.3.13",
     "react": "19.2.0",
     "react-dom": "19.2.0",

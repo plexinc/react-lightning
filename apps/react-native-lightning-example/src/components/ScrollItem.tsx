@@ -32,8 +32,8 @@ const ScrollItem = focusable<ScrollItemProps, View>(
     const width = Math.round(horizontal ? 75 * multiplier : 200);
     const height = Math.round(horizontal ? 200 : 75 * multiplier);
     const imageSrc = useMemo(
-      () => `https://picsum.photos/${width}/${height}?seed=${Math.random()}`,
-      [width, height],
+      () => `https://picsum.photos/${width}/${height}?seed=${index}`,
+      [index, width, height],
     );
 
     return (

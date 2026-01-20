@@ -1,7 +1,8 @@
-import { defineConfig } from 'tsdown';
-import baseConfig from './tsdown.config';
+import { defineConfig, type UserConfig } from 'tsdown';
+// @ts-expect-error: Needed for unrun to resolve this module correctly
+import baseConfig from './tsdown.config.ts';
 
-export default defineConfig({
+const config: UserConfig = defineConfig({
   ...baseConfig,
   entry: ['src/index.ts', 'src/exports/**/*.{tsx,ts}'],
   exports: {
@@ -23,3 +24,5 @@ export default defineConfig({
     },
   },
 });
+
+export default config;

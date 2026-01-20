@@ -15,8 +15,6 @@
     "vite-plugin"
   ],
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js",
@@ -38,9 +36,9 @@
     "dist"
   ],
   "dependencies": {
-    "@lightningjs/msdf-generator": "1.1.1",
+    "@lightningjs/msdf-generator": "1.2.0",
     "crc-32": "1.2.2",
-    "glob": "11.0.3"
+    "glob": "13.0.0"
   },
   "devDependencies": {
     "@repo/configs": "workspace:*"

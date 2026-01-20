@@ -28,24 +28,24 @@
     "access": "public",
     "exports": {
       ".": {
-        "import": "./dist/index.js",
-        "require": "./dist/index.cjs"
+        "require": "./dist/index.cjs",
+        "import": "./dist/index.js"
       },
       "./layout/Column": {
-        "import": "./dist/exports/layout/Column.js",
-        "require": "./dist/exports/layout/Column.cjs"
+        "require": "./dist/exports/layout/Column.cjs",
+        "import": "./dist/exports/layout/Column.js"
       },
       "./layout/Row": {
-        "import": "./dist/exports/layout/Row.js",
-        "require": "./dist/exports/layout/Row.cjs"
+        "require": "./dist/exports/layout/Row.cjs",
+        "import": "./dist/exports/layout/Row.js"
       },
       "./text/StyledText": {
-        "import": "./dist/exports/text/StyledText.js",
-        "require": "./dist/exports/text/StyledText.cjs"
+        "require": "./dist/exports/text/StyledText.cjs",
+        "import": "./dist/exports/text/StyledText.js"
       },
       "./util/FPSMonitor": {
-        "import": "./dist/exports/util/FPSMonitor.js",
-        "require": "./dist/exports/util/FPSMonitor.cjs"
+        "require": "./dist/exports/util/FPSMonitor.cjs",
+        "import": "./dist/exports/util/FPSMonitor.js"
       },
       "./package.json": "./package.json"
     }
@@ -62,12 +62,12 @@
   ],
   "devDependencies": {
     "@repo/configs": "workspace:*",
-    "@types/react": "19.2.2"
+    "@types/react": "19.2.8"
   },
   "peerDependencies": {
     "@plextv/react-lightning": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
-    "react": "^19.2.0"
+    "react": "^19.2.3"
   },
   "volta": {
     "extends": "../../package.json"

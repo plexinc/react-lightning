@@ -28,24 +28,24 @@
     "access": "public",
     "exports": {
       ".": {
-        "import": "./dist/index.js",
-        "require": "./dist/index.cjs"
+        "require": "./dist/index.cjs",
+        "import": "./dist/index.js"
       },
       "./layout/Column": {
-        "import": "./dist/exports/layout/Column.js",
-        "require": "./dist/exports/layout/Column.cjs"
+        "require": "./dist/exports/layout/Column.cjs",
+        "import": "./dist/exports/layout/Column.js"
       },
       "./layout/Row": {
-        "import": "./dist/exports/layout/Row.js",
-        "require": "./dist/exports/layout/Row.cjs"
+        "require": "./dist/exports/layout/Row.cjs",
+        "import": "./dist/exports/layout/Row.js"
       },
       "./lists/CellContainer": {
-        "import": "./dist/exports/lists/CellContainer.js",
-        "require": "./dist/exports/lists/CellContainer.cjs"
+        "require": "./dist/exports/lists/CellContainer.cjs",
+        "import": "./dist/exports/lists/CellContainer.js"
       },
       "./lists/FlashList": {
-        "import": "./dist/exports/lists/FlashList.js",
-        "require": "./dist/exports/lists/FlashList.cjs"
+        "require": "./dist/exports/lists/FlashList.cjs",
+        "import": "./dist/exports/lists/FlashList.js"
       },
       "./package.json": "./package.json"
     }
@@ -62,7 +62,7 @@
   ],
   "devDependencies": {
     "@repo/configs": "workspace:*",
-    "@types/react": "19.2.2"
+    "@types/react": "19.2.8"
   },
   "peerDependencies": {
     "@plextv/react-lightning": "workspace:^",
@@ -71,8 +71,8 @@
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
     "@plextv/react-native-lightning": "workspace:^",
     "@shopify/flash-list": "^2.2.0",
-    "react": "^19.2.0",
-    "react-native": "^0.82.0"
+    "react": "^19.2.3",
+    "react-native": "^0.82.1"
   },
   "peerDependenciesMeta": {
     "@shopify/flash-list": {
