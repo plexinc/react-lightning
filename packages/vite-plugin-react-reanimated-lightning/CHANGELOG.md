@@ -1,5 +1,26 @@
 # @plextv/vite-plugin-react-reanimated-lightning
 
+## 0.4.0
+
+### Patch Changes
+
+- 76874a0: fix(vite-plugin-react-reanimated-lightning): Fix worklet script alias for older versions
+- 8d1ac42: chore: Update lightning versions
+- 848a0c1: chore: Dependency version bumps
+- 451dddd: chore: More build and package fixes
+- a7a4885: fix: Fix builds and enable isolated declarations
+- Updated dependencies [410d0ac]
+- Updated dependencies [99c54a1]
+- Updated dependencies [8d1ac42]
+- Updated dependencies [0b91ada]
+- Updated dependencies [80c96e3]
+- Updated dependencies [848a0c1]
+- Updated dependencies [b5e7254]
+- Updated dependencies [451dddd]
+- Updated dependencies [a7a4885]
+- Updated dependencies [56845cc]
+  - @plextv/react-lightning-plugin-reanimated@0.4.0
+
 ## 0.4.0-alpha.4
 
 ### Patch Changes

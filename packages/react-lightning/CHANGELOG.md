@@ -1,5 +1,24 @@
 # @plextv/react-lightning
 
+## 0.4.0
+
+### Patch Changes
+
+- 01d5f33: fix(focus): Fix traps not working properly in some cases
+- f9a9cab: fix: support preventDefault() api for events
+- 264488a: fix(focus): Allow key propagation even when focus handling was cancelled
+- 848a0c1: fix: Layout event sometimes does not get fired
+- 589da1b: fix(focus): Fix removing elements not applying across focus layers
+- 8d1ac42: chore: Update lightning versions
+- 1c9a5ac: feat(react-lightning): Add inViewport event from Lightning
+- 848a0c1: chore: Dependency version bumps
+- b5e7254: chore: Update lightning packages
+- 8d1ac42: fix(focus): Fix case where FocusGroups sometimes get added to the wrong layer
+- f9a9cab: fix: onChildFocused event now works on FocusGroups and useFocus
+- 451dddd: chore: More build and package fixes
+- a7a4885: fix: Fix builds and enable isolated declarations
+- dbaa0ed: fix(focus): Fix focusability of items not getting reset when element parent changes
+
 ## 0.4.0-alpha.9
 
 ### Patch Changes
