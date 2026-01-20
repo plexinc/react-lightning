@@ -11,6 +11,7 @@
     "./tsconfig.react-native-library.json": "./tsconfig.react-native-library.json",
     "./tsdown.config": "./tsdown.config.ts",
     "./tsdown.withExports.config": "./tsdown.withExports.config.ts",
+    "./tsdown.node.config": "./tsdown.node.config.ts",
     "./vite.config": "./vite.config.mjs"
   },
   "scripts": {},
