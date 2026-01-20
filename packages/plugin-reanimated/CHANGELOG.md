@@ -1,5 +1,47 @@
 # @plextv/react-lightning-plugin-reanimated
 
+## 0.4.0
+
+### Patch Changes
+
+- 410d0ac: fix(plugin-reanimated): Use constants for gentle spring configs instead of importing from reanimated for backwards compat
+- 99c54a1: feat(plugin-reanimated): Added proper spring animation
+- 8d1ac42: chore: Update lightning versions
+- 0b91ada: feat: Added LinearTransition support
+- 80c96e3: feat: Add a placeholder withSequence
+- 848a0c1: chore: Dependency version bumps
+- b5e7254: chore: Update lightning packages
+- 451dddd: chore: More build and package fixes
+- a7a4885: fix: Fix builds and enable isolated declarations
+- 56845cc: Added useAnimatedScrollHandler, withDelay implementations.
+- Updated dependencies [01d5f33]
+- Updated dependencies [f9a9cab]
+- Updated dependencies [264488a]
+- Updated dependencies [848a0c1]
+- Updated dependencies [dbaa0ed]
+- Updated dependencies [b57bb68]
+- Updated dependencies [8d4ef27]
+- Updated dependencies [dbaa0ed]
+- Updated dependencies [589da1b]
+- Updated dependencies [8d1ac42]
+- Updated dependencies [8c5ce17]
+- Updated dependencies [1c9a5ac]
+- Updated dependencies [848a0c1]
+- Updated dependencies [b23e312]
+- Updated dependencies [43bf756]
+- Updated dependencies [8d4ef27]
+- Updated dependencies [34ddeb8]
+- Updated dependencies [b5e7254]
+- Updated dependencies [8d1ac42]
+- Updated dependencies [f9a9cab]
+- Updated dependencies [451dddd]
+- Updated dependencies [a7a4885]
+- Updated dependencies [dbaa0ed]
+  - @plextv/react-lightning@0.4.0
+  - @plextv/react-lightning-plugin-flexbox@0.4.0
+  - @plextv/react-native-lightning@0.4.0
+  - @plextv/react-lightning-plugin-css-transform@0.4.0
+
 ## 0.4.0-alpha.6
 
 ### Patch Changes

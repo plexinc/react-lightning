@@ -1,5 +1,31 @@
 # @plextv/react-lightning-components
 
+## 0.4.0
+
+### Patch Changes
+
+- 848a0c1: chore: Dependency version bumps
+- 451dddd: chore: More build and package fixes
+- a7a4885: fix: Fix builds and enable isolated declarations
+- Updated dependencies [01d5f33]
+- Updated dependencies [f9a9cab]
+- Updated dependencies [264488a]
+- Updated dependencies [848a0c1]
+- Updated dependencies [8d4ef27]
+- Updated dependencies [589da1b]
+- Updated dependencies [8d1ac42]
+- Updated dependencies [8c5ce17]
+- Updated dependencies [1c9a5ac]
+- Updated dependencies [848a0c1]
+- Updated dependencies [b5e7254]
+- Updated dependencies [8d1ac42]
+- Updated dependencies [f9a9cab]
+- Updated dependencies [451dddd]
+- Updated dependencies [a7a4885]
+- Updated dependencies [dbaa0ed]
+  - @plextv/react-lightning@0.4.0
+  - @plextv/react-lightning-plugin-flexbox@0.4.0
+
 ## 0.4.0-alpha.1
 
 ### Patch Changes
