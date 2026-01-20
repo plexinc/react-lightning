@@ -1,5 +1,11 @@
 # @plextv/vite-plugin-msdf-fontgen
 
+## 1.3.5
+
+### Patch Changes
+
+- 8143ba7: fix(vite-plugins): Roll back tsdown to 0.19 to fix vite-plugin-\* typings
+
 ## 1.3.4
 
 ### Patch Changes

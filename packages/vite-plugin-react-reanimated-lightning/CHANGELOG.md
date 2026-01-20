@@ -1,5 +1,11 @@
 # @plextv/vite-plugin-react-reanimated-lightning
 
+## 0.4.1
+
+### Patch Changes
+
+- 8143ba7: fix(vite-plugins): Roll back tsdown to 0.19 to fix vite-plugin-\* typings
+
 ## 0.4.0
 
 ### Patch Changes
