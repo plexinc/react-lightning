@@ -1,11 +1,7 @@
 {
   "extends": "@repo/configs/tsconfig.react-library.json",
   "compilerOptions": {
-    "types": [
-      "node",
-      "@plextv/react-lightning-plugin-flexbox/jsx",
-      "vite/client"
-    ]
+    "types": ["node", "@plextv/react-lightning-plugin-flexbox/jsx", "vite/client"]
   },
   "include": ["src", "../../types/*.d.ts"],
   "exclude": ["node_modules", "dist"]

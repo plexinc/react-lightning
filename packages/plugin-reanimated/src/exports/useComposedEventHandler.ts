@@ -1,4 +1,4 @@
-// biome-ignore-all lint/suspicious/noExplicitAny: Valid use of any here
+// oxlint-disable typescript/no-explicit-any -- Valid use of any here
 type EventHandler = (...args: any[]) => void;
 
 export function useComposedEventHandler(...handlers: EventHandler[]) {

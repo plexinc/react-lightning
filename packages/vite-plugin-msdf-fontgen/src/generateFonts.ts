@@ -1,7 +1,9 @@
 import { cp } from 'node:fs/promises';
 import path from 'node:path';
+
 import { genFont, setGeneratePaths } from '@lightningjs/msdf-generator';
 import { adjustFont } from '@lightningjs/msdf-generator/adjustFont';
+
 import { readFileChecksum, writeChecksumCache } from './checksum';
 import { ensureConfigsExist } from './configs';
 import getFiles from './getFiles';
@@ -25,12 +27,7 @@ export default async function generateFonts(
       return;
     }
 
-    for (const {
-      inputDir,
-      outputDir,
-      charsetChecksum,
-      files: fontFiles,
-    } of files) {
+    for (const { inputDir, outputDir, charsetChecksum, files: fontFiles } of files) {
       checksums[charsetFile] = charsetChecksum;
 
       setGeneratePaths(inputDir, outputDir, charsetFile);

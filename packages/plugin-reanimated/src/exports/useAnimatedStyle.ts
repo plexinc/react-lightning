@@ -1,19 +1,16 @@
-import type {
-  LightningElement,
-  LightningElementStyle,
-} from '@plextv/react-lightning';
 import type { DependencyList } from 'react';
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { useAnimatedStyle as useAnimatedStyleRN } from 'react-native-reanimated-original';
 import type { Mutable } from 'react-native-reanimated/lib/typescript/commonTypes';
 import type { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/commonTypes';
-import type { useAnimatedStyle as useAnimatedStyleRN } from 'react-native-reanimated-original';
+
+import type { LightningElement, LightningElementStyle } from '@plextv/react-lightning';
+
 import type { AnimatedObject } from '../types/AnimatedObject';
 import type { AnimatedStyle } from '../types/AnimatedStyle';
 import { toLightningAnimationAndStyles } from '../utils/toLightningAnimationAndStyles';
 
-type UseAnimatedStyleFn = (
-  ...args: Parameters<typeof useAnimatedStyleRN>
-) => AnimatedStyle;
+type UseAnimatedStyleFn = (...args: Parameters<typeof useAnimatedStyleRN>) => AnimatedStyle;
 
 function computeAndSetStyles(
   updater: () => AnimatedObject<DefaultStyle>,
@@ -36,25 +33,26 @@ function computeAndSetStyles(
 let idCount = 0;
 
 export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
-  const viewsRef = useRef(new Set<LightningElement>());
+  const [views] = useState(() => new Set<LightningElement>());
   const inputs: DependencyList = dependencies ?? [];
   const timerRef = useRef(0);
 
   // Debounce this call so we don't end up calculating the styles multiple times
   // when updating multiple properties in the same hook
-  const applyStyles = useCallback(() => {
+  const applyStyles = () => {
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
     }
 
     timerRef.current = window.setTimeout(() => {
-      computeAndSetStyles(updater, viewsRef.current);
+      computeAndSetStyles(updater, views);
       timerRef.current = 0;
     }, 2);
-  }, [updater]);
+  };
 
   useEffect(() => {
-    const id = idCount++;
+    const id = idCount;
+    idCount += 1;
 
     for (const dep of inputs) {
       if (dep && typeof dep === 'object' && 'addListener' in dep) {
@@ -75,6 +73,6 @@ export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
   }, [inputs, applyStyles]);
 
   return {
-    viewsRef: viewsRef.current,
+    viewsRef: views,
   };
 };

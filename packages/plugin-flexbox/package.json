@@ -1,16 +1,19 @@
 {
   "name": "@plextv/react-lightning-plugin-flexbox",
-  "description": "Adds FlexBox layout support to @plextv/react-lightning using yoga",
   "version": "0.4.0",
-  "author": "Plex Inc.",
+  "description": "Adds FlexBox layout support to @plextv/react-lightning using yoga",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/es/index.production.js",
@@ -21,7 +24,6 @@
     "./jsx": "./src/types/jsx.d.ts"
   },
   "publishConfig": {
-    "provenance": true,
     "access": "public",
     "exports": {
       ".": {
@@ -31,7 +33,8 @@
       },
       "./package.json": "./package.json",
       "./jsx": "./dist/types/types/jsx.d.ts"
-    }
+    },
+    "provenance": true
   },
   "scripts": {
     "build": "pnpm run build:vite",
@@ -45,9 +48,6 @@
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
-  "files": [
-    "dist"
-  ],
   "dependencies": {
     "tseep": "1.3.1",
     "yoga-layout": "3.2.1"

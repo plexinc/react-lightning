@@ -1,5 +1,6 @@
-import type { LightningViewElement } from '@plextv/react-lightning';
 import type { BaseSyntheticEvent } from 'react';
+
+import type { LightningViewElement } from '@plextv/react-lightning';
 
 const defaultEventProps = {
   bubbles: true,
@@ -22,15 +23,10 @@ defaultEventProps satisfies Partial<
 type DefaultEventProps = typeof defaultEventProps;
 
 export function createSyntheticEvent<
-  E extends BaseSyntheticEvent<
-    unknown,
-    LightningViewElement,
-    LightningViewElement
-  >,
+  E extends BaseSyntheticEvent<unknown, LightningViewElement, LightningViewElement>,
 >(
   target: LightningViewElement,
-  props: Omit<E, keyof DefaultEventProps | 'currentTarget' | 'target'> &
-    Partial<DefaultEventProps>,
+  props: Omit<E, keyof DefaultEventProps | 'currentTarget' | 'target'> & Partial<DefaultEventProps>,
 ): E {
   return {
     currentTarget: target,

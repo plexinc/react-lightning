@@ -1,19 +1,18 @@
 {
   "name": "@plextv/react-lightning-example",
-  "description": "Sample implementation of @plextv/react-lightning in a React app",
   "version": "0.4.0",
-  "author": "Plex Inc.",
+  "private": true,
+  "description": "Sample implementation of @plextv/react-lightning in a React app",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
-  "packageManager": "pnpm@10.12.3",
   "type": "module",
-  "private": true,
   "scripts": {
     "build": "vite build",
     "clean": "del ./dist",
@@ -40,9 +39,11 @@
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-legacy": "7.2.1",
     "@vitejs/plugin-react": "5.1.2",
+    "babel-plugin-react-compiler": "1.0.0",
     "vite-tsconfig-paths": "6.0.4"
   },
   "volta": {
     "extends": "../../package.json"
-  }
+  },
+  "packageManager": "pnpm@10.12.3"
 }

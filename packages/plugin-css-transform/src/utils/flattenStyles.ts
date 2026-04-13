@@ -1,4 +1,5 @@
 import type { StyleProp } from 'react-native';
+
 import type { AllStyleProps, AllStyles } from '../types/ReactStyle';
 
 export function flattenStyles<T extends AllStyles>(styles: AllStyleProps): T {

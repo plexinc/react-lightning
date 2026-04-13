@@ -5,11 +5,12 @@ import type {
   RendererNode,
   TextRendererNode,
 } from '@plextv/react-lightning';
+
 import type { YogaOptions } from './types/YogaOptions';
 import { SimpleDataView } from './util/SimpleDataView';
+import loadYoga from './yoga';
 import type { YogaManager } from './YogaManager';
 import type { Workerized } from './YogaManagerWorker';
-import loadYoga from './yoga';
 
 /**
  * Manages the lifecycle of Yoga nodes for Lightning elements. This can only be
@@ -31,9 +32,7 @@ export class LightningManager {
     }
 
     if (!this._yogaManager) {
-      throw new Error(
-        'YogaManager is not initialized. Make sure to call init() first.',
-      );
+      throw new Error('YogaManager is not initialized. Make sure to call init() first.');
     }
 
     this._elements.set(element.id, element);
@@ -46,14 +45,14 @@ export class LightningManager {
         }
 
         this._elements.delete(element.id);
-        // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. But avoiding the nullish operator for perf reasons
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. But avoiding the nullish operator for perf reasons
         this._yogaManager!.applyStyle(element.id, null, true);
-        // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. See above
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
         this._yogaManager!.removeNode(element.id);
       }),
 
       element.on('childAdded', (child, index) => {
-        // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. See above
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
         this._yogaManager!.addChildNode(element.id, child.id, index);
         this.applyStyle(element.id, element.style);
       }),
@@ -61,9 +60,9 @@ export class LightningManager {
       element.on('childRemoved', (child) => {
         // This will remove any pending worker style updates that haven't been sent
 
-        // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. See above
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
         this._yogaManager!.applyStyle(child.id, null, true);
-        // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. See above
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
         this._yogaManager!.removeNode(child.id);
       }),
 
@@ -80,9 +79,7 @@ export class LightningManager {
       element.on(
         'textureLoaded',
         (
-          node:
-            | RendererNode<LightningElement>
-            | TextRendererNode<LightningTextElement>,
+          node: RendererNode<LightningElement> | TextRendererNode<LightningTextElement>,
           event: { type: string; dimensions: { w: number; h: number } },
         ) => {
           if (element.isTextElement) {
@@ -111,7 +108,7 @@ export class LightningManager {
     }
 
     if (style) {
-      // biome-ignore lint/style/noNonNullAssertion: Guaranteed to exist. See above
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
       this._yogaManager!.applyStyle(elementId, style, skipRender);
     }
   }

@@ -1,3 +1,5 @@
+import { type FC, useCallback } from 'react';
+
 import type {
   KeyEvent,
   LightningElement,
@@ -5,7 +7,6 @@ import type {
   LightningViewElementProps,
 } from '@plextv/react-lightning';
 import { Keys, useFocus } from '@plextv/react-lightning';
-import { type FC, useCallback } from 'react';
 
 const containerStyles: LightningElementStyle = {
   w: 330,
@@ -47,12 +48,7 @@ const Button: FC<Props> = (props) => {
   const color = focused ? 0xcccc44ff : 0xcccc44aa;
 
   return (
-    <lng-view
-      {...otherProps}
-      ref={ref}
-      onKeyUp={handleKeyUp}
-      style={{ ...containerStyles, color }}
-    >
+    <lng-view {...otherProps} ref={ref} onKeyUp={handleKeyUp} style={{ ...containerStyles, color }}>
       <lng-text style={textStyle}>{props.children}</lng-text>
     </lng-view>
   );

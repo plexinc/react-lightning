@@ -6,9 +6,7 @@
  *
  *
  */
-/** biome-ignore-all lint/suspicious/noExplicitAny: Valid use of any */
-
-import * as React from 'react';
+/* oxlint-disable typescript/no-explicit-any -- Valid use of any */
 
 export default function mergeRefs(...refs: any[]) {
   const _len = refs.length;
@@ -39,10 +37,5 @@ export default function mergeRefs(...refs: any[]) {
 }
 
 export function useMergeRefs(...refs: any[]): (node: any) => void {
-  const _len = refs.length;
-  const args = Array.from({ length: _len });
-  for (let _key = 0; _key < _len; _key++) {
-    args[_key] = refs[_key];
-  }
-  return React.useMemo(() => mergeRefs(...args), [args]);
+  return mergeRefs(...refs);
 }

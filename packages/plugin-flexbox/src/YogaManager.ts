@@ -1,11 +1,11 @@
-import type { LightningElementStyle, Rect } from '@plextv/react-lightning';
 import { EventEmitter } from 'tseep';
 import { type Config, loadYoga, type Yoga } from 'yoga-layout/load';
+
+import type { LightningElementStyle, Rect } from '@plextv/react-lightning';
+
 import type { ManagerNode } from './types/ManagerNode';
 import type { YogaOptions } from './types/YogaOptions';
-import applyReactPropsToYoga, {
-  applyFlexPropToYoga,
-} from './util/applyReactPropsToYoga';
+import applyReactPropsToYoga, { applyFlexPropToYoga } from './util/applyReactPropsToYoga';
 import { SimpleDataView } from './util/SimpleDataView';
 
 export type BatchedUpdate = Record<number, Partial<Rect>>;
@@ -48,22 +48,17 @@ export class YogaManager {
   private _eventEmitter: EventEmitter<YogaManagerEvents> = new EventEmitter();
   private _dataView: SimpleDataView;
 
-  public on: EventEmitter<YogaManagerEvents>['on'] = this._eventEmitter.on.bind(
+  public on: EventEmitter<YogaManagerEvents>['on'] = this._eventEmitter.on.bind(this._eventEmitter);
+  public off: EventEmitter<YogaManagerEvents>['off'] = this._eventEmitter.off.bind(
     this._eventEmitter,
   );
-  public off: EventEmitter<YogaManagerEvents>['off'] =
-    this._eventEmitter.off.bind(this._eventEmitter);
 
   public get initialized(): boolean {
     return this._initialized;
   }
 
   public constructor() {
-    this._dataView = new SimpleDataView(
-      MAX_SIZEOF_UPDATE,
-      true,
-      this._flushArrayBuffer,
-    );
+    this._dataView = new SimpleDataView(MAX_SIZEOF_UPDATE, true, this._flushArrayBuffer);
   }
 
   public async init(yogaOptions?: YogaOptions): Promise<void> {
@@ -84,14 +79,10 @@ export class YogaManager {
         this._config.setErrata(this._yoga.ERRATA_STRETCH_FLEX_BASIS);
         break;
       case 'absolute-percent-against-inner':
-        this._config.setErrata(
-          this._yoga.ERRATA_ABSOLUTE_PERCENT_AGAINST_INNER_SIZE,
-        );
+        this._config.setErrata(this._yoga.ERRATA_ABSOLUTE_PERCENT_AGAINST_INNER_SIZE);
         break;
       case 'absolute-position-without-insets':
-        this._config.setErrata(
-          this._yoga.ERRATA_ABSOLUTE_POSITION_WITHOUT_INSETS_EXCLUDES_PADDING,
-        );
+        this._config.setErrata(this._yoga.ERRATA_ABSOLUTE_POSITION_WITHOUT_INSETS_EXCLUDES_PADDING);
         break;
       default:
         this._config.setErrata(this._yoga.ERRATA_NONE);
@@ -103,7 +94,7 @@ export class YogaManager {
 
   public addNode(elementId: number): ManagerNode {
     if (this._elementMap.has(elementId)) {
-      // biome-ignore lint/style/noNonNullAssertion: Already checked
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- Already checked
       return this._elementMap.get(elementId)!;
     }
 
@@ -138,9 +129,7 @@ export class YogaManager {
     const childYogaNode = this._elementMap.get(childId);
 
     if (!parentYogaNode || !childYogaNode) {
-      throw new Error(
-        `Parent or child node not found for IDs ${parentId} and ${childId}.`,
-      );
+      throw new Error(`Parent or child node not found for IDs ${parentId} and ${childId}.`);
     }
 
     index ??= childYogaNode.children.length;
@@ -182,7 +171,7 @@ export class YogaManager {
         this._rootNode = root;
       }
 
-      // biome-ignore lint/style/noNonNullAssertion: Already checked this._yoga above
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- Already checked this._yoga above
       root.node.calculateLayout(1920, 1080, this._yoga!.DIRECTION_LTR);
 
       this._initializeArrayBuffer();
@@ -284,10 +273,7 @@ export class YogaManager {
 
     const maxWidth = yogaNode.node.getMaxWidth();
 
-    if (
-      !Number.isNaN(maxWidth.value) &&
-      maxWidth.unit !== this._yoga.UNIT_UNDEFINED
-    ) {
+    if (!Number.isNaN(maxWidth.value) && maxWidth.unit !== this._yoga.UNIT_UNDEFINED) {
       // If there is a max width specified, the width on the yogaNode will
       // be the computed width
       let computedWidth = yogaNode.node.getComputedWidth();
@@ -297,9 +283,7 @@ export class YogaManager {
         const parentWidth = yogaNode.node.getParent()?.getComputedWidth();
 
         if (parentWidth) {
-          computedWidth = isPercentage
-            ? parentWidth * (maxWidth.value / 100)
-            : parentWidth;
+          computedWidth = isPercentage ? parentWidth * (maxWidth.value / 100) : parentWidth;
         } else if (maxWidth.unit === this._yoga.UNIT_POINT) {
           computedWidth = maxWidth.value;
         }
@@ -342,8 +326,7 @@ export class YogaManager {
   // returns the new offset in the dataView
   private _getUpdatedStyles(yogaNode: ManagerNode, force = false) {
     const skipHiddenNode =
-      !this._yogaOptions.processHiddenNodes &&
-      this._hiddenElements.has(yogaNode.id);
+      !this._yogaOptions.processHiddenNodes && this._hiddenElements.has(yogaNode.id);
 
     if (!force && (skipHiddenNode || !yogaNode.node.hasNewLayout())) {
       return;

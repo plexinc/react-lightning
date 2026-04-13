@@ -1,5 +1,7 @@
-import { Column, Row } from '@plextv/react-lightning-components';
 import type { Meta } from '@storybook/react-vite';
+
+import { Column, Row } from '@plextv/react-lightning-components';
+
 import { FocusableImage } from '../../../components/FocusableImage';
 
 export default {

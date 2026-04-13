@@ -1,16 +1,15 @@
-import type {
-  LightningElement,
-  LightningElementStyle,
-  Plugin,
-} from '@plextv/react-lightning';
+import type { LightningElement, LightningElementStyle, Plugin } from '@plextv/react-lightning';
+
 import { LightningManager } from './LightningManager';
 import type { YogaOptions } from './types/YogaOptions';
-import { isFlexStyleProp } from './util/isFlexStyleProp';
+import { flexProps, isFlexStyleProp } from './util/isFlexStyleProp';
 
 export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
   const lightningManager = new LightningManager();
 
   return {
+    handledStyleProps: new Set(Object.keys(flexProps)),
+
     init() {
       return lightningManager.init(yogaOptions);
     },
@@ -34,12 +33,7 @@ export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
       for (const key in styles) {
         const value = styles[key as keyof LightningElementStyle];
 
-        if (
-          key === 'w' ||
-          key === 'h' ||
-          key === 'maxWidth' ||
-          key === 'maxHeight'
-        ) {
+        if (key === 'w' || key === 'h' || key === 'maxWidth' || key === 'maxHeight') {
           // Width and height go to both flex and remaining styles
           flexStyles[key] = value;
           remainingStyles[key] = value;

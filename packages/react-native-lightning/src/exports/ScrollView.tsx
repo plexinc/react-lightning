@@ -1,15 +1,17 @@
-import {
-  type LightningElement,
-  LightningViewElement,
-  type LightningViewElementProps,
-} from '@plextv/react-lightning';
 import { createRef, PureComponent } from 'react';
-import type { JSX } from 'react/jsx-runtime';
 import type {
   NativeScrollEvent,
   ScrollView as RNScrollView,
   ScrollViewProps as RNScrollViewProps,
 } from 'react-native';
+import type { JSX } from 'react/jsx-runtime';
+
+import {
+  type LightningElement,
+  LightningViewElement,
+  type LightningViewElementProps,
+} from '@plextv/react-lightning';
+
 import type { LightningViewElementStyle } from '../../../react-lightning/src/types';
 import { createHandler } from '../hooks/useFocusHandler';
 import type { NativeLightningViewElement } from '../types/NativeLightningViewElement';
@@ -51,17 +53,11 @@ function getAxisOffset(
       const itemMidPoint = childOffset + childSize / 2;
       const halfViewportSize = viewportSize / 2;
 
-      offset = Math.min(
-        Math.max(itemMidPoint - halfViewportSize, 0),
-        scrollableSize,
-      );
+      offset = Math.min(Math.max(itemMidPoint - halfViewportSize, 0), scrollableSize);
       break;
     }
     case 'end':
-      offset = Math.max(
-        Math.min(childOffset + childSize - viewportSize, scrollableSize),
-        0,
-      );
+      offset = Math.max(Math.min(childOffset + childSize - viewportSize, scrollableSize), 0);
       break;
   }
 
@@ -80,22 +76,10 @@ function getScrollInfo(
   }
 
   const x = horizontal
-    ? getAxisOffset(
-        viewport.w,
-        container.w,
-        child.x,
-        child.w,
-        snapToAlignment ?? 'start',
-      )
+    ? getAxisOffset(viewport.w, container.w, child.x, child.w, snapToAlignment ?? 'start')
     : container.x;
   const y = !horizontal
-    ? getAxisOffset(
-        viewport.h,
-        container.h,
-        child.y,
-        child.h,
-        snapToAlignment ?? 'start',
-      )
+    ? getAxisOffset(viewport.h, container.h, child.y, child.h, snapToAlignment ?? 'start')
     : container.y;
 
   return {
@@ -107,10 +91,7 @@ function getScrollInfo(
   };
 }
 
-export class ScrollView extends PureComponent<
-  ScrollViewProps,
-  ScrollViewState
-> {
+export class ScrollView extends PureComponent<ScrollViewProps, ScrollViewState> {
   private _containerRef = createRef<LightningViewElement>();
   private _viewportRef = createRef<NativeLightningViewElement>();
 
@@ -192,8 +173,7 @@ export class ScrollView extends PureComponent<
   }
 
   public render(): JSX.Element {
-    const { children, style, contentContainerStyle, horizontal, ...props } =
-      this.props;
+    const { children, style, contentContainerStyle, horizontal, ...props } = this.props;
     const flexDirection = horizontal ? 'row' : 'column';
 
     return (
@@ -233,15 +213,11 @@ export class ScrollView extends PureComponent<
 
   private _getChildOffset = (child?: LightningElement | null | Rect) => {
     const isElement = child instanceof LightningViewElement;
-    const rect = isElement
-      ? child.getBoundingClientRect(this._containerRef.current)
-      : child;
+    const rect = isElement ? child.getBoundingClientRect(this._containerRef.current) : child;
 
     return getScrollInfo(
       this._viewportRef.current?.getBoundingClientRect(),
-      this._containerRef.current?.getBoundingClientRect(
-        this._viewportRef.current,
-      ),
+      this._containerRef.current?.getBoundingClientRect(this._viewportRef.current),
       rect,
       // If we're getting offset via a positional value, we make sure we don't
       // use the snapToAlignment to calculate the offset since the offset should

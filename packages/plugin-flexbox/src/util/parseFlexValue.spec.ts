@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+
 import { parseFlexValue } from './parseFlexValue';
 
 describe('parseFlexValue', () => {

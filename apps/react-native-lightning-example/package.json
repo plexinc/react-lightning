@@ -1,19 +1,18 @@
 {
   "name": "@plextv/react-native-lightning-example",
-  "description": "Sample implementation of @plextv/react-native-lightning in a React Native app",
   "version": "0.4.0",
-  "author": "Plex Inc.",
+  "private": true,
+  "description": "Sample implementation of @plextv/react-native-lightning in a React Native app",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
-  "packageManager": "pnpm@10.12.3",
   "type": "module",
-  "private": true,
   "scripts": {
     "build": "vite build",
     "clean": "del ./dist",
@@ -41,15 +40,16 @@
     "@plextv/vite-plugin-react-native-lightning": "workspace:*",
     "@plextv/vite-plugin-react-reanimated-lightning": "workspace:*",
     "@repo/configs": "workspace:*",
-    "@shopify/flash-list": "2.2.0",
     "@types/react": "19.2.8",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-legacy": "7.2.1",
+    "babel-plugin-react-compiler": "1.0.0",
     "typescript": "5.9.3"
   },
   "volta": {
     "extends": "../../package.json"
   },
+  "packageManager": "pnpm@10.12.3",
   "//": "unsure why react-dom needed to be ignored...",
   "depcheck": {
     "ignoreMatches": [

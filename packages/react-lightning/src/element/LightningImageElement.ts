@@ -1,10 +1,6 @@
-import type {
-  INode,
-  INodeProps,
-  NodeLoadedPayload,
-  RendererMain,
-} from '@lightningjs/renderer';
+import type { INode, INodeProps, NodeLoadedPayload, RendererMain } from '@lightningjs/renderer';
 import type { Fiber } from 'react-reconciler';
+
 import type { Plugin } from '../render/Plugin';
 import {
   type LightningElement,
@@ -21,22 +17,20 @@ function getImageType(src?: string | null): INode['imageType'] {
   }
 
   const srcLower = src.toLowerCase();
-  const isSvg =
-    srcLower.endsWith('.svg') || srcLower.startsWith('data:image/svg+xml,');
+  const isSvg = srcLower.endsWith('.svg') || srcLower.startsWith('data:image/svg+xml,');
 
   return isSvg ? 'svg' : null;
 }
 
 export class LightningImageElement<
   TStyleProps extends LightningImageElementStyle = LightningImageElementStyle,
-  TProps extends
-    LightningImageElementProps<TStyleProps> = LightningImageElementProps<TStyleProps>,
+  TProps extends LightningImageElementProps<TStyleProps> = LightningImageElementProps<TStyleProps>,
 > extends LightningViewElement<TStyleProps, TProps> {
   public override get type(): LightningElementType {
     return LightningElementType.Image;
   }
 
-  public declare node: RendererNode<LightningImageElement>;
+  declare public node: RendererNode<LightningImageElement>;
 
   public get isImageElement() {
     return true;

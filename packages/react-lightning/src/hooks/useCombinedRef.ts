@@ -1,9 +1,4 @@
-import {
-  type MutableRefObject,
-  type Ref,
-  type RefCallback,
-  useCallback,
-} from 'react';
+import { type MutableRefObject, type Ref, type RefCallback } from 'react';
 
 /**
  * This hook allows you to combine multiple refs into a single ref. This is useful when you need to pass a ref to a component that already has a ref. See the example below
@@ -34,18 +29,13 @@ import {
  * ```
  */
 export const useCombinedRef = <T>(...refs: Ref<T>[]): RefCallback<T> => {
-  const combinedCallback = useCallback(
-    (node: T) => {
-      for (const ref of refs) {
-        if (typeof ref === 'function') {
-          ref(node);
-        } else if (ref) {
-          (ref as MutableRefObject<T>).current = node;
-        }
+  return (node: T) => {
+    for (const ref of refs) {
+      if (typeof ref === 'function') {
+        ref(node);
+      } else if (ref) {
+        (ref as MutableRefObject<T>).current = node;
       }
-    },
-    [refs],
-  );
-
-  return combinedCallback;
+    }
+  };
 };

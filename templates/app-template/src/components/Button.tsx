@@ -1,9 +1,7 @@
-import {
-  type KeyEvent,
-  type LightningElementStyle,
-  useFocus,
-} from '@plextv/react-lightning';
 import { useCallback, useMemo } from 'react';
+
+import { type KeyEvent, type LightningElementStyle, useFocus } from '@plextv/react-lightning';
+
 import { Text } from './Text';
 
 type Variants = 'accent' | 'default';
@@ -37,18 +35,9 @@ type Props = {
   onPress: () => void;
 };
 
-export const Button = ({
-  label,
-  variant = 'default',
-  style,
-  autoFocus,
-  onPress,
-}: Props) => {
+export const Button = ({ label, variant = 'default', style, autoFocus, onPress }: Props) => {
   const { focused, ref } = useFocus({ autoFocus });
-  const { active, inactive, activeText, inactiveText } = useMemo(
-    () => themes[variant],
-    [variant],
-  );
+  const { active, inactive, activeText, inactiveText } = useMemo(() => themes[variant], [variant]);
 
   const handleOnKeyUp = useCallback(
     (event: KeyEvent) => {

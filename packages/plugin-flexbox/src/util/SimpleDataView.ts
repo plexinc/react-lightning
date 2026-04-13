@@ -24,15 +24,10 @@ export class SimpleDataView {
     overflowHandler?: (filledBuffer: ArrayBuffer) => void,
   ) {
     this._buffer =
-      typeof maxSizeOrBuffer === 'number'
-        ? new ArrayBuffer(maxSizeOrBuffer)
-        : maxSizeOrBuffer;
+      typeof maxSizeOrBuffer === 'number' ? new ArrayBuffer(maxSizeOrBuffer) : maxSizeOrBuffer;
     this._view = new DataView(this._buffer);
     this._offset = 0;
-    this._maxSize =
-      typeof maxSizeOrBuffer === 'number'
-        ? maxSizeOrBuffer
-        : this._buffer.byteLength;
+    this._maxSize = typeof maxSizeOrBuffer === 'number' ? maxSizeOrBuffer : this._buffer.byteLength;
     this._littleEndian = littleEndian;
     this._overflowHandler = overflowHandler;
   }
@@ -91,11 +86,9 @@ export class SimpleDataView {
   }
 
   public readUint8 = (): number => this._readInt(1, true);
-  public readUint8At = (offset: number): number =>
-    this._readIntAt(offset, 1, true);
+  public readUint8At = (offset: number): number => this._readIntAt(offset, 1, true);
   public readInt8 = (): number => this._readInt(1, false);
-  public readInt8At = (offset: number): number =>
-    this._readIntAt(offset, 1, false);
+  public readInt8At = (offset: number): number => this._readIntAt(offset, 1, false);
   public writeUint8 = (value: number): void => this._writeInt(1, value, true);
   public writeUint8At = (offset: number, value: number): void =>
     this._writeIntAt(offset, value, 1, true);
@@ -104,11 +97,9 @@ export class SimpleDataView {
     this._writeIntAt(offset, value, 1, false);
 
   public readUint16 = (): number => this._readInt(2, true);
-  public readUint16At = (offset: number): number =>
-    this._readIntAt(offset, 2, true);
+  public readUint16At = (offset: number): number => this._readIntAt(offset, 2, true);
   public readInt16 = (): number => this._readInt(2, false);
-  public readInt16At = (offset: number): number =>
-    this._readIntAt(offset, 2, false);
+  public readInt16At = (offset: number): number => this._readIntAt(offset, 2, false);
   public writeUint16 = (value: number): void => this._writeInt(2, value, true);
   public writeUint16At = (offset: number, value: number): void =>
     this._writeIntAt(offset, value, 2, true);
@@ -117,11 +108,9 @@ export class SimpleDataView {
     this._writeIntAt(offset, value, 2, false);
 
   public readUint32 = (): number => this._readInt(4, true);
-  public readUint32At = (offset: number): number =>
-    this._readIntAt(offset, 4, true);
+  public readUint32At = (offset: number): number => this._readIntAt(offset, 4, true);
   public readInt32 = (): number => this._readInt(4, false);
-  public readInt32At = (offset: number): number =>
-    this._readIntAt(offset, 4, false);
+  public readInt32At = (offset: number): number => this._readIntAt(offset, 4, false);
   public writeUint32 = (value: number): void => this._writeInt(4, value, true);
   public writeUint32At = (offset: number, value: number): void =>
     this._writeIntAt(offset, value, 4, true);
@@ -130,26 +119,20 @@ export class SimpleDataView {
     this._writeIntAt(offset, value, 4, false);
 
   public readBigUint64 = (): bigint => this._readInt(8, true);
-  public readBigUint64At = (offset: number): bigint =>
-    this._readIntAt(offset, 8, true);
+  public readBigUint64At = (offset: number): bigint => this._readIntAt(offset, 8, true);
   public readBigInt64 = (): bigint => this._readInt(8, false);
-  public readBigInt64At = (offset: number): bigint =>
-    this._readIntAt(offset, 8, false);
-  public writeBigUint64 = (value: bigint): void =>
-    this._writeInt(8, value, true);
+  public readBigInt64At = (offset: number): bigint => this._readIntAt(offset, 8, false);
+  public writeBigUint64 = (value: bigint): void => this._writeInt(8, value, true);
   public writeBigUint64At = (offset: number, value: bigint): void =>
     this._writeIntAt(offset, value, 8, true);
-  public writeBigInt64 = (value: bigint): void =>
-    this._writeInt(8, value, false);
+  public writeBigInt64 = (value: bigint): void => this._writeInt(8, value, false);
   public writeBigInt64At = (offset: number, value: bigint): void =>
     this._writeIntAt(offset, value, 8, false);
 
   public readFloat32 = (): number => this._readFloat(4);
-  public readFloat32At = (offset: number): number =>
-    this._readFloatAt(offset, 4);
+  public readFloat32At = (offset: number): number => this._readFloatAt(offset, 4);
   public readFloat64 = (): number => this._readFloat(8);
-  public readFloat64At = (offset: number): number =>
-    this._readFloatAt(offset, 8);
+  public readFloat64At = (offset: number): number => this._readFloatAt(offset, 8);
   public writeFloat32 = (value: number): void => this._writeFloat(4, value);
   public writeFloat32At = (offset: number, value: number): void =>
     this._writeFloatAt(offset, value, 4);
@@ -168,31 +151,17 @@ export class SimpleDataView {
     }
   }
 
-  private _readIntAt(
-    offset: number,
-    bytes: 1 | 2 | 4,
-    unsigned: boolean,
-  ): number;
+  private _readIntAt(offset: number, bytes: 1 | 2 | 4, unsigned: boolean): number;
   private _readIntAt(offset: number, bytes: 8, unsigned: boolean): bigint;
-  private _readIntAt(
-    offset: number,
-    bytes: 1 | 2 | 4 | 8,
-    unsigned: boolean,
-  ): number | bigint;
-  private _readIntAt(
-    offset: number,
-    bytes: 1 | 2 | 4 | 8,
-    unsigned: boolean,
-  ): number | bigint {
+  private _readIntAt(offset: number, bytes: 1 | 2 | 4 | 8, unsigned: boolean): number | bigint;
+  private _readIntAt(offset: number, bytes: 1 | 2 | 4 | 8, unsigned: boolean): number | bigint {
     if (offset < 0 || offset + bytes > this._maxSize) {
       throw new Error('Offset out of bounds');
     }
 
     switch (bytes) {
       case 1:
-        return unsigned
-          ? this._view.getUint8(offset)
-          : this._view.getInt8(offset);
+        return unsigned ? this._view.getUint8(offset) : this._view.getInt8(offset);
       case 2:
         return unsigned
           ? this._view.getUint16(offset, this._littleEndian)
@@ -219,18 +188,8 @@ export class SimpleDataView {
     return value;
   }
 
-  private _writeIntAt(
-    offset: number,
-    value: bigint,
-    size: 8,
-    unsigned: boolean,
-  ): void;
-  private _writeIntAt(
-    offset: number,
-    value: number,
-    size: 1 | 2 | 4,
-    unsigned: boolean,
-  ): void;
+  private _writeIntAt(offset: number, value: bigint, size: 8, unsigned: boolean): void;
+  private _writeIntAt(offset: number, value: number, size: 1 | 2 | 4, unsigned: boolean): void;
   private _writeIntAt(
     offset: number,
     value: number | bigint,
@@ -283,11 +242,7 @@ export class SimpleDataView {
 
   private _writeInt(size: 1 | 2 | 4, value: number, unsigned: boolean): void;
   private _writeInt(size: 8, value: bigint, unsigned: boolean): void;
-  private _writeInt(
-    size: 1 | 2 | 4 | 8,
-    value: number | bigint,
-    unsigned: boolean,
-  ) {
+  private _writeInt(size: 1 | 2 | 4 | 8, value: number | bigint, unsigned: boolean) {
     this._checkOverflow(size);
     this._writeIntAt(this._offset, value, size, unsigned);
     this._offset += size;

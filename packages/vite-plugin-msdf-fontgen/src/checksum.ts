@@ -1,32 +1,26 @@
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+
 import crc32 from 'crc-32';
 
 const CHECKSUM_FILENAME = 'hash.json';
 
-export async function readFileChecksum(
-  filePath: string,
-): Promise<number | null> {
+export async function readFileChecksum(filePath: string): Promise<number | null> {
   try {
     const fileData = await readFile(filePath);
 
     return crc32.buf(fileData, 0);
-  } catch (_err) {
+  } catch {
     return null;
   }
 }
 
-export async function readChecksumCache(
-  checksumFolder: string,
-): Promise<Record<string, number>> {
+export async function readChecksumCache(checksumFolder: string): Promise<Record<string, number>> {
   try {
     console.info('Loading checksums from cache...');
 
-    const checksumsData = await readFile(
-      path.join(checksumFolder, CHECKSUM_FILENAME),
-      'utf8',
-    );
+    const checksumsData = await readFile(path.join(checksumFolder, CHECKSUM_FILENAME), 'utf8');
 
     return JSON.parse(checksumsData.toString());
   } catch (err) {
@@ -46,9 +40,7 @@ export async function writeChecksumCache(
 ): Promise<void> {
   try {
     if (!existsSync(checksumFolder)) {
-      console.info(
-        `Cache folder doesn't exist. Creating one at ${checksumFolder}`,
-      );
+      console.info(`Cache folder doesn't exist. Creating one at ${checksumFolder}`);
       await mkdir(checksumFolder, { recursive: true });
     }
 

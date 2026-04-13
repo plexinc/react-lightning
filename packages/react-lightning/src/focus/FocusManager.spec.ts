@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  createMockElement,
-  type MockElement,
-} from '../mocks/createMockElement';
+
+import { createMockElement, type MockElement } from '../mocks/createMockElement';
 import { FocusManager } from './FocusManager';
 
 describe('FocusManager', () => {
@@ -287,12 +285,7 @@ describe('FocusManager', () => {
     focusManager.addElement(modalGrandChild, modalChild);
     focusManager.addElement(modalChild, modal);
 
-    expect(focusManager.focusPath).toEqual([
-      parent,
-      modal,
-      modalChild,
-      modalGrandChild,
-    ]);
+    expect(focusManager.focusPath).toEqual([parent, modal, modalChild, modalGrandChild]);
   });
 
   describe('Layer Management (Modal Support)', () => {

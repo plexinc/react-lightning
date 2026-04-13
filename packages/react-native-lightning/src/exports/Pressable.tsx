@@ -1,39 +1,26 @@
-import type { KeyEvent } from '@plextv/react-lightning';
-import {
-  focusable,
-  Keys,
-  type LightningViewElement,
-} from '@plextv/react-lightning';
-import type {
-  DependencyList,
-  ForwardRefExoticComponent,
-  RefAttributes,
-} from 'react';
-import { useCallback, useState } from 'react';
+import type { ForwardRefExoticComponent, RefAttributes } from 'react';
+import { useState } from 'react';
 import type { PressableProps as RNPressableProps } from 'react-native';
+
+import type { KeyEvent } from '@plextv/react-lightning';
+import { focusable, Keys, type LightningViewElement } from '@plextv/react-lightning';
+
 import { useBlurHandler, useFocusHandler } from '../hooks/useFocusHandler';
 import { useLayoutHandler } from '../hooks/useLayoutHandler';
 import { createGestureResponderEvent } from '../utils/createGestureResponderEvent';
 import { View, type ViewProps } from './View';
 
-export type PressableProps = RNPressableProps &
-  RefAttributes<LightningViewElement>;
+export type PressableProps = RNPressableProps & RefAttributes<LightningViewElement>;
 
-function useEnterKeyHandler(
-  handler: (e: KeyEvent) => void,
-  dependencies: DependencyList,
-): (e: KeyEvent) => boolean {
-  return useCallback(
-    (e) => {
-      if (e.remoteKey === Keys.Enter) {
-        handler(e);
-        return false;
-      }
+function useEnterKeyHandler(handler: (e: KeyEvent) => void): (e: KeyEvent) => boolean {
+  return (e) => {
+    if (e.remoteKey === Keys.Enter) {
+      handler(e);
+      return false;
+    }
 
-      return true;
-    },
-    [...dependencies, handler],
-  );
+    return true;
+  };
 }
 
 export const Pressable: ForwardRefExoticComponent<PressableProps> = focusable<
@@ -62,35 +49,23 @@ export const Pressable: ForwardRefExoticComponent<PressableProps> = focusable<
     const handleBlur = useBlurHandler(onBlur);
     const handleLayout = useLayoutHandler(onLayout);
 
-    const handleKeyDown = useEnterKeyHandler(
-      (e) => {
-        onPressIn?.(createGestureResponderEvent(e, ref));
-        setState({ pressed: true });
-      },
-      [onPressIn, setState],
-    );
+    const handleKeyDown = useEnterKeyHandler((e) => {
+      onPressIn?.(createGestureResponderEvent(e, ref));
+      setState({ pressed: true });
+    });
 
-    const handleKeyUp = useEnterKeyHandler(
-      (e) => {
-        onPressOut?.(createGestureResponderEvent(e, ref));
-        setState({ pressed: false });
-      },
-      [onPressOut, setState],
-    );
+    const handleKeyUp = useEnterKeyHandler((e) => {
+      onPressOut?.(createGestureResponderEvent(e, ref));
+      setState({ pressed: false });
+    });
 
-    const handleKeyPress = useEnterKeyHandler(
-      (e) => {
-        onPress?.(createGestureResponderEvent(e, ref));
-      },
-      [onPress],
-    );
+    const handleKeyPress = useEnterKeyHandler((e) => {
+      onPress?.(createGestureResponderEvent(e, ref));
+    });
 
-    const handleLongPress = useEnterKeyHandler(
-      (e) => {
-        onLongPress?.(createGestureResponderEvent(e, ref));
-      },
-      [onLongPress],
-    );
+    const handleLongPress = useEnterKeyHandler((e) => {
+      onLongPress?.(createGestureResponderEvent(e, ref));
+    });
 
     const finalStyle = typeof style === 'function' ? style(state) : style;
 

@@ -1,16 +1,19 @@
 {
   "name": "@plextv/react-native-lightning",
-  "description": "@plextv/react-lightning implementation for react-native",
   "version": "0.4.0",
-  "author": "Plex Inc.",
+  "description": "@plextv/react-lightning implementation for react-native",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -20,7 +23,6 @@
     "./package.json": "./package.json"
   },
   "publishConfig": {
-    "provenance": true,
     "access": "public",
     "exports": {
       ".": {
@@ -28,7 +30,8 @@
         "import": "./dist/index.js"
       },
       "./package.json": "./package.json"
-    }
+    },
+    "provenance": true
   },
   "scripts": {
     "build": "tsdown --config-loader unrun",
@@ -37,9 +40,6 @@
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
-  "files": [
-    "dist"
-  ],
   "dependencies": {
     "@plextv/react-lightning-components": "workspace:*",
     "@plextv/react-lightning-plugin-css-transform": "workspace:*",
@@ -59,12 +59,12 @@
     "react": "^19.2.3",
     "react-native": "^0.82.1"
   },
+  "volta": {
+    "extends": "../../package.json"
+  },
   "peerDependencyRules": {
     "allowedVersions": {
       "react": "^19"
     }
-  },
-  "volta": {
-    "extends": "../../package.json"
   }
 }

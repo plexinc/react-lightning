@@ -1,3 +1,6 @@
+import type { Meta } from '@storybook/react-vite';
+import { useEffect, useRef, useState } from 'react';
+
 import {
   FocusGroup,
   type KeyEvent,
@@ -5,8 +8,7 @@ import {
   useFocusManager,
 } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
-import type { Meta } from '@storybook/react-vite';
-import { useEffect, useRef, useState } from 'react';
+
 import Button from '../../../components/Button';
 
 export default {
@@ -79,9 +81,7 @@ export const ModalExample = () => {
           <Button onKeyPress={handleKeyPress}>Open Modal</Button>
           <Button>---</Button>
         </Row>
-        {modalVisible ? (
-          <Modal dismissModal={() => setModalVisible(false)} />
-        ) : null}
+        {modalVisible ? <Modal dismissModal={() => setModalVisible(false)} /> : null}
       </Column>
     </FocusGroup>
   );

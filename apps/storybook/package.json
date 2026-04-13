@@ -1,19 +1,18 @@
 {
   "name": "@plextv/react-lightning-storybook",
-  "description": "Documentation for react-lightning",
   "version": "0.4.0",
-  "author": "Plex Inc.",
+  "private": true,
+  "description": "Documentation for react-lightning",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
-  "packageManager": "pnpm@10.12.3",
   "type": "module",
-  "private": true,
   "scripts": {
     "build": "storybook build --output-dir ./dist",
     "clean": "del ./dist",
@@ -42,11 +41,13 @@
     "@plextv/vite-plugin-react-native-lightning": "workspace:*",
     "@plextv/vite-plugin-react-reanimated-lightning": "workspace:*",
     "@repo/configs": "workspace:*",
-    "@types/react": "19.2.8"
+    "@types/react": "19.2.8",
+    "babel-plugin-react-compiler": "1.0.0"
   },
   "volta": {
     "extends": "../../package.json"
   },
+  "packageManager": "pnpm@10.12.3",
   "depcheck": {
     "ignoreMatches": [
       "@storybook/**",

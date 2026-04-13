@@ -1,16 +1,16 @@
 {
   "name": "react-lightning",
+  "private": true,
   "description": "React reconciler for rendering React apps with Lightning.js",
-  "author": "Plex Inc.",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
-  "private": true,
   "type": "module",
   "scripts": {
     "build": "turbo build",
@@ -23,8 +23,8 @@
     "ci:publish": "pnpm run build && pnpm exec changeset publish",
     "ci:version": "pnpm exec changeset version && pnpm install --no-frozen-lockfile",
     "dev": "turbo dev",
-    "lint": "biome check",
-    "lint:format": "biome check --write",
+    "lint": "oxlint",
+    "lint:format": "oxlint --fix --fix-suggestions && oxfmt",
     "nuke": "pnpm run clean && pnpx npkill -x -y -D && pnpm install",
     "test": "pnpm run test:unit",
     "test:unit": "turbo test:unit",
@@ -32,7 +32,6 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.11",
     "@changesets/cli": "2.29.8",
     "@repo/configs": "workspace:*",
     "@types/node": "25.0.9",
@@ -41,6 +40,9 @@
     "glob": "13.0.0",
     "husky": "9.1.7",
     "listr2": "10.0.0",
+    "oxfmt": "0.35.0",
+    "oxlint": "1.50.0",
+    "oxlint-tsgolint": "0.15.0",
     "tsdown": "0.19.0",
     "tsx": "4.21.0",
     "turbo": "2.7.5",
@@ -51,7 +53,6 @@
     "vitest": "4.0.17",
     "yaml": "2.8.2"
   },
-  "packageManager": "pnpm@10.12.3",
   "engines": {
     "node": ">=22"
   },
@@ -59,6 +60,7 @@
     "node": "24.11.1",
     "pnpm": "10.12.3"
   },
+  "packageManager": "pnpm@10.12.3",
   "depcheck": {
     "ignoreMatches": [
       "del-cli",

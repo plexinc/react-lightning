@@ -1,26 +1,14 @@
-import {
-  type LightningViewElement,
-  useCombinedRef,
-  useFocus,
-} from '@plextv/react-lightning';
-import {
-  type ForwardRefExoticComponent,
-  forwardRef,
-  type RefAttributes,
-} from 'react';
-import type {
-  ButtonProps as RNButtonProps,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import { type ForwardRefExoticComponent, forwardRef, type RefAttributes } from 'react';
+import type { ButtonProps as RNButtonProps, StyleProp, ViewStyle } from 'react-native';
+
+import { type LightningViewElement, useCombinedRef, useFocus } from '@plextv/react-lightning';
+
 import { Pressable } from './Pressable';
 import { Text } from './Text';
 
 export type ButtonProps = RNButtonProps &
   RefAttributes<LightningViewElement> & {
-    style?:
-      | StyleProp<ViewStyle>
-      | ((props: { pressed: boolean }) => StyleProp<ViewStyle>);
+    style?: StyleProp<ViewStyle> | ((props: { pressed: boolean }) => StyleProp<ViewStyle>);
   };
 
 export const Button: ForwardRefExoticComponent<ButtonProps> = forwardRef<

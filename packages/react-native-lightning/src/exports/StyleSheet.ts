@@ -7,9 +7,7 @@ export function create(
 export function flatten<T>(...args: T[]): Exclude<T, false | null | undefined> {
   return Object.assign(
     {},
-    ...args
-      .filter((obj) => obj != null && obj !== false)
-      .flat(Number.POSITIVE_INFINITY),
+    ...args.filter((obj) => obj != null && obj !== false).flat(Number.POSITIVE_INFINITY),
   );
 }
 
@@ -20,8 +18,8 @@ export function compose<T>(style1: T, style2: T): T | NonNullable<T>[] {
   return style1 || style2;
 }
 
-export function setStyleAttributePreprocessor(...args: unknown[]): void {
-  console.log('>> setStyleAttributePreprocessor', args);
+export function setStyleAttributePreprocessor(): void {
+  // no-op
 }
 
 export const hairlineWidth = 1;

@@ -1,10 +1,8 @@
-import type { LightningElement, Plugin } from '@plextv/react-lightning';
 import type { SetOptional } from 'type-fest';
 
-function getChildrenSize(
-  children: LightningElement[],
-  dimensionProperty: 'w' | 'h',
-) {
+import type { LightningElement, Plugin } from '@plextv/react-lightning';
+
+function getChildrenSize(children: LightningElement[], dimensionProperty: 'w' | 'h') {
   let totalSize = 0;
 
   for (let i = 0; i < children.length; i++) {
@@ -22,10 +20,7 @@ function getChildrenSize(
   return totalSize;
 }
 
-function getAvailableSize(
-  instance: LightningElement,
-  dimensionProperty: 'w' | 'h',
-) {
+function getAvailableSize(instance: LightningElement, dimensionProperty: 'w' | 'h') {
   let size = instance.node[dimensionProperty];
 
   if (size === 0) {
@@ -59,8 +54,7 @@ function applyFlexLayout(instance: LightningElement) {
 
   const flexDirection = style.flexDirection || 'row';
   const justifyContent = style.justifyContent || 'flex-start';
-  const isHorizontal =
-    flexDirection === 'row' || flexDirection === 'row-reverse';
+  const isHorizontal = flexDirection === 'row' || flexDirection === 'row-reverse';
   const dimensionProperty = isHorizontal ? 'w' : 'h';
   const axisProperty = isHorizontal ? 'x' : 'y';
 
@@ -111,8 +105,7 @@ function applyFlexLayout(instance: LightningElement) {
 
   if (justifyContent === 'space-around') {
     const aroundStartSpace =
-      (availableSize - childrenSize) / (children.length + 1) / children.length +
-      1;
+      (availableSize - childrenSize) / (children.length + 1) / children.length + 1;
 
     currentPosition += aroundStartSpace;
     availableSize -= aroundStartSpace * 2;
@@ -155,11 +148,7 @@ function canFlexCanBeApplied(
   instance: SetOptional<LightningElement, 'node'> | null,
   isChild = false,
 ): instance is LightningElement {
-  if (
-    instance === null ||
-    instance === undefined ||
-    'node' in instance === false
-  ) {
+  if (instance === null || instance === undefined || 'node' in instance === false) {
     return false;
   }
 
@@ -177,19 +166,11 @@ function canFlexCanBeApplied(
     return false;
   }
 
-  if (
-    (style?.flexDirection === 'row' ||
-      style?.flexDirection === 'row-reverse') &&
-    style.w
-  ) {
+  if ((style?.flexDirection === 'row' || style?.flexDirection === 'row-reverse') && style.w) {
     return true;
   }
 
-  if (
-    (style?.flexDirection === 'column' ||
-      style?.flexDirection === 'column-reverse') &&
-    style.h
-  ) {
+  if ((style?.flexDirection === 'column' || style?.flexDirection === 'column-reverse') && style.h) {
     return true;
   }
 
@@ -226,11 +207,7 @@ export default function flexPlugin(): Plugin<LightningElement> {
 
   return {
     onCreateInstance(instance, props) {
-      if (
-        props === undefined ||
-        props.style == null ||
-        props.style === undefined
-      ) {
+      if (props === undefined || props.style == null || props.style === undefined) {
         return;
       }
 
@@ -256,18 +233,12 @@ export default function flexPlugin(): Plugin<LightningElement> {
           }
         }),
         instance.on('childInserted', (child) => {
-          if (
-            canFlexCanBeApplied(child, true) &&
-            canFlexCanBeApplied(child.parent)
-          ) {
+          if (canFlexCanBeApplied(child, true) && canFlexCanBeApplied(child.parent)) {
             queueUpdate(child.parent);
           }
         }),
         instance.on('childRemoved', (child) => {
-          if (
-            canFlexCanBeApplied(child, true) &&
-            canFlexCanBeApplied(child.parent)
-          ) {
+          if (canFlexCanBeApplied(child, true) && canFlexCanBeApplied(child.parent)) {
             queueUpdate(child.parent);
           }
         }),

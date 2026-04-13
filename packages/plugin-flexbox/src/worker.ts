@@ -30,9 +30,7 @@ function applyNodeOperations(buffer: ArrayBuffer) {
         const parentId = dataView.readUint32();
         const childId = dataView.readUint32();
         const index =
-          method === NodeOperations.AddChildNodeAtIndex
-            ? dataView.readUint32()
-            : undefined;
+          method === NodeOperations.AddChildNodeAtIndex ? dataView.readUint32() : undefined;
 
         manager.addChildNode(parentId, childId, index);
         break;
@@ -83,16 +81,9 @@ self.onmessage = async (
       try {
         if (typeof manager[method] === 'function') {
           // @ts-expect-error Dynamic method call
-          let result: Promise<unknown> | null | unknown = manager[method].apply(
-            manager,
-            args,
-          );
+          let result: Promise<unknown> | null | unknown = manager[method].apply(manager, args);
 
-          if (
-            result != null &&
-            typeof result === 'object' &&
-            'then' in result
-          ) {
+          if (result != null && typeof result === 'object' && 'then' in result) {
             result = await (result as Promise<unknown>);
           }
 
@@ -103,8 +94,7 @@ self.onmessage = async (
           self.postMessage({ id, error: `Method ${method} is not a function` });
         }
       } catch (error) {
-        const message =
-          typeof error === 'string' ? error : (error as Error).message;
+        const message = typeof error === 'string' ? error : (error as Error).message;
 
         self.postMessage({ id, error: message });
       }

@@ -1,5 +1,7 @@
-import type { LightningElementStyle } from '@plextv/react-lightning';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { LightningElementStyle } from '@plextv/react-lightning';
+
 import type { YogaOptions } from './types/YogaOptions';
 import { SimpleDataView } from './util/SimpleDataView';
 import { YogaManager } from './YogaManager';
@@ -124,8 +126,7 @@ describe('YogaManager', () => {
         },
         {
           errata: 'absolute-position-without-insets' as const,
-          expected:
-            mockYoga.ERRATA_ABSOLUTE_POSITION_WITHOUT_INSETS_EXCLUDES_PADDING,
+          expected: mockYoga.ERRATA_ABSOLUTE_POSITION_WITHOUT_INSETS_EXCLUDES_PADDING,
         },
         { errata: 'none' as const, expected: mockYoga.ERRATA_NONE },
       ];
@@ -258,11 +259,7 @@ describe('YogaManager', () => {
 
         yogaManager.on('render', (buffer) => {
           expect(buffer).toBeInstanceOf(ArrayBuffer);
-          expect(mockNode.calculateLayout).toHaveBeenCalledWith(
-            1920,
-            1080,
-            mockYoga.DIRECTION_LTR,
-          );
+          expect(mockNode.calculateLayout).toHaveBeenCalledWith(1920, 1080, mockYoga.DIRECTION_LTR);
           resolve();
         });
 
@@ -360,9 +357,7 @@ describe('YogaManager', () => {
       yogaManager.applyStyle(elementId, style);
 
       // applyReactPropsToYoga should be called with the mocked function
-      const { default: applyReactPropsToYoga } = await import(
-        './util/applyReactPropsToYoga'
-      );
+      const { default: applyReactPropsToYoga } = await import('./util/applyReactPropsToYoga');
       expect(applyReactPropsToYoga).toHaveBeenCalledWith(
         mockYoga,
         mockYogaOptions,
@@ -377,15 +372,11 @@ describe('YogaManager', () => {
     });
 
     it('should handle style application to non-existent node', () => {
-      const consoleWarnSpy = vi
-        .spyOn(console, 'warn')
-        .mockImplementation(() => {});
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       yogaManager.applyStyle(999, {});
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Yoga node with ID 999 not found.',
-      );
+      expect(consoleWarnSpy).toHaveBeenCalledWith('Yoga node with ID 999 not found.');
       consoleWarnSpy.mockRestore();
     });
 
@@ -403,9 +394,7 @@ describe('YogaManager', () => {
       yogaManager.addNode(elementId);
       yogaManager.applyStyle(elementId, style);
 
-      const { applyFlexPropToYoga } = await import(
-        './util/applyReactPropsToYoga'
-      );
+      const { applyFlexPropToYoga } = await import('./util/applyReactPropsToYoga');
       expect(applyFlexPropToYoga).toHaveBeenCalledWith(
         mockYoga,
         mockYogaOptions,
@@ -432,9 +421,7 @@ describe('YogaManager', () => {
       yogaManager.addNode(456);
       yogaManager.applyStyles(styles);
 
-      const { default: applyReactPropsToYoga } = await import(
-        './util/applyReactPropsToYoga'
-      );
+      const { default: applyReactPropsToYoga } = await import('./util/applyReactPropsToYoga');
       expect(applyReactPropsToYoga).toHaveBeenCalledTimes(2);
     });
   });

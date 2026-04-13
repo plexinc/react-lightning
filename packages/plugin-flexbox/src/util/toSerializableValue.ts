@@ -17,7 +17,7 @@ function isPrimitiveValue(
   );
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: Any value can be passed in
+// oxlint-disable-next-line typescript/no-explicit-any -- Any value can be passed in
 export function toSerializableValue<T>(key: string, value: any): T | null {
   const valueType = typeof value;
 
@@ -27,11 +27,7 @@ export function toSerializableValue<T>(key: string, value: any): T | null {
     // Only transforms can be objects
     if (key === 'transform') {
       return value as T;
-    } else if (
-      value != null &&
-      'current' in value &&
-      isPrimitiveValue(typeof value.current)
-    ) {
+    } else if (value != null && 'current' in value && isPrimitiveValue(typeof value.current)) {
       // ...unless it's a reanimated animation. Unfortunately, there's no real
       // good way to serialize animations. There's also no real good way to
       // keep this logic in the reanimated plugin, so we'll just have to do it

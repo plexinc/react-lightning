@@ -1,6 +1,8 @@
+import { type FC, useCallback, useState } from 'react';
+
 import { type LightningElement, useFocus } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
-import { type FC, useCallback, useState } from 'react';
+
 import Button from '../components/Button';
 
 const TEXT_WIDTH = 1076;

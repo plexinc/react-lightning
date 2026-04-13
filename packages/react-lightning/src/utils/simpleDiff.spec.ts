@@ -1,5 +1,6 @@
 import { createElement } from 'react';
 import { describe, expect, it } from 'vitest';
+
 import { simpleDiff } from './simpleDiff';
 
 describe('simpleDiff', () => {
@@ -82,10 +83,7 @@ describe('simpleDiff', () => {
       const first = { value: null, other: undefined };
       const second = { value: 'test', other: undefined };
 
-      const result = simpleDiff<{ value: string | null; other: undefined }>(
-        first,
-        second,
-      );
+      const result = simpleDiff<{ value: string | null; other: undefined }>(first, second);
 
       expect(result).toEqual({ value: 'test' });
     });

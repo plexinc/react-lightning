@@ -1,5 +1,7 @@
-import type { LightningElementStyle } from '@plextv/react-lightning';
 import { EventEmitter } from 'tseep';
+
+import type { LightningElementStyle } from '@plextv/react-lightning';
+
 import { NodeOperations } from './types/NodeOperations';
 import { SimpleDataView } from './util/SimpleDataView';
 import { toSerializableValue } from './util/toSerializableValue';
@@ -8,12 +10,10 @@ import type { YogaManager, YogaManagerEvents } from './YogaManager';
 
 const DELAY_DURATION = 1;
 
-// biome-ignore lint/suspicious/noExplicitAny: Basic type for function signatures
+// oxlint-disable-next-line typescript/no-explicit-any -- Basic type for function signatures
 type AnyFunc = (...args: any[]) => any;
-// biome-ignore lint/suspicious/noExplicitAny: We don't care about the first parameter type here
-type ParametersExceptFirst<T> = T extends (first: any, ...args: infer U) => any
-  ? U
-  : never;
+// oxlint-disable-next-line typescript/no-explicit-any -- We don't care about the first parameter type here
+type ParametersExceptFirst<T> = T extends (first: any, ...args: infer U) => any ? U : never;
 
 export type Workerized<T> = {
   [K in keyof T]: T[K] extends AnyFunc
@@ -23,10 +23,7 @@ export type Workerized<T> = {
     : never;
 };
 
-function delay<T extends (...args: unknown[]) => void | Promise<void>>(
-  fn: T,
-  delay: number,
-): T {
+function delay<T extends (...args: unknown[]) => void | Promise<void>>(fn: T, delay: number): T {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   let latestArgs: unknown[];
 
@@ -52,16 +49,8 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
   let _stylesToSend: Record<number, Partial<LightningElementStyle>> = {};
   let _numStylesToSend = 0;
   let _needsRender = false;
-  const _childOperations = new SimpleDataView(
-    undefined,
-    undefined,
-    flushChildOperations,
-  );
-  const _sizeRequests = new SimpleDataView(
-    undefined,
-    undefined,
-    flushSizeRequests,
-  );
+  const _childOperations = new SimpleDataView(undefined, undefined, flushChildOperations);
+  const _sizeRequests = new SimpleDataView(undefined, undefined, flushSizeRequests);
   let _sizeRequestPromise: Promise<void> | null = null;
 
   function flushSendStyles() {
@@ -161,15 +150,11 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
         break;
       case 'addChildNode':
         if (childId === undefined) {
-          throw new Error(
-            'Child ID must be provided for addChildNode operation',
-          );
+          throw new Error('Child ID must be provided for addChildNode operation');
         }
 
         _childOperations.writeUint8(
-          index === undefined
-            ? NodeOperations.AddChildNode
-            : NodeOperations.AddChildNodeAtIndex,
+          index === undefined ? NodeOperations.AddChildNode : NodeOperations.AddChildNodeAtIndex,
         );
         _childOperations.writeUint32(elementOrParentId);
         _childOperations.writeUint32(childId);
@@ -210,9 +195,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
             const callee = _callees[callbackId];
 
             if (!callee) {
-              console.error(
-                `No handler found for size request id: ${callbackId}`,
-              );
+              console.error(`No handler found for size request id: ${callbackId}`);
               continue;
             }
 
@@ -264,9 +247,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     });
   }
 
-  worker.onmessage = (
-    event: MessageEvent<{ id: string; result?: unknown; error?: string }>,
-  ) => {
+  worker.onmessage = (event: MessageEvent<{ id: string; result?: unknown; error?: string }>) => {
     const { id, result, error } = event.data;
 
     if (id === 'render') {
@@ -308,11 +289,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
       } else if (prop === 'applyStyle') {
         // Special case for applyStyle
         return applyStyle;
-      } else if (
-        prop === 'addNode' ||
-        prop === 'removeNode' ||
-        prop === 'addChildNode'
-      ) {
+      } else if (prop === 'addNode' || prop === 'removeNode' || prop === 'addChildNode') {
         return (...args: ParametersExceptFirst<typeof nodeOperation>) =>
           nodeOperation(prop, ...args);
       } else if (prop === 'getClampedSize') {
@@ -341,5 +318,4 @@ function getId(): number {
   return ++count;
 }
 
-export default (): Workerized<YogaManager> =>
-  wrapWorker<YogaManager>(new Worker());
+export default (): Workerized<YogaManager> => wrapWorker<YogaManager>(new Worker());

@@ -1,5 +1,6 @@
 import { createRef, type FC, useCallback } from 'react';
 import { VirtualizedList } from 'react-native';
+
 import ScrollItem from '../components/ScrollItem';
 
 export const VirtualizedListTest: FC = () => {

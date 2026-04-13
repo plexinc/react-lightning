@@ -1,6 +1,7 @@
-import fontGen from '@plextv/vite-plugin-msdf-fontgen';
 import react from '@vitejs/plugin-react';
 import type { InlineConfig } from 'vite';
+
+import fontGen from '@plextv/vite-plugin-msdf-fontgen';
 
 const config: InlineConfig = {
   plugins: [

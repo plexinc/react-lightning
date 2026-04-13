@@ -1,7 +1,9 @@
+import { type JSX, useMemo } from 'react';
+
 import { Canvas, type RenderOptions } from '@plextv/react-lightning';
 import { plugin as flexPlugin } from '@plextv/react-lightning-plugin-flexbox';
 import { getReactNativePlugins } from '@plextv/react-native-lightning';
-import { type JSX, useMemo } from 'react';
+
 import { keyMap } from '../../keyMap';
 import { DefaultStoryHeight, DefaultStoryWidth } from '../helpers/constants';
 
@@ -11,11 +13,7 @@ type Props = {
   canvasOptions?: Partial<RenderOptions>;
 };
 
-export function StorybookDecorator({
-  story: Story,
-  tags,
-  canvasOptions,
-}: Props) {
+export function StorybookDecorator({ story: Story, tags, canvasOptions }: Props) {
   const options: RenderOptions = useMemo(
     () => ({
       fpsUpdateInterval: 1000,
@@ -26,12 +24,8 @@ export function StorybookDecorator({
         {
           type: 'sdf',
           fontFamily: 'sans-serif',
-          atlasUrl:
-            import.meta.env.BASE_URL +
-            'fonts/ChocolateClassicalSans-Regular.msdf.png',
-          atlasDataUrl:
-            import.meta.env.BASE_URL +
-            'fonts/ChocolateClassicalSans-Regular.msdf.json',
+          atlasUrl: import.meta.env.BASE_URL + 'fonts/ChocolateClassicalSans-Regular.msdf.png',
+          atlasDataUrl: import.meta.env.BASE_URL + 'fonts/ChocolateClassicalSans-Regular.msdf.json',
         },
       ],
       shaders: [

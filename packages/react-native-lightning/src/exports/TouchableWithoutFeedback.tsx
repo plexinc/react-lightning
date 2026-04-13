@@ -1,21 +1,17 @@
-import {
-  type LightningViewElement,
-  useCombinedRef,
-  useFocus,
-} from '@plextv/react-lightning';
 import { type ForwardRefExoticComponent, forwardRef } from 'react';
 import type { TouchableWithoutFeedbackProps } from 'react-native';
+
+import { type LightningViewElement, useCombinedRef, useFocus } from '@plextv/react-lightning';
+
 import { Pressable } from './Pressable';
 
 export const TouchableWithoutFeedback: ForwardRefExoticComponent<TouchableWithoutFeedbackProps> =
-  forwardRef<LightningViewElement, TouchableWithoutFeedbackProps>(
-    ({ onLayout, ...props }, ref) => {
-      const { ref: focusRef } = useFocus();
-      const combinedRef = useCombinedRef(ref, focusRef);
+  forwardRef<LightningViewElement, TouchableWithoutFeedbackProps>(({ onLayout, ...props }, ref) => {
+    const { ref: focusRef } = useFocus();
+    const combinedRef = useCombinedRef(ref, focusRef);
 
-      return <Pressable ref={combinedRef} {...props} onLayout={onLayout} />;
-    },
-  );
+    return <Pressable ref={combinedRef} {...props} onLayout={onLayout} />;
+  });
 
 TouchableWithoutFeedback.displayName = 'TouchableWithoutFeedback';
 

@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "insertFinalNewline": true,
+  "trailingComma": "all",
+  "experimentalSortImports": {
+    "internalPattern": ["@plextv/", "@repo/"],
+    "partitionByNewline": false
+  },
+  "ignorePatterns": [".changeset", "**/public", "**/dist"]
+}

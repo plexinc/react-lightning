@@ -8,9 +8,7 @@ const DefaultTimingConfig = {
   reduceMotion: ReduceMotion.System,
 };
 
-export function createTimingAnimation(
-  config?: WithTimingConfig,
-): AnimationSettings {
+export function createTimingAnimation(config?: WithTimingConfig): AnimationSettings {
   return {
     duration: config?.duration ?? DefaultTimingConfig.duration,
     easing: 'linear',

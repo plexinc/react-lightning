@@ -13,42 +13,44 @@ export type ScrollItemProps = {
   altColor: number;
 };
 
-const ScrollItem = focusable<ScrollItemProps>(
+export const ScrollItem = focusable<ScrollItemProps>(
   ({ color, altColor, index, focused, horizontal, width = 200, height = 75, children }, ref) => {
-    const isImage = useRef(Math.random() > 0.5).current;
+    const isImage = useRef(Math.random() < 0.5).current;
+    const multiplier = index % 3 === 0 ? (horizontal ? 1.25 : 1.5) : 1;
     const finalColor = index % 3 === 0 ? altColor : color;
-    const finalWidth = Math.round(horizontal ? width : width);
-    const finalHeight = Math.round(horizontal ? height : height);
+    const finalWidth = Math.round(horizontal ? width * multiplier : width);
+    const finalHeight = Math.round(horizontal ? height : height * multiplier);
     const imageUrl = isImage
-      ? `https://picsum.photos/${finalWidth}/${finalHeight}?seed=${index}`
+      ? `https://picsum.photos/${horizontal ? finalWidth : finalWidth + 50}/${horizontal ? finalHeight + 25 : finalHeight}?seed=${index}`
       : null;
 
     return (
       <lng-view
         ref={ref}
         style={{
-          w: finalWidth,
-          h: finalHeight,
+          w: imageUrl ? undefined : finalWidth,
+          h: imageUrl ? undefined : finalHeight,
           border: {
             w: focused ? 0 : 1,
             color: finalColor,
           },
           color: focused ? finalColor : 0x00000000,
+          display: 'flex',
+          flexGrow: 1,
+          flexShrink: 1,
         }}
       >
         {imageUrl ? (
           <lng-image
             src={imageUrl}
             style={{
-              alpha: focused ? 1 : 0.25,
-              w: finalWidth - 2,
-              h: finalHeight - 2,
+              alpha: focused ? 1 : 0.2,
               x: 1,
               y: 1,
             }}
             transition={{
               alpha: {
-                duration: 250,
+                duration: 500,
                 easing: 'ease-in-out',
               },
             }}
@@ -72,4 +74,4 @@ const ScrollItem = focusable<ScrollItemProps>(
   },
 );
 
-export default ScrollItem;
+ScrollItem.displayName = 'ScrollItem';

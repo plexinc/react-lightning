@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+
 import AnimatedImage from './AnimatedImage';
 
 interface Props {
@@ -12,11 +13,7 @@ const PosterCollection: FC<Props> = ({ posterCount }) => {
     posters.push(<AnimatedImage key={i} />);
   }
 
-  return (
-    <lng-view style={{ position: 'absolute', width: 1670, height: 1080 }}>
-      {posters}
-    </lng-view>
-  );
+  return <lng-view style={{ position: 'absolute', width: 1670, height: 1080 }}>{posters}</lng-view>;
 };
 
 export { PosterCollection };

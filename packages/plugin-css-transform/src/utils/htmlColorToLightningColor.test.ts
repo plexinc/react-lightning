@@ -1,5 +1,6 @@
 import type { ColorValue } from 'react-native';
 import { describe, expect, it } from 'vitest';
+
 import { htmlColorToLightningColor } from './htmlColorToLightningColor';
 
 describe('htmlColorToLightningColor', () => {

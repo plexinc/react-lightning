@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+
 import depcheck, { type Options } from 'depcheck';
 import { sync as globSync } from 'glob';
 import { Listr, type ListrTask } from 'listr2';
@@ -10,7 +11,7 @@ const rootDependencies: string[] = [];
 
 const defaultDepcheckOptions: Options = {
   ignorePatterns: ['dist', 'node_modules'],
-  detectors: [...Object.values(depcheck.detector)],
+  detectors: Object.values(depcheck.detector),
 };
 
 type Context = {
@@ -67,9 +68,7 @@ function createCheckTask(
   return {
     title: `Checking ${title}`,
     task: (ctx, task) => {
-      const errorDependencies = isError
-        ? dependencies.filter(isError)
-        : dependencies;
+      const errorDependencies = isError ? dependencies.filter(isError) : dependencies;
 
       if (errorDependencies.length) {
         task.title = `${title[0]?.toUpperCase()}${title.slice(1)} (${errorDependencies.length})`;
@@ -108,8 +107,10 @@ const listr = new Listr<Context>(
               // Slightly different task handling for root. We want to check
               // if sub-packages are using dependencies for any of the unused
               // root packages
-              const { dependencies, devDependencies, missing, using } =
-                await depcheck(packageJson.path, packageJson.depcheck);
+              const { dependencies, devDependencies, missing, using } = await depcheck(
+                packageJson.path,
+                packageJson.depcheck,
+              );
               const missingDependencies = Object.keys(missing);
 
               if (packageJson.isRoot) {

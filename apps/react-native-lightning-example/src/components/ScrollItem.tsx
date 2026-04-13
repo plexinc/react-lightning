@@ -1,7 +1,8 @@
-import { focusable } from '@plextv/react-lightning';
-import { View } from '@plextv/react-native-lightning';
 import { type ReactNode, useEffect, useMemo } from 'react';
 import { type ColorValue, Text } from 'react-native';
+
+import { focusable } from '@plextv/react-lightning';
+import { View } from '@plextv/react-native-lightning';
 
 export type ScrollItemProps = {
   children: ReactNode;
@@ -14,10 +15,7 @@ export type ScrollItemProps = {
 };
 
 const ScrollItem = focusable<ScrollItemProps, View>(
-  (
-    { color, altColor, image, index, horizontal, focused, children, onFocused },
-    ref,
-  ) => {
+  ({ color, altColor, image, index, horizontal, focused, children, onFocused }, ref) => {
     useEffect(() => {
       if (focused) {
         onFocused(index);

@@ -1,4 +1,5 @@
 import { describe, expect, it, suite } from 'vitest';
+
 import { Direction } from '../focus/Direction';
 import type { LightningElement, Rect } from '../types';
 import { findClosestElement, getOverlap } from './findClosestElement';
@@ -13,13 +14,11 @@ function createMockElement(id: number, dimensions: Rect): LightningElement {
     children: [],
     node: { ...dimensions },
     focusable: true,
+    focusableIntent: true,
     insertChild(this: LightningElement, child: LightningElement) {
       this.children.push(child);
     },
-    getRelativePosition(
-      this: LightningElement,
-      relativeElement?: LightningElement,
-    ) {
+    getRelativePosition(this: LightningElement, relativeElement?: LightningElement) {
       const relativeX = relativeElement?.node?.x ?? 0;
       const relativeY = relativeElement?.node?.y ?? 0;
 
@@ -69,12 +68,7 @@ function runTestsOnElements(
       throw new Error(`Element ${source} not found.`);
     }
 
-    const closest = findClosestElement(
-      sourceElement,
-      childElements,
-      elements.root,
-      direction,
-    );
+    const closest = findClosestElement(sourceElement, childElements, elements.root, direction);
 
     it(`the ${Direction[direction]} of element ${source} it should be ${expected}`, () => {
       expect(closest?.id ?? null).toBe(expected);
@@ -334,5 +328,91 @@ suite('getOverlap', () => {
     expect(getOverlap(Direction.Right, a, b)).toEqual(25);
     expect(getOverlap(Direction.Down, a, b)).toEqual(25);
     expect(getOverlap(Direction.Left, a, b)).toEqual(0);
+  });
+
+  describe('allowOffscreen', () => {
+    it('should skip non-visible elements by default', () => {
+      const elements = createLayout(400, 200, [
+        { x: 0, y: 0, w: 200, h: 200 },
+        { x: 200, y: 0, w: 200, h: 200 },
+      ]);
+
+      // Make element 2 non-visible (focusable returns false, but focusableIntent is true)
+      Object.assign(elements[2], { focusable: false, focusableIntent: true });
+
+      const closest = findClosestElement(
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- test setup guarantees existence
+        elements[1]!,
+        elements.root.children,
+        elements.root,
+        Direction.Right,
+      );
+
+      expect(closest).toBeNull();
+    });
+
+    it('should allow focusing non-visible elements when allowOffscreen is true', () => {
+      const elements = createLayout(400, 200, [
+        { x: 0, y: 0, w: 200, h: 200 },
+        { x: 200, y: 0, w: 200, h: 200 },
+      ]);
+
+      // Make element 2 non-visible but with focusableIntent
+      Object.assign(elements[2], { focusable: false, focusableIntent: true });
+
+      const closest = findClosestElement(
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- test setup guarantees existence
+        elements[1]!,
+        elements.root.children,
+        elements.root,
+        Direction.Right,
+        true,
+      );
+
+      expect(closest?.id).toBe(2);
+    });
+
+    it('should skip elements with zero dimensions when allowOffscreen is true', () => {
+      const elements = createLayout(400, 200, [
+        { x: 0, y: 0, w: 200, h: 200 },
+        { x: 200, y: 0, w: 0, h: 0 },
+      ]);
+
+      // Zero-dimension elements should still be skipped even with allowOffscreen
+      // because they have no spatial position to navigate to
+      Object.assign(elements[2], { focusableIntent: true });
+
+      const closest = findClosestElement(
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- test setup guarantees existence
+        elements[1]!,
+        elements.root.children,
+        elements.root,
+        Direction.Right,
+        true,
+      );
+
+      expect(closest).toBeNull();
+    });
+
+    it('should not focus elements without focusableIntent when allowOffscreen is true', () => {
+      const elements = createLayout(400, 200, [
+        { x: 0, y: 0, w: 200, h: 200 },
+        { x: 200, y: 0, w: 200, h: 200 },
+      ]);
+
+      // Element has neither focusable nor focusableIntent
+      Object.assign(elements[2], { focusable: false, focusableIntent: false });
+
+      const closest = findClosestElement(
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- test setup guarantees existence
+        elements[1]!,
+        elements.root.children,
+        elements.root,
+        Direction.Right,
+        true,
+      );
+
+      expect(closest).toBeNull();
+    });
   });
 });

@@ -61,9 +61,7 @@
 
   function allocHelper() {
     if (helpers.length > 0) return helpers.pop() as Worker;
-    const h = new Worker(
-      `data:application/javascript,${encodeURIComponent(helperCode)}`,
-    );
+    const h = new Worker(`data:application/javascript,${encodeURIComponent(helperCode)}`);
     return h;
   }
 
@@ -94,11 +92,11 @@
 
     const index = index_ | 0;
     const value = value_ | 0;
-    const timeout =
-      timeout_ === undefined ? Number.POSITIVE_INFINITY : Number(timeout_);
+    const timeout = timeout_ === undefined ? Number.POSITIVE_INFINITY : Number(timeout_);
 
     // Range checking for the index.
 
+    // oxlint-disable-next-line no-unused-expressions -- intentional range check; throws RangeError if index is out of bounds
     ia[index];
 
     // Optimization, avoid the helper thread in this common case.

@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { unlink, writeFile } from 'node:fs/promises';
+
 import type { OptionsInput } from './types';
 
 export async function ensureConfigsExist({
@@ -34,9 +35,7 @@ export async function ensureConfigsExist({
       await writeFile(overridesFile, JSON.stringify(overrides, null, 2));
       cleanupFiles.push(overridesFile);
     } else {
-      console.info(
-        '  Overrides file not found and no overrides provided. Skipping.',
-      );
+      console.info('  Overrides file not found and no overrides provided. Skipping.');
     }
   }
 

@@ -1,5 +1,7 @@
-import { Column } from '@plextv/react-lightning-components';
 import { type FC, useCallback, useState } from 'react';
+
+import { Column } from '@plextv/react-lightning-components';
+
 import Button from '../components/Button';
 import { PosterCollection } from '../components/PosterCollection';
 
@@ -16,9 +18,7 @@ export const AnimationPage: FC = () => {
   return (
     <>
       <Column focusable style={{ gap: 20, zIndex: 10 }}>
-        <lng-text style={{ color: 0xffffffff, fontSize: 50 }}>
-          Poster Count: {numPosters}
-        </lng-text>
+        <lng-text style={{ color: 0xffffffff, fontSize: 50 }}>Poster Count: {numPosters}</lng-text>
         <Column focusable style={{ w: 200, gap: 10 }}>
           <Button onPress={addPoster}>Add image</Button>
           <Button onPress={removePoster}>Remove image</Button>

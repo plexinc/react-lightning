@@ -1,11 +1,11 @@
 import type { GestureResponderEvent } from 'react-native';
 
 export function createGestureResponderEvent(
-  // biome-ignore lint/suspicious/noExplicitAny: TODO
+  // oxlint-disable-next-line typescript/no-explicit-any -- TODO
   originalEvent?: any,
-  // biome-ignore lint/suspicious/noExplicitAny: TODO
+  // oxlint-disable-next-line typescript/no-explicit-any -- TODO
   currentTarget?: any,
-  // biome-ignore lint/suspicious/noExplicitAny: TODO
+  // oxlint-disable-next-line typescript/no-explicit-any -- TODO
   originalTarget?: any,
 ): GestureResponderEvent {
   return {

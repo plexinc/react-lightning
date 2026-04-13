@@ -1,8 +1,6 @@
-import {
-  LightningRootContext,
-  type LightningTextElementStyle,
-} from '@plextv/react-lightning';
-import { type FC, useCallback, useContext, useEffect, useState } from 'react';
+import { type FC, useContext, useEffect, useState } from 'react';
+
+import { LightningRootContext, type LightningTextElementStyle } from '@plextv/react-lightning';
 
 export interface FPSMonitorProps {
   prefix?: string;
@@ -27,21 +25,19 @@ const FPSMonitor: FC<FPSMonitorProps> = ({
   const [fps, setFps] = useState(0);
   const [color, setColor] = useState(0);
 
-  const updateFps = useCallback(
-    (_: unknown, { fps: value }: { fps: number }) => {
-      setFps(value);
+  const updateFps = (_: unknown, { fps: value }: { fps: number }) => {
+    setFps(value);
 
-      if (value > mediumCutoff) {
-        setColor(highColor);
-      } else if (value > lowCutoff) {
-        setColor(mediumColor);
-      } else {
-        setColor(lowColor);
-      }
-    },
-    [highColor, mediumColor, mediumCutoff, lowColor, lowCutoff],
-  );
+    if (value > mediumCutoff) {
+      setColor(highColor);
+    } else if (value > lowCutoff) {
+      setColor(mediumColor);
+    } else {
+      setColor(lowColor);
+    }
+  };
 
+  // oxlint-disable-next-line react-hooks/exhaustive-deps -- React Compiler auto-memoizes updateFps
   useEffect(() => {
     lngContext?.renderer.on('fpsUpdate', updateFps);
 

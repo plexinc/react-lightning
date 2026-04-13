@@ -1,5 +1,6 @@
-import type { Rect } from '@plextv/react-lightning';
 import type { LayoutChangeEvent } from 'react-native';
+
+import type { Rect } from '@plextv/react-lightning';
 
 export function createLayoutEvent({ x, y, w, h }: Rect): LayoutChangeEvent {
   return {

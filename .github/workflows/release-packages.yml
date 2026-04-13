@@ -3,7 +3,7 @@ name: Release Packages
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["Run tests"]
+    workflows: ['Run tests']
     branches: [main]
     types:
       - completed
@@ -34,8 +34,8 @@ jobs:
       - uses: actions/setup-node@v6.0.0
         with:
           node-version-file: package.json
-          cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -46,8 +46,8 @@ jobs:
         uses: changesets/action@v1.5.3
         with:
           version: pnpm run ci:version
-          commit: "chore: Update versions"
-          title: "chore: Update versions"
+          commit: 'chore: Update versions'
+          title: 'chore: Update versions'
           publish: pnpm run ci:publish
         env:
           # When you use the repository's GITHUB_TOKEN to perform tasks, events

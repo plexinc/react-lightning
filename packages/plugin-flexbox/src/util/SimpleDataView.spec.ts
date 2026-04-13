@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+
 import { SimpleDataView } from './SimpleDataView';
 
 describe('SimpleDataView', () => {
@@ -275,17 +276,13 @@ describe('SimpleDataView', () => {
       const dataView = new SimpleDataView();
       dataView.writeUint8(42);
 
-      expect(() => dataView.shift(2)).toThrow(
-        'Cannot shift more than current offset',
-      );
+      expect(() => dataView.shift(2)).toThrow('Cannot shift more than current offset');
     });
 
     it('should throw error when shifting from zero offset', () => {
       const dataView = new SimpleDataView();
 
-      expect(() => dataView.shift(1)).toThrow(
-        'Cannot shift more than current offset',
-      );
+      expect(() => dataView.shift(1)).toThrow('Cannot shift more than current offset');
     });
   });
 

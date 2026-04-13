@@ -1,10 +1,8 @@
 // Extracted and adapted from Reanimated's spring implementation
 // See: https://github.com/software-mansion/react-native-reanimated/tree/main/packages/react-native-reanimated/src/animation/spring
 import type { AnimationSettings } from '@lightningjs/renderer';
-import {
-  ReduceMotion,
-  type WithSpringConfig,
-} from 'react-native-reanimated-original';
+import { ReduceMotion, type WithSpringConfig } from 'react-native-reanimated-original';
+
 import {
   calculateNewStiffnessToMatchDuration,
   checkIfConfigIsValid,
@@ -33,9 +31,7 @@ const DefaultConfig: DefaultSpringConfig = {
   clamp: undefined,
 };
 
-export function createSpringAnimation(
-  userConfig?: WithSpringConfig,
-): AnimationSettings {
+export function createSpringAnimation(userConfig?: WithSpringConfig): AnimationSettings {
   const key = JSON.stringify(userConfig);
   const cached = cache.get(key);
 
@@ -70,8 +66,7 @@ export function createSpringAnimation(
   const startValue = 0;
   const toValue = 1;
   const x0 = startValue - toValue;
-  const useDuration =
-    userConfig?.dampingRatio != null || userConfig?.duration != null;
+  const useDuration = userConfig?.dampingRatio != null || userConfig?.duration != null;
 
   let current = startValue;
   let velocity = config.velocity;
@@ -84,12 +79,7 @@ export function createSpringAnimation(
     config.duration = getEstimatedDuration(zeta, omega0);
   }
 
-  const initialEnergy = getEnergy(
-    x0,
-    config.velocity,
-    config.stiffness,
-    config.mass,
-  );
+  const initialEnergy = getEnergy(x0, config.velocity, config.stiffness, config.mass);
 
   function easing(progress: number): number {
     const t = (progress * config.duration) / 1000;

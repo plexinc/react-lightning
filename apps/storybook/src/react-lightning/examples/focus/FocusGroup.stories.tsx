@@ -1,6 +1,8 @@
-import { Column, Row } from '@plextv/react-lightning-components';
 import type { Meta } from '@storybook/react-vite';
 import { useCallback, useMemo, useState } from 'react';
+
+import { Column, Row } from '@plextv/react-lightning-components';
+
 import Button from '../../../components/Button';
 import { FocusableImage } from '../../../components/FocusableImage';
 
@@ -49,10 +51,7 @@ export const DynamicFocusDisabling = () => {
         <Row key={index.toString()} focusable style={{ gap: 16 }}>
           {row.map((state, index) => (
             <lng-view key={index.toString()}>
-              <FocusableImage
-                disable={state === DISABLE}
-                hidden={state === HIDE}
-              />
+              <FocusableImage disable={state === DISABLE} hidden={state === HIDE} />
             </lng-view>
           ))}
         </Row>

@@ -1,10 +1,11 @@
+import { useCallback } from 'react';
+
 import type {
   KeyEvent,
   LightningElement,
   LightningViewElementProps,
 } from '@plextv/react-lightning';
 import { Keys, useFocus } from '@plextv/react-lightning';
-import { useCallback } from 'react';
 
 const containerStyles = {
   w: 170,

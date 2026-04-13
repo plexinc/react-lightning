@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "eslint",
+    "typescript",
+    "unicorn",
+    "oxc",
+    "react",
+    "react-perf",
+    "jsx-a11y",
+    "import"
+  ],
+  "rules": {
+    "typescript/consistent-type-imports": "error",
+    "react-hooks/exhaustive-deps": "off",
+    "jsx-a11y/no-autofocus": "off",
+    "jsx-a11y/no-static-element-interactions": "off",
+    "jsx-a11y/alt-text": "off",
+    "jsx-a11y/mouse-events-have-key-events": "off",
+    "jsx-a11y/click-events-have-key-events": "off"
+  },
+  "ignorePatterns": ["dist", ".changeset", "**/public"]
+}

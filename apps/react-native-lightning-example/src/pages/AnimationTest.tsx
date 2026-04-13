@@ -55,11 +55,7 @@ const AnimationTest: FC = () => {
       />
 
       <View style={styles.container}>
-        <Button
-          onPress={handlePress}
-          color={animColor.value}
-          title="Click me"
-        />
+        <Button onPress={handlePress} color={animColor.value} title="Click me" />
       </View>
     </>
   );

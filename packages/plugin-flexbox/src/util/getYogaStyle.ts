@@ -1,4 +1,5 @@
 import type { LightningViewElementStyle } from '@plextv/react-lightning';
+
 import { isFlexStyleProp } from './isFlexStyleProp';
 
 export function getYogaStyle(
@@ -11,7 +12,7 @@ export function getYogaStyle(
       const value = style[key];
 
       if (value != null) {
-        // biome-ignore lint/suspicious/noExplicitAny: TODO
+        // oxlint-disable-next-line typescript/no-explicit-any -- TODO
         (yogaStyles as any)[key] = value;
       }
     }

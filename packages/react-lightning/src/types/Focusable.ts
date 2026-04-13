@@ -13,7 +13,7 @@ export interface FocusEvents<T> {
   focusChanged: (element: T, isFocused: boolean) => void;
   focusableChanged: (element: T, isFocusable: boolean) => void;
 
-  // biome-ignore lint/suspicious/noExplicitAny: TODO
+  // oxlint-disable-next-line typescript/no-explicit-any -- TODO
   [x: string | symbol]: (...args: any[]) => void;
 }
 

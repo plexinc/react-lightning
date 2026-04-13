@@ -1,5 +1,6 @@
 export type {
   ContentStyle,
+  OverrideItemLayout,
   OverrideItemLayoutFn,
   ScrollEvent,
   ViewabilityConfig,

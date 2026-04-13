@@ -1,10 +1,5 @@
-import {
-  type RefObject,
-  useContext,
-  useEffect,
-  useRef,
-  useSyncExternalStore,
-} from 'react';
+import { type RefObject, useContext, useEffect, useRef, useSyncExternalStore } from 'react';
+
 import type { LightningElement } from '../types';
 import { FocusGroupContext } from './FocusGroupContext';
 import { useFocusManager } from './useFocusManager';
@@ -15,6 +10,8 @@ export type FocusOptions = {
   focusRedirect?: boolean;
   destinations?: (LightningElement | null)[];
   onChildFocused?: (child: LightningElement) => void;
+  /** When true, focus navigation can target non-visible children (e.g. clipped items in a virtualized list). */
+  allowOffscreen?: boolean;
 };
 
 export function useFocus<T extends LightningElement>(
@@ -24,6 +21,7 @@ export function useFocus<T extends LightningElement>(
     focusRedirect,
     destinations,
     onChildFocused,
+    allowOffscreen,
   }: FocusOptions = {
     active: true,
     autoFocus: false,
@@ -52,7 +50,7 @@ export function useFocus<T extends LightningElement>(
   // so we can properly remove the child element.
   const elementRef = useRef<T>(null);
 
-  /* biome-ignore lint/correctness/useExhaustiveDependencies: We purposely leave
+  /* oxlint-disable-next-line react-hooks/exhaustive-deps -- We purposely leave
     out the autoFocus/focusRedirect/destinations dependencies here. This will
     prevent unnecessary removal and re-addition of the elements to the focus
     manager. Those dependencies get updated below in other effects. */
@@ -63,7 +61,14 @@ export function useFocus<T extends LightningElement>(
         autoFocus,
         focusRedirect,
         destinations,
+        allowOffscreen,
       });
+    } else if (import.meta.env.DEV && ref.current && !parentFocusable) {
+      console.warn(
+        'useFocus: Element exists but no parent FocusGroup found. ' +
+          'This element will not participate in focus management. ' +
+          'Wrap it in a FocusGroup or ensure the parent FocusGroup has mounted.',
+      );
     }
 
     return () => {
@@ -96,6 +101,12 @@ export function useFocus<T extends LightningElement>(
       focusManager.setOnChildFocused(ref.current, onChildFocused);
     }
   }, [focusManager, onChildFocused]);
+
+  useEffect(() => {
+    if (ref.current) {
+      focusManager.setAllowOffscreen(ref.current, allowOffscreen);
+    }
+  }, [focusManager, allowOffscreen]);
 
   useEffect(() => {
     if (ref.current) {

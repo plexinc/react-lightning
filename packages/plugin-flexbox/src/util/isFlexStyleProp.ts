@@ -59,8 +59,6 @@ flexProps satisfies Partial<Record<keyof LightningViewElementStyle, boolean>>;
 
 export type FlexProps = keyof typeof flexProps;
 
-export function isFlexStyleProp(
-  prop: number | string | symbol,
-): prop is FlexProps {
+export function isFlexStyleProp(prop: number | string | symbol): prop is FlexProps {
   return prop in flexProps;
 }

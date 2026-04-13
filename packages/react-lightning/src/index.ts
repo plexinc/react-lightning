@@ -12,12 +12,7 @@ export { useFocus } from './focus/useFocus';
 export { useFocusManager } from './focus/useFocusManager';
 export { useCombinedRef } from './hooks/useCombinedRef';
 export { Keys } from './input/Keys';
-export {
-  createRoot,
-  type LightningRoot,
-  LightningRootContext,
-  type RenderOptions,
-} from './render';
+export { createRoot, type LightningRoot, LightningRootContext, type RenderOptions } from './render';
 export type { Plugin } from './render/Plugin';
 export * from './types';
 export { simpleDiff } from './utils/simpleDiff';

@@ -1,11 +1,12 @@
+import type { FC, ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
 import type {
   LightningTextElementStyle,
   LightningViewElement,
   LightningViewElementProps,
   LightningViewElementStyle,
 } from '@plextv/react-lightning';
-import type React from 'react';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 type Part = {
   content?: string | Part[];
@@ -49,39 +50,25 @@ type TextSegmentProps = {
   handleTextureLoaded: () => void;
 };
 
-const TextSegment: React.FC<TextSegmentProps> = ({
-  part,
-  tagStyles,
-  style,
-  handleTextureLoaded,
-}) => {
+const TextSegment: FC<TextSegmentProps> = ({ part, tagStyles, style, handleTextureLoaded }) => {
   if (typeof part.content === 'string') {
     const lastCharEmpty = part.content?.slice(-1) === ' ';
 
     return (
-      <lng-text
-        key={part.key}
-        style={style}
-        onTextureReady={handleTextureLoaded}
-      >
+      <lng-text key={part.key} style={style} onTextureReady={handleTextureLoaded}>
         {`${part.content}${lastCharEmpty ? ' ' : ''}`}
       </lng-text>
     );
   }
 
   if (Array.isArray(part.content)) {
-    return (
-      <>{applyTags(part.content, tagStyles, style, handleTextureLoaded)}</>
-    );
+    return <>{applyTags(part.content, tagStyles, style, handleTextureLoaded)}</>;
   }
 
   return null;
 };
 
-const parseText = (
-  inputText: string,
-  values: { [key: string]: string },
-): Part[] => {
+const parseText = (inputText: string, values: { [key: string]: string }): Part[] => {
   const parts: Part[] = [];
   const regex = /<(\w+)>(.*?)<\/\1>|{(\w+)}|([^<{]+)/g; // Match <green>...</green>, {placeholder}, or plain text
   let match = regex.exec(inputText);
@@ -125,7 +112,7 @@ const applyTags = (
   tagStyles: Record<string, LightningTextElementStyle>,
   textStyle: LightningTextElementStyle,
   onLoad: () => void,
-): React.ReactNode => {
+): ReactNode => {
   return textParts.map((part: Part) => {
     // Determine if the part is a placeholder or a custom tag, and apply relevant styles
     let combinedStyle = { ...textStyle };
@@ -155,7 +142,7 @@ const applyTags = (
   });
 };
 
-const StyledText: React.FC<StyledTextProps> = ({
+const StyledText: FC<StyledTextProps> = ({
   text,
   values = {},
   tagStyles = {},
@@ -163,10 +150,18 @@ const StyledText: React.FC<StyledTextProps> = ({
   style = {},
 }) => {
   const containerRef = useRef<LightningViewElement>(null);
+  const [positionVersion, setPositionVersion] = useState(0);
 
-  const setPositions = useCallback(() => {
+  const handleTextureLoaded = () => {
+    setPositionVersion((v) => v + 1);
+  };
+
+  // oxlint-disable-next-line react-hooks/exhaustive-deps -- text/values/tagStyles force re-layout when content changes
+  useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     let cumulativeWidth = 0;
 
@@ -175,38 +170,21 @@ const StyledText: React.FC<StyledTextProps> = ({
       childNode.x = cumulativeWidth;
       cumulativeWidth += childNode.w || 0;
     }
-  }, []);
-
-  const handleTextureLoaded = useCallback(() => {
-    setPositions();
-  }, [setPositions]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: The extra dependencies are added to force re-render when those values change
-  useEffect(() => {
-    if (containerRef.current) {
-      setPositions();
-    }
-  }, [text, values, tagStyles, setPositions]);
+  }, [text, values, tagStyles, positionVersion]);
 
   // Parse the text into parts (plain text, placeholders, and custom tags)
-  const parts = useMemo(() => parseText(text, values), [text, values]);
+  const parts = parseText(text, values);
 
-  const combinedTextStyle = useMemo(
-    () => ({
-      ...BASE_STYLE,
-      ...textStyle,
-    }),
-    [textStyle],
-  );
+  const combinedTextStyle = {
+    ...BASE_STYLE,
+    ...textStyle,
+  };
 
-  const containerFinalStyle: LightningViewElementStyle = useMemo(
-    () => ({
-      ...style,
-      // In case flexbox plugin is included, use row flow
-      flexDirection: 'row',
-    }),
-    [style],
-  );
+  const containerFinalStyle: LightningViewElementStyle = {
+    ...style,
+    // In case flexbox plugin is included, use row flow
+    flexDirection: 'row',
+  };
 
   return (
     <lng-view ref={containerRef} style={containerFinalStyle}>

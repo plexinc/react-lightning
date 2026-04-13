@@ -1,3 +1,7 @@
+import type { ForwardRefExoticComponent, RefAttributes } from 'react';
+import { forwardRef } from 'react';
+import type { View as RNView, ViewProps as RNViewProps } from 'react-native';
+
 import type {
   FocusableProps,
   LightningElementEventProps,
@@ -5,9 +9,7 @@ import type {
   LightningViewElementProps,
 } from '@plextv/react-lightning';
 import type { AllStyleProps } from '@plextv/react-lightning-plugin-css-transform';
-import type { ForwardRefExoticComponent, RefAttributes } from 'react';
-import { forwardRef } from 'react';
-import type { View as RNView, ViewProps as RNViewProps } from 'react-native';
+
 import { useLayoutHandler } from '../hooks/useLayoutHandler';
 import type { NativeLightningViewElement } from '../types/NativeLightningViewElement';
 
@@ -40,9 +42,7 @@ export const View: ForwardRefExoticComponent<ViewProps> = forwardRef<
 >(({ onLayout, ...props }, ref) => {
   const handleLayout = useLayoutHandler(onLayout);
 
-  return (
-    <lng-view ref={ref} {...(props as CombinedProps)} onLayout={handleLayout} />
-  );
+  return <lng-view ref={ref} {...(props as CombinedProps)} onLayout={handleLayout} />;
 });
 
 View.displayName = 'View';

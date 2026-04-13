@@ -1,7 +1,8 @@
-import fontGen from '@plextv/vite-plugin-msdf-fontgen';
 import legacy from '@vitejs/plugin-legacy';
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
+
+import fontGen from '@plextv/vite-plugin-msdf-fontgen';
 
 /**
  * @type {import('vite').InlineConfig}
@@ -11,7 +12,11 @@ const config = {
     tsconfigPaths({
       skip: (dir) => dir.includes('app-template'),
     }),
-    react(),
+    react({
+      babel: {
+        plugins: ['babel-plugin-react-compiler'],
+      },
+    }),
     fontGen({
       inputs: [
         {

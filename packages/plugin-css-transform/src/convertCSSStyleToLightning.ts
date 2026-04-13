@@ -1,7 +1,5 @@
-import type {
-  LightningElementStyle,
-  LightningTextElementStyle,
-} from '@plextv/react-lightning';
+import type { LightningElementStyle, LightningTextElementStyle } from '@plextv/react-lightning';
+
 import type { AllStyleProps } from './types/ReactStyle';
 import { flattenStyles } from './utils/flattenStyles';
 import { htmlColorToLightningColor } from './utils/htmlColorToLightningColor';
@@ -49,8 +47,7 @@ export function convertCSSStyleToLightning(
   }
 
   if (shadowColor != null) {
-    (finalStyle as LightningTextElementStyle).shadowColor =
-      htmlColorToLightningColor(shadowColor);
+    (finalStyle as LightningTextElementStyle).shadowColor = htmlColorToLightningColor(shadowColor);
   }
 
   if (border != null || borderWidth != null || borderColor != null) {
@@ -103,9 +100,7 @@ export function convertCSSStyleToLightning(
 
   if (otherStyles.top != null) {
     finalStyle.y =
-      typeof otherStyles.top === 'number'
-        ? otherStyles.top
-        : Number.parseInt(otherStyles.top, 10);
+      typeof otherStyles.top === 'number' ? otherStyles.top : Number.parseInt(otherStyles.top, 10);
   }
 
   if (fontWeight != null) {
@@ -116,8 +111,7 @@ export function convertCSSStyleToLightning(
   }
 
   if (transform != null) {
-    const { scaleX, scaleY, rotation, ...translateTransforms } =
-      parseTransform(transform);
+    const { scaleX, scaleY, rotation, ...translateTransforms } = parseTransform(transform);
 
     if (scaleX != null) {
       finalStyle.scaleX = scaleX;
@@ -135,11 +129,7 @@ export function convertCSSStyleToLightning(
   }
 
   // Disabled for now as some components set overflow to hidden while not having their size correctly calculated
-  if (
-    overflow === 'hidden' ||
-    overflowX === 'hidden' ||
-    overflowY === 'hidden'
-  ) {
+  if (overflow === 'hidden' || overflowX === 'hidden' || overflowY === 'hidden') {
     finalStyle.clipping = true;
   }
 

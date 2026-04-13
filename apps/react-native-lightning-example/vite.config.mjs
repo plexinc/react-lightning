@@ -1,13 +1,20 @@
+import legacy from '@vitejs/plugin-legacy';
+import { defineConfig } from 'vite';
+
 import fontGen from '@plextv/vite-plugin-msdf-fontgen';
 import reactNativeLightningPlugin from '@plextv/vite-plugin-react-native-lightning';
 import reactReanimatedLightningPlugin from '@plextv/vite-plugin-react-reanimated-lightning';
-import legacy from '@vitejs/plugin-legacy';
-import { defineConfig } from 'vite';
 
 const config = defineConfig((env) => ({
   base: './',
   plugins: [
-    reactNativeLightningPlugin(),
+    reactNativeLightningPlugin({
+      reactOptions: {
+        babel: {
+          plugins: ['babel-plugin-react-compiler'],
+        },
+      },
+    }),
     reactReanimatedLightningPlugin(),
     fontGen({
       inputs: [
@@ -31,9 +38,7 @@ const config = defineConfig((env) => ({
     hmr: false,
   },
   define: {
-    __DEV__: JSON.stringify(
-      (env.mode ?? process.env.NODE_ENV) !== 'production',
-    ),
+    __DEV__: JSON.stringify((env.mode ?? process.env.NODE_ENV) !== 'production'),
     'process.env.NODE_ENV': JSON.stringify(env.mode),
   },
 }));

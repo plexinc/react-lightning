@@ -1,10 +1,9 @@
+import type { Meta } from '@storybook/react-vite';
+
 import { FocusGroup } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
-import type { Meta } from '@storybook/react-vite';
-import {
-  FocusableImage,
-  type FocusableImageProps,
-} from '../../../components/FocusableImage';
+
+import { FocusableImage, type FocusableImageProps } from '../../../components/FocusableImage';
 
 export default {
   title: 'react-lightning/Examples/Focus/TrapFocus',
@@ -66,14 +65,7 @@ export const TrapFocus = () => {
     <>
       <TrappableImage width={75} height={75} x={10} y={10} />
       <TrappableImage width={75} height={75} x={95} y={10} />
-      <TrappableImage
-        width={75}
-        height={75}
-        x={180}
-        y={10}
-        trapFocusRight
-        trapFocusDown
-      />
+      <TrappableImage width={75} height={75} x={180} y={10} trapFocusRight trapFocusDown />
       <TrappableImage width={75} height={75} x={265} y={10} trapFocusDown />
       <TrappableImage width={75} height={75} x={350} y={10} />
 

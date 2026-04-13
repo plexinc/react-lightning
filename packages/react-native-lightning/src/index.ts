@@ -8,10 +8,7 @@ export { useRef as usePlatformMethods } from 'react';
 export * from 'react-native-web';
 
 // Override RN exports with our own
-export {
-  ActivityIndicator,
-  type ActivityIndicatorProps,
-} from './exports/ActivityIndicator';
+export { ActivityIndicator, type ActivityIndicatorProps } from './exports/ActivityIndicator';
 export { Button, type ButtonProps } from './exports/Button';
 export { FocusGroup, type FocusGroupProps } from './exports/FocusGroup';
 export { Image, type ImageProps } from './exports/Image';
@@ -20,14 +17,8 @@ export { Pressable, type PressableProps } from './exports/Pressable';
 export { ScrollView, type ScrollViewProps } from './exports/ScrollView';
 export * as StyleSheet from './exports/StyleSheet';
 export { Text, type TextProps } from './exports/Text';
-export {
-  TouchableHighlight,
-  type TouchableHighlightProps,
-} from './exports/TouchableHighlight';
-export {
-  TouchableOpacity,
-  type TouchableOpacityProps,
-} from './exports/TouchableOpacity';
+export { TouchableHighlight, type TouchableHighlightProps } from './exports/TouchableHighlight';
+export { TouchableOpacity, type TouchableOpacityProps } from './exports/TouchableOpacity';
 export {
   TouchableWithoutFeedback,
   type TouchableWithoutFeedbackProps,
@@ -46,7 +37,4 @@ export { domPolyfillsPlugin } from './plugins/domPolyfillsPlugin';
 export { reactNativePolyfillsPlugin } from './plugins/reactNativePolyfillsPlugin';
 export { createLayoutEvent } from './utils/createLayoutEvent';
 export { createSyntheticEvent } from './utils/createSyntheticEvent';
-export {
-  getReactNativePlugins,
-  type PluginOptions,
-} from './utils/getReactNativePlugins';
+export { getReactNativePlugins, type PluginOptions } from './utils/getReactNativePlugins';

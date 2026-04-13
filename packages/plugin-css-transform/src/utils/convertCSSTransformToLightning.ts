@@ -1,4 +1,5 @@
 import type { Transform } from '@plextv/react-lightning-plugin-flexbox';
+
 import { convertRotationValue } from './convertRotationValue';
 
 function getValue(
@@ -42,19 +43,13 @@ function getXYValue(
 
 export function convertCSSTransformToLightning(
   transformType: string,
-  transformValue:
-    | string
-    | number
-    | number[]
-    | Record<string, number | string | number[]>,
+  transformValue: string | number | number[] | Record<string, number | string | number[]>,
 ): Transform {
   const transformResult: Transform = {};
 
   if (typeof transformValue === 'object') {
     for (const key in transformValue) {
-      const value = (
-        transformValue as Record<string, number | string | number[]>
-      )[key];
+      const value = (transformValue as Record<string, number | string | number[]>)[key];
 
       if (value) {
         const result = convertCSSTransformToLightning(key, value);
@@ -97,11 +92,7 @@ export function convertCSSTransformToLightning(
       break;
     case 'rotate':
     case 'rotation':
-      transformResult.rotation = getValue(
-        transformValue,
-        0,
-        convertRotationValue,
-      );
+      transformResult.rotation = getValue(transformValue, 0, convertRotationValue);
       break;
   }
 

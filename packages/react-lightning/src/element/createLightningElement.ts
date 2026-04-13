@@ -1,5 +1,6 @@
 import type { RendererMain } from '@lightningjs/renderer';
 import type { Fiber } from 'react-reconciler';
+
 import type { Plugin } from '../render/Plugin';
 import {
   type LightningElement,

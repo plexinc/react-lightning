@@ -1,7 +1,8 @@
+import { defineConfig } from 'vite';
+
 import fontGen from '@plextv/vite-plugin-msdf-fontgen';
 import reactNativeLightningPlugin from '@plextv/vite-plugin-react-native-lightning';
 import reactReanimatedLightningPlugin from '@plextv/vite-plugin-react-reanimated-lightning';
-import { defineConfig } from 'vite';
 
 /**
  * @type {import('vite').InlineConfig}
@@ -10,14 +11,18 @@ const config = defineConfig((env) => ({
   base: './',
 
   define: {
-    __DEV__: JSON.stringify(
-      (env.mode ?? process.env.NODE_ENV) !== 'production',
-    ),
+    __DEV__: JSON.stringify((env.mode ?? process.env.NODE_ENV) !== 'production'),
     'process.env.NODE_ENV': JSON.stringify(env.mode),
   },
 
   plugins: [
-    reactNativeLightningPlugin(),
+    reactNativeLightningPlugin({
+      reactOptions: {
+        babel: {
+          plugins: ['babel-plugin-react-compiler'],
+        },
+      },
+    }),
     reactReanimatedLightningPlugin(),
     fontGen({
       inputs: [

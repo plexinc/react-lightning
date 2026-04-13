@@ -1,10 +1,11 @@
+import { type ForwardRefExoticComponent, forwardRef } from 'react';
+
 import {
   FocusGroup,
   type LightningViewElement,
   type LightningViewElementProps,
   type LightningViewElementStyle,
 } from '@plextv/react-lightning';
-import { type ForwardRefExoticComponent, forwardRef } from 'react';
 
 export interface RowProps extends LightningViewElementProps {
   focusable?: boolean;
@@ -16,10 +17,7 @@ export interface RowProps extends LightningViewElementProps {
   trapFocusLeft?: boolean;
 }
 
-const Row: ForwardRefExoticComponent<RowProps> = forwardRef<
-  LightningViewElement,
-  RowProps
->(
+const Row: ForwardRefExoticComponent<RowProps> = forwardRef<LightningViewElement, RowProps>(
   (
     {
       style,
@@ -50,9 +48,7 @@ const Row: ForwardRefExoticComponent<RowProps> = forwardRef<
           trapFocusRight={trapFocusRight}
           trapFocusDown={trapFocusDown}
           trapFocusLeft={trapFocusLeft}
-          style={(focused) =>
-            focused ? finalStyle : { ...finalStyle, ...focusedStyle }
-          }
+          style={(focused) => (focused ? finalStyle : { ...finalStyle, ...focusedStyle })}
         />
       );
     }

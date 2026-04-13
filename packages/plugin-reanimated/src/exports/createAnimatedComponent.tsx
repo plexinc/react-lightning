@@ -1,10 +1,3 @@
-import type {
-  LightningElement,
-  LightningElementProps,
-  LightningViewElementStyle,
-  Rect,
-  RendererNode,
-} from '@plextv/react-lightning';
 import {
   Component,
   type ComponentType,
@@ -19,6 +12,15 @@ import type {
   BaseAnimationBuilder,
   LayoutAnimationFunction,
 } from 'react-native-reanimated-original';
+
+import type {
+  LightningElement,
+  LightningElementProps,
+  LightningViewElementStyle,
+  Rect,
+  RendererNode,
+} from '@plextv/react-lightning';
+
 import { isAnimatedStyle } from '../isAnimatedStyle';
 import type { AnimatedStyle } from '../types/AnimatedStyle';
 import type { ReanimatedAnimation } from '../types/ReanimatedAnimation';
@@ -40,9 +42,7 @@ function flattenStyles<T>(
   animatedStyles: Set<AnimatedStyle>,
   flattenedStyles: Partial<T>,
 ): void;
-function flattenStyles<T>(
-  style: StyleProp<T>,
-): [Set<AnimatedStyle>, Partial<T>];
+function flattenStyles<T>(style: StyleProp<T>): [Set<AnimatedStyle>, Partial<T>];
 function flattenStyles<T>(
   style: StyleProp<T>,
   animatedStyles: Set<AnimatedStyle> = new Set(),
@@ -89,10 +89,7 @@ function getBuilder(layoutAnimationOrBuilder?: ReanimatedAnimation) {
   } else if (typeof layoutAnimationOrBuilder === 'function') {
     return layoutAnimationOrBuilder;
   } else if (import.meta.env.DEV) {
-    console.warn(
-      'This animation is not supported in React Lightning: ',
-      layoutAnimationOrBuilder,
-    );
+    console.warn('This animation is not supported in React Lightning: ', layoutAnimationOrBuilder);
   }
 
   return null;
@@ -150,16 +147,12 @@ export function createAnimatedComponent<TProps extends {}>(
   ComponentToAnimate: ComponentType<AnimatedProps<TProps>>,
 ): AnimatedComponent<TProps> {
   class AnimatedComponentInternal extends Component<AnimatedProps<TProps>> {
-    static displayName =
-      `LightningAnimated(${ComponentToAnimate.displayName || ComponentToAnimate.name || 'Component'})`;
+    static displayName = `LightningAnimated(${ComponentToAnimate.displayName || ComponentToAnimate.name || 'Component'})`;
 
     private _ref: NativeLightningElement | null = null;
     private _animatedStyles: Set<AnimatedStyle> = new Set();
     private _styles: Partial<ViewStyle> | null = null;
-    private _cachedBuilders = new WeakMap<
-      ReanimatedAnimation,
-      LayoutAnimationFunction | null
-    >();
+    private _cachedBuilders = new WeakMap<ReanimatedAnimation, LayoutAnimationFunction | null>();
 
     constructor(props: AnimatedProps<TProps>) {
       super(props);
@@ -207,13 +200,7 @@ export function createAnimatedComponent<TProps extends {}>(
     }
 
     render() {
-      return (
-        <ComponentToAnimate
-          {...this.props}
-          style={this._styles}
-          ref={this._setRefs}
-        />
-      );
+      return <ComponentToAnimate {...this.props} style={this._styles} ref={this._setRefs} />;
     }
 
     _resolveComponentRef = (ref: NativeLightningElement | null) => {
@@ -259,9 +246,7 @@ export function createAnimatedComponent<TProps extends {}>(
     };
 
     _transformStyles() {
-      const [newAnimatedStyles, flattenedStyles] = flattenStyles(
-        this.props.style,
-      );
+      const [newAnimatedStyles, flattenedStyles] = flattenStyles(this.props.style);
 
       if (this._ref) {
         // Remove refs for any animated styles that were removed
@@ -278,10 +263,7 @@ export function createAnimatedComponent<TProps extends {}>(
       this._styles = flattenedStyles;
     }
 
-    private _runAnimation(
-      builder: LayoutAnimationFunction | null,
-      callback?: () => void,
-    ) {
+    private _runAnimation(builder: LayoutAnimationFunction | null, callback?: () => void) {
       if (!this._ref || !builder) {
         callback?.();
         return;
@@ -306,9 +288,7 @@ export function createAnimatedComponent<TProps extends {}>(
           return;
         }
 
-        const lightningAnimation = toLightningAnimationAndStyles(
-          layoutAnimation.animations,
-        );
+        const lightningAnimation = toLightningAnimationAndStyles(layoutAnimation.animations);
 
         el.once('animationFinished', () => {
           if (layoutAnimation.callback) {
@@ -317,14 +297,8 @@ export function createAnimatedComponent<TProps extends {}>(
           callback?.();
         });
 
-        for (const [key, value] of Object.entries(
-          layoutAnimation.initialValues,
-        )) {
-          el.setNodeProp(
-            key as keyof RendererNode<NativeLightningElement>,
-            value,
-            false,
-          );
+        for (const [key, value] of Object.entries(layoutAnimation.initialValues)) {
+          el.setNodeProp(key as keyof RendererNode<NativeLightningElement>, value, false);
         }
 
         el?.setProps({
@@ -335,14 +309,12 @@ export function createAnimatedComponent<TProps extends {}>(
     }
   }
 
-  return forwardRef<NativeLightningElement, AnimatedProps<TProps>>(
-    (props, forwardedRef) => {
-      return (
-        <AnimatedComponentInternal
-          {...(props as AnimatedProps<TProps>)}
-          forwardedRef={forwardedRef}
-        />
-      );
-    },
-  );
+  return forwardRef<NativeLightningElement, AnimatedProps<TProps>>((props, forwardedRef) => {
+    return (
+      <AnimatedComponentInternal
+        {...(props as AnimatedProps<TProps>)}
+        forwardedRef={forwardedRef}
+      />
+    );
+  });
 }

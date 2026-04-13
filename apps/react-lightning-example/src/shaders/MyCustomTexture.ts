@@ -1,8 +1,4 @@
-import {
-  type CoreTextureManager,
-  Texture,
-  type TextureData,
-} from '@lightningjs/renderer';
+import { type CoreTextureManager, Texture, type TextureData } from '@lightningjs/renderer';
 
 /**
  * Augment the EffectMap interface to include the CustomEffect
@@ -68,9 +64,7 @@ export class MyCustomTexture extends Texture {
     return false; // <-- Don't cache at all
   }
 
-  static override resolveDefaults(
-    props: MyCustomTextureProps,
-  ): Required<MyCustomTextureProps> {
+  static override resolveDefaults(props: MyCustomTextureProps): Required<MyCustomTextureProps> {
     return {
       percent: props.percent ?? 20,
       w: props.w,

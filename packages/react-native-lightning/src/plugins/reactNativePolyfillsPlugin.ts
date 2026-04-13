@@ -1,12 +1,9 @@
-import {
-  type FocusManager,
-  LightningViewElement,
-  type Plugin,
-} from '@plextv/react-lightning';
-import { flattenStyles } from '@plextv/react-lightning-plugin-css-transform';
 import { type Fiber as ItsFineFiber, traverseFiber } from 'its-fine';
 import type { NativeMethods } from 'react-native';
 import type { Fiber } from 'react-reconciler';
+
+import { type FocusManager, LightningViewElement, type Plugin } from '@plextv/react-lightning';
+import { flattenStyles } from '@plextv/react-lightning-plugin-css-transform';
 
 type LightningNativeViewElement = NativeMethods &
   LightningViewElement & {
@@ -19,9 +16,7 @@ type LightningNativeViewElement = NativeMethods &
 // Kind of hacky, but we can't use hooks here. We need to somehow traverse the
 // fiber tree to find the focus manager though, so we can set destinations for
 // focusable elements.
-function tryFindFocusManager(
-  fiber: Fiber,
-): FocusManager<LightningViewElement> | null {
+function tryFindFocusManager(fiber: Fiber): FocusManager<LightningViewElement> | null {
   try {
     const context = traverseFiber(
       fiber as ItsFineFiber,
@@ -33,11 +28,10 @@ function tryFindFocusManager(
     );
 
     if (context) {
-      return context.memoizedProps.value
-        .focusManager as FocusManager<LightningViewElement>;
+      return context.memoizedProps.value.focusManager as FocusManager<LightningViewElement>;
     }
   } catch (error) {
-    console.warn('>> React fiber access failed:', error);
+    console.warn('[react-native-lightning] React fiber access failed:', error);
   }
 
   return null;
@@ -74,25 +68,19 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
             const rect = this.getBoundingClientRect();
             callback(this.node.x, this.node.y, rect.w, rect.h, rect.x, rect.y);
           } else {
-            this.__loadPromise.then(() =>
-              nativeMethods.measure.call(this, callback),
-            );
+            this.__loadPromise.then(() => nativeMethods.measure.call(this, callback));
           }
         },
         measureInWindow(this: LightningNativeViewElement, callback) {
           if (this.__loaded) {
             callback(this.node.x, this.node.y, this.node.w, this.node.h);
           } else {
-            this.__loadPromise.then(() =>
-              nativeMethods.measureInWindow.call(this, callback),
-            );
+            this.__loadPromise.then(() => nativeMethods.measureInWindow.call(this, callback));
           }
         },
         measureLayout(this: LightningNativeViewElement, relative, onSuccess) {
           if (this.__loaded) {
-            const { x, y } = this.getRelativePosition(
-              relative as unknown as LightningViewElement,
-            );
+            const { x, y } = this.getRelativePosition(relative as unknown as LightningViewElement);
 
             onSuccess(x, y, this.node.w, this.node.h);
           } else {

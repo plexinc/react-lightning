@@ -1,16 +1,14 @@
+import { type ForwardRefExoticComponent, forwardRef } from 'react';
+import type { TargetedEvent } from 'react-native';
+
 import {
   type FocusableProps,
   type LightningElement,
   FocusGroup as RLFocusGroup,
   type FocusGroupProps as RLFocusGroupProps,
 } from '@plextv/react-lightning';
-import { type ForwardRefExoticComponent, forwardRef } from 'react';
-import type { TargetedEvent } from 'react-native';
-import {
-  type FocusHandler,
-  useBlurHandler,
-  useFocusHandler,
-} from '../hooks/useFocusHandler';
+
+import { type FocusHandler, useBlurHandler, useFocusHandler } from '../hooks/useFocusHandler';
 import { useLayoutHandler } from '../hooks/useLayoutHandler';
 import type { AddMissingProps } from '../types/AddMissingProps';
 import type { ViewProps } from './View';
@@ -42,5 +40,7 @@ const FocusGroup: ForwardRefExoticComponent<FocusGroupProps> = forwardRef<
     />
   );
 });
+
+FocusGroup.displayName = 'RNLFocusGroup';
 
 export { FocusGroup };
