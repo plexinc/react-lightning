@@ -15,37 +15,15 @@ export type ScrollItemProps = {
   onFocused: (index: number) => void;
 };
 
-const ScrollItem = focusable<ScrollItemProps, View>(
-  (
-    {
-      color,
-      altColor,
-      image,
-      index,
-      horizontal,
-      width = 200,
-      height = 75,
-      focused,
-      children,
-      onFocused,
-    },
-    ref,
-  ) => {
-    useEffect(() => {
-      if (focused) {
-        onFocused(index);
-      }
-    }, [index, focused, onFocused]);
-
-    const multiplier = index % 3 === 0 ? 1.25 : 1;
+const ScrollItem = focusable<ScrollItemProps>(
+  ({ color, altColor, index, focused, horizontal, width = 200, height = 75, children }, ref) => {
+    const isImage = useRef(Math.random() > 0.5).current;
     const finalColor = index % 3 === 0 ? altColor : color;
-    const finalWidth = Math.round(horizontal ? height * multiplier : width);
-    const finalHeight = Math.round(horizontal ? width : height * multiplier);
-    const imageSrc = useMemo(
-      () =>
-        `https://picsum.photos/${finalWidth}/${finalHeight}?seed=${Math.random()}`,
-      [finalWidth, finalHeight],
-    );
+    const finalWidth = Math.round(horizontal ? width : width);
+    const finalHeight = Math.round(horizontal ? height : height);
+    const imageUrl = isImage
+      ? `https://picsum.photos/${finalWidth}/${finalHeight}?seed=${index}`
+      : null;
 
     return (
       <View

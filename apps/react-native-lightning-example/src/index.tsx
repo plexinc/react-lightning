@@ -1,7 +1,3 @@
-import { Canvas } from '@plextv/react-lightning';
-import { Column, Row } from '@plextv/react-lightning-components';
-import '@plextv/react-lightning-plugin-flexbox/jsx';
-import { getReactNativePlugins } from '@plextv/react-native-lightning';
 import type { LinkingOptions } from '@react-navigation/native';
 import {
   createNavigatorFactory,
@@ -11,24 +7,27 @@ import {
   useNavigation,
   useNavigationBuilder,
 } from '@react-navigation/native';
+
+import '@plextv/react-lightning-plugin-flexbox/jsx';
 import { createRoot } from 'react-dom/client';
 import { Button } from 'react-native';
+
+import { Canvas } from '@plextv/react-lightning';
+import { Column, Row } from '@plextv/react-lightning-components';
+import { getReactNativePlugins } from '@plextv/react-native-lightning';
+
 import { ErrorBoundary } from './ErrorBoundary';
 import { keyMap } from './keyMap';
 import { AnimationBuilderTest } from './pages/AnimationBuilderTest';
 import { AnimationTest } from './pages/AnimationTest';
 import { ComponentTest } from './pages/ComponentTest';
-import { FlashListTest } from './pages/FlashListTest';
 import { LayoutTest } from './pages/LayoutTest';
 import { LibraryTest } from './pages/LibraryTest';
 import { SimpleTest } from './pages/SimpleTest';
 import { VirtualizedListTest } from './pages/VirtualizedListTest';
 
 function CustomNavigator(props: Parameters<typeof useNavigationBuilder>[1]) {
-  const { state, descriptors, NavigationContent } = useNavigationBuilder(
-    StackRouter,
-    props,
-  );
+  const { state, descriptors, NavigationContent } = useNavigationBuilder(StackRouter, props);
 
   const focusedRoute = state.routes[state.index];
 
@@ -60,7 +59,6 @@ const screens = {
   Components: 'components',
   NestedLayouts: 'nestedLayouts',
   VirtualizedList: 'virtualizedList',
-  FlashList: 'flashList',
 };
 
 const linking: LinkingOptions<object> = {
@@ -122,17 +120,9 @@ const MainApp = () => {
           color={'rgba(55, 55, 22, 1)'}
           onPress={() => nav.navigate('VirtualizedList')}
         />
-        <Button
-          title="FlashList"
-          color={'rgba(55, 55, 22, 1)'}
-          onPress={() => nav.navigate('FlashList')}
-        />
       </Column>
 
-      <Column
-        focusable
-        style={{ w: 1670, h: 1080, color: 0x000000ff, clipping: true }}
-      >
+      <Column focusable style={{ w: 1670, h: 1080, color: 0x000000ff, clipping: true }}>
         <CustomStack.Navigator
           initialRouteName="Layout"
           screenOptions={{
@@ -141,18 +131,11 @@ const MainApp = () => {
         >
           <CustomStack.Screen name="Layout" component={LayoutTest} />
           <CustomStack.Screen name="Animation" component={AnimationTest} />
-          <CustomStack.Screen
-            name="AnimationBuilder"
-            component={AnimationBuilderTest}
-          />
+          <CustomStack.Screen name="AnimationBuilder" component={AnimationBuilderTest} />
           <CustomStack.Screen name="Library" component={LibraryTest} />
           <CustomStack.Screen name="Simple" component={SimpleTest} />
           <CustomStack.Screen name="Components" component={ComponentTest} />
-          <CustomStack.Screen name="FlashList" component={FlashListTest} />
-          <CustomStack.Screen
-            name="VirtualizedList"
-            component={VirtualizedListTest}
-          />
+          <CustomStack.Screen name="VirtualizedList" component={VirtualizedListTest} />
         </CustomStack.Navigator>
       </Column>
     </Row>

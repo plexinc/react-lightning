@@ -41,6 +41,7 @@
     "dist"
   ],
   "dependencies": {
+    "@plextv/react-lightning-components": "workspace:*",
     "@plextv/react-lightning-plugin-css-transform": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
     "its-fine": "2.0.0",

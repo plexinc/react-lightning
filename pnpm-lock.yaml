@@ -394,6 +394,9 @@ importers:
       '@plextv/react-lightning':
         specifier: workspace:^
         version: link:../react-lightning
+      '@plextv/react-lightning-components':
+        specifier: workspace:*
+        version: link:../react-lightning-components
       '@plextv/react-lightning-plugin-css-transform':
         specifier: workspace:*
         version: link:../plugin-css-transform

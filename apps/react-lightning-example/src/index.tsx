@@ -1,8 +1,10 @@
+import { createRoot } from 'react-dom/client';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+
 import { Canvas, type RenderOptions } from '@plextv/react-lightning';
 import { plugin as cssTransformPlugin } from '@plextv/react-lightning-plugin-css-transform';
 import { plugin as flexPlugin } from '@plextv/react-lightning-plugin-flexbox';
-import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+
 import { keyMap } from './keyMap';
 import { AnimationPage } from './pages/AnimationPage';
 import { BrowsePage } from './pages/BrowsePage';
@@ -12,6 +14,7 @@ import { PosterPage } from './pages/PosterPage';
 import { ShaderPage } from './pages/ShaderPage';
 import { TexturePage } from './pages/TexturePage';
 import { TransformsPage } from './pages/TransformsPage';
+import { VirtualListPage } from './pages/VirtualListPage';
 import { MyCustomShader } from './shaders/MyCustomShader';
 import { MyCustomTexture } from './shaders/MyCustomTexture';
 
@@ -23,6 +26,10 @@ const router = createBrowserRouter([
   {
     path: '/flex-test',
     element: <LayoutPage />,
+  },
+  {
+    path: '/virtual-list',
+    element: <VirtualListPage />,
   },
   {
     path: '/poster',

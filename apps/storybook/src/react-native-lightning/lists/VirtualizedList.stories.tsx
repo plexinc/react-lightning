@@ -1,6 +1,7 @@
 import type { Meta } from '@storybook/react-vite';
-import { createRef, useCallback } from 'react';
-import { View, VirtualizedList } from 'react-native';
+import { createRef } from 'react';
+import { VirtualizedList } from 'react-native';
+
 import ScrollItem from '../../components/ScrollItem';
 
 export default {
@@ -9,49 +10,27 @@ export default {
   tags: ['reactNative'],
 } as Meta<typeof VirtualizedList>;
 
-const getItem = (_: string[], index: number) => `Button ${index}`;
-const ITEM_WIDTH = 100;
-const ITEM_HEIGHT = 50;
-
 export const VirtualizedListTest = () => {
-  const ref = createRef<VirtualizedList<string>>();
-
-  const handleFocus = useCallback(
-    (index: number) => {
-      ref.current?.scrollToIndex({ index, viewPosition: 0.5 });
-    },
-    [ref.current],
-  );
+  const ref = createRef<VirtualizedList<{ text: string; isImage: boolean }>>();
+  const data = Array.from({ length: 5000 }, (_, i) => ({
+    text: `Button ${i}`,
+    isImage: Math.random() < 0.5,
+  }));
 
   return (
-    <View style={{ width: 500, height: 500 }}>
-      <VirtualizedList
-        ref={ref}
-        removeClippedSubviews={true}
-        snapToAlignment="start"
-        initialNumToRender={20}
-        getItem={getItem}
-        getItemCount={() => 5000}
-        getItemLayout={(_, index) => ({
-          index,
-          length: ITEM_HEIGHT,
-          offset: index * ITEM_HEIGHT,
-        })}
-        keyExtractor={(item) => item}
-        windowSize={2}
-        renderItem={({ index, item }) => (
-          <ScrollItem
-            color="rgb(79, 175, 175)"
-            altColor="rgb(175, 79, 175)"
-            index={index}
-            width={ITEM_WIDTH}
-            height={ITEM_HEIGHT}
-            onFocused={handleFocus}
-          >
-            {item}
-          </ScrollItem>
-        )}
-      />
-    </View>
+    <VirtualizedList<{ text: string; isImage: boolean }>
+      ref={ref}
+      data={data}
+      removeClippedSubviews={true}
+      snapToAlignment="center"
+      initialNumToRender={20}
+      keyExtractor={(item) => item.text}
+      windowSize={2}
+      renderItem={({ index, item }) => (
+        <ScrollItem color={0x4fafaf} altColor={0xafaf4f} index={index}>
+          {item.text}
+        </ScrollItem>
+      )}
+    />
   );
 };

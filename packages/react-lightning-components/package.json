@@ -1,16 +1,19 @@
 {
   "name": "@plextv/react-lightning-components",
-  "description": "React components for react-lightning",
   "version": "0.4.0",
-  "author": "Plex Inc.",
+  "description": "React components for react-lightning",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -19,12 +22,12 @@
     ".": "./src/index.ts",
     "./layout/Column": "./src/exports/layout/Column.tsx",
     "./layout/Row": "./src/exports/layout/Row.tsx",
+    "./lists/VirtualList": "./src/exports/lists/VirtualList.tsx",
     "./text/StyledText": "./src/exports/text/StyledText.tsx",
     "./util/FPSMonitor": "./src/exports/util/FPSMonitor.tsx",
     "./package.json": "./package.json"
   },
   "publishConfig": {
-    "provenance": true,
     "access": "public",
     "exports": {
       ".": {
@@ -39,6 +42,10 @@
         "require": "./dist/exports/layout/Row.cjs",
         "import": "./dist/exports/layout/Row.js"
       },
+      "./lists/VirtualList": {
+        "require": "./dist/exports/lists/VirtualList.cjs",
+        "import": "./dist/exports/lists/VirtualList.js"
+      },
       "./text/StyledText": {
         "require": "./dist/exports/text/StyledText.cjs",
         "import": "./dist/exports/text/StyledText.js"
@@ -48,7 +55,8 @@
         "import": "./dist/exports/util/FPSMonitor.js"
       },
       "./package.json": "./package.json"
-    }
+    },
+    "provenance": true
   },
   "scripts": {
     "build": "tsdown --config-loader unrun",
@@ -57,9 +65,6 @@
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
-  "files": [
-    "dist"
-  ],
   "devDependencies": {
     "@repo/configs": "workspace:*",
     "@types/react": "19.2.8"

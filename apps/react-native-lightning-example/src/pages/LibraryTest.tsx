@@ -89,9 +89,9 @@ const LibraryView = ({ items }: { items: PosterItem[] }) => {
       ref={ref}
       drawDistance={100}
       numColumns={6}
-      centerContent={true}
-      estimatedItemSize={500}
-      estimatedListSize={{ height: 1080, width: 1670 }}
+      ItemSeparatorComponent={() => <lng-view style={{ w: 20, h: 1 }} />}
+      contentContainerStyle={{ paddingHorizontal: 25 }}
+      style={{ w: 1670, h: 1080 }}
       renderItem={renderItem}
       data={items}
     />

@@ -1,16 +1,19 @@
 {
   "name": "@plextv/react-native-lightning-components",
-  "description": "React components for react-native-lightning",
   "version": "0.4.0",
-  "author": "Plex Inc.",
+  "description": "React components for react-native-lightning",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -19,12 +22,9 @@
     ".": "./src/index.ts",
     "./layout/Column": "./src/exports/layout/Column.tsx",
     "./layout/Row": "./src/exports/layout/Row.tsx",
-    "./lists/CellContainer": "./src/exports/lists/CellContainer.tsx",
-    "./lists/FlashList": "./src/exports/lists/FlashList.tsx",
     "./package.json": "./package.json"
   },
   "publishConfig": {
-    "provenance": true,
     "access": "public",
     "exports": {
       ".": {
@@ -39,16 +39,9 @@
         "require": "./dist/exports/layout/Row.cjs",
         "import": "./dist/exports/layout/Row.js"
       },
-      "./lists/CellContainer": {
-        "require": "./dist/exports/lists/CellContainer.cjs",
-        "import": "./dist/exports/lists/CellContainer.js"
-      },
-      "./lists/FlashList": {
-        "require": "./dist/exports/lists/FlashList.cjs",
-        "import": "./dist/exports/lists/FlashList.js"
-      },
       "./package.json": "./package.json"
-    }
+    },
+    "provenance": true
   },
   "scripts": {
     "build": "tsdown --config-loader unrun",
@@ -57,9 +50,6 @@
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
-  "files": [
-    "dist"
-  ],
   "devDependencies": {
     "@repo/configs": "workspace:*",
     "@types/react": "19.2.8"
@@ -70,14 +60,8 @@
     "@plextv/react-lightning-plugin-css-transform": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
     "@plextv/react-native-lightning": "workspace:^",
-    "@shopify/flash-list": "^2.2.0",
     "react": "^19.2.3",
     "react-native": "^0.82.1"
-  },
-  "peerDependenciesMeta": {
-    "@shopify/flash-list": {
-      "optional": true
-    }
   },
   "volta": {
     "extends": "../../package.json"
