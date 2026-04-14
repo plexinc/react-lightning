@@ -8,7 +8,9 @@ const config: UserConfig = defineConfig({
   format: 'esm',
   target: 'node22',
   platform: 'node',
-  external: [/^node:.*/],
+  deps: {
+    neverBundle: [/^node:.*/],
+  },
   exports: {
     devExports: false,
   },

@@ -11,6 +11,14 @@ const makeLayout = (offset: number, size: number): ComputedLayout => ({
   crossSize: 100,
 });
 
+function getCallArgs(fn: ReturnType<typeof vi.fn>, index: number) {
+  const call = fn.mock.calls[index];
+  if (!call) {
+    throw new Error(`Expected mock call at index ${index}`);
+  }
+  return call[0];
+}
+
 describe('ViewabilityTracker', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
@@ -29,7 +37,7 @@ describe('ViewabilityTracker', () => {
     tracker.update([0, 1, 2], 0, 250, false);
 
     expect(onChange).toHaveBeenCalledTimes(1);
-    const { viewableItems, changed } = onChange.mock.calls[0][0];
+    const { viewableItems, changed } = getCallArgs(onChange, 0);
     expect(viewableItems).toHaveLength(3);
     expect(changed).toHaveLength(3);
   });
@@ -67,7 +75,7 @@ describe('ViewabilityTracker', () => {
     // Viewport 0–120: item 0 fully visible, item 1 only 20% visible
     tracker.update([0, 1], 0, 120, false);
 
-    const items = onChange.mock.calls[0][0].viewableItems;
+    const items = getCallArgs(onChange, 0).viewableItems;
     expect(items).toHaveLength(1);
     expect(items[0].index).toBe(0);
   });
@@ -86,7 +94,7 @@ describe('ViewabilityTracker', () => {
 
     // Viewport 0–100, both items are 50px → each covers 50%
     tracker.update([0, 1], 0, 100, false);
-    expect(onChange.mock.calls[0][0].viewableItems).toHaveLength(2);
+    expect(getCallArgs(onChange, 0).viewableItems).toHaveLength(2);
   });
 
   it('respects waitForInteraction', () => {
@@ -164,7 +172,7 @@ describe('ViewabilityTracker', () => {
 
     // Only item 1 visible now
     tracker.update([1], 100, 100, false);
-    const { changed } = onChange.mock.calls[0][0];
+    const { changed } = getCallArgs(onChange, 0);
     const left = changed.find(
       (t: { index: number; isViewable: boolean }) => t.index === 0 && !t.isViewable,
     );
@@ -191,7 +199,7 @@ describe('ViewabilityTracker', () => {
     vi.advanceTimersByTime(500);
     expect(onChange).toHaveBeenCalledTimes(2);
     // Final state includes both items
-    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0];
+    const lastCall = getCallArgs(onChange, onChange.mock.calls.length - 1);
     expect(lastCall.viewableItems).toHaveLength(2);
   });
 
@@ -217,13 +225,14 @@ describe('ViewabilityTracker', () => {
     // At t=500, only T0 fires (item 0 visible 500ms, item 1 only 200ms)
     vi.advanceTimersByTime(200);
     expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange.mock.calls[0][0].viewableItems).toHaveLength(1);
-    expect(onChange.mock.calls[0][0].viewableItems[0].index).toBe(0);
+    const firstCall = getCallArgs(onChange, 0);
+    expect(firstCall.viewableItems).toHaveLength(1);
+    expect(firstCall.viewableItems[0].index).toBe(0);
 
     // At t=800, T1 fires (item 1 visible 500ms)
     vi.advanceTimersByTime(300);
     expect(onChange).toHaveBeenCalledTimes(2);
-    expect(onChange.mock.calls[1][0].viewableItems).toHaveLength(2);
+    expect(getCallArgs(onChange, 1).viewableItems).toHaveLength(2);
   });
 
   it('immediately reports committed items leaving with minimumViewTime', () => {
@@ -246,7 +255,7 @@ describe('ViewabilityTracker', () => {
     // Item 0 leaves — should be reported immediately
     tracker.update([], 200, 200, false);
     expect(onChange).toHaveBeenCalledTimes(1);
-    const { changed, viewableItems } = onChange.mock.calls[0][0];
+    const { changed, viewableItems } = getCallArgs(onChange, 0);
     expect(viewableItems).toHaveLength(0);
     expect(changed).toHaveLength(1);
     expect(changed[0].index).toBe(0);

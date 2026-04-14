@@ -28,16 +28,16 @@
     "access": "public",
     "exports": {
       ".": {
-        "require": "./dist/index.cjs",
-        "import": "./dist/index.js"
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
       },
       "./layout/Column": {
-        "require": "./dist/exports/layout/Column.cjs",
-        "import": "./dist/exports/layout/Column.js"
+        "import": "./dist/exports/layout/Column.js",
+        "require": "./dist/exports/layout/Column.cjs"
       },
       "./layout/Row": {
-        "require": "./dist/exports/layout/Row.cjs",
-        "import": "./dist/exports/layout/Row.js"
+        "import": "./dist/exports/layout/Row.js",
+        "require": "./dist/exports/layout/Row.cjs"
       },
       "./package.json": "./package.json"
     },
@@ -57,6 +57,7 @@
   "peerDependencies": {
     "@plextv/react-lightning": "workspace:^",
     "@plextv/react-lightning-components": "workspace:^",
+    "@plextv/react-lightning-plugin-flexbox": "workspace:^",
     "@plextv/react-native-lightning": "workspace:^",
     "react": "catalog:peers",
     "react-native": "catalog:peers"

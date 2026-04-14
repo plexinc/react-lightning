@@ -2,8 +2,7 @@
   "extends": "@repo/configs/tsconfig.react-native-library.json",
   "compilerOptions": {
     "jsx": "react-native",
-    "isolatedDeclarations": false,
-    "outDir": "dist"
+    "isolatedDeclarations": false
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

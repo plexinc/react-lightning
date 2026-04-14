@@ -29,8 +29,8 @@
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-router-dom": "7.12.0",
-    "swr": "2.3.8"
+    "react-router-dom": "7.14.1",
+    "swr": "2.4.1"
   },
   "devDependencies": {
     "@plextv/vite-plugin-msdf-fontgen": "workspace:*",
@@ -40,10 +40,15 @@
     "@vitejs/plugin-legacy": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "babel-plugin-react-compiler": "catalog:",
-    "vite-tsconfig-paths": "6.0.4"
+    "vite-tsconfig-paths": "6.1.1"
   },
   "volta": {
     "extends": "../../package.json"
   },
-  "packageManager": "pnpm@10.12.3"
+  "packageManager": "pnpm@10.12.3",
+  "depcheck": {
+    "ignoreMatches": [
+      "babel-plugin-react-compiler"
+    ]
+  }
 }

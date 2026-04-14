@@ -337,12 +337,17 @@ suite('getOverlap', () => {
         { x: 200, y: 0, w: 200, h: 200 },
       ]);
 
+      const source = elements[1];
+      const target = elements[2];
+      if (!source || !target) {
+        throw new Error('Expected elements at indices 1 and 2');
+      }
+
       // Make element 2 non-visible (focusable returns false, but focusableIntent is true)
-      Object.assign(elements[2], { focusable: false, focusableIntent: true });
+      Object.assign(target, { focusable: false, focusableIntent: true });
 
       const closest = findClosestElement(
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- test setup guarantees existence
-        elements[1]!,
+        source,
         elements.root.children,
         elements.root,
         Direction.Right,
@@ -357,12 +362,17 @@ suite('getOverlap', () => {
         { x: 200, y: 0, w: 200, h: 200 },
       ]);
 
+      const source = elements[1];
+      const target = elements[2];
+      if (!source || !target) {
+        throw new Error('Expected elements at indices 1 and 2');
+      }
+
       // Make element 2 non-visible but with focusableIntent
-      Object.assign(elements[2], { focusable: false, focusableIntent: true });
+      Object.assign(target, { focusable: false, focusableIntent: true });
 
       const closest = findClosestElement(
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- test setup guarantees existence
-        elements[1]!,
+        source,
         elements.root.children,
         elements.root,
         Direction.Right,
@@ -378,13 +388,18 @@ suite('getOverlap', () => {
         { x: 200, y: 0, w: 0, h: 0 },
       ]);
 
+      const source = elements[1];
+      const target = elements[2];
+      if (!source || !target) {
+        throw new Error('Expected elements at indices 1 and 2');
+      }
+
       // Zero-dimension elements should still be skipped even with allowOffscreen
       // because they have no spatial position to navigate to
-      Object.assign(elements[2], { focusableIntent: true });
+      Object.assign(target, { focusableIntent: true });
 
       const closest = findClosestElement(
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- test setup guarantees existence
-        elements[1]!,
+        source,
         elements.root.children,
         elements.root,
         Direction.Right,
@@ -400,12 +415,17 @@ suite('getOverlap', () => {
         { x: 200, y: 0, w: 200, h: 200 },
       ]);
 
+      const source = elements[1];
+      const target = elements[2];
+      if (!source || !target) {
+        throw new Error('Expected elements at indices 1 and 2');
+      }
+
       // Element has neither focusable nor focusableIntent
-      Object.assign(elements[2], { focusable: false, focusableIntent: false });
+      Object.assign(target, { focusable: false, focusableIntent: false });
 
       const closest = findClosestElement(
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- test setup guarantees existence
-        elements[1]!,
+        source,
         elements.root.children,
         elements.root,
         Direction.Right,

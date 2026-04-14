@@ -217,7 +217,6 @@ export async function createRoot(
     (error) => console.error(error),
     (error) => console.error(error),
     () => {},
-    null,
   );
 
   const lngRoot: LightningRoot = {

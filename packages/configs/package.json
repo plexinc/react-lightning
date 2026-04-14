@@ -21,5 +21,10 @@
   },
   "volta": {
     "extends": "../../package.json"
+  },
+  "depcheck": {
+    "ignoreMatches": [
+      "babel-plugin-react-compiler"
+    ]
   }
 }

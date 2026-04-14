@@ -30,11 +30,12 @@
     "@plextv/react-lightning-plugin-reanimated": "workspace:*",
     "@plextv/react-native-lightning": "workspace:*",
     "@plextv/react-native-lightning-components": "workspace:*",
-    "@react-navigation/native": "7.1.28",
+    "@react-navigation/native": "7.2.2",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-native": "catalog:",
-    "react-native-reanimated": "catalog:"
+    "react-native-reanimated": "catalog:",
+    "react-native-worklets": "0.8.1"
   },
   "devDependencies": {
     "@plextv/vite-plugin-msdf-fontgen": "workspace:*",
@@ -46,7 +47,7 @@
     "@vitejs/plugin-legacy": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "babel-plugin-react-compiler": "catalog:",
-    "typescript": "5.9.3"
+    "typescript": "6.0.2"
   },
   "volta": {
     "extends": "../../package.json"
@@ -56,7 +57,8 @@
   "depcheck": {
     "ignoreMatches": [
       "typescript",
-      "react-dom"
+      "react-dom",
+      "babel-plugin-react-compiler"
     ]
   }
 }

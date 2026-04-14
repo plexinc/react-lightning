@@ -26,8 +26,8 @@
     "access": "public",
     "exports": {
       ".": {
-        "require": "./dist/index.cjs",
-        "import": "./dist/index.js"
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
       },
       "./package.json": "./package.json"
     },
@@ -62,5 +62,8 @@
     "ignoreMatches": [
       "react-native-reanimated-original"
     ]
+  },
+  "inlinedDependencies": {
+    "type-fest": "5.5.0"
   }
 }
