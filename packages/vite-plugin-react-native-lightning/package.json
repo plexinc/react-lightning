@@ -37,13 +37,12 @@
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
-  "dependencies": {
-    "@vitejs/plugin-react": "5.1.2"
-  },
   "devDependencies": {
     "@repo/configs": "workspace:*"
   },
   "peerDependencies": {
-    "@plextv/react-native-lightning": "workspace:^"
+    "@plextv/react-native-lightning": "workspace:^",
+    "@vitejs/plugin-react": "catalog:peers",
+    "vite": "catalog:peers"
   }
 }

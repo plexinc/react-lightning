@@ -17,7 +17,7 @@
   "scripts": {},
   "devDependencies": {
     "@rollup/plugin-babel": "7.0.0",
-    "babel-plugin-react-compiler": "1.0.0"
+    "babel-plugin-react-compiler": "catalog:"
   },
   "volta": {
     "extends": "../../package.json"

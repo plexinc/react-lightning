@@ -42,5 +42,8 @@
   },
   "devDependencies": {
     "@repo/configs": "workspace:*"
+  },
+  "peerDependencies": {
+    "vite": "catalog:peers"
   }
 }

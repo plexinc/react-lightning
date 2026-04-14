@@ -41,23 +41,23 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@plextv/react-lightning-components": "workspace:*",
-    "@plextv/react-lightning-plugin-css-transform": "workspace:*",
-    "@plextv/react-lightning-plugin-flexbox": "workspace:*",
     "its-fine": "2.0.0",
     "react-native-web": "0.21.2"
   },
   "devDependencies": {
     "@repo/configs": "workspace:*",
     "@types/node": "25.0.9",
-    "@types/react": "19.2.8",
-    "@types/react-reconciler": "0.32.3"
+    "@types/react": "catalog:",
+    "@types/react-reconciler": "catalog:"
   },
   "peerDependencies": {
-    "@lightningjs/renderer": "3.0.0-beta20",
+    "@lightningjs/renderer": "catalog:",
     "@plextv/react-lightning": "workspace:^",
-    "react": "^19.2.3",
-    "react-native": "^0.82.1"
+    "@plextv/react-lightning-components": "workspace:^",
+    "@plextv/react-lightning-plugin-css-transform": "workspace:^",
+    "@plextv/react-lightning-plugin-flexbox": "workspace:^",
+    "react": "catalog:peers",
+    "react-native": "catalog:peers"
   },
   "volta": {
     "extends": "../../package.json"

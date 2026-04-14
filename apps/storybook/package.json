@@ -19,9 +19,10 @@
     "dev": "storybook dev -p 6006 --no-open"
   },
   "dependencies": {
-    "@lightningjs/renderer": "3.0.0-beta20",
+    "@lightningjs/renderer": "catalog:",
     "@plextv/react-lightning": "workspace:*",
     "@plextv/react-lightning-components": "workspace:*",
+    "@plextv/react-lightning-plugin-css-transform": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox-lite": "workspace:*",
     "@plextv/react-lightning-plugin-reanimated": "workspace:*",
@@ -29,11 +30,10 @@
     "@plextv/react-native-lightning-components": "workspace:*",
     "@storybook/addon-docs": "9.1.17",
     "@storybook/addon-links": "9.1.17",
-    "@storybook/builder-vite": "9.1.17",
     "@storybook/react-vite": "9.1.17",
-    "react": "19.2.3",
-    "react-native": "0.82.1",
-    "react-native-reanimated": "4.2.1",
+    "react": "catalog:",
+    "react-native": "catalog:",
+    "react-native-reanimated": "catalog:",
     "storybook": "9.1.17"
   },
   "devDependencies": {
@@ -41,8 +41,9 @@
     "@plextv/vite-plugin-react-native-lightning": "workspace:*",
     "@plextv/vite-plugin-react-reanimated-lightning": "workspace:*",
     "@repo/configs": "workspace:*",
-    "@types/react": "19.2.8",
-    "babel-plugin-react-compiler": "1.0.0"
+    "@types/react": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "babel-plugin-react-compiler": "catalog:"
   },
   "volta": {
     "extends": "../../package.json"

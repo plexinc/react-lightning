@@ -52,16 +52,14 @@
   },
   "devDependencies": {
     "@repo/configs": "workspace:*",
-    "@types/react": "19.2.8"
+    "@types/react": "catalog:"
   },
   "peerDependencies": {
     "@plextv/react-lightning": "workspace:^",
     "@plextv/react-lightning-components": "workspace:^",
-    "@plextv/react-lightning-plugin-css-transform": "workspace:^",
-    "@plextv/react-lightning-plugin-flexbox": "workspace:^",
     "@plextv/react-native-lightning": "workspace:^",
-    "react": "^19.2.3",
-    "react-native": "^0.82.1"
+    "react": "catalog:peers",
+    "react-native": "catalog:peers"
   },
   "volta": {
     "extends": "../../package.json"

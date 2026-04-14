@@ -43,7 +43,8 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "devDependencies": {
-    "@repo/configs": "workspace:*"
+    "@repo/configs": "workspace:*",
+    "type-fest": "catalog:"
   },
   "peerDependencies": {
     "@plextv/react-lightning": "workspace:^"

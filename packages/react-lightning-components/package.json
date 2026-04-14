@@ -67,12 +67,12 @@
   },
   "devDependencies": {
     "@repo/configs": "workspace:*",
-    "@types/react": "19.2.8"
+    "@types/react": "catalog:"
   },
   "peerDependencies": {
     "@plextv/react-lightning": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
-    "react": "^19.2.3"
+    "react": "catalog:peers"
   },
   "volta": {
     "extends": "../../package.json"
