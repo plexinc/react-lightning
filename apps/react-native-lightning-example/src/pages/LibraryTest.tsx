@@ -94,6 +94,7 @@ const LibraryView = ({ items }: { items: PosterItem[] }) => {
       snapToAlignment="center"
       drawDistance={100}
       numColumns={6}
+      estimatedItemSize={400}
       ItemSeparatorComponent={() => <lng-view style={{ w: 20, h: 1 }} />}
       contentContainerStyle={{ paddingHorizontal: 25 }}
       style={{ w: 1670, h: 1080 }}

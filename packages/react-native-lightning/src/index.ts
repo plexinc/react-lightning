@@ -12,6 +12,7 @@ export { ActivityIndicator, type ActivityIndicatorProps } from './exports/Activi
 export { Button, type ButtonProps } from './exports/Button';
 export { FocusGroup, type FocusGroupProps } from './exports/FocusGroup';
 export { Image, type ImageProps } from './exports/Image';
+export { NativeCanvas } from './exports/NativeCanvas';
 export * as Platform from './exports/Platform';
 export { Pressable, type PressableProps } from './exports/Pressable';
 export { ScrollView, type ScrollViewProps } from './exports/ScrollView';

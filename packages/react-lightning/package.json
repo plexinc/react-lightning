@@ -54,7 +54,7 @@
   },
   "peerDependencies": {
     "@lightningjs/renderer": "catalog:",
-    "react": "catalog:peers"
+    "react": "catalog:"
   },
   "volta": {
     "extends": "../../package.json"

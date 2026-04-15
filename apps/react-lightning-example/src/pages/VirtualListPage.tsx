@@ -80,6 +80,11 @@ export const VirtualListPage = () => {
         listFooterSize={46}
         ItemSeparatorComponent={Separator2}
         contentContainerStyle={{ paddingVertical: 25 }}
+        // ScrollItem multiplies width by 1.25 on every 3rd item; mirror
+        // that here so the cell wrapper allocates the right slot.
+        overrideItemLayout={(layout, _item, index) => {
+          layout.size = Math.round(index % 3 === 0 ? 75 * 1.25 : 75);
+        }}
         renderItem={({ index, item }) => (
           <FlexItem
             horizontal
@@ -103,6 +108,10 @@ export const VirtualListPage = () => {
         ListFooterComponent={Footer}
         listFooterSize={100}
         ItemSeparatorComponent={Separator}
+        // ScrollItem multiplies height by 1.5 on every 3rd item.
+        overrideItemLayout={(layout, _item, index) => {
+          layout.size = Math.round(index % 3 === 0 ? 50 * 1.5 : 50);
+        }}
         renderItem={({ index, item }) => (
           <ScrollItem
             color={0x4fafafff}

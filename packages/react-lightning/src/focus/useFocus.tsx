@@ -63,12 +63,6 @@ export function useFocus<T extends LightningElement>(
         destinations,
         allowOffscreen,
       });
-    } else if (import.meta.env.DEV && ref.current && !parentFocusable) {
-      console.warn(
-        'useFocus: Element exists but no parent FocusGroup found. ' +
-          'This element will not participate in focus management. ' +
-          'Wrap it in a FocusGroup or ensure the parent FocusGroup has mounted.',
-      );
     }
 
     return () => {

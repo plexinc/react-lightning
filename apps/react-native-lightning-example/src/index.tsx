@@ -12,9 +12,8 @@ import '@plextv/react-lightning-plugin-flexbox/jsx';
 import { createRoot } from 'react-dom/client';
 import { Button } from 'react-native';
 
-import { Canvas } from '@plextv/react-lightning';
 import { Column, Row } from '@plextv/react-lightning-components';
-import { getReactNativePlugins } from '@plextv/react-native-lightning';
+import { getReactNativePlugins, NativeCanvas } from '@plextv/react-native-lightning';
 
 import { ErrorBoundary } from './ErrorBoundary';
 import { keyMap } from './keyMap';
@@ -145,7 +144,7 @@ const MainApp = () => {
 const App = () => {
   return (
     <ErrorBoundary>
-      <Canvas
+      <NativeCanvas
         keyMap={keyMap}
         options={{
           numImageWorkers: window.navigator.hardwareConcurrency - 1 || 2,
@@ -193,7 +192,7 @@ const App = () => {
         <NavigationContainer linking={linking} theme={DarkTheme}>
           <MainApp />
         </NavigationContainer>
-      </Canvas>
+      </NativeCanvas>
     </ErrorBoundary>
   );
 };

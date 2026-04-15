@@ -22,7 +22,7 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@lightningjs/renderer": "catalog:",
+    "@lightningjs/renderer": "catalog:apps",
     "@plextv/react-lightning": "workspace:*",
     "@plextv/react-lightning-components": "workspace:*",
     "@plextv/react-lightning-plugin-css-transform": "workspace:*",
@@ -31,10 +31,10 @@
     "@plextv/react-native-lightning": "workspace:*",
     "@plextv/react-native-lightning-components": "workspace:*",
     "@react-navigation/native": "7.2.2",
-    "react": "catalog:",
-    "react-dom": "catalog:",
-    "react-native": "catalog:",
-    "react-native-reanimated": "catalog:",
+    "react": "catalog:apps",
+    "react-dom": "catalog:apps",
+    "react-native": "catalog:apps",
+    "react-native-reanimated": "catalog:apps",
     "react-native-worklets": "0.8.1"
   },
   "devDependencies": {
@@ -42,6 +42,7 @@
     "@plextv/vite-plugin-react-native-lightning": "workspace:*",
     "@plextv/vite-plugin-react-reanimated-lightning": "workspace:*",
     "@repo/configs": "workspace:*",
+    "@rolldown/plugin-babel": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-legacy": "catalog:",

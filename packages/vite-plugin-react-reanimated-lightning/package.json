@@ -43,7 +43,7 @@
   },
   "peerDependencies": {
     "@plextv/react-lightning-plugin-reanimated": "workspace:^",
-    "react-native-reanimated": "catalog:peers",
-    "vite": "catalog:peers"
+    "react-native-reanimated": "catalog:",
+    "vite": "catalog:"
   }
 }

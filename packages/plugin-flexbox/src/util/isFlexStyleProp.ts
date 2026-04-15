@@ -59,6 +59,11 @@ flexProps satisfies Partial<Record<keyof LightningViewElementStyle, boolean>>;
 
 export type FlexProps = keyof typeof flexProps;
 
+// `Set.has` is faster than the `in` operator (which walks the prototype
+// chain — `'toString' in flexProps` returns true, etc.) and runs on every
+// style key during transformProps and the worker proxy's applyStyle.
+const _flexPropsSet: Set<string> = new Set(Object.keys(flexProps));
+
 export function isFlexStyleProp(prop: number | string | symbol): prop is FlexProps {
-  return prop in flexProps;
+  return typeof prop === 'string' && _flexPropsSet.has(prop);
 }

@@ -22,6 +22,7 @@ export interface LightningElementEvents extends FocusEvents<LightningElement> {
   childRemoved: (child: LightningElement, index: number) => void;
   beforeRender: () => void;
   layout: (dimensions: Rect) => void;
+  resized: (element: LightningElement, dimensions: { w: number; h: number }) => void;
   inViewport: NodeRenderStateEventHandler;
   textureLoaded: NodeLoadedEventHandler;
   textureFailed: NodeFailedEventHandler;

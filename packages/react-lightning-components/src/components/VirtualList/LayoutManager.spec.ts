@@ -11,9 +11,12 @@ describe('LayoutManager', () => {
         data: makeData(3),
         estimatedItemSize: 100,
         numColumns: 1,
+        cellCrossSize: 200,
       });
 
-      expect(lm.getLayout(0)).toEqual(expect.objectContaining({ offset: 0, size: 100 }));
+      expect(lm.getLayout(0)).toEqual(
+        expect.objectContaining({ offset: 0, size: 100, crossSize: 200 }),
+      );
       expect(lm.getLayout(1)).toEqual(expect.objectContaining({ offset: 100, size: 100 }));
       expect(lm.getLayout(2)).toEqual(expect.objectContaining({ offset: 200, size: 100 }));
       expect(lm.totalSize).toBe(300);
@@ -25,7 +28,7 @@ describe('LayoutManager', () => {
         data: makeData(3),
         estimatedItemSize: 100,
         numColumns: 1,
-
+        cellCrossSize: 200,
         overrideItemLayout: (layout, _item, index) => {
           layout.size = sizes[index];
         },
@@ -43,22 +46,69 @@ describe('LayoutManager', () => {
         data: makeData(2),
         estimatedItemSize: 100,
         numColumns: 1,
+        cellCrossSize: 200,
       });
 
       expect(lm.getLayout(5)).toBeUndefined();
     });
+
+    it('collapses null data entries to size 0', () => {
+      const data: Array<{ id: number } | null> = [{ id: 0 }, null, { id: 2 }];
+      const lm = new LayoutManager({
+        data,
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+      });
+
+      expect(lm.getLayout(0)?.size).toBe(100);
+      expect(lm.getLayout(1)?.size).toBe(0);
+      expect(lm.getLayout(1)?.offset).toBe(100);
+      expect(lm.getLayout(2)?.offset).toBe(100);
+      expect(lm.totalSize).toBe(200);
+    });
+
+    it('collapses undefined data entries to size 0', () => {
+      const data: Array<{ id: number } | undefined> = [{ id: 0 }, undefined, { id: 2 }];
+      const lm = new LayoutManager({
+        data,
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+      });
+
+      expect(lm.getLayout(1)?.size).toBe(0);
+      expect(lm.getLayout(2)?.offset).toBe(100);
+    });
+
+    it('honours override.size = 0 to collapse a row', () => {
+      const lm = new LayoutManager({
+        data: makeData(3),
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+        overrideItemLayout: (layout, _item, index) => {
+          if (index === 1) {
+            layout.size = 0;
+          }
+        },
+      });
+
+      expect(lm.getLayout(1)?.size).toBe(0);
+      expect(lm.getLayout(2)?.offset).toBe(100);
+      expect(lm.totalSize).toBe(200);
+    });
   });
 
   describe('multi column', () => {
-    it('positions items in a grid', () => {
+    it('positions items in a grid using cellCrossSize', () => {
       const lm = new LayoutManager({
         data: makeData(5),
         estimatedItemSize: 100,
         numColumns: 2,
+        cellCrossSize: 100,
       });
 
-      // columnWidth = estimatedItemSize = 100
-      // Row 0: items 0, 1
       expect(lm.getLayout(0)).toEqual(
         expect.objectContaining({
           offset: 0,
@@ -75,19 +125,18 @@ describe('LayoutManager', () => {
           crossSize: 100,
         }),
       );
-      // Row 1: items 2, 3
       expect(lm.getLayout(2)).toEqual(expect.objectContaining({ offset: 100, column: 0 }));
       expect(lm.getLayout(3)).toEqual(expect.objectContaining({ offset: 100, column: 1 }));
-      // Row 2: item 4 (partial row)
       expect(lm.getLayout(4)).toEqual(expect.objectContaining({ offset: 200, column: 0 }));
       expect(lm.totalSize).toBe(300);
     });
 
-    it('handles span override', () => {
+    it('handles span override (crossSize scales with span)', () => {
       const lm = new LayoutManager({
         data: makeData(3),
         estimatedItemSize: 100,
         numColumns: 3,
+        cellCrossSize: 100,
         overrideItemLayout: (layout, _item, index) => {
           if (index === 0) {
             layout.span = 2;
@@ -95,10 +144,8 @@ describe('LayoutManager', () => {
         },
       });
 
-      // columnWidth = estimatedItemSize = 100, span 2 = 200
       expect(lm.getLayout(0)?.crossSize).toBe(200);
       expect(lm.getLayout(0)?.column).toBe(0);
-      // Item 1 fills remaining column in the same row
       expect(lm.getLayout(1)?.column).toBe(2);
       expect(lm.getLayout(1)?.crossSize).toBe(100);
     });
@@ -108,12 +155,12 @@ describe('LayoutManager', () => {
         data: makeData(2),
         estimatedItemSize: 100,
         numColumns: 2,
+        cellCrossSize: 100,
         overrideItemLayout: (layout) => {
-          layout.span = 5; // more than numColumns
+          layout.span = 5;
         },
       });
 
-      // Span clamped to 2, crossSize = 2 * 100 = 200
       expect(lm.getLayout(0)?.crossSize).toBe(200);
     });
   });
@@ -124,14 +171,13 @@ describe('LayoutManager', () => {
         data: makeData(3),
         estimatedItemSize: 100,
         numColumns: 1,
-
+        cellCrossSize: 200,
         separatorSize: 10,
       });
 
       expect(lm.getLayout(0)).toEqual(expect.objectContaining({ offset: 0, size: 100 }));
       expect(lm.getLayout(1)).toEqual(expect.objectContaining({ offset: 110, size: 100 }));
       expect(lm.getLayout(2)).toEqual(expect.objectContaining({ offset: 220, size: 100 }));
-      // totalSize = 3*100 + 2*10 = 320
       expect(lm.totalSize).toBe(320);
     });
 
@@ -140,19 +186,32 @@ describe('LayoutManager', () => {
         data: makeData(5),
         estimatedItemSize: 100,
         numColumns: 2,
+        cellCrossSize: 100,
         separatorSize: 20,
       });
 
-      // Row 0: items 0, 1 at offset 0
       expect(lm.getLayout(0)?.offset).toBe(0);
       expect(lm.getLayout(1)?.offset).toBe(0);
-      // Row 1: items 2, 3 at offset 100 (no separator between rows)
       expect(lm.getLayout(2)?.offset).toBe(100);
       expect(lm.getLayout(3)?.offset).toBe(100);
-      // Row 2: item 4 at offset 200
       expect(lm.getLayout(4)?.offset).toBe(200);
-      // totalSize = 3*100 = 300 (separators handled cross-axis by cell)
       expect(lm.totalSize).toBe(300);
+    });
+
+    it('does not add separator gap after a zero-size empty row', () => {
+      const data: Array<{ id: number } | null> = [{ id: 0 }, null, { id: 2 }];
+      const lm = new LayoutManager({
+        data,
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+        separatorSize: 10,
+      });
+
+      expect(lm.getLayout(0)?.offset).toBe(0);
+      expect(lm.getLayout(1)?.offset).toBe(110);
+      expect(lm.getLayout(1)?.size).toBe(0);
+      expect(lm.getLayout(2)?.offset).toBe(110);
     });
   });
 
@@ -162,9 +221,9 @@ describe('LayoutManager', () => {
         data: makeData(20),
         estimatedItemSize: 100,
         numColumns: 1,
+        cellCrossSize: 200,
       });
 
-      // scroll=500, viewport=300, draw=100 → range 400..900
       const range = lm.getVisibleRange(500, 300, 100);
       expect(range.startIndex).toBe(4);
       expect(range.endIndex).toBe(8);
@@ -175,6 +234,7 @@ describe('LayoutManager', () => {
         data: [],
         estimatedItemSize: 100,
         numColumns: 1,
+        cellCrossSize: 200,
       });
       expect(lm.getVisibleRange(0, 300, 100)).toEqual({
         startIndex: 0,
@@ -187,6 +247,7 @@ describe('LayoutManager', () => {
         data: makeData(5),
         estimatedItemSize: 100,
         numColumns: 1,
+        cellCrossSize: 200,
       });
 
       const range = lm.getVisibleRange(0, 1000, 500);
@@ -199,6 +260,7 @@ describe('LayoutManager', () => {
         data: makeData(10),
         estimatedItemSize: 100,
         numColumns: 1,
+        cellCrossSize: 200,
       });
 
       const range = lm.getVisibleRange(800, 200, 0);
@@ -207,42 +269,237 @@ describe('LayoutManager', () => {
     });
   });
 
-  describe('reportItemSize', () => {
-    it('returns true and marks dirty when size changes', () => {
-      const lm = new LayoutManager({
-        data: makeData(3),
-        estimatedItemSize: 100,
-        numColumns: 1,
-      });
-      lm.getLayout(0); // force initial compute
-
-      const changed = lm.reportItemSize(0, 150);
-      expect(changed).toBe(true);
-      expect(lm.getLayout(1)?.offset).toBe(150);
-    });
-
-    it('returns false when size is unchanged', () => {
-      const lm = new LayoutManager({
-        data: makeData(3),
-        estimatedItemSize: 100,
-        numColumns: 1,
-      });
-      lm.getLayout(0);
-
-      expect(lm.reportItemSize(0, 100)).toBe(false);
-    });
-
-    it('updates averageItemSize after reports', () => {
+  describe('findIndexAtOffset', () => {
+    it('locates the index at a given main-axis offset', () => {
       const lm = new LayoutManager({
         data: makeData(5),
         estimatedItemSize: 100,
         numColumns: 1,
+        cellCrossSize: 200,
       });
-      lm.getLayout(0);
 
-      lm.reportItemSize(0, 200);
-      lm.reportItemSize(1, 200);
-      expect(lm.averageItemSize).toBe(200);
+      expect(lm.findIndexAtOffset(0)).toBe(0);
+      expect(lm.findIndexAtOffset(50)).toBe(0);
+      expect(lm.findIndexAtOffset(100)).toBe(1);
+      expect(lm.findIndexAtOffset(250)).toBe(2);
+    });
+
+    it('returns -1 for empty data', () => {
+      const lm = new LayoutManager({
+        data: [],
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+      });
+
+      expect(lm.findIndexAtOffset(0)).toBe(-1);
+    });
+  });
+
+  describe('reportItemSize', () => {
+    it('uses measured size in subsequent layouts', () => {
+      const lm = new LayoutManager({
+        data: makeData(3),
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+        keyExtractor: (item) => String(item.id),
+      });
+
+      expect(lm.getLayout(1)?.offset).toBe(100);
+
+      const changed = lm.reportItemSize('0', 150);
+      expect(changed).toBe(true);
+      expect(lm.getLayout(1)?.offset).toBe(150);
+      expect(lm.totalSize).toBe(350);
+    });
+
+    it('measurement wins over override', () => {
+      const lm = new LayoutManager({
+        data: makeData(3),
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+        keyExtractor: (item) => String(item.id),
+        overrideItemLayout: (layout) => {
+          layout.size = 80;
+        },
+      });
+
+      expect(lm.getLayout(0)?.size).toBe(80);
+
+      lm.reportItemSize('0', 120);
+      expect(lm.getLayout(0)?.size).toBe(120);
+      expect(lm.getLayout(1)?.offset).toBe(120);
+    });
+
+    it('returns false for zero or negative sizes', () => {
+      const lm = new LayoutManager({
+        data: makeData(2),
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+        keyExtractor: (item) => String(item.id),
+      });
+
+      expect(lm.reportItemSize('0', 0)).toBe(false);
+      expect(lm.reportItemSize('0', -5)).toBe(false);
+      expect(lm.getLayout(0)?.size).toBe(100);
+    });
+
+    it('returns false when reported size matches stored value', () => {
+      const lm = new LayoutManager({
+        data: makeData(2),
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+        keyExtractor: (item) => String(item.id),
+      });
+
+      lm.reportItemSize('0', 150);
+      expect(lm.reportItemSize('0', 150)).toBe(false);
+      expect(lm.reportItemSize('0', 150.4)).toBe(false);
+      expect(lm.reportItemSize('0', 152)).toBe(true);
+    });
+
+    it('measurements survive index shifts (keyed by userKey)', () => {
+      const data = makeData(3);
+      const lm = new LayoutManager({
+        data,
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+        keyExtractor: (item) => String(item.id),
+      });
+
+      lm.reportItemSize('1', 150);
+      expect(lm.getLayout(1)?.size).toBe(150);
+
+      // Insert a new item at the front — id=1 is now at index 2.
+      const newData = [{ id: 99 }, ...data];
+      lm.updateConfig({ data: newData });
+
+      expect(lm.getLayout(0)?.size).toBe(100);
+      expect(lm.getLayout(1)?.size).toBe(100);
+      expect(lm.getLayout(2)?.size).toBe(150);
+    });
+
+    it('falls back to estimate when no keyExtractor is provided', () => {
+      const lm = new LayoutManager({
+        data: makeData(2),
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+      });
+
+      lm.reportItemSize('0', 150);
+      expect(lm.getLayout(0)?.size).toBe(100);
+    });
+
+    it('null/undefined data overrides measurement (collapses to 0)', () => {
+      const data: Array<{ id: number } | null> = [{ id: 0 }, null];
+      const lm = new LayoutManager({
+        data,
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+        keyExtractor: (item) => String(item.id),
+      });
+
+      lm.reportItemSize('1', 150);
+      expect(lm.getLayout(1)?.size).toBe(0);
+    });
+
+    it('first measurement becomes the implicit estimate for later unmeasured items', () => {
+      const lm = new LayoutManager({
+        data: makeData(4),
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+        keyExtractor: (item) => String(item.id),
+      });
+
+      // Before any measurement: items use the caller's estimatedItemSize.
+      expect(lm.getLayout(2)?.size).toBe(100);
+
+      // First measurement comes in. Items 1,2,3 are still unmeasured but
+      // should now use 150 (the first-measured size) as the fallback.
+      lm.reportItemSize('0', 150);
+      expect(lm.getLayout(0)?.size).toBe(150);
+      expect(lm.getLayout(1)?.size).toBe(150);
+      expect(lm.getLayout(2)?.size).toBe(150);
+    });
+
+    it('later measurements do NOT update the implicit estimate', () => {
+      const lm = new LayoutManager({
+        data: makeData(5),
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+        keyExtractor: (item) => String(item.id),
+      });
+
+      lm.reportItemSize('0', 100);
+      lm.reportItemSize('1', 200);
+
+      // Item 0 measured at 100, item 1 measured at 200, but the implicit
+      // estimate stays locked at 100 (the first measurement). Items 2-4
+      // use 100 until they're measured individually.
+      expect(lm.getLayout(0)?.size).toBe(100);
+      expect(lm.getLayout(1)?.size).toBe(200);
+      expect(lm.getLayout(2)?.size).toBe(100);
+      expect(lm.getLayout(3)?.size).toBe(100);
+    });
+
+    it('reportItemEmpty collapses the row to size 0', () => {
+      const lm = new LayoutManager({
+        data: makeData(3),
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+        keyExtractor: (item) => String(item.id),
+      });
+
+      expect(lm.getLayout(1)?.size).toBe(100);
+
+      expect(lm.reportItemEmpty('1')).toBe(true);
+      expect(lm.getLayout(1)?.size).toBe(0);
+      expect(lm.getLayout(2)?.offset).toBe(100);
+      expect(lm.totalSize).toBe(200);
+    });
+
+    it('reportItemEmpty is idempotent', () => {
+      const lm = new LayoutManager({
+        data: makeData(2),
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+        keyExtractor: (item) => String(item.id),
+      });
+
+      expect(lm.reportItemEmpty('0')).toBe(true);
+      expect(lm.reportItemEmpty('0')).toBe(false);
+    });
+
+    it('per-item override.size wins over the implicit estimate', () => {
+      const lm = new LayoutManager({
+        data: makeData(3),
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+        keyExtractor: (item) => String(item.id),
+        overrideItemLayout: (layout, _item, index) => {
+          if (index === 2) {
+            layout.size = 75;
+          }
+        },
+      });
+
+      lm.reportItemSize('0', 200);
+
+      expect(lm.getLayout(0)?.size).toBe(200); // measured
+      expect(lm.getLayout(1)?.size).toBe(200); // first-measured fallback
+      expect(lm.getLayout(2)?.size).toBe(75); // override.size wins
     });
   });
 
@@ -252,118 +509,35 @@ describe('LayoutManager', () => {
         data: makeData(3),
         estimatedItemSize: 100,
         numColumns: 1,
+        cellCrossSize: 200,
       });
       expect(lm.totalSize).toBe(300);
 
-      lm.updateConfig({ data: makeData(5) });
+      expect(lm.updateConfig({ data: makeData(5) })).toBe(true);
       expect(lm.totalSize).toBe(500);
     });
-  });
 
-  describe('deferMeasurement / flushDeferred', () => {
-    it('buffers measurements and applies them on flush', () => {
-      const lm = new LayoutManager({
-        data: makeData(5),
-        estimatedItemSize: 100,
-        numColumns: 1,
-      });
-      lm.getLayout(0);
-
-      lm.deferMeasurement(0, 150, 100);
-      lm.deferMeasurement(1, 200, 100);
-      expect(lm.hasPendingMeasurements).toBe(true);
-
-      const result = lm.flushDeferred();
-      expect(result.changed).toBe(true);
-      expect(lm.hasPendingMeasurements).toBe(false);
-      expect(lm.getLayout(0)?.size).toBe(150);
-      expect(lm.getLayout(1)?.size).toBe(200);
-    });
-
-    it('returns anchorDelta when anchor shifts', () => {
-      const lm = new LayoutManager({
-        data: makeData(5),
-        estimatedItemSize: 100,
-        numColumns: 1,
-      });
-      lm.getLayout(0);
-
-      // Item 0 grows from 100 → 200. The average also shifts to 200,
-      // so unmeasured item 1 is re-estimated at 200. Total delta for item 2: +200.
-      lm.deferMeasurement(0, 200, 100);
-      const result = lm.flushDeferred(2);
-      expect(result.anchorDelta).toBe(200);
-    });
-
-    it('returns zero delta when no anchor provided', () => {
+    it('recomputes when cellCrossSize changes', () => {
       const lm = new LayoutManager({
         data: makeData(3),
         estimatedItemSize: 100,
         numColumns: 1,
+        cellCrossSize: 200,
       });
-      lm.getLayout(0);
 
-      lm.deferMeasurement(0, 200, 100);
-      const result = lm.flushDeferred();
-      expect(result.anchorDelta).toBe(0);
+      expect(lm.updateConfig({ cellCrossSize: 300 })).toBe(true);
+      expect(lm.getLayout(0)?.crossSize).toBe(300);
     });
 
-    it('returns unchanged when no measurements are pending', () => {
+    it('returns false when nothing changed', () => {
       const lm = new LayoutManager({
         data: makeData(3),
         estimatedItemSize: 100,
         numColumns: 1,
-      });
-      lm.getLayout(0);
-
-      expect(lm.hasPendingMeasurements).toBe(false);
-      const result = lm.flushDeferred(0);
-      expect(result.changed).toBe(false);
-      expect(result.anchorDelta).toBe(0);
-    });
-
-    it('returns unchanged when deferred sizes match current', () => {
-      const lm = new LayoutManager({
-        data: makeData(3),
-        estimatedItemSize: 100,
-        numColumns: 1,
-      });
-      lm.getLayout(0);
-
-      lm.deferMeasurement(0, 100, 100);
-      const result = lm.flushDeferred(1);
-      expect(result.changed).toBe(false);
-      expect(result.anchorDelta).toBe(0);
-    });
-
-    it('clear also clears pending measurements', () => {
-      const lm = new LayoutManager({
-        data: makeData(3),
-        estimatedItemSize: 100,
-        numColumns: 1,
+        cellCrossSize: 200,
       });
 
-      lm.deferMeasurement(0, 200, 100);
-      lm.clear();
-      expect(lm.hasPendingMeasurements).toBe(false);
-    });
-  });
-
-  describe('clear', () => {
-    it('resets all state', () => {
-      const lm = new LayoutManager({
-        data: makeData(5),
-        estimatedItemSize: 100,
-        numColumns: 1,
-      });
-      lm.getLayout(0);
-      lm.reportItemSize(0, 200);
-      lm.clear();
-
-      // Data still exists so totalSize recomputes from estimated sizes
-      expect(lm.totalSize).toBe(500);
-      // Average was cleared, so falls back to estimatedItemSize
-      expect(lm.averageItemSize).toBe(100);
+      expect(lm.updateConfig({ estimatedItemSize: 100, numColumns: 1 })).toBe(false);
     });
   });
 });

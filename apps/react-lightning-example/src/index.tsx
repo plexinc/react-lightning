@@ -3,12 +3,13 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import { Canvas, type RenderOptions } from '@plextv/react-lightning';
 import { plugin as cssTransformPlugin } from '@plextv/react-lightning-plugin-css-transform';
-import { plugin as flexPlugin } from '@plextv/react-lightning-plugin-flexbox';
+import { FlexRoot, plugin as flexPlugin } from '@plextv/react-lightning-plugin-flexbox';
 
 import { keyMap } from './keyMap';
 import { AnimationPage } from './pages/AnimationPage';
 import { BrowsePage } from './pages/BrowsePage';
 import { LayoutPage } from './pages/LayoutPage';
+import { NestedListPage } from './pages/NestedListPage';
 import { Page60 } from './pages/Page60';
 import { PosterPage } from './pages/PosterPage';
 import { ShaderPage } from './pages/ShaderPage';
@@ -52,6 +53,10 @@ const router = createBrowserRouter([
     element: <TransformsPage />,
   },
   {
+    path: '/nested-list',
+    element: <NestedListPage />,
+  },
+  {
     path: '/page60',
     element: <Page60 />,
   },
@@ -90,7 +95,9 @@ const options: RenderOptions = {
 
 const App = () => (
   <Canvas keyMap={keyMap} options={options}>
-    <RouterProvider router={router} />
+    <FlexRoot style={{ w: 1920, h: 1080 }}>
+      <RouterProvider router={router} />
+    </FlexRoot>
   </Canvas>
 );
 

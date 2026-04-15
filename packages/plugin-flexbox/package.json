@@ -54,10 +54,12 @@
   },
   "devDependencies": {
     "@repo/configs": "workspace:*",
+    "@types/react": "catalog:",
     "copyfiles": "2.4.1"
   },
   "peerDependencies": {
-    "@plextv/react-lightning": "workspace:^"
+    "@plextv/react-lightning": "workspace:^",
+    "react": "catalog:"
   },
   "volta": {
     "extends": "../../package.json"

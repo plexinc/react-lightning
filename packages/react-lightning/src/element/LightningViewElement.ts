@@ -15,6 +15,7 @@ import type {
 import type { Fiber } from 'react-reconciler';
 import { EventEmitter, type IEventEmitter } from 'tseep';
 
+import { getNodeResizeObserver, type NodeResizeObserver } from '../observer/NodeResizeObserver';
 import type { Plugin } from '../render/Plugin';
 import {
   type Focusable,
@@ -100,6 +101,8 @@ export class LightningViewElement<
   private _eventEmitter = new EventEmitter<LightningElementEvents>();
   private _deferTarget: LightningElement | null = null;
   private _deferNodeRemovalHandler: ((destroy: () => void) => void) | null = null;
+  private _resizeObserver: NodeResizeObserver | null = null;
+  private _isObservingResize = false;
 
   public get visible(): boolean {
     return this._visible;
@@ -310,10 +313,19 @@ export class LightningViewElement<
 
     LightningViewElement.allElements[this.id] = this;
 
+    if (this.props.onResize) {
+      this._reconcileResizeObserving();
+    }
+
     this._eventEmitter.emit('initialized');
   }
 
   public destroy(): void {
+    if (this._isObservingResize && this._resizeObserver) {
+      this._resizeObserver.unobserve(this);
+      this._isObservingResize = false;
+    }
+
     this.node.off('inViewport', this._onInViewport);
     this.node.off('loaded', this._onTextureLoaded);
     this.node.off('failed', this._onTextureFailed);
@@ -340,17 +352,34 @@ export class LightningViewElement<
 
   public on = (...args: Parameters<IEventEmitter<LightningElementEvents>['on']>): (() => void) => {
     this._eventEmitter.on(...args);
-    return () => this._eventEmitter.off(...args);
+
+    if (args[0] === 'resized') {
+      this._reconcileResizeObserving();
+    }
+
+    return () => this.off(...args);
   };
   public once = (
     ...args: Parameters<IEventEmitter<LightningElementEvents>['once']>
   ): (() => void) => {
     this._eventEmitter.once(...args);
-    return () => this._eventEmitter.off(...args);
+
+    if (args[0] === 'resized') {
+      this._reconcileResizeObserving();
+    }
+
+    return () => this.off(...args);
   };
 
-  public off: IEventEmitter<LightningElementEvents>['off'] = (...args) =>
-    this._eventEmitter.off(...args);
+  public off: IEventEmitter<LightningElementEvents>['off'] = (...args) => {
+    const result = this._eventEmitter.off(...args);
+
+    if (args[0] === 'resized') {
+      this._reconcileResizeObserving();
+    }
+
+    return result;
+  };
   public emit: IEventEmitter<LightningElementEvents>['emit'] = (...args) =>
     this._eventEmitter.emit(...args);
 
@@ -404,9 +433,17 @@ export class LightningViewElement<
   public removeChild(child: LightningElement): void {
     const index = this.children.indexOf(child);
 
-    if (index >= 0) {
-      this.children.splice(index, 1);
+    // Idempotent — React's reconciler hits this path twice per unmount:
+    // first via the host-config `removeChild`, then again from inside
+    // `destroy()` (`this.parent?.removeChild(this)`). The second call is
+    // a no-op for `this.children` but used to re-emit `childRemoved`,
+    // doubling downstream worker traffic in plugin-flexbox (each emit
+    // fires `removeNode` + `queueRender` etc.).
+    if (index < 0) {
+      return;
     }
+
+    this.children.splice(index, 1);
 
     if (!child._deferTarget) {
       child.node.parent = null;
@@ -570,6 +607,17 @@ export class LightningViewElement<
     this._onLayout(dimensions);
   }
 
+  /**
+   * Invoked by {@link NodeResizeObserver} at the start of each frame when
+   * the observed node's width or height has changed since the prior frame.
+   *
+   * Not intended to be called by application code.
+   */
+  public _emitResize(dimensions: { w: number; h: number }): void {
+    this._eventEmitter.emit('resized', this, dimensions);
+    this.props.onResize?.(dimensions);
+  }
+
   public recalculateVisibility = (): void => {
     const prevFocusable = this.focusable;
     const prevVisible = this._visible;
@@ -623,6 +671,27 @@ export class LightningViewElement<
     this._renderer.destroyNode(this.node);
   };
 
+  private _reconcileResizeObserving(): void {
+    const shouldObserve =
+      this.props.onResize != null || this._eventEmitter.hasListeners('resized');
+
+    if (shouldObserve === this._isObservingResize) {
+      return;
+    }
+
+    if (shouldObserve) {
+      if (this._resizeObserver === null) {
+        this._resizeObserver = getNodeResizeObserver(this._renderer);
+      }
+
+      this._resizeObserver.observe(this);
+      this._isObservingResize = true;
+    } else if (this._resizeObserver) {
+      this._resizeObserver.unobserve(this);
+      this._isObservingResize = false;
+    }
+  }
+
   // Don't pass down the `data` prop to the lightning node.
   private _createNode({ data: _data, ...props }: Partial<INodeProps>): RendererNode<this> {
     const node = this.isTextElement
@@ -661,6 +730,7 @@ export class LightningViewElement<
 
     const transformedProps = this._transformProps(payload) ?? ({} as TProps);
     const previousOpacity = this.node.alpha;
+    const previousOnResize = this.props.onResize;
 
     let changed = false;
 
@@ -669,6 +739,10 @@ export class LightningViewElement<
         this.props[key] = transformedProps[key];
         changed = true;
       }
+    }
+
+    if (previousOnResize !== this.props.onResize) {
+      this._reconcileResizeObserving();
     }
 
     const lngProps = this._toLightningNodeProps({

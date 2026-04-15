@@ -23,25 +23,39 @@ export interface UseScrollHandlerOptions {
   onScroll?: (event: ScrollEvent) => void;
   onEndReached?: () => void;
   onEndReachedThreshold: number;
-  /** Called when a scroll animation finishes. */
-  onAnimationEnd?: () => void;
-  /** Called before a scroll begins (e.g. to flush deferred measurements). */
-  onBeforeScroll?: () => void;
   /** Main-axis start padding (acts as scroll margin). */
   paddingStart: number;
   /** Main-axis end padding (acts as scroll margin). */
   paddingEnd: number;
+  /**
+   * Initial scroll offset to start at — used when restoring state for a
+   * recycled VL whose previous scroll position was cached.
+   */
+  initialScrollOffset?: number;
+  /**
+   * Fired the moment a scroll/focus-snap animation begins — i.e. when
+   * `scrollToOffset(_, animated=true)` enters the animated branch and is
+   * not already in flight. VL uses this to enable LayoutManager batching
+   * so intermediate yoga measurements during the animation don't reflow
+   * the layout on every frame.
+   */
+  onAnimationStart?: () => void;
+  /**
+   * Fired when the most recent scroll animation finishes (its `stopped`
+   * event fires while still being the current one) OR when `resetScroll`
+   * cancels an animation that was in flight. VL uses this to flush the
+   * batched measurements and bump layoutVersion in one go.
+   */
+  onAnimationEnd?: () => void;
 }
 
-export function useScrollHandler(options: UseScrollHandlerOptions): {
+export interface UseScrollHandlerResult {
   contentRef: RefObject<LightningElement | null>;
+  /** Live scroll offset — updated on every scroll, including mid-animation. */
   scrollOffsetRef: RefObject<number>;
-  animatingRef: RefObject<boolean>;
+  /** Last scroll offset at which the visible range changed — safe to read during render. */
+  committedScrollOffset: number;
   maxScroll: number;
-  computeVisibleRange: () => {
-    startIndex: number;
-    endIndex: number;
-  };
   scrollToOffset: (offset: number, animated?: boolean) => void;
   scrollToIndex: (
     index: number,
@@ -51,7 +65,15 @@ export function useScrollHandler(options: UseScrollHandlerOptions): {
   ) => void;
   scrollToEnd: (animated?: boolean) => void;
   handleChildFocused: (child: LightningElement) => void;
-} {
+  /**
+   * Imperatively jump scroll state to an absolute offset without animation
+   * or onScroll/onEndReached side-effects. Used to restore cached scroll
+   * position when a recycled VL switches to a different cellKey.
+   */
+  resetScroll: (offset: number) => void;
+}
+
+export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHandlerResult {
   const {
     layoutManager,
     horizontal,
@@ -66,26 +88,40 @@ export function useScrollHandler(options: UseScrollHandlerOptions): {
     onScroll,
     onEndReached,
     onEndReachedThreshold,
-    onAnimationEnd,
-    onBeforeScroll,
     paddingStart,
     paddingEnd,
+    initialScrollOffset = 0,
+    onAnimationStart,
+    onAnimationEnd,
   } = options;
 
   const contentRef = useRef<LightningElement>(null);
-  const scrollOffsetRef = useRef(0);
+  const scrollOffsetRef = useRef(initialScrollOffset);
   const endReachedRef = useRef(false);
-  const lastRangeRef = useRef({ startIndex: 0, endIndex: -1 });
-  const animatingRef = useRef(false);
   const animationIdRef = useRef(0);
-  const onAnimationEndRef = useRef(onAnimationEnd);
-  const onBeforeScrollRef = useRef(onBeforeScroll);
-  const [, setScrollVersion] = useState(0);
+  // True from the moment an animated scroll begins until the final
+  // `stopped` event fires (or `resetScroll` cancels). Guards both ends
+  // of the start/end notification so chained animations only fire one
+  // start and one end overall.
+  const isAnimatingRef = useRef(false);
+  const [committedScrollOffset, setCommittedScrollOffset] = useState(initialScrollOffset);
 
+  // Apply the restored scroll offset to lightning on mount. useState's
+  // initializer keeps committedScrollOffset in sync, but the contentRef's
+  // node still needs node.x/y written so the scroll position is visually
+  // correct from the first frame.
+  // oxlint-disable-next-line react-hooks/exhaustive-deps -- mount-only restore
   useEffect(() => {
-    onAnimationEndRef.current = onAnimationEnd;
-    onBeforeScrollRef.current = onBeforeScroll;
-  });
+    if (initialScrollOffset > 0 && contentRef.current) {
+      const value = -initialScrollOffset;
+
+      if (horizontal) {
+        contentRef.current.node.x = value;
+      } else {
+        contentRef.current.node.y = value;
+      }
+    }
+  }, []);
 
   const maxScroll = Math.max(0, totalContentSize - viewportSize);
 
@@ -103,9 +139,13 @@ export function useScrollHandler(options: UseScrollHandlerOptions): {
     const value = -offset;
 
     if (animated && animationDuration > 0) {
-      animatingRef.current = true;
-
       const thisAnimId = ++animationIdRef.current;
+
+      if (!isAnimatingRef.current) {
+        isAnimatingRef.current = true;
+        onAnimationStart?.();
+      }
+
       const anim = horizontal
         ? el.node.animate({ x: value }, { duration: animationDuration, easing: 'ease-out' })
         : el.node.animate({ y: value }, { duration: animationDuration, easing: 'ease-out' });
@@ -115,8 +155,6 @@ export function useScrollHandler(options: UseScrollHandlerOptions): {
           return;
         }
 
-        animatingRef.current = false;
-
         // Pin the position so reconciliation doesn't reset it
         if (horizontal) {
           el.node.x = value;
@@ -124,13 +162,12 @@ export function useScrollHandler(options: UseScrollHandlerOptions): {
           el.node.y = value;
         }
 
-        onAnimationEndRef.current?.();
+        isAnimatingRef.current = false;
+        onAnimationEnd?.();
       });
 
       anim.start();
     } else {
-      animatingRef.current = false;
-
       if (horizontal) {
         el.node.x = value;
       } else {
@@ -139,31 +176,18 @@ export function useScrollHandler(options: UseScrollHandlerOptions): {
     }
   }
 
-  function computeVisibleRange() {
-    const scrollInItemSpace = Math.max(0, scrollOffsetRef.current - itemAreaOffset);
-
-    return layoutManager.getVisibleRange(scrollInItemSpace, viewportSize, drawDistance);
-  }
-
-  function checkRangeChanged(): void {
-    const range = computeVisibleRange();
-    const last = lastRangeRef.current;
-
-    if (range.startIndex !== last.startIndex || range.endIndex !== last.endIndex) {
-      lastRangeRef.current = range;
-      setScrollVersion((v) => v + 1);
-    }
-  }
-
   function scrollToOffset(offset: number, animated = true): void {
-    onBeforeScrollRef.current?.();
-
     const clamped = clamp(offset);
 
     scrollOffsetRef.current = clamped;
 
     applyPosition(clamped, animated);
-    checkRangeChanged();
+    // Commit unconditionally. `committedScrollOffset` drives `contentStyle.x`
+    // on the post-animation render and the parent's state-cache write — both
+    // need the actual scroll, not just the offset of the last range change.
+    // Same-value setState bails out of rendering, so a no-op commit costs
+    // nothing.
+    setCommittedScrollOffset(clamped);
 
     if (onEndReached) {
       const distFromEnd = totalContentSize - clamped - viewportSize;
@@ -244,15 +268,42 @@ export function useScrollHandler(options: UseScrollHandlerOptions): {
     scrollToOffset(target, true);
   }
 
+  function resetScroll(offset: number): void {
+    scrollOffsetRef.current = offset;
+    setCommittedScrollOffset(offset);
+
+    // Cancel any in-flight scroll animation so it doesn't snap back.
+    animationIdRef.current++;
+
+    if (isAnimatingRef.current) {
+      isAnimatingRef.current = false;
+      onAnimationEnd?.();
+    }
+
+    // Apply directly to lightning so the next paint reflects the new
+    // scroll without waiting for React's reconciliation to flush.
+    const el = contentRef.current;
+
+    if (el) {
+      const value = -offset;
+
+      if (horizontal) {
+        el.node.x = value;
+      } else {
+        el.node.y = value;
+      }
+    }
+  }
+
   return {
     contentRef,
     scrollOffsetRef,
-    animatingRef,
+    committedScrollOffset,
     maxScroll,
-    computeVisibleRange,
     scrollToOffset,
     scrollToIndex,
     scrollToEnd,
     handleChildFocused,
+    resetScroll,
   };
 }

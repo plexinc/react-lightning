@@ -19,7 +19,7 @@
     "dev": "storybook dev -p 6006 --no-open"
   },
   "dependencies": {
-    "@lightningjs/renderer": "catalog:",
+    "@lightningjs/renderer": "catalog:apps",
     "@plextv/react-lightning": "workspace:*",
     "@plextv/react-lightning-components": "workspace:*",
     "@plextv/react-lightning-plugin-css-transform": "workspace:*",
@@ -31,10 +31,10 @@
     "@storybook/addon-docs": "10.3.5",
     "@storybook/addon-links": "10.3.5",
     "@storybook/react-vite": "10.3.5",
-    "react": "catalog:",
-    "react-dom": "catalog:",
-    "react-native": "catalog:",
-    "react-native-reanimated": "catalog:",
+    "react": "catalog:apps",
+    "react-dom": "catalog:apps",
+    "react-native": "catalog:apps",
+    "react-native-reanimated": "catalog:apps",
     "react-native-worklets": "0.8.1",
     "storybook": "10.3.5"
   },
@@ -43,6 +43,7 @@
     "@plextv/vite-plugin-react-native-lightning": "workspace:*",
     "@plextv/vite-plugin-react-reanimated-lightning": "workspace:*",
     "@repo/configs": "workspace:*",
+    "@rolldown/plugin-babel": "catalog:",
     "@types/react": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "babel-plugin-react-compiler": "catalog:"

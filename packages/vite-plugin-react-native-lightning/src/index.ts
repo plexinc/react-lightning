@@ -1,4 +1,5 @@
-import react from '@vitejs/plugin-react';
+import babel from '@rolldown/plugin-babel';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import type { PluginOption } from 'vite';
 
 const extensions = [
@@ -20,11 +21,13 @@ const extensions = [
 type Options = {
   cwd?: string;
   reactOptions?: Parameters<typeof react>[0];
+  babelOptions?: Parameters<typeof babel>[0];
 };
 
 const vitePlugin = (options?: Options): PluginOption => {
   return [
     react(options?.reactOptions),
+    babel({ presets: [reactCompilerPreset()], ...options?.babelOptions }),
     {
       name: 'vite-react-native-lightning',
       enforce: 'pre',

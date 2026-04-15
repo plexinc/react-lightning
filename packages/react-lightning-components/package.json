@@ -72,7 +72,7 @@
   "peerDependencies": {
     "@plextv/react-lightning": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
-    "react": "catalog:peers"
+    "react": "catalog:"
   },
   "volta": {
     "extends": "../../package.json"

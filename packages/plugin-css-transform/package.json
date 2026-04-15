@@ -51,7 +51,7 @@
     "@lightningjs/renderer": "catalog:",
     "@plextv/react-lightning": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
-    "react-native": "catalog:peers"
+    "react-native": "catalog:"
   },
   "volta": {
     "extends": "../../package.json"

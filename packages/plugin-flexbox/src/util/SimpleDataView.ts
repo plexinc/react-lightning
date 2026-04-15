@@ -48,9 +48,20 @@ export class SimpleDataView {
     return this._offset;
   }
 
+  /**
+   * Zero the write offset so subsequent writes start from the beginning of
+   * the underlying buffer. The buffer itself is reused — the `buffer`
+   * getter returns a `slice()` (an independent copy), so a previous flush
+   * that postMessaged the slice does not affect this buffer's writability.
+   *
+   * Pre-fix: this method allocated a fresh `ArrayBuffer` of `_maxSize`
+   * (10KB on the worker side, 1MB default elsewhere) every time. Combined
+   * with the per-flush `slice()` allocation in the getter, that produced
+   * two ArrayBuffers per flush — significant GC pressure during a busy
+   * UI commit. The underlying buffer never needs reallocation because
+   * we never transfer it; only the slice is transferred.
+   */
   public reset(): void {
-    this._buffer = new ArrayBuffer(this._maxSize);
-    this._view = new DataView(this._buffer);
     this._offset = 0;
   }
 
@@ -58,6 +69,16 @@ export class SimpleDataView {
     const newOffset = this._offset + size;
 
     return newOffset <= this._maxSize && newOffset >= 0;
+  }
+
+  /**
+   * Advance the write offset by `n` bytes without bounds checks. Pairs with
+   * direct `dataView` writes after a prior `hasSpace(n)` validated the run.
+   * Lets a hot writer skip the per-call `_checkOverflow` + switch dispatch
+   * inside `writeXxx` when batching a known, fixed-size record.
+   */
+  public advance(n: number): void {
+    this._offset += n;
   }
 
   // Shifts the offset back by the specified size.

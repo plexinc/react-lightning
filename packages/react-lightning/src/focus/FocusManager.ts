@@ -292,6 +292,41 @@ export class FocusManager<
     }
   }
 
+  /**
+   * Mark `element` as the preferred focus target of its immediate parent
+   * without walking up the tree or stealing focus from elsewhere.
+   *
+   * Use case: a virtualised-list cell whose `shouldFocus` flips true on
+   * slot recycle while the user is focused on a different subtree. The
+   * parent's `focusedElement` may still point at a stale sibling slot
+   * from the row this slot served previously, so the next time focus
+   * actually traverses into this group it would land on the wrong cell.
+   * Setting the parent's `focusedElement` here updates the tree so that
+   * future traversal resolves correctly. `_recalculateFocusPath` is
+   * still invoked: if the parent is already in the active focus path
+   * (the user is on this group), focus moves from the old child to the
+   * new one as expected; otherwise the path is unchanged and the user's
+   * current focus is left alone.
+   */
+  public setFocusedChild(element: T): void {
+    const node = this.activeLayer.elements.get(element);
+
+    if (!node) {
+      return;
+    }
+
+    if (!element.focusable || hasExternalRedirect(node)) {
+      return;
+    }
+
+    if (node.parent.focusedElement === node) {
+      return;
+    }
+
+    node.parent.focusedElement = node;
+    this._recalculateFocusPath();
+  }
+
   public pushLayer(): void {
     // Store the current layer before creating new one
     const previousLayer = this.activeLayer;

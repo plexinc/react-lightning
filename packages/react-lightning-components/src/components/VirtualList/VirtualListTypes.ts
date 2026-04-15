@@ -6,6 +6,12 @@ export interface VirtualListRenderItemInfo<T> {
   item: T;
   index: number;
   extraData?: unknown;
+  /**
+   * True when this item should receive focus on mount — set by VirtualList
+   * when restoring a previously-focused item after a recycle remount. Pass
+   * to the focusable element's autoFocus prop.
+   */
+  shouldFocus?: boolean;
 }
 
 export interface OverrideItemLayout {

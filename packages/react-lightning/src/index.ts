@@ -1,4 +1,5 @@
 export { Canvas } from './components/Canvas';
+export type { CanvasProps } from './components/Canvas/CanvasProps';
 export { AllStyleProps } from './element/AllStyleProps';
 export { createLightningElement } from './element/createLightningElement';
 export { LightningImageElement } from './element/LightningImageElement';

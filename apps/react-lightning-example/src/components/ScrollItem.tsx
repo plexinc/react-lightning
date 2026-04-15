@@ -28,22 +28,21 @@ export const ScrollItem = focusable<ScrollItemProps>(
       <lng-view
         ref={ref}
         style={{
-          w: imageUrl ? undefined : finalWidth,
-          h: imageUrl ? undefined : finalHeight,
+          w: finalWidth,
+          h: finalHeight,
           border: {
             w: focused ? 0 : 1,
             color: finalColor,
           },
           color: focused ? finalColor : 0x00000000,
-          display: 'flex',
-          flexGrow: 1,
-          flexShrink: 1,
         }}
       >
         {imageUrl ? (
           <lng-image
             src={imageUrl}
             style={{
+              w: finalWidth - 2,
+              h: finalHeight - 2,
               alpha: focused ? 1 : 0.2,
               x: 1,
               y: 1,

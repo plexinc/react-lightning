@@ -1,4 +1,6 @@
+import babel from '@rolldown/plugin-babel';
 import legacy from '@vitejs/plugin-legacy';
+import { reactCompilerPreset } from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 import fontGen from '@plextv/vite-plugin-msdf-fontgen';
@@ -8,13 +10,11 @@ import reactReanimatedLightningPlugin from '@plextv/vite-plugin-react-reanimated
 const config = defineConfig((env) => ({
   base: './',
   plugins: [
-    reactNativeLightningPlugin({
-      reactOptions: {
-        babel: {
-          plugins: ['babel-plugin-react-compiler'],
-        },
-      },
-    }),
+    reactNativeLightningPlugin(),
+    // React Compiler. @vitejs/plugin-react v6 uses oxc and ignores any
+    // `babel` option, so the compiler runs through @rolldown/plugin-babel
+    // with the preset exported by @vitejs/plugin-react.
+    babel({ presets: [reactCompilerPreset()] }),
     reactReanimatedLightningPlugin(),
     fontGen({
       inputs: [

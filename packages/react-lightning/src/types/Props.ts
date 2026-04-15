@@ -15,6 +15,7 @@ import type {
 export interface LightningElementEventProps {
   onBeforeLayout?: (rect: Rect) => void;
   onLayout?: (rect: Rect) => void;
+  onResize?: (dimensions: { w: number; h: number }) => void;
   onRender?: () => void;
   onBeforeRender?: () => void;
   onTextureReady?: (dimensions: Dimensions) => void;

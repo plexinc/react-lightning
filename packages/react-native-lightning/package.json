@@ -56,16 +56,11 @@
     "@plextv/react-lightning-components": "workspace:^",
     "@plextv/react-lightning-plugin-css-transform": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
-    "react": "catalog:peers",
-    "react-native": "catalog:peers"
+    "react": "catalog:",
+    "react-native": "catalog:"
   },
   "volta": {
     "extends": "../../package.json"
-  },
-  "peerDependencyRules": {
-    "allowedVersions": {
-      "react": "^19"
-    }
   },
   "inlinedDependencies": {
     "tseep": "1.3.1",

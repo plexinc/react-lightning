@@ -161,17 +161,24 @@ export default function applyReactPropsToYoga(
   managerNode: ManagerNode,
   style: Partial<LightningViewElementStyle>,
 ): void {
-  for (const [prop, value] of Object.entries(style)) {
-    if (isFlexStyleProp(prop) && managerNode.props[prop] !== value) {
-      managerNode.props[prop] = value;
+  // `for...in` instead of `Object.entries(style)` to avoid the per-call
+  // array allocation. This function runs on every applyStyle dispatch,
+  // which during a UI update can be hundreds of times per frame.
+  for (const prop in style) {
+    if (isFlexStyleProp(prop)) {
+      const value = style[prop];
 
-      applyFlexPropToYoga(
-        yoga,
-        config,
-        managerNode.node,
-        prop,
-        value as LightningViewElementStyle[typeof prop],
-      );
+      if (managerNode.props[prop] !== value) {
+        managerNode.props[prop] = value;
+
+        applyFlexPropToYoga(
+          yoga,
+          config,
+          managerNode.node,
+          prop,
+          value as LightningViewElementStyle[typeof prop],
+        );
+      }
     }
   }
 }

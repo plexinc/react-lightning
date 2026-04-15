@@ -42,7 +42,8 @@
   },
   "peerDependencies": {
     "@plextv/react-native-lightning": "workspace:^",
-    "@vitejs/plugin-react": "catalog:peers",
-    "vite": "catalog:peers"
+    "@rolldown/plugin-babel": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "vite": "catalog:"
   }
 }

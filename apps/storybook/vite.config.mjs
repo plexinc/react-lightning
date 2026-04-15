@@ -1,3 +1,5 @@
+import babel from '@rolldown/plugin-babel';
+import { reactCompilerPreset } from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 import fontGen from '@plextv/vite-plugin-msdf-fontgen';
@@ -16,13 +18,11 @@ const config = defineConfig((env) => ({
   },
 
   plugins: [
-    reactNativeLightningPlugin({
-      reactOptions: {
-        babel: {
-          plugins: ['babel-plugin-react-compiler'],
-        },
-      },
-    }),
+    reactNativeLightningPlugin(),
+    // React Compiler. @vitejs/plugin-react v6 uses oxc and ignores any
+    // `babel` option, so the compiler runs through @rolldown/plugin-babel
+    // with the preset exported by @vitejs/plugin-react.
+    babel({ presets: [reactCompilerPreset()] }),
     reactReanimatedLightningPlugin(),
     fontGen({
       inputs: [
@@ -35,6 +35,13 @@ const config = defineConfig((env) => ({
       ],
     }),
   ],
+
+  optimizeDeps: {
+    // plugin-flexbox uses a ?worker&inline Vite import that rolldown's
+    // dep optimizer can't resolve. Exclude it so Vite handles it via its
+    // normal transform pipeline instead.
+    exclude: ['@plextv/react-lightning-plugin-flexbox'],
+  },
 
   server: {
     port: 3333,

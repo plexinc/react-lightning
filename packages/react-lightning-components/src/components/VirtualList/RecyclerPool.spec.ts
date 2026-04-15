@@ -97,4 +97,36 @@ describe('RecyclerPool', () => {
     expect(pool.getSlotKey(5)).toBeDefined();
     expect(pool.getSlotKey(99)).toBeUndefined();
   });
+
+  it('getPooledSlots returns released slots paired with their last index', () => {
+    const pool = new RecyclerPool();
+
+    const slots1 = pool.reconcile([0, 1, 2], () => 'default');
+    // oxlint-disable-next-line typescript/no-non-null-assertion -- key was just inserted
+    const keyForIndex0 = slots1.get(0)!;
+
+    // 0 leaves visibility, 3 enters. Slot for 0 is now pooled but reused for 3.
+    pool.reconcile([1, 2, 3], () => 'default');
+
+    // No fully-released slots (keyForIndex0 was repurposed).
+    expect(pool.getPooledSlots()).toEqual([]);
+
+    // Drop down to two visible items — slot for index 3 is released without reuse.
+    pool.reconcile([1, 2], () => 'default');
+
+    const pooled = pool.getPooledSlots();
+    expect(pooled).toHaveLength(1);
+    expect(pooled[0]).toEqual({ slotKey: keyForIndex0, lastIndex: 3 });
+  });
+
+  it('getPooledSlots is empty after clear', () => {
+    const pool = new RecyclerPool();
+
+    pool.reconcile([0, 1], () => 'default');
+    pool.reconcile([], () => 'default');
+    expect(pool.getPooledSlots()).toHaveLength(2);
+
+    pool.clear();
+    expect(pool.getPooledSlots()).toEqual([]);
+  });
 });

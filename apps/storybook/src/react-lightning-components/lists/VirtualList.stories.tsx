@@ -5,7 +5,6 @@ import { focusable } from '@plextv/react-lightning';
 import VirtualList from '@plextv/react-lightning-components/lists/VirtualList';
 import type { VirtualListRef } from '@plextv/react-lightning-components/lists/VirtualList';
 
-import type { ScrollItemProps } from '../../components/ScrollItem';
 import ScrollItem from '../../components/ScrollItem';
 
 export default {

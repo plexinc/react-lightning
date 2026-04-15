@@ -1,5 +1,6 @@
+import type { LightningElementStyle } from '@plextv/react-lightning';
+
 import { NodeOperations } from './types/NodeOperations';
-import { SimpleDataView } from './util/SimpleDataView';
 import { YogaManager } from './YogaManager';
 
 const manager = new YogaManager();
@@ -9,59 +10,75 @@ manager.on('render', (buffer) => {
 });
 
 function applyNodeOperations(buffer: ArrayBuffer) {
-  const dataView = new SimpleDataView(buffer);
+  // Raw `DataView` instead of `SimpleDataView` — pure read loop, called
+  // per `'flushBoth'`/`'nodeOperations'` message. Manual offset
+  // arithmetic skips `SimpleDataView`'s wrapper object and the
+  // `_readInt` switch-statement indirection.
+  const view = new DataView(buffer);
+  const length = buffer.byteLength;
+  let offset = 0;
 
-  while (dataView.hasSpace(1)) {
-    const method = dataView.readUint8();
+  while (offset < length) {
+    const method = view.getUint8(offset);
+    offset += 1;
 
     switch (method) {
       case NodeOperations.AddNode: {
-        const elementId = dataView.readUint32();
+        const elementId = view.getUint32(offset, true);
+        offset += 4;
         manager.addNode(elementId);
         break;
       }
       case NodeOperations.RemoveNode: {
-        const elementId = dataView.readUint32();
+        const elementId = view.getUint32(offset, true);
+        offset += 4;
         manager.removeNode(elementId);
         break;
       }
       case NodeOperations.AddChildNode:
       case NodeOperations.AddChildNodeAtIndex: {
-        const parentId = dataView.readUint32();
-        const childId = dataView.readUint32();
-        const index =
-          method === NodeOperations.AddChildNodeAtIndex ? dataView.readUint32() : undefined;
+        const parentId = view.getUint32(offset, true);
+        const childId = view.getUint32(offset + 4, true);
+        offset += 8;
+
+        let index: number | undefined;
+
+        if (method === NodeOperations.AddChildNodeAtIndex) {
+          index = view.getUint32(offset, true);
+          offset += 4;
+        }
 
         manager.addChildNode(parentId, childId, index);
+        break;
+      }
+      case NodeOperations.DetachChildNode: {
+        const parentId = view.getUint32(offset, true);
+        const childId = view.getUint32(offset + 4, true);
+        offset += 8;
+
+        manager.detachChildNode(parentId, childId);
+        break;
+      }
+      case NodeOperations.AddIndependentRoot: {
+        const elementId = view.getUint32(offset, true);
+        offset += 4;
+        manager.addIndependentRoot(elementId);
+        break;
+      }
+      case NodeOperations.RemoveIndependentRoot: {
+        const elementId = view.getUint32(offset, true);
+        offset += 4;
+        manager.removeIndependentRoot(elementId);
         break;
       }
     }
   }
 }
 
-function getClampedSize(id: number, buffer: ArrayBuffer) {
-  // Buffer contains callback Id and element Id
-  const dataView = new SimpleDataView(buffer);
-
-  while (dataView.hasSpace(4)) {
-    // Skip the callback id, we'll just overwrite the element id with the result
-    dataView.moveBy(4);
-
-    const elementId = dataView.readUint32();
-    const result = manager.getClampedSize(elementId);
-
-    dataView.moveBy(-4);
-    dataView.writeUint32(result ?? 0);
-  }
-
-  // Send the buffer back
-  self.postMessage({ id, result: buffer }, [buffer]);
-}
-
 self.onmessage = async (
   event: MessageEvent<{
     id: number;
-    method: keyof typeof manager | 'nodeOperations';
+    method: keyof typeof manager | 'nodeOperations' | 'flushBoth';
     args?: unknown[];
   }>,
 ) => {
@@ -74,9 +91,20 @@ self.onmessage = async (
     case 'nodeOperations':
       applyNodeOperations(args?.[0] as ArrayBuffer);
       break;
-    case 'getClampedSize':
-      getClampedSize(id, args?.[0] as ArrayBuffer);
+    case 'flushBoth': {
+      // Combined message: apply node-tree mutations first, then styles.
+      // Mirrors the causal ordering the previous two-message setup
+      // enforced by having `flushSendStyles` call `flushChildOperations`
+      // before posting `applyStyles`. Sent only when BOTH sets are
+      // pending at flush time — single-purpose paths still use the
+      // `'nodeOperations'` and `'applyStyles'` (default) messages.
+      applyNodeOperations(args?.[0] as ArrayBuffer);
+      manager.applyStyles(
+        args?.[1] as Record<number, Partial<LightningElementStyle>>,
+        args?.[2] as boolean,
+      );
       break;
+    }
     default: {
       try {
         if (typeof manager[method] === 'function') {

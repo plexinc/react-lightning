@@ -1,7 +1,7 @@
 import { type JSX, useMemo } from 'react';
 
 import { Canvas, type RenderOptions } from '@plextv/react-lightning';
-import { plugin as flexPlugin } from '@plextv/react-lightning-plugin-flexbox';
+import { FlexRoot, plugin as flexPlugin } from '@plextv/react-lightning-plugin-flexbox';
 import { getReactNativePlugins } from '@plextv/react-native-lightning';
 
 import { keyMap } from '../../keyMap';
@@ -46,7 +46,9 @@ export function StorybookDecorator({ story: Story, tags, canvasOptions }: Props)
 
   return (
     <Canvas keyMap={keyMap} options={options}>
-      <Story />
+      <FlexRoot style={{ w: DefaultStoryWidth, h: DefaultStoryHeight }}>
+        <Story />
+      </FlexRoot>
     </Canvas>
   );
 }
