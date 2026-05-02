@@ -310,8 +310,13 @@ describe('LayoutManager', () => {
 
       const changed = lm.reportItemSize('0', 150);
       expect(changed).toBe(true);
+      expect(lm.getLayout(0)?.size).toBe(150);
       expect(lm.getLayout(1)?.offset).toBe(150);
-      expect(lm.totalSize).toBe(350);
+      // Items 1 and 2 are unmeasured but inherit `_firstMeasuredSize` (150)
+      // as their implicit fallback now that any cell has reported.
+      expect(lm.getLayout(1)?.size).toBe(150);
+      expect(lm.getLayout(2)?.size).toBe(150);
+      expect(lm.totalSize).toBe(450);
     });
 
     it('measurement wins over override', () => {
@@ -347,7 +352,7 @@ describe('LayoutManager', () => {
       expect(lm.getLayout(0)?.size).toBe(100);
     });
 
-    it('returns false when reported size matches stored value', () => {
+    it('returns false on no-op reports and defers different values via dampening', () => {
       const lm = new LayoutManager({
         data: makeData(2),
         estimatedItemSize: 100,
@@ -356,10 +361,17 @@ describe('LayoutManager', () => {
         keyExtractor: (item) => String(item.id),
       });
 
-      lm.reportItemSize('0', 150);
+      // First measurement applies immediately and returns true.
+      expect(lm.reportItemSize('0', 150)).toBe(true);
+      // Exact match on stored value: no-op, returns false.
       expect(lm.reportItemSize('0', 150)).toBe(false);
+      // Within 1px of stored value: treated as a match, returns false.
       expect(lm.reportItemSize('0', 150.4)).toBe(false);
-      expect(lm.reportItemSize('0', 152)).toBe(true);
+      // A meaningfully different value goes through stability dampening —
+      // it returns false synchronously and only commits later via the
+      // backstop timer or a confirming report after the stability window.
+      expect(lm.reportItemSize('0', 152)).toBe(false);
+      expect(lm.getLayout(0)?.size).toBe(150);
     });
 
     it('measurements survive index shifts (keyed by userKey)', () => {
@@ -379,12 +391,19 @@ describe('LayoutManager', () => {
       const newData = [{ id: 99 }, ...data];
       lm.updateConfig({ data: newData });
 
-      expect(lm.getLayout(0)?.size).toBe(100);
-      expect(lm.getLayout(1)?.size).toBe(100);
+      // The measurement for id=1 follows the userKey across the index
+      // shift. Unmeasured items (id=99 and id=0) fall back to the
+      // first-measured implicit estimate (150), not `estimatedItemSize`.
+      expect(lm.getLayout(0)?.size).toBe(150);
+      expect(lm.getLayout(1)?.size).toBe(150);
       expect(lm.getLayout(2)?.size).toBe(150);
     });
 
-    it('falls back to estimate when no keyExtractor is provided', () => {
+    it('without keyExtractor, measurements apply via String(index) keys', () => {
+      // The cell calls reportItemSize with `String(index)` as the userKey
+      // when no keyExtractor is configured (see VirtualList.getKey). The
+      // LayoutManager must use the same fallback or measurements would be
+      // stored but never found, leaving cells stuck at the estimate.
       const lm = new LayoutManager({
         data: makeData(2),
         estimatedItemSize: 100,
@@ -393,7 +412,33 @@ describe('LayoutManager', () => {
       });
 
       lm.reportItemSize('0', 150);
-      expect(lm.getLayout(0)?.size).toBe(100);
+      expect(lm.getLayout(0)?.size).toBe(150);
+    });
+
+    it('without keyExtractor, measurements do NOT survive index shifts', () => {
+      const data = makeData(3);
+      const lm = new LayoutManager({
+        data,
+        estimatedItemSize: 100,
+        numColumns: 1,
+        cellCrossSize: 200,
+      });
+
+      // Measure index 1 — the userKey is the index string '1'.
+      lm.reportItemSize('1', 150);
+      expect(lm.getLayout(1)?.size).toBe(150);
+
+      // Inserting at the front shifts every index down. With no
+      // keyExtractor, the measurement stays under userKey '1' and now
+      // applies to whatever item happens to be at index 1 in the new
+      // data, not to the original item that was measured.
+      const newData = [{ id: 99 }, ...data];
+      lm.updateConfig({ data: newData });
+
+      // Index 1 still resolves to the measurement (now applied to id=0,
+      // which was originally at index 0). This is the documented gotcha
+      // — supply a keyExtractor for dynamic lists.
+      expect(lm.getLayout(1)?.size).toBe(150);
     });
 
     it('null/undefined data overrides measurement (collapses to 0)', () => {
@@ -403,7 +448,7 @@ describe('LayoutManager', () => {
         estimatedItemSize: 100,
         numColumns: 1,
         cellCrossSize: 200,
-        keyExtractor: (item) => String(item.id),
+        keyExtractor: (item) => String(item?.id),
       });
 
       lm.reportItemSize('1', 150);

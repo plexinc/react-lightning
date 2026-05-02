@@ -11,10 +11,14 @@ const mockNode = {
   create: vi.fn(),
   free: vi.fn(),
   insertChild: vi.fn(),
+  removeChild: vi.fn(),
   calculateLayout: vi.fn(),
   hasNewLayout: vi.fn(),
   getComputedLayout: vi.fn(),
+  getComputedLeft: vi.fn(),
+  getComputedTop: vi.fn(),
   getComputedWidth: vi.fn(),
+  getComputedHeight: vi.fn(),
   getMaxWidth: vi.fn(),
   getParent: vi.fn(),
   markLayoutSeen: vi.fn(),
@@ -69,7 +73,10 @@ describe('YogaManager', () => {
   beforeEach(() => {
     yogaManager = new YogaManager();
 
-    // Reset mock implementations
+    // Reset mock implementations. The render path uses individual getters
+    // (getComputedLeft/Top/Width/Height) instead of getComputedLayout, so
+    // each must be stubbed independently for `_getUpdatedStyles` to write
+    // a valid update record.
     mockNode.hasNewLayout.mockReturnValue(true);
     mockNode.getComputedLayout.mockReturnValue({
       left: 10,
@@ -77,7 +84,10 @@ describe('YogaManager', () => {
       width: 100,
       height: 50,
     });
+    mockNode.getComputedLeft.mockReturnValue(10);
+    mockNode.getComputedTop.mockReturnValue(20);
     mockNode.getComputedWidth.mockReturnValue(100);
+    mockNode.getComputedHeight.mockReturnValue(50);
     mockNode.getMaxWidth.mockReturnValue({
       value: NaN,
       unit: mockYoga.UNIT_UNDEFINED,
@@ -260,7 +270,15 @@ describe('YogaManager', () => {
 
         yogaManager.on('render', (buffer) => {
           expect(buffer).toBeInstanceOf(ArrayBuffer);
-          expect(mockNode.calculateLayout).toHaveBeenCalledWith(1920, 1080, mockYoga.DIRECTION_LTR);
+          // YogaManager passes `undefined` for both available dimensions
+          // so yoga uses each root's own w/h (or shrinks-to-fit). Hard-
+          // coding 1920×1080 here would stretch unset axes and break
+          // measurement-driven roots like VirtualList cells.
+          expect(mockNode.calculateLayout).toHaveBeenCalledWith(
+            undefined,
+            undefined,
+            mockYoga.DIRECTION_LTR,
+          );
           resolve();
         });
 

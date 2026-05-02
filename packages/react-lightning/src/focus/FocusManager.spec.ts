@@ -288,6 +288,85 @@ describe('FocusManager', () => {
     expect(focusManager.focusPath).toEqual([parent, modal, modalChild, modalGrandChild]);
   });
 
+  describe('setFocusedChild', () => {
+    it("updates the parent's preferred child without moving the active focus path", () => {
+      const root = createMockElement(1, 'root');
+      const groupA = createMockElement(2, 'groupA');
+      const groupB = createMockElement(3, 'groupB');
+      const a1 = createMockElement(4, 'a1');
+      const b1 = createMockElement(5, 'b1');
+      const b2 = createMockElement(6, 'b2');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(groupA, root);
+      focusManager.addElement(groupB, root);
+      focusManager.addElement(a1, groupA, { autoFocus: true });
+      focusManager.addElement(b1, groupB, { autoFocus: true });
+      focusManager.addElement(b2, groupB);
+
+      // User is focused inside groupA's subtree (root → groupA → a1).
+      focusManager.focus(a1);
+      expect(focusManager.focusPath).toEqual([root, groupA, a1]);
+
+      // Mark b2 as the preferred entry into groupB. Since groupB isn't in
+      // the active focus path, the user's focus should not move.
+      focusManager.setFocusedChild(b2);
+      expect(focusManager.focusPath).toEqual([root, groupA, a1]);
+
+      // When focus next traverses into groupB, it lands on b2 (the new
+      // preferred child) rather than b1 (the original autoFocus pick).
+      focusManager.focus(groupB);
+      expect(focusManager.focusPath).toEqual([root, groupB, b2]);
+    });
+
+    it('moves focus when the parent IS in the active focus path', () => {
+      const root = createMockElement(1, 'root');
+      const child1 = createMockElement(2, 'child1');
+      const child2 = createMockElement(3, 'child2');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(child1, root, { autoFocus: true });
+      focusManager.addElement(child2, root);
+
+      expect(focusManager.focusPath).toEqual([root, child1]);
+
+      // root is in the active focus path; setFocusedChild(child2) replaces
+      // child1 with child2 in the path and triggers blur/focus events.
+      focusManager.setFocusedChild(child2);
+      expect(focusManager.focusPath).toEqual([root, child2]);
+      expect(child1.focused).toBe(false);
+      expect(child2.focused).toBe(true);
+    });
+
+    it('is a no-op when the element is already the preferred child', () => {
+      const root = createMockElement(1, 'root');
+      const child = createMockElement(2, 'child');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(child, root, { autoFocus: true });
+
+      const focusedSpy = vi.fn();
+      focusManager.on('focused', focusedSpy);
+
+      // Already the focusedElement — should not re-fire any focus events.
+      focusManager.setFocusedChild(child);
+      expect(focusedSpy).not.toHaveBeenCalled();
+    });
+
+    it('is a no-op for an unknown element', () => {
+      const root = createMockElement(1, 'root');
+      const child = createMockElement(2, 'child');
+      const stranger = createMockElement(3, 'stranger');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(child, root, { autoFocus: true });
+
+      // Stranger was never added — call should silently return.
+      focusManager.setFocusedChild(stranger);
+      expect(focusManager.focusPath).toEqual([root, child]);
+    });
+  });
+
   describe('Layer Management (Modal Support)', () => {
     it('should create a new layer when pushLayer is called', () => {
       const mainElement = createMockElement(1, 'main');

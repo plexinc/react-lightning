@@ -491,8 +491,11 @@ export class LayoutManager<T> {
 
     const item = this._data[index];
 
-    if (item != null && this._keyExtractor) {
-      const userKey = this._keyExtractor(item, index);
+    if (item != null) {
+      // Match VirtualListCell: it reports with String(index) when no
+      // keyExtractor is configured, so per-item lookup must use the same
+      // key. Without this, measurements would be stored but never found.
+      const userKey = this._keyExtractor ? this._keyExtractor(item, index) : String(index);
       const measured = this._measuredSizes.get(userKey);
 
       if (measured != null) {

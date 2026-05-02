@@ -9,7 +9,6 @@ const makeLayout = (offset: number, size: number): ComputedLayout => ({
   column: 0,
   crossOffset: 0,
   crossSize: 100,
-  measured: false,
 });
 
 function getCallArgs(fn: ReturnType<typeof vi.fn>, index: number) {
