@@ -205,7 +205,9 @@ export class SimpleDataView {
   private _readInt(size: 1 | 2 | 4 | 8, unsigned: boolean): number | bigint {
     this._checkOverflow(size);
     const value = this._readIntAt(this._offset, size, unsigned);
+
     this._offset += size;
+
     return value;
   }
 
@@ -286,7 +288,9 @@ export class SimpleDataView {
   private _readFloat(size: 4 | 8): number {
     this._checkOverflow(size);
     const value = this._readFloatAt(this._offset, size);
+
     this._offset += size;
+
     return value;
   }
 

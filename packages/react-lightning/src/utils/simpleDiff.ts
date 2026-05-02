@@ -68,6 +68,7 @@ function areValuesEqual(first: unknown, second: unknown): boolean {
 
     // Count keys and compare in a single pass without allocating arrays
     let firstKeyCount = 0;
+
     for (const key in first as Record<string, unknown>) {
       firstKeyCount++;
       const firstValue = (first as Record<string, unknown>)[key];
@@ -86,8 +87,10 @@ function areValuesEqual(first: unknown, second: unknown): boolean {
 
     // Ensure second doesn't have extra keys
     let secondKeyCount = 0;
+
     for (const _ in second as Record<string, unknown>) {
       secondKeyCount++;
+
       if (secondKeyCount > firstKeyCount) {
         return false;
       }
@@ -152,8 +155,10 @@ export function simpleDiff<T extends object>(first: T, second: T): Partial<T> | 
   // Check for keys that are only in the second object
   if (!hasDiffs) {
     let secondKeyCount = 0;
+
     for (const _ in second) {
       secondKeyCount++;
+
       if (secondKeyCount > firstKeyCount) {
         hasDiffs = true;
         break;

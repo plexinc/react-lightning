@@ -194,8 +194,10 @@ export default function flexPlugin(): Plugin<LightningElement> {
 
     window.setTimeout(() => {
       _isUpdateQueued = false;
+
       while (updateQueue.length > 0) {
         const instance = updateQueue.shift();
+
         if (instance === null || instance === undefined) {
           continue;
         }

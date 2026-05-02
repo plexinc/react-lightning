@@ -12,6 +12,7 @@ export function flattenStyles<T extends AllStyles>(styles: AllStyleProps): T {
       return JSON.parse(styles);
     } catch (err) {
       console.warn('There was an error parsing the style: ', styles, '\n', err);
+
       return {} as T;
     }
   }

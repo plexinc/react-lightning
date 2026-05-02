@@ -21,14 +21,17 @@ export default function mergeRefs(...refs: any[]) {
       if (ref == null) {
         continue;
       }
+
       if (typeof ref === 'function') {
         ref(node);
         continue;
       }
+
       if (typeof ref === 'object') {
         ref.current = node;
         continue;
       }
+
       console.error(
         `mergeRefs cannot handle Refs of type boolean, number or string, received ref ${String(ref)}`,
       );

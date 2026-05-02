@@ -101,6 +101,7 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
               console.warn(
                 '[react-native-lightning polyfills] FocusManager not found, cannot set destinations',
               );
+
               return;
             }
           }
@@ -115,6 +116,7 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
               console.warn(
                 '[react-native-lightning polyfills] FocusManager not found, failed to request focus',
               );
+
               return;
             }
           }

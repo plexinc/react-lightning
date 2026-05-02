@@ -32,7 +32,7 @@ export class RecyclerPool {
   private _visibleSet = new Set<number>();
   private _nextId = 0;
 
-  constructor(label = "pool") {
+  constructor(label = 'pool') {
     this._label = label;
   }
 
@@ -82,10 +82,7 @@ export class RecyclerPool {
         const preferred = this._lastSlotForIndex.get(index);
         let key: string;
 
-        if (
-          preferred !== undefined &&
-          this._tryClaimPreferred(type, preferred)
-        ) {
+        if (preferred !== undefined && this._tryClaimPreferred(type, preferred)) {
           key = preferred;
           preferredReused++;
         } else {
@@ -123,10 +120,7 @@ export class RecyclerPool {
    * if the slot isn't available (was reassigned to a different index, or
    * has a different type now).
    */
-  private _tryClaimPreferred(
-    type: string | number,
-    preferred: string,
-  ): boolean {
+  private _tryClaimPreferred(type: string | number, preferred: string): boolean {
     if (this._slotTypes.get(preferred) !== type) {
       return false;
     }

@@ -24,6 +24,7 @@ export default async function generateFonts(
 
     if (files.length === 0) {
       console.log('No font files found');
+
       return;
     }
 

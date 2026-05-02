@@ -10,7 +10,7 @@ A virtualized scroll list for Lightning, modeled on FlashList v1. The user is **
 
 ### Pinned mode (no flex ancestor)
 
-When the VL is rendered outside any flex parent (`useIsInFlex() === false`), no yoga is running in this subtree. Cells are absolutely positioned with explicit `w` AND `h` from `LayoutManager` — VL is the *single, exclusive* source of cell positioning and sizing. No FlexRoot, no measurement, no `onResize`. The user's `renderItem` content sizes itself however it wants, but the cell does not adapt; the caller is responsible for accurate `estimatedItemSize` / `overrideItemLayout`. This is the FlashList v1 strict model and has no feedback loops by construction.
+When the VL is rendered outside any flex parent (`useIsInFlex() === false`), no yoga is running in this subtree. Cells are absolutely positioned with explicit `w` AND `h` from `LayoutManager` — VL is the _single, exclusive_ source of cell positioning and sizing. No FlexRoot, no measurement, no `onResize`. The user's `renderItem` content sizes itself however it wants, but the cell does not adapt; the caller is responsible for accurate `estimatedItemSize` / `overrideItemLayout`. This is the FlashList v1 strict model and has no feedback loops by construction.
 
 ### Measured mode (flex ancestor)
 
@@ -33,11 +33,11 @@ The crucial discipline in measured mode is **measurement is one-directional and 
 
 **Three responsibilities:**
 
-| File | Responsibility |
-|---|---|
-| `LayoutManager.ts` | Pure layout math. Given data + sizes + cross-axis size, computes per-item offsets in O(n). |
-| `VirtualListCell.tsx` | One `<lng-view>` per visible cell with explicit absolute position and dimensions. Wraps user content in `VLCellKeyContext` + `CellBoundsContext` providers. The renderItem subtree persists across slot recycles — the cell wrapper *and* its descendants survive userKey changes; nested VLs read the new userKey via `VLCellKeyContext` and run their cellKey-change branch instead of remounting. |
-| `VirtualList.tsx` | Viewport derivation, scroll/focus state, recycling, the React glue. |
+| File                  | Responsibility                                                                                                                                                                                                                                                                                                                                                                                       |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LayoutManager.ts`    | Pure layout math. Given data + sizes + cross-axis size, computes per-item offsets in O(n).                                                                                                                                                                                                                                                                                                           |
+| `VirtualListCell.tsx` | One `<lng-view>` per visible cell with explicit absolute position and dimensions. Wraps user content in `VLCellKeyContext` + `CellBoundsContext` providers. The renderItem subtree persists across slot recycles — the cell wrapper _and_ its descendants survive userKey changes; nested VLs read the new userKey via `VLCellKeyContext` and run their cellKey-change branch instead of remounting. |
+| `VirtualList.tsx`     | Viewport derivation, scroll/focus state, recycling, the React glue.                                                                                                                                                                                                                                                                                                                                  |
 
 Supporting modules: `useScrollHandler.ts` (scroll math, animation, focus-driven scroll), `useViewability.ts` (onViewableItemsChanged), `RecyclerPool.ts` (slot reuse by item type), `parseContentStyle.ts` (RN-style padding props), `VirtualListContext.ts` (the three React contexts).
 
@@ -48,26 +48,31 @@ Supporting modules: `useScrollHandler.ts` (scroll math, animation, focus-driven 
 `VirtualListProps<T>` (see `VirtualListTypes.ts` for full types):
 
 ### Required
+
 - **`data: ReadonlyArray<T>`** — items to render.
 - **`renderItem: (info: VirtualListRenderItemInfo<T>) => ReactElement`** — render function. `info` carries `{ item, index, extraData, shouldFocus }`.
 
 ### Sizing
+
 - **`estimatedItemSize?: number`** (default `200`) — main-axis size used when no override is provided. **In this model, the estimate IS the size** for items lacking an override — it's not a guess that gets refined. Pick it carefully.
 - **`overrideItemLayout?: (layout, item, index, numColumns, extraData) => void`** — set `layout.size` (main-axis) and optionally `layout.span` (multi-column). Called for every layout pass; must be fast.
 - **`numColumns?: number`** (default `1`) — multi-column grid. Cells fill columns left-to-right, then advance main-axis by the tallest size in the row.
 
 ### Layout
+
 - **`horizontal?: boolean`** (default `false`) — scroll axis.
 - **`style?: LightningViewElementStyle`** — applied to the outer FocusGroup. `style.w` / `style.h` set the viewport explicitly (highest priority over parent bounds and self-measure).
 - **`contentContainerStyle?: ContentStyle`** — RN-style padding (`padding`, `paddingHorizontal`, `paddingVertical`, `paddingTop` etc) and `backgroundColor`.
 
 ### Slots
+
 - **`ListHeaderComponent` / `listHeaderSize`** — header rendered before items, takes `listHeaderSize` main-axis pixels.
 - **`ListFooterComponent` / `listFooterSize`** — footer after items.
 - **`ListEmptyComponent`** — replaces the entire list when `data.length === 0`.
 - **`ItemSeparatorComponent`** — rendered between cells in single-column lists. Skipped after collapsed (size=0) rows.
 
 ### Behavior
+
 - **`drawDistance?: number`** (default `250`) — pixels beyond viewport to keep mounted. Larger = smoother scroll, more memory.
 - **`keyExtractor?: (item, index) => string`** — used by recycler for slot identity AND by focus restoration. Falls back to `String(index)`.
 - **`getItemType?: (item, index, extraData) => string | number`** — items of the same type share a recycler pool.
@@ -82,6 +87,7 @@ Supporting modules: `useScrollHandler.ts` (scroll math, animation, focus-driven 
 - **`autoFocus` / `trapFocus{Up,Right,Down,Left}`** — forwarded to the FocusGroup wrapping the list.
 
 ### Imperative — `VirtualListRef`
+
 - `scrollToIndex({ index, animated?, viewPosition?, viewOffset? })`
 - `scrollToOffset({ offset, animated? })`
 - `scrollToEnd({ animated? })`
@@ -94,21 +100,21 @@ Supporting modules: `useScrollHandler.ts` (scroll math, animation, focus-driven 
 
 **Main-axis size priority** (highest wins):
 
-1. **Measured size** *(measured mode only)* — the cell's last reported main-axis dimension, keyed by `userKey`.
+1. **Measured size** _(measured mode only)_ — the cell's last reported main-axis dimension, keyed by `userKey`.
 2. **`overrideItemLayout` returns `layout.size`**.
 3. **Data entry is `null` / `undefined`** — size is forced to `0`, cell is not rendered.
-4. **First-measured size** *(measured mode only)* — once any cell has reported a measurement, that first value is used as the fallback for *unmeasured* cells in place of `estimatedItemSize`. Locked on first; later measurements update individual cells via the per-key path but do not change the implicit fallback.
+4. **First-measured size** _(measured mode only)_ — once any cell has reported a measurement, that first value is used as the fallback for _unmeasured_ cells in place of `estimatedItemSize`. Locked on first; later measurements update individual cells via the per-key path but do not change the implicit fallback.
 5. **Fallback: `estimatedItemSize`** — used only before the first measurement lands (and always in pinned mode, where no measurements happen).
 
-The first-measured fallback is what makes `estimatedItemSize` matter less in measured mode: a slightly-off estimate produces visible reflow only on the very first cell. After that, the second and subsequent cells use the first cell's actual rendered size as their starting point — usually a much closer match to the real content size, so each cell's per-key measurement update moves things only a few pixels (or not at all). Locking on the *first* measurement (rather than tracking a running average or the most recent) is deliberate: a moving estimate would cascade-rerender every later unmeasured item every time someone new measured, defeating the goal.
+The first-measured fallback is what makes `estimatedItemSize` matter less in measured mode: a slightly-off estimate produces visible reflow only on the very first cell. After that, the second and subsequent cells use the first cell's actual rendered size as their starting point — usually a much closer match to the real content size, so each cell's per-key measurement update moves things only a few pixels (or not at all). Locking on the _first_ measurement (rather than tracking a running average or the most recent) is deliberate: a moving estimate would cascade-rerender every later unmeasured item every time someone new measured, defeating the goal.
 
 In **pinned mode** (no flex ancestor), step 1 doesn't apply: cells never report sizes, so the chain effectively skips to step 2/3/4. Every cell is exactly the size LayoutManager dictated. Get your `estimatedItemSize` / `overrideItemLayout` right or you'll see gaps/overflow.
 
-In **measured mode** (flex ancestor), measurement wins over override because real rendered size is authoritative — if the user's content renders to 250px and the override said 200px, going with 250 prevents overflow into the next item. If the caller wants to *force* a size and prevent measurement updates, they need to render content sized to that exact dimension (the cell measures whatever content actually renders).
+In **measured mode** (flex ancestor), measurement wins over override because real rendered size is authoritative — if the user's content renders to 250px and the override said 200px, going with 250 prevents overflow into the next item. If the caller wants to _force_ a size and prevent measurement updates, they need to render content sized to that exact dimension (the cell measures whatever content actually renders).
 
-**Cross-axis size** is *never* measured in either mode. Every item's cross-axis size equals `cellCrossSize` (derived from viewport). Span is the one exception — `layout.span = 2` makes a multi-column item occupy 2 columns of `cellCrossSize` width. If a user's content overflows the cross-axis, it paints outside the cell wrapper but does not affect `cellCrossSize` for any item.
+**Cross-axis size** is _never_ measured in either mode. Every item's cross-axis size equals `cellCrossSize` (derived from viewport). Span is the one exception — `layout.span = 2` makes a multi-column item occupy 2 columns of `cellCrossSize` width. If a user's content overflows the cross-axis, it paints outside the cell wrapper but does not affect `cellCrossSize` for any item.
 
-**First-render behavior** *(measured mode)*. Cells whose `userKey` has never been measured fall through to override → estimate. They render at that estimated main-axis size; once yoga lays them out and `onResize` fires, the cell reports its actual size, LayoutManager updates, and following items reposition. So a list with accurate `estimatedItemSize` (or `overrideItemLayout`) renders correctly from frame 1; lists with bad estimates show a brief reflow on first paint.
+**First-render behavior** _(measured mode)_. Cells whose `userKey` has never been measured fall through to override → estimate. They render at that estimated main-axis size; once yoga lays them out and `onResize` fires, the cell reports its actual size, LayoutManager updates, and following items reposition. So a list with accurate `estimatedItemSize` (or `overrideItemLayout`) renders correctly from frame 1; lists with bad estimates show a brief reflow on first paint.
 
 **Recycling and measurement.** Measurements are keyed by `userKey`, not index, so a recycled cell reuses its prior measurement immediately. A cell rendering an item it has measured before paints at the right size on first paint — no re-measure needed unless content actually changed.
 
@@ -116,7 +122,7 @@ In **measured mode** (flex ancestor), measurement wins over override because rea
 
 1. **Animation batching** (top layer). When `useScrollHandler` fires `onAnimationStart`, VL flips LM into batching mode (`setBatching(true)`). While batched, every report goes into `_batchedSizes` (latest wins per `userKey`) and bypasses the dampening path entirely — the animation is the consumer's clear signal that intermediate yoga measurements aren't worth committing. On `onAnimationEnd`, `setBatching(false)` drains the batch directly into `_measuredSizes` in a single step and bumps `layoutVersion` once. The layout stays frozen for the visible duration of the animation, then settles in one commit when it ends.
 
-2. **Per-key stability dampening** (below the batching layer). Outside of animations, first measurements apply immediately. Subsequent *changes* to an already-stored measurement go through a `_STABILITY_MS` (currently 120ms) wait: a different value starts a "pending" timer; further reports of the same value advance toward confirmation, and only after the value has been stable for the window does it commit to layout. A different intermediate value restarts the timer. A backstop `setTimeout` is also scheduled per pending entry so values commit even if the cell pushes once and goes quiet (props stable, no further re-renders). This filters transient oscillations from user content that re-measures asynchronously after a scroll has already settled — without the dampener, every spurious yoga measurement propagates to layout offsets and rows below jump on every scroll tick.
+2. **Per-key stability dampening** (below the batching layer). Outside of animations, first measurements apply immediately. Subsequent _changes_ to an already-stored measurement go through a `_STABILITY_MS` (currently 120ms) wait: a different value starts a "pending" timer; further reports of the same value advance toward confirmation, and only after the value has been stable for the window does it commit to layout. A different intermediate value restarts the timer. A backstop `setTimeout` is also scheduled per pending entry so values commit even if the cell pushes once and goes quiet (props stable, no further re-renders). This filters transient oscillations from user content that re-measures asynchronously after a scroll has already settled — without the dampener, every spurious yoga measurement propagates to layout offsets and rows below jump on every scroll tick.
 
 The backstop wakes VL through `LayoutManager.setOnChange(cb)` — VL registers a callback at construction that calls `setLayoutVersion(v => v + 1)`. The synchronous-commit paths (immediate first-measurement, stable repeat-after-window) instead return `true` from `reportItemSize` so VL bumps inline. The two paths are mutually exclusive: while `_batching` is true, the dampening map is cleared and pending timers are cancelled (the upcoming flush will replace those values anyway).
 
@@ -124,7 +130,7 @@ The backstop wakes VL through `LayoutManager.setOnChange(cb)` — VL registers a
 
 **Measurements persist across data identity changes.** A new `data` array reference (e.g. from a tab switch or a parent re-render that recomputes the array) does not wipe measurements. Cells whose `userKey` survives the change reuse their cached size — items don't shift on re-render. Callers who truly need to invalidate (orientation change, theme swap that materially affects content sizing) can call `layoutManager.clearMeasurements()` imperatively. If user-content's measured size genuinely fluctuates during a session (focus animations, async-loaded content), each reported value updates the layout — that's intentional, since the alternative (locking to max) leaves visible empty space when content is at smaller sizes.
 
-**Skipping cells when `renderItem` returns null.** If `renderItem` returns `null`, the cell renders nothing — no `FocusGroup` wrapper, no separator, no DOM — *and* the cell calls `LayoutManager.reportItemEmpty(userKey)` via `useLayoutEffect`, which collapses the row to zero main-axis size. Following items close ranks around the gap. This is for callers whose data shape doesn't permit a clean `null` entry but still has logically-empty rows (e.g. `{ id, label, items: [] }` with `items.length === 0` meaning "render nothing").
+**Skipping cells when `renderItem` returns null.** If `renderItem` returns `null`, the cell renders nothing — no `FocusGroup` wrapper, no separator, no DOM — _and_ the cell calls `LayoutManager.reportItemEmpty(userKey)` via `useLayoutEffect`, which collapses the row to zero main-axis size. Following items close ranks around the gap. This is for callers whose data shape doesn't permit a clean `null` entry but still has logically-empty rows (e.g. `{ id, label, items: [] }` with `items.length === 0` meaning "render nothing").
 
 The `reportItemEmpty` path is deliberately separate from `reportItemSize`. The size path rejects 0 to filter transient FlexRoot reports during recycle (FlexRoot briefly measures 0 between unmount and remount of its children); accepting those would collapse legitimate rows. `reportItemEmpty` is the explicit, intent-bearing alternative — only called from the renderItem-null code path.
 
@@ -160,7 +166,7 @@ The `reportItemEmpty` path is deliberately separate from `reportItemSize`. The s
 
 The asymmetry is load-bearing. In a vertical VL nested inside a column-flex parent, `parentCellBounds.width` and `measuredSize.w` both report the full allocated column width — the right size for cells to fill. Cell-content cross sizes (per-row natural widths) are typically larger than the viewport in app-style rows that wrap inner horizontal scrollers, so trusting them would set `cellCrossSize` to the inner scroller's full `totalContentSize` instead of the viewport.
 
-In a horizontal VL nested inside a parent section that contains other siblings (a title, a status row, etc.), `parentCellBounds.height` is the *outer cell's* full height — `title + innerVL + other`. Using that as the inner VL's cross dim sizes the cells to include the chrome height too. Worse, when the outer cell's measurement bounces (as the user's section component re-measures during scroll/focus animations), the inner VL's `cellCrossSize` bounces with it, and cells are sometimes too tall (gap), sometimes too short (overflow). Trusting the cells' own measured cross instead — `maxContentCross` — gives `cellCrossSize` the cards' natural height regardless of what the outer section measures around them. Only when no cell has measured yet do we fall back to parent/measured/estimate.
+In a horizontal VL nested inside a parent section that contains other siblings (a title, a status row, etc.), `parentCellBounds.height` is the _outer cell's_ full height — `title + innerVL + other`. Using that as the inner VL's cross dim sizes the cells to include the chrome height too. Worse, when the outer cell's measurement bounces (as the user's section component re-measures during scroll/focus animations), the inner VL's `cellCrossSize` bounces with it, and cells are sometimes too tall (gap), sometimes too short (overflow). Trusting the cells' own measured cross instead — `maxContentCross` — gives `cellCrossSize` the cards' natural height regardless of what the outer section measures around them. Only when no cell has measured yet do we fall back to parent/measured/estimate.
 
 `maxContentCross` is monotonic per-dataset: once a cell reports cross=N, the VL stays at N or larger until `data` / `extraData` identity changes (at which point the value resets so a fresh, smaller dataset isn't stuck at the prior dataset's max).
 
@@ -182,28 +188,23 @@ For a list with no explicit cross AND no flex ancestor (pinned mode), no measure
   autoFocus={shouldFocus}
   style={{
     position: 'absolute',
-    x, y,
+    x,
+    y,
     // Both axes pinned by VL — cell wrapper has NO flex of its own.
     w: horizontal ? size : crossSize,
     h: horizontal ? crossSize : size,
   }}
 >
   {isInFlex ? (
-    <FlexRoot
-      onResize={(e) => onItemSizeChange(userKey, horizontal ? e.w : e.h)}
-    >
+    <FlexRoot onResize={(e) => onItemSizeChange(userKey, horizontal ? e.w : e.h)}>
       <VLCellKeyContext.Provider value={userKey}>
-        <CellBoundsContext.Provider value={cellBounds}>
-          {renderedItem}
-        </CellBoundsContext.Provider>
+        <CellBoundsContext.Provider value={cellBounds}>{renderedItem}</CellBoundsContext.Provider>
       </VLCellKeyContext.Provider>
     </FlexRoot>
   ) : (
     /* plain content — no flex, no measurement */
     <VLCellKeyContext.Provider value={userKey}>
-      <CellBoundsContext.Provider value={cellBounds}>
-        {renderedItem}
-      </CellBoundsContext.Provider>
+      <CellBoundsContext.Provider value={cellBounds}>{renderedItem}</CellBoundsContext.Provider>
     </VLCellKeyContext.Provider>
   )}
   {/* optional separator, position:absolute */}
@@ -267,10 +268,10 @@ User presses arrow → FocusGroup fires `onChildFocused(child)` → `handleVLFoc
 
 1. **Compute target index** from `child.getRelativePosition(contentRef)`. Child positions inside contentRef are scroll-independent (cells are absolutely positioned inside contentRef; only contentRef's own x/y changes for scroll), so this is safe to do before scrolling.
 2. **Run `handleChildFocused(child)`** — that's the snap-alignment scroll inside `useScrollHandler`. It calls `scrollToOffset(target, animated)`, which synchronously sets `scrollOffsetRef.current = clamp(target)` and kicks off the animation. So even though the visual scroll is async, the ref is already updated.
-3. **Write to cache** with `{ scrollOffset: scrollOffsetRef.current, focusedIndex: targetIdx }`. Because step 2 already updated the ref, this captures the *post-alignment* offset.
+3. **Write to cache** with `{ scrollOffset: scrollOffsetRef.current, focusedIndex: targetIdx }`. Because step 2 already updated the ref, this captures the _post-alignment_ offset.
 4. **Update `focusedIndexRef.current`**.
 
-The order matters. If you write before step 2, you capture the pre-scroll offset. On restore, `resetScroll` puts the row at that pre-scroll offset, autoFocus fires, `handleChildFocused` runs and scrolls to the *correct* offset — but the user sees the row land slightly off and then jump. Two visits are needed for the cache to converge. Doing alignment first and writing after is what makes the first visit land cleanly.
+The order matters. If you write before step 2, you capture the pre-scroll offset. On restore, `resetScroll` puts the row at that pre-scroll offset, autoFocus fires, `handleChildFocused` runs and scrolls to the _correct_ offset — but the user sees the row land slightly off and then jump. Two visits are needed for the cache to converge. Doing alignment first and writing after is what makes the first visit land cleanly.
 
 ### Recycle entry flow
 
@@ -310,13 +311,13 @@ interface VLPersistedState {
 
 Three write paths, with different timing characteristics:
 
-| When | Reads what | Why |
-|---|---|---|
-| `handleVLFocus`, after `handleChildFocused` | `scrollOffsetRef.current` (latest, synchronous) + `focusedIndexRef.current` + `layoutManager.getMeasurements()` | Captures every focus-driven scroll precisely — including sub-range scrolls that don't commit a new visible range. |
-| `useEffect` on `committedScrollOffset` | `committedScrollOffset` (state, updated when range changes) + `focusedIndexRef.current` + `layoutManager.getMeasurements()` | Backstop for non-focus scrolls (touch/wheel/imperative `scrollToOffset`). Doesn't fire for sub-range scrolls. |
-| Cell-key-change block (during render) | `scrollOffsetRef.current` + `focusedIndexRef.current` + `layoutManager.getMeasurements()` | Saves outgoing state right before restoring incoming, ensuring the most recent measurements survive even if no in-life save fired since the last update. |
+| When                                        | Reads what                                                                                                                  | Why                                                                                                                                                      |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `handleVLFocus`, after `handleChildFocused` | `scrollOffsetRef.current` (latest, synchronous) + `focusedIndexRef.current` + `layoutManager.getMeasurements()`             | Captures every focus-driven scroll precisely — including sub-range scrolls that don't commit a new visible range.                                        |
+| `useEffect` on `committedScrollOffset`      | `committedScrollOffset` (state, updated when range changes) + `focusedIndexRef.current` + `layoutManager.getMeasurements()` | Backstop for non-focus scrolls (touch/wheel/imperative `scrollToOffset`). Doesn't fire for sub-range scrolls.                                            |
+| Cell-key-change block (during render)       | `scrollOffsetRef.current` + `focusedIndexRef.current` + `layoutManager.getMeasurements()`                                   | Saves outgoing state right before restoring incoming, ensuring the most recent measurements survive even if no in-life save fired since the last update. |
 
-The focus-event write must run *after* `handleChildFocused` so that `scrollOffsetRef.current` reflects the snap-aligned offset, not the pre-scroll one. See [Focus restoration → In-list navigation flow](#in-list-navigation-flow) for the full rationale.
+The focus-event write must run _after_ `handleChildFocused` so that `scrollOffsetRef.current` reflects the snap-aligned offset, not the pre-scroll one. See [Focus restoration → In-list navigation flow](#in-list-navigation-flow) for the full rationale.
 
 The cell-key-change block runs as derived state (set during render), not in an effect, so the current render uses the new state — avoids a flash of stale scroll/focus.
 
@@ -386,13 +387,13 @@ The current design measures only main-axis. Cross is unilaterally `cellCrossSize
 
 ## Invariants and pitfalls
 
-- **`estimatedItemSize` is critical in pinned mode** (no flex ancestor) — it IS the size for items without an override. In measured mode, a bad estimate only affects items rendered *before the very first cell measures*; once any cell reports its size, that becomes the implicit fallback for the rest of the unmeasured items.
+- **`estimatedItemSize` is critical in pinned mode** (no flex ancestor) — it IS the size for items without an override. In measured mode, a bad estimate only affects items rendered _before the very first cell measures_; once any cell reports its size, that becomes the implicit fallback for the rest of the unmeasured items.
 - **`overrideItemLayout` is hot.** It's called for every item on every layout. Don't allocate or do expensive work inside.
 - **`keyExtractor` matters.** Measurements are keyed by it. Without one, indices are used (`String(index)`) — which means measurements don't survive data inserts/removes that shift indices. For dynamic lists, supply a stable `keyExtractor`.
 - **The cell's main-axis is whatever yoga lays out.** If your `renderItem` returns content with explicit dimensions matching your `estimatedItemSize`/`overrideItemLayout`, the cell measures to that. If they disagree, measurement wins on subsequent renders.
 - **The cell's cross-axis is fixed at `cellCrossSize`.** Content overflowing the cross axis paints outside the cell wrapper. Either fit content to `cellCrossSize` or pick a larger viewport / smaller `numColumns`.
 - **Top-level VLs should set `style.w/h` explicitly** when known. Self-measurement via `FocusGroup.onResize` works but adds a render cycle.
-- **Nested VLs without `style.h` (or `style.w`) inherit from `parentCellBounds`.** That's the cell wrapper's current size — which after measurement is the cell's *content* size (estimate before, measured after). For a horizontal inner VL inside a row, it's usually cleaner to set `style.h` on the inner VL to its actual item height rather than rely on the parent cell sizing.
+- **Nested VLs without `style.h` (or `style.w`) inherit from `parentCellBounds`.** That's the cell wrapper's current size — which after measurement is the cell's _content_ size (estimate before, measured after). For a horizontal inner VL inside a row, it's usually cleaner to set `style.h` on the inner VL to its actual item height rather than rely on the parent cell sizing.
 - **`focusedIndexRef` is read at cell render time.** Mount-time autoFocus chains through `FocusGroup → useFocus → addElement` claim focus on first paint. For a persisting cell whose `shouldFocus` flips false → true (slot recycle to a new content that should be focused), the imperative `cellElementRef.current.focus()` in `VirtualListCell`'s layoutEffect is what actually moves focus.
 - **Don't add focusedIndex to the persistence `useEffect` deps.** The ref-based direct write in `handleVLFocus` covers per-focus updates; adding the dep reintroduces the setState-async race.
 - **In `handleVLFocus`, run `handleChildFocused` BEFORE writing to the cache.** `scrollToOffset` synchronously updates `scrollOffsetRef.current` to the snap-aligned target, so the subsequent cache write captures the post-alignment offset. Inverting this order forces a two-visit convergence on restore — the row lands at the wrong offset and only fixes itself on a second focus event.

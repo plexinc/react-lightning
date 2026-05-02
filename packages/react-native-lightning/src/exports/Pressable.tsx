@@ -16,6 +16,7 @@ function useEnterKeyHandler(handler: (e: KeyEvent) => void): (e: KeyEvent) => bo
   return (e) => {
     if (e.remoteKey === Keys.Enter) {
       handler(e);
+
       return false;
     }
 

@@ -21,15 +21,9 @@ export type Workerized<T> = {
 };
 
 /**
- * Coalesces calls within a single synchronous task. The first call schedules
- * a microtask; subsequent calls before that microtask fires are no-ops (they
- * just keep `latestArgs` updated). At the end of the current synchronous
- * code, the microtask runs `fn` with the latest args.
- *
- * We use a microtask instead of `setTimeout(_, 1)` because the timer's
- * minimum 1ms (and 4ms after nesting) breaks coalescing into many small
- * postMessage flushes during a React commit pass. A microtask collapses a
- * whole commit's worth of writes into one flush.
+ * Coalesces calls within a sync task — runs `fn` once at the end of the
+ * current sync code with the latest args. Uses a microtask, not setTimeout,
+ * because the timer's 1ms+ minimum breaks coalescing during a React commit.
  */
 function debounceMicrotask<T extends (...args: unknown[]) => void | Promise<void>>(fn: T): T {
   let scheduled = false;
@@ -61,14 +55,9 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
   const _childOperations = new SimpleDataView(undefined, undefined, _onChildOpsOverflow);
 
   /**
-   * Overflow handler for `_childOperations`. Deliberately distinct from
-   * `flushChildOperations` (which combines with pending styles): an
-   * overflow happens mid-write, so the buffer being flushed is a *partial*
-   * batch of node operations. Combining pending styles with this partial
-   * batch would land them on the worker before the rest of the nodeOps
-   * arrive — styles would target nodes that don't exist yet, causing
-   * "node not found" warnings and silently-skipped layout. nodeOps-only
-   * here is the only safe choice.
+   * Overflow flush is nodeOps-only — combining pending styles with a
+   * partial nodeOps batch would land styles before the remaining nodeOps,
+   * targeting nodes that don't exist yet ("node not found" warnings).
    */
   function _onChildOpsOverflow(filledBuffer: ArrayBuffer) {
     worker.postMessage(
@@ -87,12 +76,10 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
       return;
     }
 
-    // Combine with pending nodeOps if any. See `_flushBothInternal` for
-    // the full reasoning — the short version: this collapses two separate
-    // postMessages into one when both flush types fire in the same
-    // microtask cycle.
+    // Combine with pending nodeOps — collapses two postMessages into one.
     if (_childOperations.offset > 0) {
       _flushBothInternal();
+
       return;
     }
 
@@ -122,19 +109,9 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
         _stylesToSend[elementId] = styleToSend;
       }
 
-      // `for...in` instead of `Object.entries(style)` — avoids the per-call
-      // [key, value] tuple array allocation. This loop runs on every
-      // applyStyle, which fires hundreds of times during a busy commit.
-      //
-      // We also short-circuit non-flex keys here. LightningManager.applyStyle
-      // is called with the element's full `props.style` from event handlers
-      // (`stylesChanged`, `inViewport`, `childAdded`'s parent applyStyle),
-      // so the input often contains color/alpha/font/etc. — keys yoga
-      // doesn't care about. Filtering here saves: a `toSerializableValue`
-      // call per skipped key, the bytes those keys would add to the
-      // postMessage payload (structured-clone cost), and the
-      // `isFlexStyleProp` check the worker's `applyReactPropsToYoga`
-      // would do on the same key anyway.
+      // `for...in` skips Object.entries' tuple allocation — hot path on
+      // every applyStyle. Filter non-flex keys here so we don't serialize
+      // them, ship them across postMessage, and let the worker re-filter.
       for (const key in style) {
         if (!isFlexStyleProp(key)) {
           continue;
@@ -149,13 +126,9 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
         }
       }
     } else {
-      // Drop a pending entry if one exists. Without the existence check the
-      // counter underflows whenever `applyStyle(id, null)` runs for an id
-      // with nothing pending — the common case for `childRemoved`, which
-      // calls `applyStyle(child.id, null, true)` regardless of whether any
-      // style was buffered for that child. A negative counter then breaks
-      // the `> 50` early-flush threshold and the `=== 0` short-circuit in
-      // `flushSendStyles`.
+      // Existence check is required — `applyStyle(id, null)` fires from
+      // childRemoved regardless of whether anything was buffered, and a
+      // counter underflow breaks the > 50 / === 0 thresholds below.
       if (!_stylesToSend[elementId]) {
         return;
       }
@@ -167,7 +140,6 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     _needsRender ||= !skipRender;
 
     if (_numStylesToSend > 50) {
-      // Flush early if the object gets too large
       flushSendStyles();
     } else {
       queueSendStyles();
@@ -184,6 +156,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     // Combine with pending styles if any. See `_flushBothInternal`.
     if (_numStylesToSend > 0) {
       _flushBothInternal();
+
       return;
     }
 
@@ -199,17 +172,9 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
   }
 
   /**
-   * Drain both pending node operations and pending styles into a single
-   * `'flushBoth'` postMessage. The worker handler applies node operations
-   * first, then styles — preserving the causal ordering the two-message
-   * setup enforced by hand (`flushChildOperations()` before
-   * `flushSendStyles()` posted `applyStyles`).
-   *
-   * Caller must have verified that BOTH queues have data; this function
-   * blindly transfers/clears both. The overflow handler
-   * (`_onChildOpsOverflow`) intentionally bypasses this and posts
-   * nodeOps-only, since combining at overflow would land pre-overflow
-   * styles on the worker before the rest of the nodeOps catch up.
+   * Single 'flushBoth' postMessage — worker applies nodeOps then styles,
+   * preserving the causal ordering. Caller must have verified BOTH queues
+   * have data; this function blindly transfers and clears.
    */
   function _flushBothInternal() {
     const buffer = _childOperations.buffer;
@@ -230,11 +195,8 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
 
   const queueSendNodeOperations = debounceMicrotask(flushChildOperations);
 
-  // Coalesce N synchronous `queueRender` calls into a single postMessage.
-  // During React unmount cascades the prior fire-immediate path produced
-  // ~2 postMessages per destroyed node (a flush + a queueRender). With
-  // these state vars + the debounced drain below, all `queueRender`s in a
-  // sync block collapse into one message at end-of-microtask.
+  // Coalesce N synchronous queueRender calls into one postMessage —
+  // unmount cascades otherwise produce ~2 messages per destroyed node.
   let _wantsRender = false;
   let _renderElementId = 0;
   let _renderForce = false;
@@ -244,10 +206,9 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
       return;
     }
 
-    // Capture before flushSendStyles resets `_needsRender`. When pending
-    // styles are flushed with skipRender=false (i.e. `_needsRender` was
-    // true), `applyStyles` on the worker auto-triggers `queueRender`
-    // already — so the explicit message below is redundant and we skip it.
+    // Capture before flushSendStyles resets _needsRender. When applyStyles
+    // ships with skipRender=false the worker auto-renders, so the explicit
+    // queueRender below would be redundant.
     const willAutoRender = _numStylesToSend > 0 && _needsRender;
 
     flushChildOperations();
@@ -279,7 +240,6 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     childId?: number,
     index?: number,
   ) {
-    // Batch operations into a buffer for quick transfers and less postMessage calls
     switch (method) {
       case 'addNode':
         _childOperations.writeUint8(NodeOperations.AddNode);
@@ -334,6 +294,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     if (id === 'render') {
       // Special case for render updates
       _eventEmitter.emit('render', result as ArrayBuffer);
+
       return;
     }
 
@@ -341,6 +302,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
 
     if (!callee) {
       console.error(`No handler found for worker message id: ${id}`);
+
       return;
     }
 
@@ -355,11 +317,8 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     }
   };
 
-  // Awaitable: flush pending ops/styles for causal ordering, then post
-  // the call and register a callee so the caller can `await` the worker's
-  // response. Used only by `init` — every other call from
-  // LightningManager is fire-and-forget and rides the buffered nodeOps
-  // pipeline (see `nodeOperation`) or the debounced render drain.
+  // Used by `init` only — every other call is fire-and-forget on the
+  // buffered pipeline. Flushes pending ops/styles for causal ordering.
   function _awaitable(method: string, args: unknown[]): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const id = getId();
@@ -373,10 +332,8 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     });
   }
 
-  // Plain object with pre-bound methods instead of a `Proxy`. The Proxy
-  // version did `Proxy.get` + a string-compare chain + a fresh
-  // `(...args) => nodeOperation(prop, ...args)` closure allocation per
-  // node-op call — measurable self-time during VL recycle bursts.
+  // Pre-bound methods instead of a Proxy — Proxy.get + closure allocation
+  // per node-op call was measurable self-time in VL recycle bursts.
   const proxy = {
     on: _eventEmitter.on.bind(_eventEmitter),
     off: _eventEmitter.off.bind(_eventEmitter),
@@ -394,8 +351,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
       queueRenderDrain();
     },
     addIndependentRoot: (elementId: number) => nodeOperation('addIndependentRoot', elementId),
-    removeIndependentRoot: (elementId: number) =>
-      nodeOperation('removeIndependentRoot', elementId),
+    removeIndependentRoot: (elementId: number) => nodeOperation('removeIndependentRoot', elementId),
     init: (yogaOptions?: unknown) => _awaitable('init', [yogaOptions]),
   };
 

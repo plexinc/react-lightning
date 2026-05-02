@@ -30,6 +30,7 @@ export const useAnimatedScrollHandler: UseAnimatedScrollHandlerFn = (
 
     if (typeof scrollHandlers === 'function') {
       scrollHandlers(reanimatedEvent, context);
+
       return;
     }
 

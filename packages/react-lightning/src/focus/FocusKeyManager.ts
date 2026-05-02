@@ -81,6 +81,7 @@ export class FocusKeyManager<T extends LightningElement> {
 
     if (closestElement) {
       this._focusManager.focus(closestElement as T);
+
       return false;
     }
 

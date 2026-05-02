@@ -17,6 +17,7 @@ export function fromCssUnit(
   if (typeof value === 'object') {
     // TODO: Support animated nodes
     console.warn('[fromCssUnit] Unsupported css unit:', value);
+
     return;
   }
 

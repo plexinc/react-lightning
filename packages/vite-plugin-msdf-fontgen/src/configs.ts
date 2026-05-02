@@ -41,9 +41,11 @@ export async function ensureConfigsExist({
 
   return () => {
     console.log('Cleaning up...');
+
     return Promise.all(
       cleanupFiles.map((file) => {
         console.info(`  Removing ${file}`);
+
         return unlink(file);
       }),
     );

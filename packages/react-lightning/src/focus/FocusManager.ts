@@ -335,6 +335,7 @@ export class FocusManager<
     for (let i = previousLayer.focusPath.length - 1; i >= 0; i--) {
       // oxlint-disable-next-line typescript/no-non-null-assertion -- bounds-checked loop
       const element = previousLayer.focusPath[i]!;
+
       if (element.focused) {
         element.blur();
         this._eventEmitter.emit('blurred', element);
@@ -373,6 +374,7 @@ export class FocusManager<
     for (let i = currentLayer.focusPath.length - 1; i >= 0; i--) {
       // oxlint-disable-next-line typescript/no-non-null-assertion -- bounds-checked loop
       const element = currentLayer.focusPath[i]!;
+
       if (element.focused) {
         element.blur();
         this._eventEmitter.emit('blurred', element);
@@ -520,6 +522,7 @@ export class FocusManager<
         // Look up the current node to avoid stale closure references
         // after re-parenting
         const currentNode = this.activeLayer.elements.get(element);
+
         if (!currentNode) {
           return;
         }
@@ -532,13 +535,16 @@ export class FocusManager<
             currentNode,
           );
         }
+
         this._checkFocusableChildren(currentNode.parent);
         this._recalculateFocusPath();
       }),
       element.on('focusChanged', (_, isFocused) => {
         if (isFocused && !element.focused) {
           const currentNode = this.activeLayer.elements.get(element);
+
           this.focus(element);
+
           if (currentNode) {
             this._tryEmitChildFocusedEvent(currentNode);
           }
@@ -551,6 +557,7 @@ export class FocusManager<
     const { element } = node;
 
     const disposers = this._disposers.get(element);
+
     if (disposers) {
       for (const dispose of disposers) {
         dispose();
@@ -579,18 +586,23 @@ export class FocusManager<
 
           if (!focusNode) {
             console.warn('FocusManager: No focus node found for destination', destination);
+
             return;
           }
 
           // Detect redirect cycles
           const visited = visitedRedirects ?? new Set<T>();
+
           if (visited.has(destination)) {
             console.warn('FocusManager: Focus redirect cycle detected, aborting');
+
             return;
           }
+
           visited.add(destination);
 
           this._focusNode(focusNode, visited);
+
           return;
         }
       }
@@ -651,6 +663,7 @@ export class FocusManager<
 
     if (childrenLength === 0) {
       parentNode.hasFocusableChildren = false;
+
       return;
     }
 
@@ -772,7 +785,9 @@ export class FocusManager<
     // Build new path only when we know it changed
     // oxlint-disable-next-line unicorn/no-new-array -- pre-allocated array filled in the loop below
     const newPath: T[] = new Array(newLength);
+
     curr = layer.root.focusedElement;
+
     for (let i = 0; i < newLength; i++) {
       // oxlint-disable-next-line typescript/no-non-null-assertion -- curr is non-null for newLength iterations
       newPath[i] = curr!.element;

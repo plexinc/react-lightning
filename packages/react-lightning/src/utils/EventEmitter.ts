@@ -12,6 +12,7 @@ export class EventEmitter<
   public on<K extends keyof T>(name: K, listener: T[K]): () => void {
     if (!listener) {
       console.warn('[EventEmitter] Invalid argument specified as a listener');
+
       return () => {
         /* no-op */
       };

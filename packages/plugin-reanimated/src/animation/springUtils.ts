@@ -12,6 +12,7 @@ export function checkIfConfigIsValid(config: DefaultSpringConfig): boolean {
   let errorMessage = '';
   (['stiffness', 'damping', 'dampingRatio', 'mass', 'energyThreshold'] as const).forEach((prop) => {
     const value = config[prop];
+
     if (value <= 0) {
       errorMessage += `, ${prop} must be grater than zero but got ${value}`;
     }

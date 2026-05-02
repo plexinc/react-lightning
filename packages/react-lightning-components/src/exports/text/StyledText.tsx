@@ -159,6 +159,7 @@ const StyledText: FC<StyledTextProps> = ({
   // oxlint-disable-next-line react-hooks/exhaustive-deps -- text/values/tagStyles force re-layout when content changes
   useEffect(() => {
     const container = containerRef.current;
+
     if (!container) {
       return;
     }

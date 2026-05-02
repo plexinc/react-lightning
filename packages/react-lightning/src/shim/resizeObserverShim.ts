@@ -15,8 +15,10 @@ class LightningResizeObserver extends window.ResizeObserver {
     if (target instanceof LightningViewElement) {
       this._targets.add(target);
       target.on('layout', this._fireCallbacks);
+
       return;
     }
+
     super.observe(target, options);
   }
 
@@ -24,8 +26,10 @@ class LightningResizeObserver extends window.ResizeObserver {
     if (target instanceof LightningViewElement) {
       this._targets.delete(target);
       target.off('layout', this._fireCallbacks);
+
       return;
     }
+
     super.unobserve(target);
   }
 

@@ -184,12 +184,9 @@ export class YogaManager {
 
     this._isRenderQueued = true;
 
-    // Microtask instead of setTimeout(_, 1): we want the layout pass to
-    // run AFTER the current synchronous batch of style/node operations
-    // (which arrive in succession from postMessage handlers and
-    // worker-side updates), and a microtask achieves that with no timer
-    // overhead. setTimeout enforces a 1ms minimum (4ms after nesting) and
-    // fragments large batches into many separate render passes.
+    // Microtask runs AFTER the current synchronous batch of style/node
+    // ops (arriving from postMessage handlers); setTimeout's 1ms+ minimum
+    // would fragment a batch into many render passes.
     queueMicrotask(() => {
       this._isRenderQueued = false;
 
@@ -200,11 +197,9 @@ export class YogaManager {
       this._initializeArrayBuffer();
 
       for (const independentRoot of this._independentRoots) {
-        // Pass undefined for available size so yoga uses the root's own
-        // explicit w/h if set, and shrinks-to-fit otherwise. Hardcoding
-        // 1920×1080 here makes every root with an unset axis stretch to the
-        // canvas dimensions — which breaks measurement-driven roots like
-        // VirtualList cells.
+        // undefined available size → yoga uses the root's own w/h (or
+        // shrink-to-fit). Passing 1920×1080 would stretch any unset axis
+        // and break measurement-driven roots like VirtualList cells.
         independentRoot.node.calculateLayout(
           undefined,
           undefined,
@@ -226,10 +221,8 @@ export class YogaManager {
       throw new Error('Yoga was not initialized! Did you call `init()`?');
     }
 
-    // `for...in` instead of `Object.entries(styles)` to skip the per-call
-    // [key, value] tuple allocation. This iterates every batched style
-    // update on the worker side per `'flushBoth'` / `'applyStyles'`
-    // message.
+    // `for...in` skips the [key, value] tuple allocation of Object.entries —
+    // this is a hot path on every flushBoth/applyStyles message.
     for (const elementId in styles) {
       // oxlint-disable-next-line typescript/no-non-null-assertion -- key from for..in iteration of own props
       this.applyStyle(+elementId, styles[elementId as unknown as number]!, skipRender);
@@ -253,6 +246,7 @@ export class YogaManager {
 
     if (!yogaNode) {
       console.warn(`Yoga node with ID ${elementId} not found.`);
+
       return;
     }
 
@@ -324,33 +318,25 @@ export class YogaManager {
     return yogaNode;
   }
 
-  // Walks the yoga subtree and emits an update for every node with a fresh
-  // layout. Critically, recursion is unconditional — yoga's hasNewLayout is
-  // per-node, so a child's layout may have changed even when its parent's
-  // didn't (e.g. absolute children laid out independently of flow siblings,
-  // or a subtree just attached via _reattachChildren).
+  // Recursion is unconditional — yoga's hasNewLayout is per-node, so a
+  // child's layout can change even when the parent's didn't (absolute
+  // children, just-attached subtrees from _reattachChildren).
   private _getUpdatedStyles(yogaNode: ManagerNode, force = false) {
     const skipHiddenNode =
       !this._yogaOptions.processHiddenNodes && this._hiddenElements.has(yogaNode.id);
 
     if (!skipHiddenNode && (force || yogaNode.node.hasNewLayout())) {
-      // We want to keep chunks together, so check the size to ensure we have enough space
       if (!this._dataView.hasSpace(APPROX_SIZEOF_UPDATE)) {
-        // If we don't have enough space, flush the current buffer
         this._flushArrayBuffer(this._dataView.buffer);
       }
 
-      // Read layout via individual getters instead of `getComputedLayout()`,
-      // which allocates a fresh `{ left, top, width, height }` object per
-      // node. This function recurses through every yoga descendant on every
-      // layout pass, so the saved allocations add up quickly on big trees.
+      // Individual getters instead of getComputedLayout() — that allocates
+      // a {left, top, width, height} object per node, and we recurse the
+      // entire yoga tree every layout pass.
       const node = yogaNode.node;
 
-      // Direct `DataView` writes — `hasSpace(APPROX_SIZEOF_UPDATE)` above
-      // already validated the full 12-byte run, so the per-call overflow
-      // check and `_writeInt` switch dispatch inside `writeUint32`/
-      // `writeInt16` are pure overhead here. This fires for every
-      // freshly-laid-out yoga descendant on every layout pass.
+      // Direct DataView writes — hasSpace above already validated the full
+      // 12-byte run, so per-call overflow checks are pure overhead here.
       const view = this._dataView.dataView;
       const offset = this._dataView.offset;
 

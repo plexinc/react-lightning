@@ -266,6 +266,7 @@ export function createAnimatedComponent<TProps extends {}>(
     private _runAnimation(builder: LayoutAnimationFunction | null, callback?: () => void) {
       if (!this._ref || !builder) {
         callback?.();
+
         return;
       }
 
@@ -285,6 +286,7 @@ export function createAnimatedComponent<TProps extends {}>(
 
         if (!layoutAnimation) {
           callback?.();
+
           return;
         }
 

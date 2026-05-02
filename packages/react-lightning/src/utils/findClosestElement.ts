@@ -184,6 +184,7 @@ function fillDimensions(
   out.y = y;
   out.centerX = x + w / 2;
   out.centerY = y + h / 2;
+
   return out;
 }
 

@@ -72,29 +72,28 @@ export interface FlexRootProps {
  * elements get no flex behavior. Wrap your app's root (or any subtree that
  * should use flexbox) with this component.
  */
-export const FlexRoot: ForwardRefExoticComponent<
-  FlexRootProps & RefAttributes<LightningElement>
-> = forwardRef<LightningElement, FlexRootProps>(({ children, style, onResize }, forwardedRef) => {
-  const ref = useRef<LightningElement>(null);
+export const FlexRoot: ForwardRefExoticComponent<FlexRootProps & RefAttributes<LightningElement>> =
+  forwardRef<LightningElement, FlexRootProps>(({ children, style, onResize }, forwardedRef) => {
+    const ref = useRef<LightningElement>(null);
 
-  useImperativeHandle(forwardedRef, () => ref.current as LightningElement, []);
+    useImperativeHandle(forwardedRef, () => ref.current as LightningElement, []);
 
-  useLayoutEffect(() => {
-    const manager = getFlexboxManager();
-    const element = ref.current;
+    useLayoutEffect(() => {
+      const manager = getFlexboxManager();
+      const element = ref.current;
 
-    if (!manager || !element) {
-      return;
-    }
+      if (!manager || !element) {
+        return;
+      }
 
-    return manager.markFlexRoot(element);
-  }, []);
+      return manager.markFlexRoot(element);
+    }, []);
 
-  return (
-    <lng-view ref={ref} style={style} onResize={onResize}>
-      <FlexContext.Provider value={true}>{children}</FlexContext.Provider>
-    </lng-view>
-  );
-});
+    return (
+      <lng-view ref={ref} style={style} onResize={onResize}>
+        <FlexContext.Provider value={true}>{children}</FlexContext.Provider>
+      </lng-view>
+    );
+  });
 
 FlexRoot.displayName = 'FlexRoot';

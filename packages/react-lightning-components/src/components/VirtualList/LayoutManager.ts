@@ -20,33 +20,17 @@ export interface LayoutManagerConfig<T> {
   overrideItemLayout?: OverrideItemLayoutFn<T>;
   extraData?: unknown;
   separatorSize?: number;
-  /**
-   * Cross-axis size of a single column, computed by VirtualList from its
-   * viewport. The LayoutManager treats this as ground truth — no aggregation
-   * from cell-reported sizes. When 0/unset, layouts still resolve their
-   * main-axis offsets correctly so visibility math works during the first
-   * render.
-   */
+  /** Ground truth from VL viewport; never aggregated from cell reports. */
   cellCrossSize: number;
-  /**
-   * Stable identity function for items, mirroring `VirtualList.keyExtractor`.
-   * Used to key measurements so they survive recycling and data shifts.
-   * When not provided, the index is used as the key — measurements still
-   * work but don't survive inserts/removes that shift indices.
-   */
+  /** When omitted, index is used — measurements then don't survive insert/remove that shifts indices. */
   keyExtractor?: (item: T, index: number) => string;
 }
 
 /**
- * Computes per-item offsets in O(n). Sizes come from (in priority order)
- * a measurement reported via `reportItemSize`, then `overrideItemLayout`,
- * then `estimatedItemSize`. Cross-axis size is unilateral: every item's
- * `crossSize` equals the configured `cellCrossSize` (× span for grids).
- * Cross-axis is never measured or aggregated — that's the load-bearing
- * rule that keeps the layout free of feedback loops.
- *
- * Measurements are stored by `userKey` (from `keyExtractor`) so they
- * survive recycling and data inserts/removes that shift indices.
+ * Computes per-item offsets in O(n). Main-axis size is the per-userKey
+ * measurement, then `overrideItemLayout`, then `estimatedItemSize`. Cross
+ * is always `cellCrossSize` (× span); never measured or aggregated —
+ * that's the rule that keeps the layout loop-free.
  */
 export class LayoutManager<T> {
   private static _overrideScratch: { size?: number; span?: number } = {};
@@ -63,52 +47,24 @@ export class LayoutManager<T> {
   private _cellCrossSize: number;
   private _keyExtractor?: (item: T, index: number) => string;
   private _measuredSizes: Map<string, number> = new Map();
-  /**
-   * While `_batching` is on (VL flips it during a scroll/focus-snap
-   * animation), reports accumulate per-`userKey` here instead of running
-   * through dampening — the animation is the consumer's clear signal that
-   * intermediate yoga measurements aren't worth committing.
-   * `setBatching(false)` drains this directly into `_measuredSizes` at
-   * animation end.
-   */
+  /** While true, reports accumulate per-userKey and skip dampening. Drained on `setBatching(false)`. */
   private _batching = false;
   private _batchedSizes: Map<string, number> = new Map();
   /**
-   * Per-`userKey` stability window. When a cell's reported size differs
-   * from the currently-stored one, the new value sits here until either
-   * (a) the same value is re-reported after `_STABILITY_MS` elapses, or
-   * (b) the backstop timer fires `_STABILITY_MS` after `firstSeenAt`. A
-   * different incoming value cancels the timer and replaces the entry.
-   *
-   * This dampens the multi-frame cascade where a user's section component
-   * re-measures during focus/scroll animations or async content settling
-   * — without dampening, every intermediate measurement reflows the
-   * layout for every following item.
+   * Per-userKey stability window. A different incoming value sits pending
+   * until either matched after `_STABILITY_MS` or the backstop timer
+   * fires. Filters multi-frame measurement cascades during scroll/focus
+   * animations and async content settling.
    */
   private _pendingSizes: Map<string, { size: number; firstSeenAt: number }> = new Map();
-  /**
-   * Backstop timers per `userKey`. Required because a cell may push
-   * exactly once for a given size and then go quiet (props stable, no
-   * further re-renders) — without the timer, the pending value would
-   * sit forever and the layout would paint at the old size.
-   */
+  /** Backstop timers — required because a cell can push once and go quiet (props stable). */
   private _pendingTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
   private _onChange?: () => void;
   private static readonly _STABILITY_MS = 120;
   /**
-   * The very first non-zero size reported via `reportItemSize` for this
-   * list. Used as the implicit fallback for unmeasured items in place of
-   * the caller-provided `estimatedItemSize` once at least one cell has
-   * been seen — empirically that's a much better predictor than a generic
-   * estimate, and it cuts the visible reflow when subsequent cells turn
-   * out to be roughly the same size.
-   *
-   * Locked on first measurement; never updates. If we tracked the most
-   * recent measurement instead, every measured cell would shift the
-   * implicit estimate and cascade-rerender every later unmeasured item —
-   * which is the opposite of "less jank". The first measurement is
-   * usually representative and the remaining error gets corrected only
-   * when each individual cell measures.
+   * Implicit fallback for unmeasured items once any cell has measured —
+   * usually a much better predictor than the caller's estimate. Locked on
+   * first measurement so subsequent cells don't cascade-shift the fallback.
    */
   private _firstMeasuredSize = 0;
 
@@ -131,35 +87,20 @@ export class LayoutManager<T> {
     return this._totalSize;
   }
 
-  /**
-   * Register a "layout dirtied" callback. Fires when a pending
-   * measurement matures via the stability backstop timer — there's no
-   * incoming report at that moment to bump layoutVersion synchronously,
-   * so LM has to wake the caller itself.
-   */
+  /** Fires when the stability backstop timer commits a pending measurement (no incoming report to bump layoutVersion synchronously). */
   setOnChange(cb: () => void): void {
     this._onChange = cb;
   }
 
-  /**
-   * Returns a copy of the current per-`userKey` measurement map. Used
-   * by VL to snapshot measurements into the parent state cache so a
-   * recycled cell's inner VL can restore them on remount instead of
-   * having to re-measure from estimate.
-   */
+  /** Copy so the cache snapshot doesn't alias live state. */
   getMeasurements(): Map<string, number> {
     return new Map(this._measuredSizes);
   }
 
   /**
-   * Replaces the current measurement map with the given snapshot. Marks
-   * layout dirty. Called from VL when restoring inner VL state from the
-   * parent state cache — no `_onChange` notification because the caller
-   * is responsible for the surrounding render flow.
-   *
-   * Also clears any in-flight dampening / batching state — pending
-   * entries from the previous content are no longer relevant under
-   * the restored measurement set.
+   * Replace measurements wholesale and clear in-flight dampening/batching
+   * (entries from prior content are stale under the new set). No
+   * `_onChange` — caller owns the surrounding render flow.
    */
   setMeasurements(measurements: Map<string, number>): void {
     this._measuredSizes = new Map(measurements);
@@ -174,13 +115,7 @@ export class LayoutManager<T> {
     this._dirty = true;
   }
 
-  /**
-   * Toggle batching mode. While active, reports accumulate per `userKey`
-   * (latest wins) and the dampening path is skipped — animations are the
-   * caller's clear signal that intermediate measurements aren't worth
-   * committing. Returns `true` if disabling caused at least one stored
-   * size to change.
-   */
+  /** Returns `true` if disabling drained at least one batched size into measurements. */
   setBatching(active: boolean): boolean {
     if (this._batching === active) {
       return false;
@@ -189,9 +124,7 @@ export class LayoutManager<T> {
     this._batching = active;
 
     if (active) {
-      // Switching INTO batching: cancel any in-flight dampening timers.
-      // The animation will overwrite all relevant values via the batch,
-      // so old pending entries are irrelevant.
+      // Cancel pending dampening — the upcoming batch will overwrite anyway.
       for (const timer of this._pendingTimers.values()) {
         clearTimeout(timer);
       }
@@ -290,18 +223,10 @@ export class LayoutManager<T> {
   }
 
   /**
-   * Records the rendered main-axis size for an item, keyed by its stable
-   * `userKey`. Subsequent layouts use this size instead of
-   * `overrideItemLayout` / `estimatedItemSize` for that key.
-   *
-   * Returns `true` when the stored size changed synchronously (caller
-   * should bump layoutVersion). Returns `false` when the report was
-   * batched, dampened, or rejected.
-   *
-   * Rejects:
-   * - `size <= 0` — transient zero during recycle. Use `reportItemEmpty`
-   *   for genuinely-empty rows.
-   * - non-finite values.
+   * Records the rendered main-axis size keyed by `userKey`. Returns `true`
+   * when the size committed synchronously (caller should bump
+   * layoutVersion). Rejects size ≤ 0 / non-finite — use `reportItemEmpty`
+   * for genuinely-empty rows.
    */
   reportItemSize(userKey: string, size: number): boolean {
     if (!Number.isFinite(size) || size <= 0) {
@@ -318,11 +243,11 @@ export class LayoutManager<T> {
 
     if (existing != null && Math.abs(existing - size) < 1) {
       this._clearPending(userKey);
+
       return false;
     }
 
-    // First measurement — apply immediately. There's no existing value
-    // to thrash against, and waiting would just delay layout settling.
+    // First measurement — apply immediately, nothing to thrash against.
     if (existing == null) {
       this._measuredSizes.set(userKey, size);
 
@@ -341,8 +266,7 @@ export class LayoutManager<T> {
     const pending = this._pendingSizes.get(userKey);
 
     if (pending != null && Math.abs(pending.size - size) < 1) {
-      // Same as already-pending. Don't reset the timer. If the window
-      // has already elapsed, commit synchronously.
+      // Same as pending — don't reset the timer; commit if window elapsed.
       if (now - pending.firstSeenAt >= LayoutManager._STABILITY_MS) {
         this._measuredSizes.set(userKey, size);
         this._clearPending(userKey);
@@ -390,14 +314,7 @@ export class LayoutManager<T> {
     this._pendingSizes.delete(userKey);
   }
 
-  /**
-   * Drops every per-key measurement and resets the first-measured size.
-   * Not called automatically — VirtualList preserves measurements across
-   * data identity changes so recycled items use their cached size on
-   * first paint. Callers can invoke this imperatively when they truly
-   * want to invalidate (e.g. orientation change, theme swap that
-   * materially affects content sizing).
-   */
+  /** Imperative invalidation — VL itself preserves measurements across data identity changes. */
   clearMeasurements(): void {
     if (this._measuredSizes.size === 0 && this._firstMeasuredSize === 0) {
       return;
@@ -417,13 +334,9 @@ export class LayoutManager<T> {
   }
 
   /**
-   * Records the item identified by `userKey` as logically empty. The row
-   * collapses to zero main-axis size and other items close ranks around
-   * it.
-   *
-   * Distinct from `reportItemSize(_, 0)` (which we reject as a transient
-   * FlexRoot zero during recycle): this is the *intentional* empty path,
-   * called from `VirtualListCell` when `renderItem` returns null.
+   * Collapses the row to zero main-axis size. Distinct from
+   * `reportItemSize(_, 0)` (rejected as transient): this is the
+   * intentional empty path, fired when `renderItem` returns null.
    */
   reportItemEmpty(userKey: string): boolean {
     if (this._batching) {
@@ -445,11 +358,6 @@ export class LayoutManager<T> {
     return true;
   }
 
-  /**
-   * Returns the stored measurement for a userKey, or undefined if none.
-   * Mostly here so consumers can ask "have I measured this?" without
-   * exposing the internal Map.
-   */
   getMeasuredSize(userKey: string): number | undefined {
     return this._measuredSizes.get(userKey);
   }

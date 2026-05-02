@@ -46,6 +46,7 @@ export const VLCellKeyContext: Context<string | null> = createContext<string | n
  * VL inside a cell can persist its scroll position + focused index across
  * recycle remounts (keyed by the nested VL's enclosing cell key).
  */
-export const VLStateCacheContext: Context<Map<string, VLPersistedState> | null> = createContext<
-  Map<string, VLPersistedState> | null
->(null);
+export const VLStateCacheContext: Context<Map<string, VLPersistedState> | null> = createContext<Map<
+  string,
+  VLPersistedState
+> | null>(null);

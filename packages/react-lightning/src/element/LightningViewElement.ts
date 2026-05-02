@@ -223,6 +223,7 @@ export class LightningViewElement<
     // Optimize child iteration
     for (let i = 0; i < this.children.length; i++) {
       const child = this.children[i];
+
       if (child) {
         child.deferTarget = value;
       }
@@ -398,6 +399,7 @@ export class LightningViewElement<
 
     for (let i = 0; i < this.children.length; i++) {
       const child = this.children[i];
+
       if (child) {
         child.node.parent = node;
       }
@@ -672,8 +674,7 @@ export class LightningViewElement<
   };
 
   private _reconcileResizeObserving(): void {
-    const shouldObserve =
-      this.props.onResize != null || this._eventEmitter.hasListeners('resized');
+    const shouldObserve = this.props.onResize != null || this._eventEmitter.hasListeners('resized');
 
     if (shouldObserve === this._isObservingResize) {
       return;
@@ -782,6 +783,7 @@ export class LightningViewElement<
 
     // Check for style changes without allocating an array
     let hasStyleChanges = false;
+
     if (payload.style) {
       for (const _ in payload.style) {
         hasStyleChanges = true;
@@ -979,15 +981,19 @@ export class LightningViewElement<
     if (borderTop) {
       props[hasRounded ? 'border-top' : 'top'] = borderTop;
     }
+
     if (borderLeft) {
       props[hasRounded ? 'border-left' : 'left'] = borderLeft;
     }
+
     if (borderRight) {
       props[hasRounded ? 'border-right' : 'right'] = borderRight;
     }
+
     if (borderBottom) {
       props[hasRounded ? 'border-bottom' : 'bottom'] = borderBottom;
     }
+
     if (borderColor) {
       props[hasRounded ? 'border-color' : 'color'] = borderColor;
     }
@@ -1039,12 +1045,15 @@ export class LightningViewElement<
           if (!style.w) {
             finalStyle.w = rect.w;
           }
+
           if (!style.h) {
             finalStyle.h = rect.h;
           }
+
           if (!style.x) {
             finalStyle.x = rect.x;
           }
+
           if (!style.y) {
             finalStyle.y = rect.y;
           }

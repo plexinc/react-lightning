@@ -9,7 +9,6 @@ export interface UseScrollHandlerOptions {
   layoutManager: LayoutManager<unknown>;
   horizontal: boolean;
   viewportSize: number;
-  drawDistance: number;
   /** Offset from the top of the content container to the first item. */
   itemAreaOffset: number;
   /** Total size of the scrollable content (including padding, header, footer). */
@@ -27,25 +26,10 @@ export interface UseScrollHandlerOptions {
   paddingStart: number;
   /** Main-axis end padding (acts as scroll margin). */
   paddingEnd: number;
-  /**
-   * Initial scroll offset to start at — used when restoring state for a
-   * recycled VL whose previous scroll position was cached.
-   */
   initialScrollOffset?: number;
-  /**
-   * Fired the moment a scroll/focus-snap animation begins — i.e. when
-   * `scrollToOffset(_, animated=true)` enters the animated branch and is
-   * not already in flight. VL uses this to enable LayoutManager batching
-   * so intermediate yoga measurements during the animation don't reflow
-   * the layout on every frame.
-   */
+  /** Fires once when an animated scroll begins; VL flips LM into batching. */
   onAnimationStart?: () => void;
-  /**
-   * Fired when the most recent scroll animation finishes (its `stopped`
-   * event fires while still being the current one) OR when `resetScroll`
-   * cancels an animation that was in flight. VL uses this to flush the
-   * batched measurements and bump layoutVersion in one go.
-   */
+  /** Fires once when the in-flight animation ends or `resetScroll` cancels it; VL drains the batch. */
   onAnimationEnd?: () => void;
 }
 
@@ -65,11 +49,7 @@ export interface UseScrollHandlerResult {
   ) => void;
   scrollToEnd: (animated?: boolean) => void;
   handleChildFocused: (child: LightningElement) => void;
-  /**
-   * Imperatively jump scroll state to an absolute offset without animation
-   * or onScroll/onEndReached side-effects. Used to restore cached scroll
-   * position when a recycled VL switches to a different cellKey.
-   */
+  /** Jump to an offset with no animation or onScroll/onEndReached side-effects (cellKey-restore path). */
   resetScroll: (offset: number) => void;
 }
 
@@ -78,7 +58,6 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     layoutManager,
     horizontal,
     viewportSize,
-    drawDistance,
     itemAreaOffset,
     totalContentSize,
     viewportCrossSize,
@@ -106,10 +85,8 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
   const isAnimatingRef = useRef(false);
   const [committedScrollOffset, setCommittedScrollOffset] = useState(initialScrollOffset);
 
-  // Apply the restored scroll offset to lightning on mount. useState's
-  // initializer keeps committedScrollOffset in sync, but the contentRef's
-  // node still needs node.x/y written so the scroll position is visually
-  // correct from the first frame.
+  // Pin restored scroll offset to node.x/y on mount so first paint matches
+  // committedScrollOffset (which useState already initialized).
   // oxlint-disable-next-line react-hooks/exhaustive-deps -- mount-only restore
   useEffect(() => {
     if (initialScrollOffset > 0 && contentRef.current) {
@@ -182,11 +159,8 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     scrollOffsetRef.current = clamped;
 
     applyPosition(clamped, animated);
-    // Commit unconditionally. `committedScrollOffset` drives `contentStyle.x`
-    // on the post-animation render and the parent's state-cache write — both
-    // need the actual scroll, not just the offset of the last range change.
-    // Same-value setState bails out of rendering, so a no-op commit costs
-    // nothing.
+    // Commit unconditionally — drives contentStyle.x on the post-animation
+    // render and the parent's cache write. Same-value setState is free.
     setCommittedScrollOffset(clamped);
 
     if (onEndReached) {

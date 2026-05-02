@@ -15,6 +15,7 @@ export function compose<T>(style1: T, style2: T): T | NonNullable<T>[] {
   if (style1 && style2) {
     return [style1, style2];
   }
+
   return style1 || style2;
 }
 

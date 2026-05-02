@@ -11,28 +11,14 @@ import loadYoga from './yoga';
 import type { YogaManager } from './YogaManager';
 import type { Workerized } from './YogaManagerWorker';
 
-/**
- * Manages the lifecycle of Yoga nodes for Lightning elements. This can only be
- * done on the main thread and not the worker thread.
- */
+/** Lifecycle of Yoga nodes for Lightning elements. Main-thread only. */
 export class LightningManager {
   private _elements = new Map<number, LightningElement>();
   private _boundaries = new Set<number>();
   private _flexRoots = new Set<number>();
-  /**
-   * Tracks the yoga-side parent for every attached node (childId -> parentId).
-   * Used to make boundary/flex-root marking idempotent without a sync round-trip
-   * to a worker.
-   */
+  /** childId -> yoga-side parentId. Lets boundary/flex-root marking stay sync without a worker round-trip. */
   private _yogaParents = new Map<number, number>();
-  /**
-   * Per-parent count of children currently attached in yoga. Lets
-   * `_yogaIndexFor` short-circuit the O(n) sibling walk for the common
-   * append-at-end case (the new child's yoga index equals the parent's
-   * current attached count). Maintained alongside `_yogaParents`: any
-   * change to a child's yoga parent updates the old parent's count down
-   * and the new parent's count up.
-   */
+  /** Per-parent attached-children count. Lets `_yogaIndexFor` skip the O(n) sibling walk on append-at-end. */
   private _yogaChildCounts = new Map<number, number>();
   private _yogaManager: YogaManager | Workerized<YogaManager> | undefined;
 
@@ -42,13 +28,9 @@ export class LightningManager {
   }
 
   /**
-   * Marks an element as a flex boundary inside a flex tree. Its existing
-   * children are detached from yoga and any future children added to its
-   * subtree are not added to yoga either. A nested {@link markFlexRoot}
-   * restores yoga participation for everything below it.
-   *
-   * Note: flex is opt-in, so calling this outside a {@link markFlexRoot}
-   * subtree is a no-op — those elements are already excluded from yoga.
+   * Detaches the element's subtree from yoga (and excludes future
+   * descendants). A nested {@link markFlexRoot} re-enables flex below it.
+   * No-op outside a flex root since those elements are already excluded.
    */
   public markBoundary(element: LightningElement): () => void {
     if (this._boundaries.has(element.id)) {
@@ -77,12 +59,9 @@ export class LightningManager {
   }
 
   /**
-   * Opts an element and its subtree into flex layout. The element becomes an
-   * independent yoga root — its subtree is laid out on its own each render,
-   * separately from any other flex tree.
-   *
-   * Flex is opt-in for this plugin. Without a flex root somewhere above an
-   * element, that element is invisible to yoga and gets no flex behavior.
+   * Opts an element and its subtree into flex layout as an independent
+   * yoga root. Flex is opt-in — without a flex root above it, an element
+   * is invisible to yoga.
    */
   public markFlexRoot(element: LightningElement): () => void {
     if (this._flexRoots.has(element.id)) {
@@ -103,9 +82,8 @@ export class LightningManager {
 
       this._reattachChildren(element);
 
-      // Trigger the first layout pass for the freshly-attached subtree.
-      // Without this, the new independent root sits with default 0,0 sizes
-      // until something else happens to call applyStyle.
+      // First layout pass — without this the root sits at 0,0 until
+      // something else calls applyStyle.
       this._yogaManager.queueRender(element.id);
     }
 
@@ -117,12 +95,7 @@ export class LightningManager {
     this._yogaManager?.removeIndependentRoot(elementId);
   }
 
-  /**
-   * Returns true when an element should NOT participate in yoga layout. Flex
-   * is opt-in: an element is in flex only when it has an ancestor (or is one)
-   * marked as a {@link markFlexRoot}. A nested {@link markBoundary} between
-   * the element and that flex root re-disables flex for the subtree.
-   */
+  /** True when the element should NOT participate in yoga (no flex root ancestor, or a boundary intervenes). */
   private _isInBoundary(parent: LightningElement): boolean {
     let curr: LightningElement | null = parent;
 
@@ -142,15 +115,9 @@ export class LightningManager {
   }
 
   /**
-   * Counts how many preceding React siblings of `parent` are currently
-   * attached to `parent` in yoga. The result is the yoga-side index at which
-   * a child should be inserted to preserve relative order with React.
-   *
-   * Fast path: when the new child is being appended at the end of
-   * `parent.children` (the common case for React mounts and most list
-   * additions), the yoga-side index is exactly the parent's current
-   * attached-children count — no sibling walk needed. This turns the
-   * O(N²) cost of mass-mounting a list into O(N).
+   * Yoga-side index for inserting at React's `reactIndex`, accounting for
+   * skipped siblings (boundaries, flex roots). Append-at-end fast path
+   * uses the cached count — turns O(N²) mass-mount into O(N).
    */
   private _yogaIndexFor(parent: LightningElement, reactIndex: number): number {
     if (reactIndex === parent.children.length - 1) {
@@ -170,22 +137,13 @@ export class LightningManager {
     return yogaIndex;
   }
 
-  /**
-   * Marks `childId` as yoga-attached to `parentId`. Updates `_yogaParents`
-   * AND `_yogaChildCounts` together so `_yogaIndexFor`'s fast path stays
-   * accurate.
-   */
+  /** Maintains `_yogaParents` and `_yogaChildCounts` together so the fast path stays accurate. */
   private _setYogaParent(childId: number, parentId: number): void {
     this._yogaParents.set(childId, parentId);
     this._yogaChildCounts.set(parentId, (this._yogaChildCounts.get(parentId) ?? 0) + 1);
   }
 
-  /**
-   * Records that `childId` is no longer yoga-attached to `parentId`.
-   * Symmetric counterpart of `_setYogaParent`. The `parentId` argument is
-   * required because at call time `_yogaParents.get(childId)` may have
-   * already been deleted.
-   */
+  /** Counterpart of `_setYogaParent`. `parentId` passed explicitly since `_yogaParents.get` may already be cleared. */
   private _clearYogaParent(childId: number, parentId: number): void {
     this._yogaParents.delete(childId);
 
@@ -245,6 +203,7 @@ export class LightningManager {
   public trackElement(element: LightningElement): void {
     if (this._elements.has(element.id)) {
       console.warn(`Yoga node is already attached to element #${element.id}.`);
+
       return;
     }
 
@@ -284,11 +243,8 @@ export class LightningManager {
           return;
         }
 
-        // Translate the React-side index to a yoga-side index by counting
-        // preceding siblings that are actually attached to this parent in
-        // yoga. Without this, skipped siblings (nested boundaries, flex
-        // roots) cause yoga's insertChild to walk off the end of its
-        // children array — which surfaces as "memory access out of bounds".
+        // Translate React index → yoga index. Skipped siblings (boundaries,
+        // flex roots) cause "memory access out of bounds" otherwise.
         const yogaIndex = this._yogaIndexFor(element, index);
 
         // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
@@ -296,18 +252,15 @@ export class LightningManager {
         this._setYogaParent(child.id, element.id);
         this.applyStyle(element.id, element.style);
 
-        // React mounts bottom-up: `child` may already have its own subtree
-        // that was inserted before `child` itself joined the flex tree. Those
-        // descendants were skipped at their own childAdded time (no flex
-        // ancestor existed then). Promote them now.
+        // React mounts bottom-up: `child`'s descendants were inserted
+        // before `child` joined the flex tree, so they were skipped at
+        // their own childAdded time. Promote them now.
         if (!this._boundaries.has(child.id)) {
           this._reattachChildren(child);
         }
       }),
 
       element.on('childRemoved', (child) => {
-        // This will remove any pending worker style updates that haven't been sent
-
         const childYogaParent = this._yogaParents.get(child.id);
 
         if (childYogaParent !== undefined) {
@@ -319,11 +272,9 @@ export class LightningManager {
         // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
         this._yogaManager!.removeNode(child.id);
 
-        // Schedule a yoga re-layout. Without this, a parent that shrink-fits
-        // its children (no explicit w/h) keeps the old size when a child is
-        // removed — its node.w/h stay at the last computed values, and
-        // NodeResizeObserver never fires the shrink event up to consumers
-        // (e.g., VirtualList's reportItemSize).
+        // Re-layout — without this a shrink-fit parent keeps the old size
+        // (node.w/h stay at last computed) and NodeResizeObserver never
+        // fires the shrink event to consumers like VL.reportItemSize.
         // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
         this._yogaManager!.queueRender(element.id);
       }),
@@ -376,12 +327,8 @@ export class LightningManager {
   }
 
   private _applyUpdates = (buffer: ArrayBuffer) => {
-    // Raw `DataView` instead of `SimpleDataView` here — this is a pure
-    // read loop fired per render frame, and `SimpleDataView` adds an
-    // outer object plus a layer of `_readInt` indirection that's pure
-    // overhead when we don't need overflow handling, write tracking, or
-    // auto-incrementing offsets across method calls. Manual offset
-    // arithmetic is the cheapest option for a hot per-frame path.
+    // Raw `DataView` over `SimpleDataView` — this is a per-frame hot path
+    // that doesn't need overflow handling or write tracking.
     const view = new DataView(buffer);
     const length = buffer.byteLength;
     let offset = 0;
@@ -401,14 +348,12 @@ export class LightningManager {
         continue;
       }
 
-      // Apply layout directly to the node to prevent re-rendering, and the
-      // style retains the original value that was set.
+      // Apply directly to the node so style retains its original value.
       let skipX = false;
       let skipY = false;
       let dirty = false;
       let resize = false;
 
-      // `isTextElement` is a getter — cache once, read twice below.
       const isText = el.isTextElement;
 
       if (el.parent?.style.display !== 'flex') {
@@ -430,9 +375,7 @@ export class LightningManager {
         dirty = el.setNodeProp('y', y) || dirty;
       }
 
-      // If width is 0, we should not set it on the node, as it will cause
-      // layout issues. We also ignore setting width/height for text elements,
-      // as their size is handled by lightning.
+      // Skip zero (causes layout issues) and text elements (Lightning sizes them).
       if (width !== 0 && !isText) {
         dirty = el.setNodeProp('w', width) || dirty;
         resize = true;

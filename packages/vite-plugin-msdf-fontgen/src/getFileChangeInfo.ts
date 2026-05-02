@@ -19,6 +19,7 @@ export async function getFileChangeInfo(
     };
   } catch (err) {
     console.error('Error reading file:', err);
+
     return { needsUpdate: true, checksum: null };
   }
 }

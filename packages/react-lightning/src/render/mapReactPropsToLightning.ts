@@ -44,6 +44,7 @@ export function mapReactPropsToLightning(
             // Single-pass: validate and concatenate simultaneously
             let text = '';
             let allValid = true;
+
             for (let i = 0; i < children.length; i++) {
               if (isValidTextChild(children[i])) {
                 text += String(children[i]);
@@ -52,6 +53,7 @@ export function mapReactPropsToLightning(
                 break;
               }
             }
+
             if (allValid) {
               textProps.text = text;
             }
