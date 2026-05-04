@@ -1,5 +1,19 @@
 # @plextv/react-lightning-plugin-reanimated
 
+## 0.4.1
+
+### Patch Changes
+
+- 38f1b60: chore: Update dependencies and migrate from Biome to oxc
+- Updated dependencies [38f1b60]
+- Updated dependencies [38f1b60]
+- Updated dependencies [38f1b60]
+- Updated dependencies [38f1b60]
+  - @plextv/react-lightning@0.4.1
+  - @plextv/react-lightning-plugin-css-transform@0.4.1
+  - @plextv/react-lightning-plugin-flexbox@0.4.1
+  - @plextv/react-native-lightning@0.4.1
+
 ## 0.4.0
 
 ### Patch Changes

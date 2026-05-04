@@ -1,5 +1,14 @@
 # @plextv/vite-plugin-react-native-lightning
 
+## 0.4.2
+
+### Patch Changes
+
+- 38f1b60: chore: Update dependencies and migrate from Biome to oxc
+- Updated dependencies [38f1b60]
+- Updated dependencies [38f1b60]
+  - @plextv/react-native-lightning@0.4.1
+
 ## 0.4.1
 
 ### Patch Changes

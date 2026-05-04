@@ -1,5 +1,15 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.4.1
+
+### Patch Changes
+
+- 38f1b60: chore: Update dependencies and migrate from Biome to oxc
+- 38f1b60: refactor: Rework YogaManager, LightningManager, and the worker pipeline for faster prop translation and a non-flex fast path.
+- Updated dependencies [38f1b60]
+- Updated dependencies [38f1b60]
+  - @plextv/react-lightning@0.4.1
+
 ## 0.4.0
 
 ### Patch Changes

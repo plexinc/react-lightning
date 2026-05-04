@@ -1,5 +1,16 @@
 # @plextv/react-lightning-components
 
+## 0.4.1
+
+### Patch Changes
+
+- 38f1b60: feat: Add VirtualList component for fast virtualized lists with view recycling
+- Updated dependencies [38f1b60]
+- Updated dependencies [38f1b60]
+- Updated dependencies [38f1b60]
+  - @plextv/react-lightning@0.4.1
+  - @plextv/react-lightning-plugin-flexbox@0.4.1
+
 ## 0.4.0
 
 ### Patch Changes

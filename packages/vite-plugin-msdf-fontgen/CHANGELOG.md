@@ -1,5 +1,11 @@
 # @plextv/vite-plugin-msdf-fontgen
 
+## 1.3.6
+
+### Patch Changes
+
+- 38f1b60: chore: Update dependencies and migrate from Biome to oxc
+
 ## 1.3.5
 
 ### Patch Changes
