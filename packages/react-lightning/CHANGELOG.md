@@ -1,5 +1,12 @@
 # @plextv/react-lightning
 
+## 0.4.1
+
+### Patch Changes
+
+- 38f1b60: chore: Update dependencies and migrate from Biome to oxc
+- 38f1b60: feat: Add NodeResizeObserver, FocusManager.setFocusedChild, the `resized` element event, and a CanvasProps type export.
+
 ## 0.4.0
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@plextv/react-native-lightning-example",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "description": "Sample implementation of @plextv/react-native-lightning in a React Native app",
   "bugs": {

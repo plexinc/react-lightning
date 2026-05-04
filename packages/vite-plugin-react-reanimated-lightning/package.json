@@ -1,6 +1,6 @@
 {
   "name": "@plextv/vite-plugin-react-reanimated-lightning",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Vite plugin for @plextv/react-lightning-plugin-reanimated",
   "keywords": [
     "lightning-js",
