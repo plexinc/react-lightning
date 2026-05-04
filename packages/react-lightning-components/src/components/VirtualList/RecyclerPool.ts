@@ -1,6 +1,4 @@
 export class RecyclerPool {
-  /** Debug-only label used in pool logging to disambiguate instances. */
-  private _label: string;
   /** dataIndex -> slotKey */
   private _active = new Map<number, string>();
   /** itemType -> available slotKeys */
@@ -31,10 +29,6 @@ export class RecyclerPool {
   private _slotToLastIndex = new Map<string, number>();
   private _visibleSet = new Set<number>();
   private _nextId = 0;
-
-  constructor(label = 'pool') {
-    this._label = label;
-  }
 
   get activeCount(): number {
     return this._active.size;
@@ -103,12 +97,6 @@ export class RecyclerPool {
 
     for (const [index, key] of this._active) {
       this._lastSlotForIndex.set(index, key);
-    }
-
-    if (import.meta.env.DEV && (released > 0 || preferredReused > 0 || pooled > 0 || created > 0)) {
-      console.log(
-        `[Pool ${this._label}] released:${released} preferred:${preferredReused} pool:${pooled} new:${created} active:${this._active.size} pooled:${this.pooledCount} types:${this._available.size}`,
-      );
     }
 
     return this._active;

@@ -223,7 +223,7 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     separatorSize,
   ]);
 
-  const [pool] = useState<RecyclerPool>(() => new RecyclerPool(horizontal ? 'h' : 'v'));
+  const [pool] = useState<RecyclerPool>(() => new RecyclerPool());
   const getKey = (index: number): string =>
     keyExtractor && data[index] !== undefined ? keyExtractor(data[index], index) : String(index);
   const getData = (i: number) => data[i];
