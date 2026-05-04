@@ -1,22 +1,16 @@
-import type {
-  Animatable,
-  LightningElementStyle,
-} from '@plextv/react-lightning';
+import type { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/commonTypes';
+
+import type { Animatable, LightningElementStyle } from '@plextv/react-lightning';
 import { convertCSSTransformToLightning } from '@plextv/react-lightning-plugin-css-transform';
 import type { Transform } from '@plextv/react-lightning-plugin-flexbox';
-import type { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/commonTypes';
+
 import { AnimatedValue } from '../animation/AnimatedValue';
 import type { AnimatedObject } from '../types/AnimatedObject';
 import { getTransitionProperty } from '../utils/getTransitionProperty';
 
-type AnimatableTransform = Record<
-  keyof Transform,
-  number | string | AnimatedValue
->;
+type AnimatableTransform = Record<keyof Transform, number | string | AnimatedValue>;
 
-type LightningTransition = NonNullable<
-  Animatable<LightningElementStyle>['transition']
->;
+type LightningTransition = NonNullable<Animatable<LightningElementStyle>['transition']>;
 
 type DefaultStyleWithLightningTransform = Omit<DefaultStyle, 'transform'> & {
   transform?: Transform;
@@ -50,7 +44,7 @@ function applyTransform(
       case 'translateY':
         // Using our lightning style transform instead of RN
         style.transform = {
-          ...(style.transform ?? {}),
+          ...style.transform,
           ...convertCSSTransformToLightning(key, actualValue),
         };
 
@@ -95,18 +89,16 @@ function applyStyle<T extends DefaultStyle, K extends keyof T>(
   if (value instanceof AnimatedValue) {
     const transitionProp = getTransitionProperty(prop as keyof DefaultStyle);
 
-    // biome-ignore lint/suspicious/noExplicitAny: Just passing through
+    // oxlint-disable-next-line typescript/no-explicit-any -- Just passing through
     (style as any)[transitionProp] = value.value as T[K];
     transition[transitionProp] = value.lngAnimation;
   } else {
-    // biome-ignore lint/suspicious/noExplicitAny: Just passing through
+    // oxlint-disable-next-line typescript/no-explicit-any -- Just passing through
     (style as any)[prop] = value;
   }
 }
 
-export function toLightningAnimationAndStyles(
-  computedStyle: AnimatedObject<DefaultStyle>,
-): {
+export function toLightningAnimationAndStyles(computedStyle: AnimatedObject<DefaultStyle>): {
   transition: LightningTransition;
   style: DefaultStyleWithLightningTransform;
 } {

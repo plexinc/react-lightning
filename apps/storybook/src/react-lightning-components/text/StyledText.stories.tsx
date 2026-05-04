@@ -1,5 +1,7 @@
+import React, { useState } from 'react';
+
 import { StyledText } from '@plextv/react-lightning-components';
-import React from 'react';
+
 import Button from '../../components/Button';
 
 const LANGUAGE = {
@@ -89,12 +91,7 @@ export const TextWithTags = () => {
 
   return (
     <lng-view style={positionStyles}>
-      <StyledText
-        text={text}
-        values={{}}
-        tagStyles={tagStyles}
-        textStyle={baseStyle}
-      />
+      <StyledText text={text} values={{}} tagStyles={tagStyles} textStyle={baseStyle} />
     </lng-view>
   );
 };
@@ -113,8 +110,7 @@ export const MultiplePlaceholders = () => {
     question: { fontStyle: 'italic' as const, color: 0xccdddd99 },
   };
 
-  const text =
-    'Hello {friendName}, your answer is {answer} for the question: {question}.';
+  const text = 'Hello {friendName}, your answer is {answer} for the question: {question}.';
 
   return (
     <StyledText
@@ -133,7 +129,7 @@ export const DynamicStyles = () => {
     answer: 'C',
   };
 
-  const [isCorrect, setIsCorrect] = React.useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
 
   const dynamicStyles = {
     answer: {
@@ -177,14 +173,13 @@ export const MultilingualSupport = () => {
     },
   };
   const languages = [LANGUAGE.EN, LANGUAGE.DE, LANGUAGE.IT];
-  const [currentLanguage, setCurrentLanguage] = React.useState(LANGUAGE.EN);
+  const [currentLanguage, setCurrentLanguage] = useState(LANGUAGE.EN);
 
   const firstLineText = PhoneFriendFirstLine[currentLanguage] as string;
   const secondLineText = PhoneFriendSecondLine[currentLanguage] as string;
 
   const changeLanguage = () => {
-    const nextIndex =
-      (languages.indexOf(currentLanguage) + 1) % languages.length;
+    const nextIndex = (languages.indexOf(currentLanguage) + 1) % languages.length;
     const newLanguage = languages[nextIndex] as string;
     setCurrentLanguage(newLanguage);
   };

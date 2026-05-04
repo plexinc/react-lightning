@@ -1,6 +1,8 @@
-import { Canvas, type RenderOptions } from '@plextv/react-lightning';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+
+import { Canvas, type RenderOptions } from '@plextv/react-lightning';
+
 import { App } from './App';
 import { keyMap } from './keyMap';
 import { BrowsePage } from './pages/BrowsePage';

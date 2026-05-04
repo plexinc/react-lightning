@@ -1,5 +1,7 @@
-import { Column, Row } from '@plextv/react-lightning-components';
 import { type FC, useCallback, useState } from 'react';
+
+import { Column, Row } from '@plextv/react-lightning-components';
+
 import Button from '../components/Button';
 
 const img =
@@ -46,11 +48,7 @@ export const TransformsPage: FC = () => {
       <lng-image
         src={img}
         style={{
-          transform: [
-            { scaleX: scale },
-            { scaleY: scale },
-            { rotate: `${rotation}deg` },
-          ],
+          transform: [{ scaleX: scale }, { scaleY: scale }, { rotate: `${rotation}deg` }],
         }}
         transition={{
           scaleX: { duration: 350, easing: 'ease-out' },

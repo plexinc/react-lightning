@@ -1,5 +1,7 @@
-import { Column } from '@plextv/react-lightning-components';
 import type { Meta } from '@storybook/react-vite';
+
+import { Column } from '@plextv/react-lightning-components';
+
 import {
   ColorPalette,
   DefaultStoryHeight,
@@ -49,9 +51,7 @@ export default {
   },
 } as Meta<typeof Column>;
 
-export const FlexStart = ({
-  justifyContent = FlexTypes.FLEX_START,
-}: ColumnLayoutProps) => {
+export const FlexStart = ({ justifyContent = FlexTypes.FLEX_START }: ColumnLayoutProps) => {
   return (
     <Column
       focusable
@@ -74,9 +74,7 @@ FlexStart.args = {
   justifyContent: FlexTypes.FLEX_START,
 };
 
-export const FlexEnd = ({
-  justifyContent = FlexTypes.FLEX_END,
-}: ColumnLayoutProps) => {
+export const FlexEnd = ({ justifyContent = FlexTypes.FLEX_END }: ColumnLayoutProps) => {
   return (
     <Column
       focusable
@@ -99,9 +97,7 @@ FlexEnd.args = {
   justifyContent: FlexTypes.FLEX_END,
 };
 
-export const SpaceEvenly = ({
-  justifyContent = FlexTypes.SPACE_EVENLY,
-}: ColumnLayoutProps) => {
+export const SpaceEvenly = ({ justifyContent = FlexTypes.SPACE_EVENLY }: ColumnLayoutProps) => {
   return (
     <Column
       focusable
@@ -124,9 +120,7 @@ SpaceEvenly.args = {
   justifyContent: FlexTypes.SPACE_EVENLY,
 };
 
-export const SpaceBetween = ({
-  justifyContent = FlexTypes.SPACE_BETWEEN,
-}: ColumnLayoutProps) => {
+export const SpaceBetween = ({ justifyContent = FlexTypes.SPACE_BETWEEN }: ColumnLayoutProps) => {
   return (
     <Column
       focusable
@@ -149,9 +143,7 @@ SpaceBetween.args = {
   justifyContent: FlexTypes.SPACE_BETWEEN,
 };
 
-export const SpaceAround = ({
-  justifyContent = FlexTypes.SPACE_AROUND,
-}: ColumnLayoutProps) => {
+export const SpaceAround = ({ justifyContent = FlexTypes.SPACE_AROUND }: ColumnLayoutProps) => {
   return (
     <Column
       focusable

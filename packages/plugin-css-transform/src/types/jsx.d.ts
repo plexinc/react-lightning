@@ -3,6 +3,7 @@ import type {
   LightningTextElementProps,
   LightningViewElementProps,
 } from '@plextv/react-lightning';
+
 import type { AllStyleProps } from './ReactStyle';
 
 declare module 'react' {

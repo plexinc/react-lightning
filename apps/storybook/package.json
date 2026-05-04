@@ -1,56 +1,62 @@
 {
   "name": "@plextv/react-lightning-storybook",
-  "description": "Documentation for react-lightning",
   "version": "0.4.0",
-  "author": "Plex Inc.",
+  "private": true,
+  "description": "Documentation for react-lightning",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
-  "packageManager": "pnpm@10.12.3",
   "type": "module",
-  "private": true,
   "scripts": {
     "build": "storybook build --output-dir ./dist",
     "clean": "del ./dist",
     "dev": "storybook dev -p 6006 --no-open"
   },
   "dependencies": {
-    "@lightningjs/renderer": "3.0.0-beta20",
+    "@lightningjs/renderer": "catalog:apps",
     "@plextv/react-lightning": "workspace:*",
     "@plextv/react-lightning-components": "workspace:*",
+    "@plextv/react-lightning-plugin-css-transform": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox-lite": "workspace:*",
     "@plextv/react-lightning-plugin-reanimated": "workspace:*",
     "@plextv/react-native-lightning": "workspace:*",
     "@plextv/react-native-lightning-components": "workspace:*",
-    "@storybook/addon-docs": "9.1.17",
-    "@storybook/addon-links": "9.1.17",
-    "@storybook/builder-vite": "9.1.17",
-    "@storybook/react-vite": "9.1.17",
-    "react": "19.2.3",
-    "react-native": "0.82.1",
-    "react-native-reanimated": "4.2.1",
-    "storybook": "9.1.17"
+    "@storybook/addon-docs": "10.3.5",
+    "@storybook/addon-links": "10.3.5",
+    "@storybook/react-vite": "10.3.5",
+    "react": "catalog:apps",
+    "react-dom": "catalog:apps",
+    "react-native": "catalog:apps",
+    "react-native-reanimated": "catalog:apps",
+    "react-native-worklets": "0.8.1",
+    "storybook": "10.3.5"
   },
   "devDependencies": {
     "@plextv/vite-plugin-msdf-fontgen": "workspace:*",
     "@plextv/vite-plugin-react-native-lightning": "workspace:*",
     "@plextv/vite-plugin-react-reanimated-lightning": "workspace:*",
     "@repo/configs": "workspace:*",
-    "@types/react": "19.2.8"
+    "@rolldown/plugin-babel": "catalog:",
+    "@types/react": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "babel-plugin-react-compiler": "catalog:"
   },
   "volta": {
     "extends": "../../package.json"
   },
+  "packageManager": "pnpm@10.12.3",
   "depcheck": {
     "ignoreMatches": [
       "@storybook/**",
-      "**/storybook"
+      "**/storybook",
+      "babel-plugin-react-compiler"
     ]
   }
 }

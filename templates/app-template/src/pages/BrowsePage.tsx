@@ -1,5 +1,6 @@
-import { FocusGroup, useFocus } from '@plextv/react-lightning';
 import { useMemo } from 'react';
+
+import { FocusGroup, useFocus } from '@plextv/react-lightning';
 
 const WIDTH = 200;
 const HEIGHT = 300;
@@ -11,10 +12,7 @@ type ImageProps = {
 };
 
 const Image = ({ x, y, autoFocus }: ImageProps) => {
-  const src = useMemo(
-    () => `https://picsum.photos/${WIDTH}/${HEIGHT}?random=${Math.random()}`,
-    [],
-  );
+  const src = useMemo(() => `https://picsum.photos/${WIDTH}/${HEIGHT}?random=${Math.random()}`, []);
   const { focused, ref } = useFocus({ autoFocus });
 
   return (

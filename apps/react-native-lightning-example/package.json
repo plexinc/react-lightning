@@ -1,19 +1,18 @@
 {
   "name": "@plextv/react-native-lightning-example",
-  "description": "Sample implementation of @plextv/react-native-lightning in a React Native app",
   "version": "0.4.0",
-  "author": "Plex Inc.",
+  "private": true,
+  "description": "Sample implementation of @plextv/react-native-lightning in a React Native app",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
-  "packageManager": "pnpm@10.12.3",
   "type": "module",
-  "private": true,
   "scripts": {
     "build": "vite build",
     "clean": "del ./dist",
@@ -23,38 +22,44 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@lightningjs/renderer": "3.0.0-beta20",
+    "@lightningjs/renderer": "catalog:apps",
     "@plextv/react-lightning": "workspace:*",
     "@plextv/react-lightning-components": "workspace:*",
+    "@plextv/react-lightning-plugin-css-transform": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
     "@plextv/react-lightning-plugin-reanimated": "workspace:*",
     "@plextv/react-native-lightning": "workspace:*",
     "@plextv/react-native-lightning-components": "workspace:*",
-    "@react-navigation/native": "7.1.28",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-native": "0.82.1",
-    "react-native-reanimated": "4.2.1"
+    "@react-navigation/native": "7.2.2",
+    "react": "catalog:apps",
+    "react-dom": "catalog:apps",
+    "react-native": "catalog:apps",
+    "react-native-reanimated": "catalog:apps",
+    "react-native-worklets": "0.8.1"
   },
   "devDependencies": {
     "@plextv/vite-plugin-msdf-fontgen": "workspace:*",
     "@plextv/vite-plugin-react-native-lightning": "workspace:*",
     "@plextv/vite-plugin-react-reanimated-lightning": "workspace:*",
     "@repo/configs": "workspace:*",
-    "@shopify/flash-list": "2.2.0",
-    "@types/react": "19.2.8",
-    "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-legacy": "7.2.1",
-    "typescript": "5.9.3"
+    "@rolldown/plugin-babel": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-legacy": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "babel-plugin-react-compiler": "catalog:",
+    "typescript": "6.0.2"
   },
   "volta": {
     "extends": "../../package.json"
   },
+  "packageManager": "pnpm@10.12.3",
   "//": "unsure why react-dom needed to be ignored...",
   "depcheck": {
     "ignoreMatches": [
       "typescript",
-      "react-dom"
+      "react-dom",
+      "babel-plugin-react-compiler"
     ]
   }
 }

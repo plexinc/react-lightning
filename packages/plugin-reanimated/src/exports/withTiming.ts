@@ -1,4 +1,5 @@
 import type Animated from 'react-native-reanimated-original';
+
 import { AnimatedValue } from '../animation/AnimatedValue';
 import { AnimationType } from '../types/AnimationType';
 

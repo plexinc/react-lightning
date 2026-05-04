@@ -1,23 +1,18 @@
 import type { ColorValue } from 'react-native';
+
 import { htmlColorCodes } from './htmlColorCodes';
 
 const hexRgbRegex = /^#?([a-f0-9]{6})$/i;
 const hexShortRgbRegex = /^#?([a-f0-9]{3})$/i;
-const rgbRegex =
-  /^rgba?\(([0-9.]+)[, ]+([0-9.]+)[, ]+([0-9.]+)[, ]*([0-9.]+)?\)$/i;
+const rgbRegex = /^rgba?\(([0-9.]+)[, ]+([0-9.]+)[, ]+([0-9.]+)[, ]*([0-9.]+)?\)$/i;
 
-function withAlphaOverride(
-  color: number,
-  overrideAlpha?: number | string,
-): number {
+function withAlphaOverride(color: number, overrideAlpha?: number | string): number {
   if (overrideAlpha == null) {
     return color;
   }
 
   const alphaInt =
-    typeof overrideAlpha === 'string'
-      ? Number.parseInt(overrideAlpha, 16)
-      : overrideAlpha;
+    typeof overrideAlpha === 'string' ? Number.parseInt(overrideAlpha, 16) : overrideAlpha;
 
   // Create a bitmask for the alpha value
   const alphaMask = 0xffffff00 | alphaInt;
@@ -48,13 +43,7 @@ export function htmlColorToLightningColor(
   const rgbResult = rgbRegex.exec(colorLower);
 
   if (rgbResult) {
-    const parts = rgbResult.slice() as [
-      string,
-      string,
-      string,
-      string,
-      string?,
-    ];
+    const parts = rgbResult.slice() as [string, string, string, string, string?];
 
     const rgbColor =
       ((Number.parseInt(parts[1], 10) << 24) >>> 0) +
@@ -68,10 +57,7 @@ export function htmlColorToLightningColor(
   const hexRgbResult = hexRgbRegex.exec(colorLower);
 
   if (hexRgbResult?.[1]) {
-    return withAlphaOverride(
-      Number.parseInt(`${hexRgbResult[1]}ff`, 16),
-      overrideAlpha,
-    );
+    return withAlphaOverride(Number.parseInt(`${hexRgbResult[1]}ff`, 16), overrideAlpha);
   }
 
   const hexShortRgbResult = hexShortRgbRegex.exec(colorLower);
@@ -83,7 +69,5 @@ export function htmlColorToLightningColor(
     return withAlphaOverride(Number.parseInt(rgbText, 16), overrideAlpha);
   }
 
-  throw new Error(
-    `Invalid hex value specified for conversion: ${color.toString()}`,
-  );
+  throw new Error(`Invalid hex value specified for conversion: ${color.toString()}`);
 }

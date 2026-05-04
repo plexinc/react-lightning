@@ -1,4 +1,5 @@
 import { EventEmitter, type IEventEmitter } from 'tseep';
+
 import type { Focusable } from '../types';
 import type { EventNotifier } from '../types/EventNotifier';
 import type { Traps } from './Traps';
@@ -20,6 +21,8 @@ export type FocusNode<T> = Omit<RootNode<T>, 'element'> & {
   destinations: (T | null)[] | null;
   traps: Traps;
   hasFocusableChildren: boolean;
+  /** When true, focus navigation can target non-visible children (e.g. clipped items in a virtualized list). */
+  allowOffscreen: boolean;
 };
 
 type FocusLayer<T> = {
@@ -40,9 +43,7 @@ function isRootNode<T>(node: FocusNode<T> | RootNode<T>): node is RootNode<T> {
   return !('parent' in node) && node.element === null;
 }
 
-function hasExternalRedirect<T extends { parent?: T | null }>(
-  node: FocusNode<T>,
-): boolean {
+function hasExternalRedirect<T extends { parent?: T | null }>(node: FocusNode<T>): boolean {
   if (!node.focusRedirect || !node.destinations) {
     return false;
   }
@@ -67,11 +68,9 @@ export class FocusManager<
     parent?: T | null;
     isFocusGroup?: boolean;
   },
-> implements EventNotifier<FocusEvents<T>>
-{
+> implements EventNotifier<FocusEvents<T>> {
   private _disposers: Map<T, (() => void)[]> = new Map();
-  private _childFocusEventHandlers: Map<T, ((child: T) => void) | undefined> =
-    new Map();
+  private _childFocusEventHandlers: Map<T, ((child: T) => void) | undefined> = new Map();
   private _focusStack: FocusLayer<T>[] = [];
   private _eventEmitter = new EventEmitter<FocusEvents<T>>();
 
@@ -102,18 +101,15 @@ export class FocusManager<
     ];
   }
 
-  public on = (
-    ...args: Parameters<IEventEmitter<FocusEvents<T>>['on']>
-  ): (() => void) => {
+  public on = (...args: Parameters<IEventEmitter<FocusEvents<T>>['on']>): (() => void) => {
     this._eventEmitter.on(...args);
 
     return () => this._eventEmitter.off(...args);
   };
-  public off: EventEmitter<FocusEvents<T>>['off'] = this._eventEmitter.off.bind(
+  public off: EventEmitter<FocusEvents<T>>['off'] = this._eventEmitter.off.bind(this._eventEmitter);
+  public emit: EventEmitter<FocusEvents<T>>['emit'] = this._eventEmitter.emit.bind(
     this._eventEmitter,
   );
-  public emit: EventEmitter<FocusEvents<T>>['emit'] =
-    this._eventEmitter.emit.bind(this._eventEmitter);
 
   public getFocusNode(element: T): FocusNode<T> | null {
     const node = this.activeLayer.elements.get(element);
@@ -133,11 +129,13 @@ export class FocusManager<
       focusRedirect?: boolean;
       destinations?: (T | null)[] | null;
       traps?: Traps;
+      allowOffscreen?: boolean;
     },
   ): void {
     const autoFocus = options?.autoFocus ?? false;
     const focusRedirect = options?.focusRedirect ?? false;
     const destinations = options?.destinations ?? null;
+    const allowOffscreen = options?.allowOffscreen ?? false;
     const traps = options?.traps ?? {
       up: false,
       right: false,
@@ -156,18 +154,12 @@ export class FocusManager<
         // their hooks are run before getting attached to the tree. This causes
         // the component to get added to the old layer before the new layer's
         // created.
-        const parentNodeInPreviousLayer:
-          | RootNode<T>
-          | FocusNode<T>
-          | undefined = this._focusStack.at(-2)?.elements?.get?.(parent);
+        const parentNodeInPreviousLayer: RootNode<T> | FocusNode<T> | undefined = this._focusStack
+          .at(-2)
+          ?.elements?.get?.(parent);
 
-        if (
-          parentNodeInPreviousLayer &&
-          !isRootNode(parentNodeInPreviousLayer)
-        ) {
-          parentNode = this._addMissingParentsToCurrentLayer(
-            parentNodeInPreviousLayer,
-          );
+        if (parentNodeInPreviousLayer && !isRootNode(parentNodeInPreviousLayer)) {
+          parentNode = this._addMissingParentsToCurrentLayer(parentNodeInPreviousLayer);
         }
 
         if (!parentNode) {
@@ -191,16 +183,14 @@ export class FocusManager<
       childNode.focusRedirect = focusRedirect;
       childNode.destinations = destinations;
       childNode.traps = traps;
+      childNode.allowOffscreen = allowOffscreen;
 
       // If the child node already exists, we need to remove it from its current parent
       if (childNode.parent !== parentNode) {
         const index = childNode.parent.children.indexOf(childNode);
 
         if (childNode.parent.focusedElement === childNode) {
-          childNode.parent.focusedElement = this._findNextBestFocus(
-            childNode.parent,
-            childNode,
-          );
+          childNode.parent.focusedElement = this._findNextBestFocus(childNode.parent, childNode);
         }
 
         if (index !== -1) {
@@ -225,6 +215,7 @@ export class FocusManager<
         focusRedirect,
         destinations,
         traps,
+        allowOffscreen,
       );
     }
 
@@ -237,8 +228,7 @@ export class FocusManager<
     if (
       child.focusable &&
       !hasExternalRedirect(childNode) &&
-      (!parentNode.focusedElement ||
-        (!parentNode.focusedElement.autoFocus && autoFocus))
+      (!parentNode.focusedElement || (!parentNode.focusedElement.autoFocus && autoFocus))
     ) {
       parentNode.focusedElement = childNode;
     }
@@ -246,13 +236,10 @@ export class FocusManager<
     this._recalculateFocusPath();
   }
 
-  private _forAllNodes(
-    element: T,
-    callback: (node: FocusNode<T>) => void,
-  ): void {
+  private _forAllNodes(element: T, callback: (node: FocusNode<T>) => void): void {
     for (let i = this._focusStack.length - 1; i >= 0; i--) {
       const layer = this._focusStack[i];
-      // biome-ignore lint/style/noNonNullAssertion: Already asserted layer exists
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- Already asserted layer exists
       const node = layer!.elements.get(element);
 
       if (node) {
@@ -280,12 +267,9 @@ export class FocusManager<
   }
 
   public setFocusRedirect(element: T, focusRedirect?: boolean): void {
-    // Only apply redirect to the active layer, as redirects are likely to be layer-specific
-    const node = this.activeLayer.elements.get(element);
-
-    if (node) {
+    this._forAllNodes(element, (node) => {
       node.focusRedirect = !!focusRedirect;
-    }
+    });
   }
 
   public setDestinations(element: T, destinations?: (T | null)[]): void {
@@ -294,10 +278,13 @@ export class FocusManager<
     });
   }
 
-  public setOnChildFocused(
-    element: T,
-    onChildFocused?: (child: T) => void,
-  ): void {
+  public setAllowOffscreen(element: T, allowOffscreen?: boolean): void {
+    this._forAllNodes(element, (node) => {
+      node.allowOffscreen = !!allowOffscreen;
+    });
+  }
+
+  public setOnChildFocused(element: T, onChildFocused?: (child: T) => void): void {
     if (onChildFocused) {
       this._childFocusEventHandlers.set(element, onChildFocused);
     } else {
@@ -305,12 +292,50 @@ export class FocusManager<
     }
   }
 
+  /**
+   * Mark `element` as the preferred focus target of its immediate parent
+   * without walking up the tree or stealing focus from elsewhere.
+   *
+   * Use case: a virtualised-list cell whose `shouldFocus` flips true on
+   * slot recycle while the user is focused on a different subtree. The
+   * parent's `focusedElement` may still point at a stale sibling slot
+   * from the row this slot served previously, so the next time focus
+   * actually traverses into this group it would land on the wrong cell.
+   * Setting the parent's `focusedElement` here updates the tree so that
+   * future traversal resolves correctly. `_recalculateFocusPath` is
+   * still invoked: if the parent is already in the active focus path
+   * (the user is on this group), focus moves from the old child to the
+   * new one as expected; otherwise the path is unchanged and the user's
+   * current focus is left alone.
+   */
+  public setFocusedChild(element: T): void {
+    const node = this.activeLayer.elements.get(element);
+
+    if (!node) {
+      return;
+    }
+
+    if (!element.focusable || hasExternalRedirect(node)) {
+      return;
+    }
+
+    if (node.parent.focusedElement === node) {
+      return;
+    }
+
+    node.parent.focusedElement = node;
+    this._recalculateFocusPath();
+  }
+
   public pushLayer(): void {
     // Store the current layer before creating new one
     const previousLayer = this.activeLayer;
 
-    // Blur all currently focused elements (they belong to the previous layer)
-    for (const element of previousLayer.focusPath) {
+    // Blur in reverse order (leaf-first) so children clean up before parents
+    for (let i = previousLayer.focusPath.length - 1; i >= 0; i--) {
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- bounds-checked loop
+      const element = previousLayer.focusPath[i]!;
+
       if (element.focused) {
         element.blur();
         this._eventEmitter.emit('blurred', element);
@@ -345,15 +370,18 @@ export class FocusManager<
     // Get current layer info before popping
     const currentLayer = this.activeLayer;
 
-    // Blur all elements in current layer
-    for (const element of currentLayer.focusPath) {
+    // Blur in reverse order (leaf-first) so children clean up before parents
+    for (let i = currentLayer.focusPath.length - 1; i >= 0; i--) {
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- bounds-checked loop
+      const element = currentLayer.focusPath[i]!;
+
       if (element.focused) {
         element.blur();
         this._eventEmitter.emit('blurred', element);
       }
     }
 
-    // biome-ignore lint/style/noNonNullAssertion: Already checked above
+    // oxlint-disable-next-line typescript/no-non-null-assertion -- Already checked above
     this._focusStack.pop()!;
 
     this._eventEmitter.emit('layerRemoved');
@@ -425,9 +453,7 @@ export class FocusManager<
       }
     }
 
-    return path
-      .map((id) => (id === node.element.id.toString() ? `[${id}]` : id))
-      .join(' > ');
+    return path.map((id) => (id === node.element.id.toString() ? `[${id}]` : id)).join(' > ');
   }
 
   private _addMissingParentsToCurrentLayer(nodeFromAnotherLayer: FocusNode<T>) {
@@ -444,7 +470,7 @@ export class FocusManager<
     let prevNode: FocusNode<T> | null = null;
 
     while (stack.length > 0) {
-      // biome-ignore lint/style/noNonNullAssertion: Already asserted stack is not empty
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- Already asserted stack is not empty
       const nodeToCreate = stack.pop()!;
       const parentNode = prevNode === null ? this.activeLayer.root : prevNode;
       const newNode = this._createFocusNode(nodeToCreate.element, parentNode);
@@ -464,6 +490,7 @@ export class FocusManager<
     focusRedirect = false,
     destinations: (T | null)[] | null = null,
     traps: Traps = { up: false, right: false, down: false, left: false },
+    allowOffscreen = false,
   ) {
     const node: FocusNode<T> = {
       element,
@@ -475,6 +502,7 @@ export class FocusManager<
       destinations,
       traps,
       hasFocusableChildren: false,
+      allowOffscreen,
     };
 
     this.activeLayer.elements.set(element, node);
@@ -491,21 +519,35 @@ export class FocusManager<
 
     this._disposers.set(element, [
       element.on('focusableChanged', (_, isFocusable) => {
-        if (!node.parent.focusedElement) {
-          node.parent.focusedElement = this._findNextBestFocus(node.parent);
-        } else if (!isFocusable && node.parent.focusedElement === node) {
-          node.parent.focusedElement = this._findNextBestFocus(
-            node.parent,
-            node,
+        // Look up the current node to avoid stale closure references
+        // after re-parenting
+        const currentNode = this.activeLayer.elements.get(element);
+
+        if (!currentNode) {
+          return;
+        }
+
+        if (!currentNode.parent.focusedElement) {
+          currentNode.parent.focusedElement = this._findNextBestFocus(currentNode.parent);
+        } else if (!isFocusable && currentNode.parent.focusedElement === currentNode) {
+          currentNode.parent.focusedElement = this._findNextBestFocus(
+            currentNode.parent,
+            currentNode,
           );
         }
-        this._checkFocusableChildren(node.parent);
+
+        this._checkFocusableChildren(currentNode.parent);
         this._recalculateFocusPath();
       }),
       element.on('focusChanged', (_, isFocused) => {
         if (isFocused && !element.focused) {
+          const currentNode = this.activeLayer.elements.get(element);
+
           this.focus(element);
-          this._tryEmitChildFocusedEvent(node);
+
+          if (currentNode) {
+            this._tryEmitChildFocusedEvent(currentNode);
+          }
         }
       }),
     ]);
@@ -515,6 +557,7 @@ export class FocusManager<
     const { element } = node;
 
     const disposers = this._disposers.get(element);
+
     if (disposers) {
       for (const dispose of disposers) {
         dispose();
@@ -524,42 +567,49 @@ export class FocusManager<
     }
   }
 
-  private _focusNode(childNode: FocusNode<T>) {
+  private _focusNode(childNode: FocusNode<T>, visitedRedirects?: Set<T>) {
     let currParent = childNode.parent;
     let currChild: FocusNode<T> | RootNode<T> = childNode;
     const elements = this.activeLayer.elements;
 
     if (currChild.children.length && !currChild.focusedElement) {
-      this._findNextBestFocus(currChild);
+      currChild.focusedElement = this._findNextBestFocus(currChild);
     }
 
     while (currChild && !isRootNode(currChild) && currParent) {
       if (currChild.focusRedirect && currChild.destinations) {
         // TODO: Probably something smarter here to decide which destination to focus
-        const destination = currChild.destinations?.find(
-          (child) => child?.focusable,
-        );
+        const destination = currChild.destinations?.find((child) => child?.focusable);
 
         if (destination) {
           const focusNode = elements.get(destination);
 
           if (!focusNode) {
-            console.warn(
-              'FocusManager: No focus node found for destination',
-              destination,
-            );
+            console.warn('FocusManager: No focus node found for destination', destination);
+
             return;
           }
 
-          this._focusNode(focusNode);
+          // Detect redirect cycles
+          const visited = visitedRedirects ?? new Set<T>();
+
+          if (visited.has(destination)) {
+            console.warn('FocusManager: Focus redirect cycle detected, aborting');
+
+            return;
+          }
+
+          visited.add(destination);
+
+          this._focusNode(focusNode, visited);
+
           return;
         }
       }
 
       currParent.focusedElement = currChild as FocusNode<T>;
       currChild = currParent;
-      currParent =
-        'parent' in currChild ? currChild.parent : this.activeLayer.root;
+      currParent = 'parent' in currChild ? currChild.parent : this.activeLayer.root;
     }
 
     this._recalculateFocusPath();
@@ -571,9 +621,7 @@ export class FocusManager<
       return;
     }
 
-    const onChildFocused = this._childFocusEventHandlers.get(
-      node.parent.element,
-    );
+    const onChildFocused = this._childFocusEventHandlers.get(node.parent.element);
 
     if (onChildFocused) {
       onChildFocused(node.element);
@@ -615,6 +663,7 @@ export class FocusManager<
 
     if (childrenLength === 0) {
       parentNode.hasFocusableChildren = false;
+
       return;
     }
 
@@ -622,7 +671,7 @@ export class FocusManager<
     let hasFocusableChildren = false;
 
     for (let i = 0; i < childrenLength; i++) {
-      // biome-ignore lint/style/noNonNullAssertion: Already asserted that child exists
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- Already asserted that child exists
       const child = children[i]!;
 
       if (child.element.focusable) {
@@ -643,27 +692,20 @@ export class FocusManager<
 
     // Check each child for leaf node ancestry and update focusability
     for (let i = 0; i < childrenLength; i++) {
-      // biome-ignore lint/style/noNonNullAssertion: Already asserted that child exists
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- Already asserted that child exists
       const child = children[i]!;
 
       if (this._hasLeafParent(child.element, leafNodes, parentNode.element)) {
         child.element.focusable = false;
 
         if (parentNode.focusedElement === child) {
-          parentNode.focusedElement = this._findNextBestFocus(
-            parentNode,
-            child,
-          );
+          parentNode.focusedElement = this._findNextBestFocus(parentNode, child);
         }
       }
     }
   }
 
-  private _hasLeafParent(
-    element: T,
-    leafNodes: Set<number>,
-    parentNode: T | null,
-  ): boolean {
+  private _hasLeafParent(element: T, leafNodes: Set<number>, parentNode: T | null): boolean {
     let curr: T | null = element.parent as T | null;
 
     while (curr && curr !== parentNode) {
@@ -715,35 +757,55 @@ export class FocusManager<
   }
 
   private _recalculateFocusPath(): void {
-    const newPath: T[] = [];
     const layer = this.activeLayer;
+    const oldPath = layer.focusPath;
+
+    // Quick check: walk the focused chain and compare against old path.
+    // If every element matches and lengths are equal, nothing changed.
     let curr: FocusNode<T> | null = layer.root.focusedElement;
+    let newLength = 0;
     let divergenceIndex = 0;
+    let pathMatches = true;
 
     while (curr) {
-      newPath.push(curr.element);
-
-      if (newPath[divergenceIndex] === layer.focusPath[divergenceIndex]) {
-        divergenceIndex++;
+      if (pathMatches && oldPath[newLength] === curr.element) {
+        divergenceIndex = newLength + 1;
+      } else {
+        pathMatches = false;
       }
-
+      newLength++;
       curr = curr.focusedElement;
     }
 
-    // Only process elements that actually changed
-    let changed = false;
+    // If entire path matches and same length, nothing to do
+    if (pathMatches && newLength === oldPath.length) {
+      return;
+    }
 
-    for (let i = layer.focusPath.length - 1; i >= divergenceIndex; i--) {
-      const removedFocus = layer.focusPath[i];
+    // Build new path only when we know it changed
+    // oxlint-disable-next-line unicorn/no-new-array -- pre-allocated array filled in the loop below
+    const newPath: T[] = new Array(newLength);
+
+    curr = layer.root.focusedElement;
+
+    for (let i = 0; i < newLength; i++) {
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- curr is non-null for newLength iterations
+      newPath[i] = curr!.element;
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- curr is non-null for newLength iterations
+      curr = curr!.focusedElement;
+    }
+
+    // Blur removed elements (leaf-first)
+    for (let i = oldPath.length - 1; i >= divergenceIndex; i--) {
+      const removedFocus = oldPath[i];
 
       if (removedFocus?.focused) {
         removedFocus.blur();
         this._eventEmitter.emit('blurred', removedFocus);
       }
-
-      changed = true;
     }
 
+    // Focus newly added elements (root-first)
     for (let i = divergenceIndex; i < newPath.length; i++) {
       const addedFocus = newPath[i];
 
@@ -751,13 +813,9 @@ export class FocusManager<
         addedFocus.focus();
         this._eventEmitter.emit('focused', addedFocus);
       }
-
-      changed = true;
     }
 
-    if (changed) {
-      layer.focusPath = newPath;
-      this._eventEmitter.emit('focusPathChanged', newPath);
-    }
+    layer.focusPath = newPath;
+    this._eventEmitter.emit('focusPathChanged', newPath);
   }
 }

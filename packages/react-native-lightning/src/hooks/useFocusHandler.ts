@@ -1,8 +1,3 @@
-import {
-  type LightningElement,
-  LightningViewElement,
-} from '@plextv/react-lightning';
-import { useCallback } from 'react';
 import type {
   BlurEvent,
   FocusEvent,
@@ -10,6 +5,9 @@ import type {
   TargetedEvent,
   ViewProps,
 } from 'react-native';
+
+import { type LightningElement, LightningViewElement } from '@plextv/react-lightning';
+
 import { createNativeSyntheticEvent } from '../utils/createNativeSyntheticEvent';
 
 export type FocusHandler<T extends 'focus' | 'blur', TEvent> = (
@@ -24,22 +22,14 @@ function handleEvent<T extends 'focus' | 'blur'>(
   onEvent: ViewProps[`on${Capitalize<T>}`] | undefined,
 ): void {
   if (element instanceof LightningViewElement) {
-    onEvent?.(
-      createNativeSyntheticEvent<TargetedEvent>(
-        { target: element.id },
-        element,
-      ),
-    );
+    onEvent?.(createNativeSyntheticEvent<TargetedEvent>({ target: element.id }, element));
   }
 }
 
 function useHandler<T extends 'focus' | 'blur'>(
   onEvent?: ViewProps[`on${Capitalize<T>}`],
 ): FocusHandler<T, TargetedEvent> | undefined {
-  const handler = useCallback<FocusHandler<T, TargetedEvent>>(
-    (element) => handleEvent(element, onEvent),
-    [onEvent],
-  );
+  const handler: FocusHandler<T, TargetedEvent> = (element) => handleEvent(element, onEvent);
 
   return onEvent ? handler : undefined;
 }

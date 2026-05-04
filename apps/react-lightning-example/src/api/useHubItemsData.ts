@@ -1,4 +1,5 @@
 import useSWR, { type SWRResponse } from 'swr';
+
 import { getHeaders } from './getHeaders';
 import { getToken } from './getToken';
 import type { HubItemsRoot } from './types/HubItems';
@@ -7,8 +8,7 @@ const baseUrl = 'https://vod.provider.plex.tv';
 
 const args = {
   contentDirectoryID: 'movies',
-  excludeElements:
-    'Actor,Collection,Country,Label,Mood,Part,Producer,Similar,Photo,Vast,Topic',
+  excludeElements: 'Actor,Collection,Country,Label,Mood,Part,Producer,Similar,Photo,Vast,Topic',
   excludeFields: 'file,tagline',
   includeDetails: '1',
 };

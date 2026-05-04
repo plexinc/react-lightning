@@ -23,11 +23,9 @@ function select<T>(
     | { [platform in PlatformOSType | 'lightning']: T }
     | ({ [platform in PlatformOSType | 'lightning']?: T } & { default: T }),
 ): T;
-function select<T>(
-  specifics: {
-    [platform in PlatformOSType | 'lightning' | 'default']?: T;
-  },
-): T | undefined {
+function select<T>(specifics: {
+  [platform in PlatformOSType | 'lightning' | 'default']?: T;
+}): T | undefined {
   return specifics.lightning ?? specifics.default;
 }
 

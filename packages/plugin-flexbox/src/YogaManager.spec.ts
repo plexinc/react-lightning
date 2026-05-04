@@ -1,5 +1,7 @@
-import type { LightningElementStyle } from '@plextv/react-lightning';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { LightningElementStyle } from '@plextv/react-lightning';
+
 import type { YogaOptions } from './types/YogaOptions';
 import { SimpleDataView } from './util/SimpleDataView';
 import { YogaManager } from './YogaManager';
@@ -9,10 +11,14 @@ const mockNode = {
   create: vi.fn(),
   free: vi.fn(),
   insertChild: vi.fn(),
+  removeChild: vi.fn(),
   calculateLayout: vi.fn(),
   hasNewLayout: vi.fn(),
   getComputedLayout: vi.fn(),
+  getComputedLeft: vi.fn(),
+  getComputedTop: vi.fn(),
   getComputedWidth: vi.fn(),
+  getComputedHeight: vi.fn(),
   getMaxWidth: vi.fn(),
   getParent: vi.fn(),
   markLayoutSeen: vi.fn(),
@@ -67,7 +73,10 @@ describe('YogaManager', () => {
   beforeEach(() => {
     yogaManager = new YogaManager();
 
-    // Reset mock implementations
+    // Reset mock implementations. The render path uses individual getters
+    // (getComputedLeft/Top/Width/Height) instead of getComputedLayout, so
+    // each must be stubbed independently for `_getUpdatedStyles` to write
+    // a valid update record.
     mockNode.hasNewLayout.mockReturnValue(true);
     mockNode.getComputedLayout.mockReturnValue({
       left: 10,
@@ -75,7 +84,10 @@ describe('YogaManager', () => {
       width: 100,
       height: 50,
     });
+    mockNode.getComputedLeft.mockReturnValue(10);
+    mockNode.getComputedTop.mockReturnValue(20);
     mockNode.getComputedWidth.mockReturnValue(100);
+    mockNode.getComputedHeight.mockReturnValue(50);
     mockNode.getMaxWidth.mockReturnValue({
       value: NaN,
       unit: mockYoga.UNIT_UNDEFINED,
@@ -124,8 +136,7 @@ describe('YogaManager', () => {
         },
         {
           errata: 'absolute-position-without-insets' as const,
-          expected:
-            mockYoga.ERRATA_ABSOLUTE_POSITION_WITHOUT_INSETS_EXCLUDES_PADDING,
+          expected: mockYoga.ERRATA_ABSOLUTE_POSITION_WITHOUT_INSETS_EXCLUDES_PADDING,
         },
         { errata: 'none' as const, expected: mockYoga.ERRATA_NONE },
       ];
@@ -250,17 +261,22 @@ describe('YogaManager', () => {
       }).toThrow('Yoga is not initialized! Did you call `init()`?');
     });
 
-    it('should queue render for existing node', () => {
+    it('should queue render for an independent root', () => {
       return new Promise<void>((resolve) => {
         const elementId = 123;
 
         yogaManager.addNode(elementId);
+        yogaManager.addIndependentRoot(elementId);
 
         yogaManager.on('render', (buffer) => {
           expect(buffer).toBeInstanceOf(ArrayBuffer);
+          // YogaManager passes `undefined` for both available dimensions
+          // so yoga uses each root's own w/h (or shrinks-to-fit). Hard-
+          // coding 1920×1080 here would stretch unset axes and break
+          // measurement-driven roots like VirtualList cells.
           expect(mockNode.calculateLayout).toHaveBeenCalledWith(
-            1920,
-            1080,
+            undefined,
+            undefined,
             mockYoga.DIRECTION_LTR,
           );
           resolve();
@@ -270,18 +286,18 @@ describe('YogaManager', () => {
       });
     });
 
-    it('should handle queueing render for non-existent node', () => {
+    it('should not emit render when there are no independent roots', () => {
       return new Promise<void>((resolve, reject) => {
-        const elementId = 999;
+        const elementId = 123;
 
-        // Should not emit render event
+        yogaManager.addNode(elementId);
+
         yogaManager.on('render', () => {
-          reject('Should not emit render event for non-existent node');
+          reject(new Error('Should not emit render when no independent roots are registered'));
         });
 
         yogaManager.queueRender(elementId);
 
-        // Wait a bit to ensure no event is emitted
         setTimeout(() => {
           resolve();
         }, 10);
@@ -293,6 +309,8 @@ describe('YogaManager', () => {
         const elementId = 123;
 
         yogaManager.addNode(elementId);
+        yogaManager.addIndependentRoot(elementId);
+        yogaManager.queueRender(elementId);
         yogaManager.queueRender(elementId);
 
         // Should only calculate layout once after both calls
@@ -309,6 +327,7 @@ describe('YogaManager', () => {
         const numNodes = 100;
 
         yogaManager.addNode(rootId);
+        yogaManager.addIndependentRoot(rootId);
 
         for (let i = 1; i < numNodes; i++) {
           yogaManager.addNode(i);
@@ -333,6 +352,83 @@ describe('YogaManager', () => {
         });
 
         yogaManager.queueRender(rootId);
+      });
+    });
+
+    it('should iterate every independent root on render', () => {
+      return new Promise<void>((resolve) => {
+        const rootA = 1;
+        const rootB = 2;
+
+        yogaManager.addNode(rootA);
+        yogaManager.addNode(rootB);
+        yogaManager.addIndependentRoot(rootA);
+        yogaManager.addIndependentRoot(rootB);
+
+        yogaManager.on('render', () => {
+          expect(mockNode.calculateLayout).toHaveBeenCalledTimes(2);
+          resolve();
+        });
+
+        yogaManager.queueRender(rootA);
+      });
+    });
+  });
+
+  describe('detach + independent root management', () => {
+    beforeEach(async () => {
+      await yogaManager.init();
+    });
+
+    it('should detach a child without freeing it', () => {
+      const parentId = 1;
+      const childId = 2;
+
+      yogaManager.addNode(parentId);
+      yogaManager.addNode(childId);
+      yogaManager.addChildNode(parentId, childId, 0);
+
+      const parentNode = yogaManager.addNode(parentId);
+
+      // sanity — child is in parent's children
+      expect(parentNode.children).toHaveLength(1);
+
+      yogaManager.detachChildNode(parentId, childId);
+
+      expect(parentNode.children).toHaveLength(0);
+      expect(mockNode.free).not.toHaveBeenCalled();
+    });
+
+    it('should be a no-op to detach an unattached child', () => {
+      const parentId = 1;
+      const childId = 2;
+
+      yogaManager.addNode(parentId);
+      yogaManager.addNode(childId);
+
+      // Not attached — detach should silently do nothing
+      yogaManager.detachChildNode(parentId, childId);
+
+      expect(mockNode.free).not.toHaveBeenCalled();
+    });
+
+    it('should remove an independent root', () => {
+      return new Promise<void>((resolve, reject) => {
+        const elementId = 123;
+
+        yogaManager.addNode(elementId);
+        yogaManager.addIndependentRoot(elementId);
+        yogaManager.removeIndependentRoot(elementId);
+
+        yogaManager.on('render', () => {
+          reject(new Error('Removed independent root should not render'));
+        });
+
+        yogaManager.queueRender(elementId);
+
+        setTimeout(() => {
+          resolve();
+        }, 10);
       });
     });
   });
@@ -360,9 +456,7 @@ describe('YogaManager', () => {
       yogaManager.applyStyle(elementId, style);
 
       // applyReactPropsToYoga should be called with the mocked function
-      const { default: applyReactPropsToYoga } = await import(
-        './util/applyReactPropsToYoga'
-      );
+      const { default: applyReactPropsToYoga } = await import('./util/applyReactPropsToYoga');
       expect(applyReactPropsToYoga).toHaveBeenCalledWith(
         mockYoga,
         mockYogaOptions,
@@ -377,15 +471,11 @@ describe('YogaManager', () => {
     });
 
     it('should handle style application to non-existent node', () => {
-      const consoleWarnSpy = vi
-        .spyOn(console, 'warn')
-        .mockImplementation(() => {});
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       yogaManager.applyStyle(999, {});
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Yoga node with ID 999 not found.',
-      );
+      expect(consoleWarnSpy).toHaveBeenCalledWith('Yoga node with ID 999 not found.');
       consoleWarnSpy.mockRestore();
     });
 
@@ -403,9 +493,7 @@ describe('YogaManager', () => {
       yogaManager.addNode(elementId);
       yogaManager.applyStyle(elementId, style);
 
-      const { applyFlexPropToYoga } = await import(
-        './util/applyReactPropsToYoga'
-      );
+      const { applyFlexPropToYoga } = await import('./util/applyReactPropsToYoga');
       expect(applyFlexPropToYoga).toHaveBeenCalledWith(
         mockYoga,
         mockYogaOptions,
@@ -432,86 +520,8 @@ describe('YogaManager', () => {
       yogaManager.addNode(456);
       yogaManager.applyStyles(styles);
 
-      const { default: applyReactPropsToYoga } = await import(
-        './util/applyReactPropsToYoga'
-      );
+      const { default: applyReactPropsToYoga } = await import('./util/applyReactPropsToYoga');
       expect(applyReactPropsToYoga).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  describe('clamped size calculation', () => {
-    beforeEach(async () => {
-      await yogaManager.init();
-    });
-
-    it('should throw error when not initialized', () => {
-      const uninitializedManager = new YogaManager();
-      expect(() => {
-        uninitializedManager.getClampedSize(123);
-      }).toThrow('Yoga was not initialized! Did you call `init()`?');
-    });
-
-    it('should return null for non-existent node', () => {
-      const result = yogaManager.getClampedSize(999);
-      expect(result).toBeNull();
-    });
-
-    it('should return null when no max width is set', () => {
-      const elementId = 123;
-      yogaManager.addNode(elementId);
-
-      mockNode.getMaxWidth.mockReturnValue({
-        value: NaN,
-        unit: mockYoga.UNIT_UNDEFINED,
-      });
-
-      const result = yogaManager.getClampedSize(elementId);
-      expect(result).toBeNull();
-    });
-
-    it('should return computed width when max width is set', () => {
-      const elementId = 123;
-      yogaManager.addNode(elementId);
-
-      mockNode.getMaxWidth.mockReturnValue({
-        value: 150,
-        unit: mockYoga.UNIT_POINT,
-      });
-      mockNode.getComputedWidth.mockReturnValue(100);
-
-      const result = yogaManager.getClampedSize(elementId);
-      expect(result).toBe(100);
-    });
-
-    it('should calculate percentage-based max width', () => {
-      const elementId = 123;
-      yogaManager.addNode(elementId);
-
-      const parentNode = { getComputedWidth: vi.fn(() => 200) };
-      mockNode.getMaxWidth.mockReturnValue({
-        value: 50,
-        unit: mockYoga.UNIT_PERCENT,
-      });
-      mockNode.getComputedWidth.mockReturnValue(NaN);
-      mockNode.getParent.mockReturnValue(parentNode);
-
-      const result = yogaManager.getClampedSize(elementId);
-      expect(result).toBe(100); // parent width when percentage
-    });
-
-    it('should use max width value when no parent and unit is point', () => {
-      const elementId = 123;
-      yogaManager.addNode(elementId);
-
-      mockNode.getMaxWidth.mockReturnValue({
-        value: 150,
-        unit: mockYoga.UNIT_POINT,
-      });
-      mockNode.getComputedWidth.mockReturnValue(NaN);
-      mockNode.getParent.mockReturnValue(null);
-
-      const result = yogaManager.getClampedSize(elementId);
-      expect(result).toBe(150);
     });
   });
 

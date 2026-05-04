@@ -1,4 +1,5 @@
 export { Canvas } from './components/Canvas';
+export type { CanvasProps } from './components/Canvas/CanvasProps';
 export { AllStyleProps } from './element/AllStyleProps';
 export { createLightningElement } from './element/createLightningElement';
 export { LightningImageElement } from './element/LightningImageElement';
@@ -12,12 +13,7 @@ export { useFocus } from './focus/useFocus';
 export { useFocusManager } from './focus/useFocusManager';
 export { useCombinedRef } from './hooks/useCombinedRef';
 export { Keys } from './input/Keys';
-export {
-  createRoot,
-  type LightningRoot,
-  LightningRootContext,
-  type RenderOptions,
-} from './render';
+export { createRoot, type LightningRoot, LightningRootContext, type RenderOptions } from './render';
 export type { Plugin } from './render/Plugin';
 export * from './types';
 export { simpleDiff } from './utils/simpleDiff';

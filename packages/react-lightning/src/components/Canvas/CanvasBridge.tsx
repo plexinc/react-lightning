@@ -1,4 +1,5 @@
 import { type FC, useEffect, useRef, useState } from 'react';
+
 import { createRoot, type LightningRoot } from '../../render';
 import type { CanvasProps } from './CanvasProps';
 

@@ -1,9 +1,8 @@
-import type {
-  LightningTextElement,
-  LightningTextElementStyle,
-} from '@plextv/react-lightning';
-import { type ForwardRefExoticComponent, forwardRef, useMemo } from 'react';
+import { type ForwardRefExoticComponent, forwardRef } from 'react';
 import type { Text as RNText, TextProps as RNTextProps } from 'react-native';
+
+import type { LightningTextElement, LightningTextElementStyle } from '@plextv/react-lightning';
+
 import { useLayoutHandler } from '../hooks/useLayoutHandler';
 import { useTextLayoutHandler } from '../hooks/useTextLayoutHandler';
 
@@ -24,10 +23,10 @@ export const Text: ForwardRefExoticComponent<RNTextProps> = forwardRef<
       onLayout,
       onTextLayout,
       // Press events ignored on purpose in lightning
-      onLongPress,
-      onPress,
-      onPressIn,
-      onPressOut,
+      onLongPress: _onLongPress,
+      onPress: _onPress,
+      onPressIn: _onPressIn,
+      onPressOut: _onPressOut,
       children,
       ellipsizeMode,
       numberOfLines,
@@ -39,29 +38,21 @@ export const Text: ForwardRefExoticComponent<RNTextProps> = forwardRef<
     const handleTextLayout = useTextLayoutHandler(onTextLayout);
     const handleLayout = useLayoutHandler(onLayout);
 
-    const overflowStyle = useMemo(() => {
-      const overflow: LightningTextElementStyle = {
-        maxLines: numberOfLines,
-      };
+    const overflowStyle: LightningTextElementStyle = {
+      maxLines: numberOfLines,
+    };
 
-      if (ellipsizeMode === 'clip') {
-        overflow.textOverflow = 'clip';
-      } else if (ellipsizeMode === 'tail') {
-        overflow.textOverflow = 'ellipsis';
-      }
-
-      return overflow;
-    }, [ellipsizeMode, numberOfLines]);
+    if (ellipsizeMode === 'clip') {
+      overflowStyle.textOverflow = 'clip';
+    } else if (ellipsizeMode === 'tail') {
+      overflowStyle.textOverflow = 'ellipsis';
+    }
 
     return (
       <lng-text
         ref={ref}
         {...otherProps}
-        style={[
-          defaultTextStyle,
-          overflowStyle,
-          style as LightningTextElementStyle,
-        ]}
+        style={[defaultTextStyle, overflowStyle, style as LightningTextElementStyle]}
         onLayout={handleLayout}
         onTextureReady={handleTextLayout}
       >

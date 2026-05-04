@@ -1,6 +1,3 @@
-import { FocusGroup, type LightningElement } from '@plextv/react-lightning';
-import { Column, Row } from '@plextv/react-lightning-components';
-import { ScrollView } from '@plextv/react-native-lightning';
 import { type FC, type RefObject, useCallback, useRef } from 'react';
 import {
   ActivityIndicator,
@@ -11,6 +8,10 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+
+import { FocusGroup, type LightningElement } from '@plextv/react-lightning';
+import { Column, Row } from '@plextv/react-lightning-components';
+import { ScrollView } from '@plextv/react-native-lightning';
 
 const ComponentTest: FC = () => {
   const ref = useRef<ScrollView>(null);
@@ -48,20 +49,17 @@ const ComponentTest: FC = () => {
               ellipsizeMode="tail"
               numberOfLines={3}
             >
-              This is a text component that overflows. Lorem ipsum dolor sit
-              amet, consectetur adipiscing elit. Donec tellus libero, maximus
-              sit amet lorem quis, vehicula vestibulum magna. Donec eget
-              consequat erat. Donec lorem erat, lacinia a ultricies a,
-              consectetur vitae ipsum. Integer at viverra eros. Nullam nec
-              lectus et enim faucibus molestie. Etiam porttitor pharetra mauris,
-              quis sodales quam molestie sed. Cras consectetur interdum purus,
-              ut malesuada nisl ultricies sit amet. Aliquam cursus orci ipsum, a
-              vestibulum tortor pellentesque in. Donec non urna facilisis nisl
-              laoreet mollis nec vitae dolor. Phasellus dictum ac quam ac
-              laoreet. Morbi pellentesque varius odio, vel pretium orci pretium
-              eget. Nam ultrices lorem urna, in mattis quam commodo a. Morbi
-              fermentum, tellus at condimentum rhoncus, quam neque lacinia nibh,
-              quis tincidunt orci metus sed metus.
+              This is a text component that overflows. Lorem ipsum dolor sit amet, consectetur
+              adipiscing elit. Donec tellus libero, maximus sit amet lorem quis, vehicula vestibulum
+              magna. Donec eget consequat erat. Donec lorem erat, lacinia a ultricies a, consectetur
+              vitae ipsum. Integer at viverra eros. Nullam nec lectus et enim faucibus molestie.
+              Etiam porttitor pharetra mauris, quis sodales quam molestie sed. Cras consectetur
+              interdum purus, ut malesuada nisl ultricies sit amet. Aliquam cursus orci ipsum, a
+              vestibulum tortor pellentesque in. Donec non urna facilisis nisl laoreet mollis nec
+              vitae dolor. Phasellus dictum ac quam ac laoreet. Morbi pellentesque varius odio, vel
+              pretium orci pretium eget. Nam ultrices lorem urna, in mattis quam commodo a. Morbi
+              fermentum, tellus at condimentum rhoncus, quam neque lacinia nibh, quis tincidunt orci
+              metus sed metus.
             </Text>
             <ActivityIndicator size="large" />
             <Button title="This is a green Button" color="green" />
@@ -73,9 +71,7 @@ const ComponentTest: FC = () => {
                 height: 50,
               }}
             >
-              <Text style={{ color: '#000000' }}>
-                This is a View with a red background
-              </Text>
+              <Text style={{ color: '#000000' }}>This is a View with a red background</Text>
             </View>
             <TouchableOpacity
               style={{
@@ -92,14 +88,9 @@ const ComponentTest: FC = () => {
                 height: 50,
               }}
             >
-              <Text>
-                This is a TouchableWithoutFeedback with a purple background
-              </Text>
+              <Text>This is a TouchableWithoutFeedback with a purple background</Text>
             </TouchableWithoutFeedback>
-            <Image
-              source={{ uri: 'https://picsum.photos/200/300' }}
-              width={100}
-            />
+            <Image source={{ uri: 'https://picsum.photos/200/300' }} width={100} />
             <Button title="This is the bottom" color="blue" />
           </FocusGroup>
         </ScrollView>

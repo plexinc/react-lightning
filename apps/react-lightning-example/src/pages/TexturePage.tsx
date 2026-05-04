@@ -1,5 +1,6 @@
-import { Column } from '@plextv/react-lightning-components';
 import type { FC } from 'react';
+
+import { Column } from '@plextv/react-lightning-components';
 
 export const TexturePage: FC = () => {
   return (

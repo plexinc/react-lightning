@@ -1,16 +1,19 @@
 {
   "name": "@plextv/react-lightning-plugin-css-transform",
-  "description": "Transforms CSS properties to lightning properties. Requires @plextv/react-lightning-plugin-flexbox",
   "version": "0.4.0",
-  "author": "Plex Inc.",
+  "description": "Transforms CSS properties to lightning properties. Requires @plextv/react-lightning-plugin-flexbox",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -21,16 +24,16 @@
     "./jsx": "./src/types/jsx.d.ts"
   },
   "publishConfig": {
-    "provenance": true,
     "access": "public",
     "exports": {
       ".": {
-        "require": "./dist/index.cjs",
-        "import": "./dist/index.js"
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
       },
       "./package.json": "./package.json",
       "./jsx": "./dist/types/jsx.d.ts"
-    }
+    },
+    "provenance": true
   },
   "scripts": {
     "build": "tsdown --config-loader unrun",
@@ -39,21 +42,21 @@
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
-  "files": [
-    "dist"
-  ],
   "devDependencies": {
     "@repo/configs": "workspace:*",
-    "@types/react": "19.2.8",
+    "@types/react": "catalog:",
     "csstype": "3.2.3"
   },
   "peerDependencies": {
-    "@lightningjs/renderer": "3.0.0-beta20",
+    "@lightningjs/renderer": "catalog:",
     "@plextv/react-lightning": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
-    "react-native": "^0.82.1"
+    "react-native": "catalog:"
   },
   "volta": {
     "extends": "../../package.json"
+  },
+  "inlinedDependencies": {
+    "csstype": "3.2.3"
   }
 }

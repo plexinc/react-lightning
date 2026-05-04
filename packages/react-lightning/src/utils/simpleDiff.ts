@@ -1,7 +1,5 @@
 const REACT_ELEMENT_TYPE = Symbol.for('react.element');
-const REACT_TRANSITIONAL_ELEMENT_TYPE = Symbol.for(
-  'react.transitional.element',
-);
+const REACT_TRANSITIONAL_ELEMENT_TYPE = Symbol.for('react.transitional.element');
 
 // This is a list of properties that should be deeply compared, specifically for
 // React elements.
@@ -64,32 +62,41 @@ function areValuesEqual(first: unknown, second: unknown): boolean {
 
   // Handle objects - reference check already done above, so do shallow comparison
   if (typeof first === 'object' && typeof second === 'object') {
-    const firstKeys = Object.keys(first);
-    const secondKeys = Object.keys(second);
-
-    if (firstKeys.length !== secondKeys.length) {
-      return false;
+    if (first instanceof Date && second instanceof Date) {
+      return first.getTime() === second.getTime();
     }
 
-    for (const key of firstKeys) {
+    // Count keys and compare in a single pass without allocating arrays
+    let firstKeyCount = 0;
+
+    for (const key in first as Record<string, unknown>) {
+      firstKeyCount++;
       const firstValue = (first as Record<string, unknown>)[key];
       const secondValue = (second as Record<string, unknown>)[key];
 
       if (!(key in second) || firstValue !== secondValue) {
         if (DEEP_PROPS.includes(key)) {
-          return areValuesEqual(firstValue, secondValue);
+          if (!areValuesEqual(firstValue, secondValue)) {
+            return false;
+          }
+        } else {
+          return false;
         }
+      }
+    }
 
+    // Ensure second doesn't have extra keys
+    let secondKeyCount = 0;
+
+    for (const _ in second as Record<string, unknown>) {
+      secondKeyCount++;
+
+      if (secondKeyCount > firstKeyCount) {
         return false;
       }
     }
 
-    if (first instanceof Date && second instanceof Date) {
-      // Special case for Date objects
-      return first.getTime() === second.getTime();
-    }
-
-    return true;
+    return firstKeyCount === secondKeyCount;
   }
 
   // For all other cases (primitives of different types), they're not equal
@@ -113,10 +120,7 @@ function areValuesEqual(first: unknown, second: unknown): boolean {
  *
  * Note, Symbols as keys are not supported, and will be ignored.
  */
-export function simpleDiff<T extends object>(
-  first: T,
-  second: T,
-): Partial<T> | null {
+export function simpleDiff<T extends object>(first: T, second: T): Partial<T> | null {
   // If objects are referentially equal, return null
   if (first === second) {
     return null;
@@ -124,12 +128,10 @@ export function simpleDiff<T extends object>(
 
   const secondCopy = { ...second };
   let hasDiffs = false;
+  let firstKeyCount = 0;
 
-  // Get all keys from both objects
-  const firstKeys = Object.keys(first);
-  const secondKeys = Object.keys(secondCopy);
-
-  for (const key of firstKeys) {
+  for (const key in first) {
+    firstKeyCount++;
     const firstValue = first[key as keyof T];
     const secondHasKey = key in secondCopy;
     const secondValue = secondCopy[key as keyof T];
@@ -151,8 +153,17 @@ export function simpleDiff<T extends object>(
   }
 
   // Check for keys that are only in the second object
-  if (!hasDiffs && firstKeys.length !== secondKeys.length) {
-    hasDiffs = true;
+  if (!hasDiffs) {
+    let secondKeyCount = 0;
+
+    for (const _ in second) {
+      secondKeyCount++;
+
+      if (secondKeyCount > firstKeyCount) {
+        hasDiffs = true;
+        break;
+      }
+    }
   }
 
   return hasDiffs ? secondCopy : null;

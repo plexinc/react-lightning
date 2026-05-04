@@ -1,10 +1,11 @@
+import type { StandardProperties as CSSProperties } from 'csstype';
+import type { ImageStyle, StyleProp, TextStyle, ViewStyle } from 'react-native';
+
 import type {
   LightningImageElementStyle,
   LightningTextElementStyle,
   LightningViewElementStyle,
 } from '@plextv/react-lightning';
-import type { StandardProperties as CSSProperties } from 'csstype';
-import type { ImageStyle, StyleProp, TextStyle, ViewStyle } from 'react-native';
 
 export type AllStyles = Partial<
   ViewStyle &

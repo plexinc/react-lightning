@@ -4,6 +4,7 @@ import type {
   NodeLoadedEventHandler,
   NodeRenderStateEventHandler,
 } from '@lightningjs/renderer';
+
 import type { LightningElement } from './Element';
 import type { FocusEvents } from './Focusable';
 import type { Rect } from './Geometry';
@@ -21,6 +22,7 @@ export interface LightningElementEvents extends FocusEvents<LightningElement> {
   childRemoved: (child: LightningElement, index: number) => void;
   beforeRender: () => void;
   layout: (dimensions: Rect) => void;
+  resized: (element: LightningElement, dimensions: { w: number; h: number }) => void;
   inViewport: NodeRenderStateEventHandler;
   textureLoaded: NodeLoadedEventHandler;
   textureFailed: NodeFailedEventHandler;
@@ -30,6 +32,6 @@ export interface LightningElementEvents extends FocusEvents<LightningElement> {
   propsChanged: (newProps: Partial<LightningElementProps>) => void;
   animationFinished: (animationName: IAnimationController) => void;
 
-  // biome-ignore lint/suspicious/noExplicitAny: TODO
+  // oxlint-disable-next-line typescript/no-explicit-any -- TODO
   [k: string | symbol]: (...args: any[]) => void;
 }

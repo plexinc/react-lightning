@@ -1,8 +1,8 @@
-import Animated, {
-  type ReanimatedAnimation,
-} from '@plextv/react-lightning-plugin-reanimated';
-import { Row } from '@plextv/react-native-lightning-components';
 import { type FC, useMemo, useState } from 'react';
+
+import Animated, { type ReanimatedAnimation } from '@plextv/react-lightning-plugin-reanimated';
+import { Row } from '@plextv/react-native-lightning-components';
+
 import Button from '../components/Button';
 
 type AnimatedProps = {

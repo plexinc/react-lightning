@@ -1,5 +1,7 @@
 import path from 'node:path';
+
 import { glob } from 'glob';
+
 import { getFileChangeInfo } from './getFileChangeInfo';
 import { sortByExtension } from './sortByExtension';
 import type { OptionsInput } from './types';
@@ -26,24 +28,18 @@ export default async function getFiles(
   checksums: Record<string, number | null>,
 ): Promise<FontInfo[]> {
   const fontFiles: Record<string, FontInfo> = {};
-  const extensionGlob =
-    extensions.length > 1 ? `{${extensions.join(',')}}` : extensions[0];
+  const extensionGlob = extensions.length > 1 ? `{${extensions.join(',')}}` : extensions[0];
 
   console.log('Looking for fonts...');
   const inputFonts = await glob(`${src}/**/*.${extensionGlob}`);
   const charsetFileChangeInfo = await getFileChangeInfo(charsetFile, checksums);
   const shouldForce = force || charsetFileChangeInfo.needsUpdate;
 
-  console.info(
-    `Found ${inputFonts.length} files:\n  ${inputFonts.join('\n  ')}`,
-  );
+  console.info(`Found ${inputFonts.length} files:\n  ${inputFonts.join('\n  ')}`);
 
   // Sort files by extension so it follows the order of the extensions option
   for (const inputFontFile of inputFonts.sort(sortByExtension(extensions))) {
-    const inputFileChangeInfo = await getFileChangeInfo(
-      inputFontFile,
-      checksums,
-    );
+    const inputFileChangeInfo = await getFileChangeInfo(inputFontFile, checksums);
 
     const inputDir = path.dirname(inputFontFile);
     const outputDir = path.join(dest, path.relative(src, inputDir));
@@ -71,10 +67,7 @@ export default async function getFiles(
     for (const type of types) {
       const { name } = path.parse(fontFilename);
       const outputFile = path.join(outputDir, `${name}.${type}.png`);
-      const outputFileChangeInfo = await getFileChangeInfo(
-        outputFile,
-        checksums,
-      );
+      const outputFileChangeInfo = await getFileChangeInfo(outputFile, checksums);
 
       if (shouldForce || outputFileChangeInfo.needsUpdate) {
         outputs.push({

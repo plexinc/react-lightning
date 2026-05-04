@@ -11,6 +11,7 @@ import {
   SlideOutUp as ReanimatedSlideOutUp,
 } from 'react-native-reanimated-original';
 import type { Class } from 'type-fest';
+
 import { withDelay } from '../exports/withDelay';
 import { withTiming } from '../exports/withTiming';
 import { createBuilderWrapper } from './createBuilderWrapper';
@@ -107,35 +108,28 @@ export const SlideInDown: Class<ReanimatedSlideInDown> = createBuilderWrapper(
   },
 );
 
-export const SlideOutRight: Class<ReanimatedSlideOutRight> =
-  createBuilderWrapper(
-    ReanimatedSlideOutRight,
-    function (this: ReanimatedSlideOutRight) {
-      const delay = this.getDelay();
+export const SlideOutRight: Class<ReanimatedSlideOutRight> = createBuilderWrapper(
+  ReanimatedSlideOutRight,
+  function (this: ReanimatedSlideOutRight) {
+    const delay = this.getDelay();
 
-      return (values: ExitAnimationsValues) => ({
-        animations: {
-          x: withDelay(
-            delay,
-            withTiming(
-              Math.max(
-                values.currentOriginX + values.windowWidth,
-                values.windowWidth,
-              ),
-              {
-                duration: this.durationV,
-                easing: this.easingV,
-              },
-            ),
-          ),
-        },
-        initialValues: {
-          x: values.currentOriginX,
-        },
-        callback: this.callbackV,
-      });
-    },
-  );
+    return (values: ExitAnimationsValues) => ({
+      animations: {
+        x: withDelay(
+          delay,
+          withTiming(Math.max(values.currentOriginX + values.windowWidth, values.windowWidth), {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
+        ),
+      },
+      initialValues: {
+        x: values.currentOriginX,
+      },
+      callback: this.callbackV,
+    });
+  },
+);
 
 export const SlideOutLeft: Class<ReanimatedSlideOutLeft> = createBuilderWrapper(
   ReanimatedSlideOutLeft,
@@ -146,16 +140,10 @@ export const SlideOutLeft: Class<ReanimatedSlideOutLeft> = createBuilderWrapper(
       animations: {
         x: withDelay(
           delay,
-          withTiming(
-            Math.min(
-              values.currentOriginX - values.windowWidth,
-              -values.windowWidth,
-            ),
-            {
-              duration: this.durationV,
-              easing: this.easingV,
-            },
-          ),
+          withTiming(Math.min(values.currentOriginX - values.windowWidth, -values.windowWidth), {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
         ),
       },
       initialValues: {
@@ -175,16 +163,10 @@ export const SlideOutUp: Class<ReanimatedSlideOutUp> = createBuilderWrapper(
       animations: {
         y: withDelay(
           delay,
-          withTiming(
-            Math.min(
-              values.currentOriginY - values.windowHeight,
-              -values.windowHeight,
-            ),
-            {
-              duration: this.durationV,
-              easing: this.easingV,
-            },
-          ),
+          withTiming(Math.min(values.currentOriginY - values.windowHeight, -values.windowHeight), {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
         ),
       },
       initialValues: {
@@ -204,16 +186,10 @@ export const SlideOutDown: Class<ReanimatedSlideOutDown> = createBuilderWrapper(
       animations: {
         y: withDelay(
           delay,
-          withTiming(
-            Math.max(
-              values.currentOriginY + values.windowHeight,
-              values.windowHeight,
-            ),
-            {
-              duration: this.durationV,
-              easing: this.easingV,
-            },
-          ),
+          withTiming(Math.max(values.currentOriginY + values.windowHeight, values.windowHeight), {
+            duration: this.durationV,
+            easing: this.easingV,
+          }),
         ),
       },
       initialValues: {

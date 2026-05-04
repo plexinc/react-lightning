@@ -7,14 +7,13 @@ import type {
   Ref,
   RefAttributes,
 } from 'react';
-import { forwardRef, memo, useMemo } from 'react';
+import { forwardRef, memo } from 'react';
+
 import { useCombinedRef } from '../hooks/useCombinedRef';
 import type { LightningElement } from '../types';
 import { type FocusOptions, useFocus } from './useFocus';
 
-type Focusable<P, T> = P &
-  RefAttributes<T> &
-  FocusOptions & { focused: boolean };
+type Focusable<P, T> = P & RefAttributes<T> & FocusOptions & { focused: boolean };
 
 const ForwardRefComponent = forwardRef(() => <div />);
 
@@ -48,23 +47,15 @@ export function focusable<P, T extends LightningElement = LightningElement>(
     isForwardRef(Component)
       ? Component
       : forwardRef<T, Focusable<P, T>>(
-          Component as ForwardRefRenderFunction<
-            T,
-            PropsWithoutRef<Focusable<P, T>>
-          >,
+          Component as ForwardRefRenderFunction<T, PropsWithoutRef<Focusable<P, T>>>,
         ),
   );
 
   MemoRefComponent.displayName = `Focusable${Component.displayName}`;
 
   return forwardRef<T, Focusable<P, T>>((props, forwardedRef) => {
-    const options = useMemo(
-      () =>
-        typeof focusOptions === 'function'
-          ? focusOptions(props as Focusable<P, T>)
-          : focusOptions,
-      [props, focusOptions],
-    );
+    const options =
+      typeof focusOptions === 'function' ? focusOptions(props as Focusable<P, T>) : focusOptions;
     const { ref, focused } = useFocus(options);
     const combinedRef = useCombinedRef(ref, forwardedRef);
 
@@ -72,11 +63,6 @@ export function focusable<P, T extends LightningElement = LightningElement>(
   });
 }
 
-function isForwardRef<T>(
-  Component: object,
-): Component is ForwardRefExoticComponent<T> {
-  return (
-    '$$typeof' in Component &&
-    Component.$$typeof === ForwardRefComponent.$$typeof
-  );
+function isForwardRef<T>(Component: object): Component is ForwardRefExoticComponent<T> {
+  return '$$typeof' in Component && Component.$$typeof === ForwardRefComponent.$$typeof;
 }

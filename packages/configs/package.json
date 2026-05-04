@@ -2,8 +2,8 @@
   "name": "@repo/configs",
   "version": "0.0.2",
   "private": true,
-  "author": "Plex Inc.",
   "license": "MIT",
+  "author": "Plex Inc.",
   "type": "module",
   "exports": {
     "./tsconfig.json": "./tsconfig.json",
@@ -15,7 +15,16 @@
     "./vite.config": "./vite.config.mjs"
   },
   "scripts": {},
+  "devDependencies": {
+    "@rollup/plugin-babel": "7.0.0",
+    "babel-plugin-react-compiler": "catalog:"
+  },
   "volta": {
     "extends": "../../package.json"
+  },
+  "depcheck": {
+    "ignoreMatches": [
+      "babel-plugin-react-compiler"
+    ]
   }
 }

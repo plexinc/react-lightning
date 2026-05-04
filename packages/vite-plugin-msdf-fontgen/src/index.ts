@@ -1,5 +1,7 @@
 import path from 'node:path';
+
 import type { PluginOption } from 'vite';
+
 import { readChecksumCache } from './checksum';
 import generateFonts from './generateFonts';
 import type { OptionsArg, OptionsInput, OptionsInputArg } from './types';
@@ -21,13 +23,7 @@ export default function msdfFontGen({
       for (const input of inputs) {
         const options = getOptions(input);
 
-        await generateFonts(
-          options,
-          force,
-          checksums,
-          cacheFolder,
-          copyOriginalToDestDir,
-        );
+        await generateFonts(options, force, checksums, cacheFolder, copyOriginalToDestDir);
       }
     },
   };

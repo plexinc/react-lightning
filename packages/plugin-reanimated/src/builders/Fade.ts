@@ -13,6 +13,7 @@ import {
   FadeOutUp as ReanimatedFadeOutUp,
 } from 'react-native-reanimated-original';
 import type { Class } from 'type-fest';
+
 import { withDelay } from '../exports/withDelay';
 import { withTiming } from '../exports/withTiming';
 import { createBuilderWrapper } from './createBuilderWrapper';

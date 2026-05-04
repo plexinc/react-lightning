@@ -1,21 +1,24 @@
 {
   "name": "@plextv/vite-plugin-react-reanimated-lightning",
-  "description": "Vite plugin for @plextv/react-lightning-plugin-reanimated",
   "version": "0.4.1",
-  "author": "Plex Inc.",
+  "description": "Vite plugin for @plextv/react-lightning-plugin-reanimated",
+  "keywords": [
+    "lightning-js",
+    "react-native",
+    "react-reanimated",
+    "vite-plugin"
+  ],
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
-  "keywords": [
-    "vite-plugin",
-    "react-native",
-    "react-reanimated",
-    "lightning-js"
+  "files": [
+    "dist"
   ],
   "type": "module",
   "types": "./dist/index.d.mts",
@@ -24,8 +27,8 @@
     "./package.json": "./package.json"
   },
   "publishConfig": {
-    "provenance": true,
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "tsdown --config-loader unrun",
@@ -35,14 +38,12 @@
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
-  "files": [
-    "dist"
-  ],
   "devDependencies": {
     "@repo/configs": "workspace:*"
   },
   "peerDependencies": {
     "@plextv/react-lightning-plugin-reanimated": "workspace:^",
-    "react-native-reanimated": "^4.2.1"
+    "react-native-reanimated": "catalog:",
+    "vite": "catalog:"
   }
 }

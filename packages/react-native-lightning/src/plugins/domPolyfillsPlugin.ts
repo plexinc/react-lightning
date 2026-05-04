@@ -4,6 +4,7 @@ import {
   LightningViewElement,
   type Plugin,
 } from '@plextv/react-lightning';
+
 import type { NativeLightningViewElement } from '../types/NativeLightningViewElement';
 
 const ELEMENT_NODE = 1;
@@ -156,16 +157,12 @@ export const domPolyfillsPlugin = (): Plugin => {
         }, {} as PropertyDescriptorMap),
       );
 
-      Object.defineProperty(
-        LightningViewElement.prototype,
-        '__domPolyfillsAdded',
-        {
-          value: true,
-          configurable: false,
-          enumerable: false,
-          writable: false,
-        },
-      );
+      Object.defineProperty(LightningViewElement.prototype, '__domPolyfillsAdded', {
+        value: true,
+        configurable: false,
+        enumerable: false,
+        writable: false,
+      });
 
       return Promise.resolve();
     },

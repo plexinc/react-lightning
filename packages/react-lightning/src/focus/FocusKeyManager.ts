@@ -2,7 +2,15 @@ import { Keys } from '../input/Keys';
 import type { KeyEvent, LightningElement } from '../types';
 import { findClosestElement } from '../utils/findClosestElement';
 import { Direction } from './Direction';
-import type { FocusManager } from './FocusManager';
+import type { FocusManager, FocusNode } from './FocusManager';
+
+/** Lazily maps FocusNode children to their elements without allocating an array */
+function* childElements(children: FocusNode<LightningElement>[]): Iterable<LightningElement> {
+  for (let i = 0; i < children.length; i++) {
+    // oxlint-disable-next-line typescript/no-non-null-assertion -- bounds-checked loop
+    yield children[i]!.element;
+  }
+}
 
 export class FocusKeyManager<T extends LightningElement> {
   private _focusManager: FocusManager<LightningElement>;
@@ -52,11 +60,7 @@ export class FocusKeyManager<T extends LightningElement> {
   // Returns false if focus works, to stop the propagation of the key event.
   // If there's nothing to navigate to, return true and let the event bubble
   // up to be handled by the next focus group.
-  private _tryFocusNext = (
-    element: T,
-    event: KeyEvent,
-    direction: Direction,
-  ): boolean => {
+  private _tryFocusNext = (element: T, event: KeyEvent, direction: Direction): boolean => {
     const focusNode = this._focusManager.getFocusNode(element);
 
     if (!focusNode) {
@@ -69,13 +73,15 @@ export class FocusKeyManager<T extends LightningElement> {
 
     const closestElement = findClosestElement(
       focusNode.focusedElement.element,
-      focusNode.children.map((child) => child.element),
+      childElements(focusNode.children),
       focusNode.parent.element,
       direction,
+      focusNode.allowOffscreen,
     );
 
     if (closestElement) {
       this._focusManager.focus(closestElement as T);
+
       return false;
     }
 

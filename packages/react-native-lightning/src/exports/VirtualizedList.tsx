@@ -1,34 +1,8 @@
-import { type FC, forwardRef, type Ref } from 'react';
-import {
-  VirtualizedList as RNVirtualizedList,
-  type VirtualizedListProps as RNVirtualizedListProps,
-} from 'react-native';
-import { ScrollView } from './ScrollView';
+import type { VirtualListRef } from '@plextv/react-lightning-components/lists/VirtualList';
+import VirtualList from '@plextv/react-lightning-components/lists/VirtualList';
+import { type VirtualListProps } from '@plextv/react-lightning-components/lists/VirtualList';
 
-export type VirtualizedListProps<T> = RNVirtualizedListProps<T>;
-export type VirtualizedList<T> = RNVirtualizedList<T>;
+export type VirtualizedListProps<T> = VirtualListProps<T>;
+export type VirtualizedList = VirtualListRef;
 
-interface ForwardRef extends FC<VirtualizedListProps<unknown>> {
-  <T = unknown>(
-    props: VirtualizedListProps<T> & { ref: Ref<VirtualizedList<T>> },
-  ): ReturnType<FC<VirtualizedListProps<T>>>;
-}
-
-export const VirtualizedList: ForwardRef = forwardRef(
-  <T,>(
-    { renderScrollComponent, ...props }: VirtualizedListProps<T>,
-    ref: Ref<VirtualizedList<T>>,
-  ) => (
-    <RNVirtualizedList
-      {...props}
-      ref={ref}
-      renderScrollComponent={
-        // If a renderScrollComponent was not provided, make sure we use our
-        // own ScrollView since the RN one doesn't work in Lightning
-        renderScrollComponent ?? ((props) => <ScrollView {...props} />)
-      }
-    />
-  ),
-);
-
-VirtualizedList.displayName = 'LightningVirtualizedList';
+export const VirtualizedList: typeof VirtualList = VirtualList;

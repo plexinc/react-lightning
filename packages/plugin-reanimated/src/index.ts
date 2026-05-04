@@ -12,8 +12,7 @@ export * from 'react-native-reanimated-original';
 
 // Overrides
 export default {
-  createAnimatedComponent:
-    createAnimatedComponent as typeof createAnimatedComponent,
+  createAnimatedComponent: createAnimatedComponent as typeof createAnimatedComponent,
   addWhitelistedUIProps: Noop as () => null,
   addWhitelistedNativeProps: Noop as () => null,
   Image: Image as typeof Image,

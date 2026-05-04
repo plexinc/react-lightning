@@ -1,5 +1,6 @@
 import type { FC, ReactNode } from 'react';
-import { useCallback, useContext, useEffect, useRef } from 'react';
+import { useContext, useEffect, useRef } from 'react';
+
 import { useFocusManager } from '../focus/useFocusManager';
 import { bubbleEvent } from './bubbleEvent';
 import type { KeyMap } from './KeyMapContext';
@@ -13,66 +14,56 @@ export const KeyPressHandler: FC<{ children: ReactNode }> = ({ children }) => {
   const focusManager = useFocusManager();
   const keyDownTime = useRef<number>(0);
 
-  const createKeyHandler = useCallback(
-    (handler: 'onKeyDown' | 'onKeyUp', keyMap: KeyMap) => {
-      return (event: KeyboardEvent) => {
-        if (event.repeat) {
-          return;
+  const createKeyHandler = (handler: 'onKeyDown' | 'onKeyUp', keyMap: KeyMap) => {
+    return (event: KeyboardEvent) => {
+      if (event.repeat) {
+        return;
+      }
+
+      const element = focusManager.focusPath.at(-1);
+
+      if (!element) {
+        return;
+      }
+
+      if (event instanceof KeyboardEvent) {
+        const remoteKey = keyMap[event.keyCode] ?? Keys.Unknown;
+
+        // Build the event object once and reuse for all bubbleEvent calls
+        const keyEvent = {
+          keyCode: event.keyCode,
+          key: event.key,
+          code: event.code,
+          remoteKey,
+          repeat: event.repeat,
+          target: element,
+          currentTarget: element,
+          stopFocusHandling: false,
+          preventDefault: event.preventDefault,
+        };
+
+        if (handler === 'onKeyDown') {
+          keyDownTime.current = event.timeStamp;
+        } else if (handler === 'onKeyUp') {
+          const duration = event.timeStamp - keyDownTime.current;
+
+          keyDownTime.current = 0;
+
+          bubbleEvent(duration > LONG_PRESS_THRESHOLD ? 'onLongPress' : 'onKeyPress', keyEvent);
+
+          // Reset stopFocusHandling for the next bubbleEvent call
+          keyEvent.stopFocusHandling = false;
         }
 
-        const element = focusManager.focusPath.at(-1);
+        bubbleEvent(handler, keyEvent);
 
-        if (!element) {
-          return;
+        if (remoteKey !== Keys.Unknown) {
+          event.stopPropagation();
+          event.preventDefault();
         }
-
-        if (event instanceof KeyboardEvent) {
-          const remoteKey = keyMap[event.keyCode] ?? Keys.Unknown;
-
-          if (handler === 'onKeyDown') {
-            keyDownTime.current = event.timeStamp;
-          } else if (handler === 'onKeyUp') {
-            const duration = event.timeStamp - keyDownTime.current;
-
-            keyDownTime.current = 0;
-
-            bubbleEvent(
-              duration > LONG_PRESS_THRESHOLD ? 'onLongPress' : 'onKeyPress',
-              {
-                keyCode: event.keyCode,
-                key: event.key,
-                code: event.code,
-                remoteKey,
-                repeat: event.repeat,
-                target: element,
-                currentTarget: element,
-                stopFocusHandling: false,
-                preventDefault: event.preventDefault,
-              },
-            );
-          }
-
-          bubbleEvent(handler, {
-            keyCode: event.keyCode,
-            key: event.key,
-            code: event.code,
-            remoteKey,
-            repeat: event.repeat,
-            target: element,
-            currentTarget: element,
-            stopFocusHandling: false,
-            preventDefault: event.preventDefault,
-          });
-
-          if (remoteKey !== Keys.Unknown) {
-            event.stopPropagation();
-            event.preventDefault();
-          }
-        }
-      };
-    },
-    [focusManager],
-  );
+      }
+    };
+  };
 
   useEffect(() => {
     const keyDownHandler = createKeyHandler('onKeyDown', keyMap);

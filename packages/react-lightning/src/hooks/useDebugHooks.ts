@@ -1,12 +1,6 @@
-import {
-  type DependencyList,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react';
+import { type DependencyList, useCallback, useEffect, useMemo, useRef } from 'react';
 
-// biome-ignore lint/suspicious/noExplicitAny: any is used so we can pass any function
+// oxlint-disable-next-line typescript/no-explicit-any -- any is used so we can pass any function
 type DebuggableHook = (...args: any[]) => any;
 
 function wrapHook<T extends DebuggableHook>(hook: T, name: string): T {
@@ -14,18 +8,19 @@ function wrapHook<T extends DebuggableHook>(hook: T, name: string): T {
     const dependencies = args.at(-1) as DependencyList;
     const prevValue = useRef<DependencyList>([]);
 
-    const changedDeps = dependencies.reduce<
-      Record<number, { old: unknown; new: unknown }>
-    >((acc, dependency, index) => {
-      if (dependency !== prevValue.current[index]) {
-        acc[index] = {
-          old: prevValue.current[index],
-          new: dependency,
-        };
-      }
+    const changedDeps = dependencies.reduce<Record<number, { old: unknown; new: unknown }>>(
+      (acc, dependency, index) => {
+        if (dependency !== prevValue.current[index]) {
+          acc[index] = {
+            old: prevValue.current[index],
+            new: dependency,
+          };
+        }
 
-      return acc;
-    }, {});
+        return acc;
+      },
+      {},
+    );
 
     if (Object.keys(changedDeps).length) {
       console.log(`[${name}] `, changedDeps);
@@ -37,12 +32,6 @@ function wrapHook<T extends DebuggableHook>(hook: T, name: string): T {
   }) as T;
 }
 
-export const useEffectDebug: typeof useEffect = wrapHook(
-  useEffect,
-  'useEffectDebug',
-);
-export const useCallbackDebug: typeof useCallback = wrapHook(
-  useCallback,
-  'useCallbackDebug',
-);
+export const useEffectDebug: typeof useEffect = wrapHook(useEffect, 'useEffectDebug');
+export const useCallbackDebug: typeof useCallback = wrapHook(useCallback, 'useCallbackDebug');
 export const useMemoDebug: typeof useMemo = wrapHook(useMemo, 'useMemoDebug');

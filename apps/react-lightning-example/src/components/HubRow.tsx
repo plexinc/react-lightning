@@ -1,9 +1,8 @@
-import type {
-  LightningElement,
-  LightningViewElementProps,
-} from '@plextv/react-lightning';
-import { Column, Row } from '@plextv/react-lightning-components';
 import { type FC, useCallback, useState } from 'react';
+
+import type { LightningElement, LightningViewElementProps } from '@plextv/react-lightning';
+import { Column, Row } from '@plextv/react-lightning-components';
+
 import type { Hub } from '../api/types/Hubs';
 import { useHubItemsData } from '../api/useHubItemsData';
 import { HubItem } from './HubItem';
@@ -18,9 +17,7 @@ export const HubRow: FC<Props> = (props) => {
   const [horizontalOffset, setHorizontalOffset] = useState(0);
 
   const handleFocus = useCallback((element: LightningElement) => {
-    setHorizontalOffset(
-      Math.min(0, -element.node.x - element.node.w / 2 + 1920 / 2),
-    );
+    setHorizontalOffset(Math.min(0, -element.node.x - element.node.w / 2 + 1920 / 2));
   }, []);
 
   if (isLoading) {

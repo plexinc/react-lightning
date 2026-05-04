@@ -1,10 +1,9 @@
 import type { ITextNode } from '@lightningjs/renderer';
-import type { LightningTextElementProps } from '@plextv/react-lightning';
 import type { Meta } from '@storybook/react-vite';
-import {
-  DefaultStoryHeight,
-  DefaultStoryWidth,
-} from '../../../helpers/constants';
+
+import type { LightningTextElementProps } from '@plextv/react-lightning';
+
+import { DefaultStoryHeight, DefaultStoryWidth } from '../../../helpers/constants';
 
 type Props = {
   text: string;

@@ -72,14 +72,14 @@ A key map will be required for adding keyboard and remote support.
 import { Keys } from '@plextv/react-lightning';
 
 const keyMap = {
-  37: Keys.Left,
-  38: Keys.Up,
-  39: Keys.Right,
-  40: Keys.Down,
+37: Keys.Left,
+38: Keys.Up,
+39: Keys.Right,
+40: Keys.Down,
 
-  8: Keys.Back, // Backspace
-  27: Keys.Back, // Esc
-  13: Keys.Enter, // Enter
+8: Keys.Back, // Backspace
+27: Keys.Back, // Esc
+13: Keys.Enter, // Enter
 };
 
 export { keyMap };
@@ -99,13 +99,14 @@ import { keyMap } from './keyMap';
 const appElement = document.getElementById('app');
 
 const options: RenderOptions = {
-  // ...
+// ...
 };
 
 const App = () => (
-  <Canvas keyMap={keyMap} options={options}>
-    {/* Your app here */}
-  </Canvas>
+
+<Canvas keyMap={keyMap} options={options}>
+  {/* Your app here */}
+</Canvas>
 );
 
 const root = await createRoot(appElement, options);

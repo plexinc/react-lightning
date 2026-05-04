@@ -46,10 +46,6 @@ export class MockElement implements Focusable, EventNotifier {
   }
 }
 
-export function createMockElement(
-  id: number,
-  name: string,
-  visible = true,
-): MockElement {
+export function createMockElement(id: number, name: string, visible = true): MockElement {
   return new MockElement(id, name, visible);
 }

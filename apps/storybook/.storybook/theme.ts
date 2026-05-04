@@ -4,8 +4,7 @@ export default create({
   base: 'dark',
   brandTitle: 'Plex Theme',
   brandUrl: 'https://plex.tv',
-  brandImage:
-    'https://www.plex.tv/wp-content/themes/plex/assets/img/plex-logo.svg',
+  brandImage: 'https://www.plex.tv/wp-content/themes/plex/assets/img/plex-logo.svg',
   brandTarget: '_top',
 
   // Colors

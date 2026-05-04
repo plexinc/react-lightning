@@ -14,6 +14,8 @@ import type {
 } from '@lightningjs/renderer';
 import type { Fiber } from 'react-reconciler';
 import { EventEmitter, type IEventEmitter } from 'tseep';
+
+import { getNodeResizeObserver, type NodeResizeObserver } from '../observer/NodeResizeObserver';
 import type { Plugin } from '../render/Plugin';
 import {
   type Focusable,
@@ -60,10 +62,7 @@ function __checkProps(props: string[]) {
   }
 }
 
-function createTexture(
-  renderer: RendererMain,
-  textureDef: TextureDef,
-): Texture {
+function createTexture(renderer: RendererMain, textureDef: TextureDef): Texture {
   return renderer.createTexture(textureDef.type, textureDef.props);
 }
 
@@ -71,10 +70,8 @@ let idCounter = 0;
 
 export class LightningViewElement<
   TStyleProps extends LightningViewElementStyle = LightningViewElementStyle,
-  TProps extends
-    LightningViewElementProps<TStyleProps> = LightningViewElementProps<TStyleProps>,
-> implements Focusable
-{
+  TProps extends LightningViewElementProps<TStyleProps> = LightningViewElementProps<TStyleProps>,
+> implements Focusable {
   public static allElements: Record<number, LightningElement> = {};
 
   public readonly id: number;
@@ -98,12 +95,14 @@ export class LightningViewElement<
   private _focused = false;
   private _focusable = false;
   private _visible = true;
+  private _recycled = false;
   private _hasStagedUpdates = false;
   private _hasLayout = false;
   private _eventEmitter = new EventEmitter<LightningElementEvents>();
   private _deferTarget: LightningElement | null = null;
-  private _deferNodeRemovalHandler: ((destroy: () => void) => void) | null =
-    null;
+  private _deferNodeRemovalHandler: ((destroy: () => void) => void) | null = null;
+  private _resizeObserver: NodeResizeObserver | null = null;
+  private _isObservingResize = false;
 
   public get visible(): boolean {
     return this._visible;
@@ -111,6 +110,27 @@ export class LightningViewElement<
 
   public get focusable(): boolean {
     return this._focusable && this.visible;
+  }
+
+  /**
+   * Returns the raw focusable flag without visibility checks.
+   * Used by focus navigation when `allowOffscreen` is enabled to allow
+   * focusing elements that are clipped or not yet visible (e.g. in virtualized lists).
+   */
+  public get focusableIntent(): boolean {
+    return this._focusable;
+  }
+
+  /**
+   * Whether this element is a recycled cell from a virtualized list.
+   * Used by devtools to display a ♻ indicator in the focus graph and elements tree.
+   */
+  public get recycled(): boolean {
+    return this._recycled;
+  }
+
+  public set recycled(value: boolean) {
+    this._recycled = value;
   }
 
   public set focusable(value: boolean) {
@@ -153,11 +173,7 @@ export class LightningViewElement<
   }
 
   public set parent(parent) {
-    if (
-      parent &&
-      this._parent === parent &&
-      this._parent.node === parent.node
-    ) {
+    if (parent && this._parent === parent && this._parent.node === parent.node) {
       return;
     }
 
@@ -207,6 +223,7 @@ export class LightningViewElement<
     // Optimize child iteration
     for (let i = 0; i < this.children.length; i++) {
       const child = this.children[i];
+
       if (child) {
         child.deferTarget = value;
       }
@@ -226,6 +243,7 @@ export class LightningViewElement<
   }
 
   public get rootElement(): LightningElement {
+    // oxlint-disable-next-line typescript/no-this-alias - Required for loop optimization
     let root: LightningElement = this;
 
     while (root.parent) {
@@ -253,6 +271,12 @@ export class LightningViewElement<
     this._plugins = plugins ?? [];
 
     if (import.meta.env.DEV) {
+      if (!fiber._debugInfo) {
+        fiber._debugInfo = {};
+      }
+
+      fiber._debugInfo.isLngNode = true;
+
       if (!__bannedPropsInitialized) {
         __getBannedProps(renderer.createNode({}));
       }
@@ -271,10 +295,7 @@ export class LightningViewElement<
 
     const lngProps = this._toLightningNodeProps(this.props, true);
 
-    this._styleProxy = new Proxy(
-      this.props.style ?? {},
-      this._styleProxyHandler,
-    );
+    this._styleProxy = new Proxy(this.props.style ?? {}, this._styleProxyHandler);
 
     if (import.meta.env.DEV) {
       __checkProps(Object.keys(lngProps));
@@ -293,10 +314,19 @@ export class LightningViewElement<
 
     LightningViewElement.allElements[this.id] = this;
 
+    if (this.props.onResize) {
+      this._reconcileResizeObserving();
+    }
+
     this._eventEmitter.emit('initialized');
   }
 
   public destroy(): void {
+    if (this._isObservingResize && this._resizeObserver) {
+      this._resizeObserver.unobserve(this);
+      this._isObservingResize = false;
+    }
+
     this.node.off('inViewport', this._onInViewport);
     this.node.off('loaded', this._onTextureLoaded);
     this.node.off('failed', this._onTextureFailed);
@@ -321,21 +351,36 @@ export class LightningViewElement<
     this._eventEmitter.emit('destroy');
   }
 
-  public on = (
-    ...args: Parameters<IEventEmitter<LightningElementEvents>['on']>
-  ): (() => void) => {
+  public on = (...args: Parameters<IEventEmitter<LightningElementEvents>['on']>): (() => void) => {
     this._eventEmitter.on(...args);
-    return () => this._eventEmitter.off(...args);
+
+    if (args[0] === 'resized') {
+      this._reconcileResizeObserving();
+    }
+
+    return () => this.off(...args);
   };
   public once = (
     ...args: Parameters<IEventEmitter<LightningElementEvents>['once']>
   ): (() => void) => {
     this._eventEmitter.once(...args);
-    return () => this._eventEmitter.off(...args);
+
+    if (args[0] === 'resized') {
+      this._reconcileResizeObserving();
+    }
+
+    return () => this.off(...args);
   };
 
-  public off: IEventEmitter<LightningElementEvents>['off'] = (...args) =>
-    this._eventEmitter.off(...args);
+  public off: IEventEmitter<LightningElementEvents>['off'] = (...args) => {
+    const result = this._eventEmitter.off(...args);
+
+    if (args[0] === 'resized') {
+      this._reconcileResizeObserving();
+    }
+
+    return result;
+  };
   public emit: IEventEmitter<LightningElementEvents>['emit'] = (...args) =>
     this._eventEmitter.emit(...args);
 
@@ -354,6 +399,7 @@ export class LightningViewElement<
 
     for (let i = 0; i < this.children.length; i++) {
       const child = this.children[i];
+
       if (child) {
         child.node.parent = node;
       }
@@ -364,17 +410,12 @@ export class LightningViewElement<
     this.recalculateVisibility();
   }
 
-  public insertChild(
-    child: LightningElement,
-    beforeChild?: LightningElement | null,
-  ): void {
+  public insertChild(child: LightningElement, beforeChild?: LightningElement | null): void {
     if (child.parent === this && child.parent.node === this.node) {
       return;
     }
 
-    const index = beforeChild
-      ? this.children.indexOf(beforeChild)
-      : this.children.length;
+    const index = beforeChild ? this.children.indexOf(beforeChild) : this.children.length;
 
     if (beforeChild) {
       this.children.splice(index, 0, child);
@@ -394,9 +435,17 @@ export class LightningViewElement<
   public removeChild(child: LightningElement): void {
     const index = this.children.indexOf(child);
 
-    if (index >= 0) {
-      this.children.splice(index, 1);
+    // Idempotent — React's reconciler hits this path twice per unmount:
+    // first via the host-config `removeChild`, then again from inside
+    // `destroy()` (`this.parent?.removeChild(this)`). The second call is
+    // a no-op for `this.children` but used to re-emit `childRemoved`,
+    // doubling downstream worker traffic in plugin-flexbox (each emit
+    // fires `removeNode` + `queueRender` etc.).
+    if (index < 0) {
+      return;
     }
+
+    this.children.splice(index, 1);
 
     if (!child._deferTarget) {
       child.node.parent = null;
@@ -433,6 +482,7 @@ export class LightningViewElement<
     let totalX = 0;
     let totalY = 0;
 
+    // oxlint-disable-next-line typescript/no-this-alias - Required for loop optimization
     let curr: LightningElement | null = this;
 
     while (curr && curr !== ancestor) {
@@ -559,12 +609,22 @@ export class LightningViewElement<
     this._onLayout(dimensions);
   }
 
+  /**
+   * Invoked by {@link NodeResizeObserver} at the start of each frame when
+   * the observed node's width or height has changed since the prior frame.
+   *
+   * Not intended to be called by application code.
+   */
+  public _emitResize(dimensions: { w: number; h: number }): void {
+    this._eventEmitter.emit('resized', this, dimensions);
+    this.props.onResize?.(dimensions);
+  }
+
   public recalculateVisibility = (): void => {
     const prevFocusable = this.focusable;
     const prevVisible = this._visible;
 
-    this._visible =
-      this.node.alpha > 0 && (!this.parent || this.parent.visible);
+    this._visible = this.node.alpha > 0 && (!this.parent || this.parent.visible);
 
     if (this._visible !== prevVisible) {
       this._eventEmitter.emit('visibilityChanged', this._visible);
@@ -594,9 +654,7 @@ export class LightningViewElement<
     ).start();
   }
 
-  public animateShader(
-    props: Partial<CoreShaderNode['props']>,
-  ): IAnimationController {
+  public animateShader(props: Partial<CoreShaderNode['props']>): IAnimationController {
     return this._createAnimation(
       {
         shaderProps: props,
@@ -606,7 +664,7 @@ export class LightningViewElement<
   }
 
   public toString(expanded?: boolean) {
-    return `${this.constructor.name} id=${this.id}${this.focusable ? ' focusable' : ''}${this.visible ? ' visible' : ''}${expanded ? ` props=${JSON.stringify(this.props)}` : ''}`;
+    return `${this._recycled ? '\u267B ' : ''}${this.constructor.name} id=${this.id}${this.focusable ? ' focusable' : ''}${this.visible ? ' visible' : ''}${expanded ? ` props=${JSON.stringify(this.props)}` : ''}`;
   }
 
   private _destroyFinalize = () => {
@@ -615,11 +673,28 @@ export class LightningViewElement<
     this._renderer.destroyNode(this.node);
   };
 
+  private _reconcileResizeObserving(): void {
+    const shouldObserve = this.props.onResize != null || this._eventEmitter.hasListeners('resized');
+
+    if (shouldObserve === this._isObservingResize) {
+      return;
+    }
+
+    if (shouldObserve) {
+      if (this._resizeObserver === null) {
+        this._resizeObserver = getNodeResizeObserver(this._renderer);
+      }
+
+      this._resizeObserver.observe(this);
+      this._isObservingResize = true;
+    } else if (this._resizeObserver) {
+      this._resizeObserver.unobserve(this);
+      this._isObservingResize = false;
+    }
+  }
+
   // Don't pass down the `data` prop to the lightning node.
-  private _createNode({
-    data: _data,
-    ...props
-  }: Partial<INodeProps>): RendererNode<this> {
+  private _createNode({ data: _data, ...props }: Partial<INodeProps>): RendererNode<this> {
     const node = this.isTextElement
       ? this._renderer.createTextNode(props)
       : this._renderer.createNode(props);
@@ -649,8 +724,14 @@ export class LightningViewElement<
     this._stagedUpdates = {};
     this._hasStagedUpdates = false;
 
+    // Fast path: style-only updates where no plugin handles the changed properties
+    if (this._canFastPathStyle(payload)) {
+      return this._applyStyleFastPath(payload);
+    }
+
     const transformedProps = this._transformProps(payload) ?? ({} as TProps);
     const previousOpacity = this.node.alpha;
+    const previousOnResize = this.props.onResize;
 
     let changed = false;
 
@@ -659,6 +740,10 @@ export class LightningViewElement<
         this.props[key] = transformedProps[key];
         changed = true;
       }
+    }
+
+    if (previousOnResize !== this.props.onResize) {
+      this._reconcileResizeObserving();
     }
 
     const lngProps = this._toLightningNodeProps({
@@ -671,25 +756,147 @@ export class LightningViewElement<
       Object.assign(this.rawProps, payload);
     }
 
+    // Prevent non-numeric width and height values from being set on the
+    // lightning node, as this can cause it to disappear. Instead, we'll set
+    // them on the style proxy so they can be applied once they're valid. This
+    // allows for things like setting width/height to '100%' in JSX without
+    // breaking the node, even though it's not a valid value for the lightning
+    // node itself. Once the layout system calculates the actual pixel values,
+    // it will update the lightning node and remove the string values from the
+    // style proxy.
+    if (typeof lngProps.w !== 'number') {
+      delete lngProps.w;
+    }
+
+    if (typeof lngProps.h !== 'number') {
+      delete lngProps.h;
+    }
+
     Object.assign(this.node, lngProps);
 
-    // biome-ignore lint/suspicious/noExplicitAny: Required for accessing AllStyleProps symbol
+    // oxlint-disable-next-line typescript/no-explicit-any -- Required for accessing AllStyleProps symbol
     Object.assign((this.style as any)[AllStyleProps], this.props.style);
 
     if (previousOpacity !== this.node.alpha) {
       this.recalculateVisibility();
     }
 
-    // Check for style changes before computing Object.keys()
-    const hasStyleChanges =
-      payload.style && Object.keys(payload.style).length > 0;
+    // Check for style changes without allocating an array
+    let hasStyleChanges = false;
+
+    if (payload.style) {
+      for (const _ in payload.style) {
+        hasStyleChanges = true;
+        break;
+      }
+    }
 
     if (hasStyleChanges) {
-      this._eventEmitter.emit(
-        'stylesChanged',
-        this.props.style as Partial<LightningElementStyle>,
-      );
+      this._eventEmitter.emit('stylesChanged', this.props.style as Partial<LightningElementStyle>);
     }
+
+    this._isUpdateQueued = false;
+
+    return changed;
+  }
+
+  /** Style properties that may trigger shader creation — must use the slow path. */
+  private static readonly _shaderStyleProps = new Set([
+    'borderRadius',
+    'borderTop',
+    'borderLeft',
+    'borderRight',
+    'borderBottom',
+  ]);
+
+  /**
+   * Checks whether a staged update can skip the plugin transform pipeline.
+   * Returns true when the payload only contains style properties that no
+   * plugin declares as handled and that don't require shader creation.
+   */
+  private _canFastPathStyle(payload: Partial<TProps>): boolean {
+    if (!('style' in payload) || !payload.style) {
+      return false;
+    }
+
+    for (const key in payload) {
+      if (key !== 'style') {
+        return false;
+      }
+    }
+
+    const style = payload.style;
+
+    for (const key in style) {
+      if (LightningViewElement._shaderStyleProps.has(key)) {
+        return false;
+      }
+
+      for (const plugin of this._plugins) {
+        if (!plugin.transformProps) {
+          continue;
+        }
+
+        const handled = plugin.handledStyleProps;
+
+        if (!handled || handled.has(key)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Applies a style-only update directly to the Lightning node, bypassing
+   * the plugin transform pipeline and full props-merge iteration.
+   */
+  private _applyStyleFastPath(payload: Partial<TProps>): boolean {
+    const style = payload.style as Partial<TStyleProps>;
+    const previousOpacity = this.node.alpha;
+    let changed = false;
+
+    if (this.props.style !== style) {
+      // oxlint-disable-next-line typescript/no-explicit-any -- matching slow-path behaviour
+      (this.props as any).style = style;
+      changed = true;
+    }
+
+    if (import.meta.env.DEV) {
+      Object.assign(this.rawProps, payload);
+    }
+
+    const transition = this.props.transition;
+
+    for (const key in style) {
+      const typedKey = key as string & keyof TStyleProps;
+      const value = style[typedKey];
+
+      if (value == null) {
+        continue;
+      }
+
+      if ((key === 'w' || key === 'h') && typeof value !== 'number') {
+        continue;
+      }
+
+      if (transition?.[typedKey]) {
+        this.animateStyle(typedKey, value as TStyleProps[typeof typedKey]);
+      } else {
+        // oxlint-disable-next-line typescript/no-explicit-any -- direct node property assignment
+        (this.node as any)[key] = value;
+      }
+    }
+
+    // oxlint-disable-next-line typescript/no-explicit-any -- Required for accessing AllStyleProps symbol
+    Object.assign((this.style as any)[AllStyleProps], style);
+
+    if (previousOpacity !== this.node.alpha) {
+      this.recalculateVisibility();
+    }
+
+    this._eventEmitter.emit('stylesChanged', this.props.style as Partial<LightningElementStyle>);
 
     this._isUpdateQueued = false;
 
@@ -736,9 +943,7 @@ export class LightningViewElement<
     return animation;
   }
 
-  private _getShaderFromStyle(
-    style: TStyleProps | undefined | null,
-  ): ShaderDef | undefined {
+  private _getShaderFromStyle(style: TStyleProps | undefined | null): ShaderDef | undefined {
     if (!style) {
       return;
     }
@@ -747,15 +952,8 @@ export class LightningViewElement<
     let type: ShaderDef['type'] | undefined;
     let hasRounded = false;
 
-    const {
-      border,
-      borderColor,
-      borderTop,
-      borderLeft,
-      borderRight,
-      borderBottom,
-      borderRadius,
-    } = style;
+    const { border, borderColor, borderTop, borderLeft, borderRight, borderBottom, borderRadius } =
+      style;
 
     if (borderRadius) {
       type = 'Rounded';
@@ -763,14 +961,7 @@ export class LightningViewElement<
       hasRounded = true;
     }
 
-    if (
-      border ||
-      borderColor ||
-      borderTop ||
-      borderLeft ||
-      borderRight ||
-      borderBottom
-    ) {
+    if (border || borderColor || borderTop || borderLeft || borderRight || borderBottom) {
       if (type && type === 'Rounded') {
         type = 'RoundedWithBorder';
       } else {
@@ -790,15 +981,19 @@ export class LightningViewElement<
     if (borderTop) {
       props[hasRounded ? 'border-top' : 'top'] = borderTop;
     }
+
     if (borderLeft) {
       props[hasRounded ? 'border-left' : 'left'] = borderLeft;
     }
+
     if (borderRight) {
       props[hasRounded ? 'border-right' : 'right'] = borderRight;
     }
+
     if (borderBottom) {
       props[hasRounded ? 'border-bottom' : 'bottom'] = borderBottom;
     }
+
     if (borderColor) {
       props[hasRounded ? 'border-color' : 'color'] = borderColor;
     }
@@ -807,7 +1002,7 @@ export class LightningViewElement<
   }
 
   public _toLightningNodeProps(
-    // biome-ignore lint/suspicious/noExplicitAny: TODO
+    // oxlint-disable-next-line typescript/no-explicit-any -- TODO
     props: TProps & Record<string, any>,
     initial = false,
   ): Partial<INodeProps> {
@@ -827,10 +1022,12 @@ export class LightningViewElement<
     const finalStyle: Partial<INodeProps> = {};
 
     if (style !== undefined && style !== null) {
-      // Optimize by using for...in loop instead of Object.entries()
+      const transition = !initial ? this.props.transition : undefined;
+      const isText = this.isTextElement;
+
       for (const key in style) {
         // Lightning doesn't allow setting w/h on text nodes
-        if (this.isTextElement && (key === 'w' || key === 'h')) {
+        if (isText && (key === 'w' || key === 'h')) {
           continue;
         }
 
@@ -840,7 +1037,7 @@ export class LightningViewElement<
           continue;
         }
 
-        if (!initial && this.props.transition?.[key as keyof TStyleProps]) {
+        if (transition?.[key as keyof TStyleProps]) {
           this.animateStyle(key as keyof TStyleProps, value);
         } else if (initial && key === 'initialDimensions') {
           const rect = value as NonNullable<TStyleProps['initialDimensions']>;
@@ -848,17 +1045,20 @@ export class LightningViewElement<
           if (!style.w) {
             finalStyle.w = rect.w;
           }
+
           if (!style.h) {
             finalStyle.h = rect.h;
           }
+
           if (!style.x) {
             finalStyle.x = rect.x;
           }
+
           if (!style.y) {
             finalStyle.y = rect.y;
           }
         } else {
-          // biome-ignore lint/suspicious/noExplicitAny: TODO
+          // oxlint-disable-next-line typescript/no-explicit-any -- TODO
           (finalStyle as any)[key] = value;
         }
       }
@@ -886,10 +1086,7 @@ export class LightningViewElement<
         this._shaderDef.props
       ) {
         this.animateShader(this._shaderDef.props);
-      } else if (
-        this._shaderDef.type === oldShader?.type &&
-        this.shader.props
-      ) {
+      } else if (this._shaderDef.type === oldShader?.type && this.shader.props) {
         for (const [key, value] of Object.entries(this._shaderDef.props)) {
           if (this.shader.props[key]) {
             this.shader.props[key] = value;
@@ -910,11 +1107,7 @@ export class LightningViewElement<
 
     const finalProps = Object.assign(otherProps, finalStyle);
 
-    if (
-      initial === true &&
-      this.isImageElement === false &&
-      finalProps.color === undefined
-    ) {
+    if (initial === true && this.isImageElement === false && finalProps.color === undefined) {
       // set default color to 0 for all elements except image elements
       finalProps.color = 0;
     }

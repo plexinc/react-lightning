@@ -10,10 +10,9 @@ export type DefaultSpringConfig = {
 
 export function checkIfConfigIsValid(config: DefaultSpringConfig): boolean {
   let errorMessage = '';
-  (
-    ['stiffness', 'damping', 'dampingRatio', 'mass', 'energyThreshold'] as const
-  ).forEach((prop) => {
+  (['stiffness', 'damping', 'dampingRatio', 'mass', 'energyThreshold'] as const).forEach((prop) => {
     const value = config[prop];
+
     if (value <= 0) {
       errorMessage += `, ${prop} must be grater than zero but got ${value}`;
     }
@@ -23,11 +22,7 @@ export function checkIfConfigIsValid(config: DefaultSpringConfig): boolean {
     errorMessage += `, duration can't be negative, got ${config.duration}`;
   }
 
-  if (
-    config.clamp?.min &&
-    config.clamp?.max &&
-    config.clamp.min > config.clamp.max
-  ) {
+  if (config.clamp?.min && config.clamp?.max && config.clamp.min > config.clamp.max) {
     errorMessage += `, clamp.min should be lower than clamp.max, got clamp: {min: ${config.clamp.min}, max: ${config.clamp.max}} `;
   }
 
@@ -143,13 +138,10 @@ export function calculateNewStiffnessToMatchDuration(
     const perceptualCoefficient = 1.5;
     const MILLISECONDS_IN_SECOND = 1000;
 
-    const settlingDuration =
-      (targetDuration * perceptualCoefficient) / MILLISECONDS_IN_SECOND;
+    const settlingDuration = (targetDuration * perceptualCoefficient) / MILLISECONDS_IN_SECOND;
     const omega0 = Math.sqrt(stiffness / m) * zeta;
 
-    const xtk =
-      (x0 + (v0 + x0 * omega0) * settlingDuration) *
-      Math.exp(-omega0 * settlingDuration);
+    const xtk = (x0 + (v0 + x0 * omega0) * settlingDuration) * Math.exp(-omega0 * settlingDuration);
 
     const vtk =
       (x0 + (v0 + x0 * omega0) * settlingDuration) *
@@ -187,8 +179,7 @@ export function criticallyDampedSpringCalculations(precalculatedValues: {
   const { v0, x0, omega0, t } = precalculatedValues;
 
   const criticallyDampedEnvelope = Math.exp(-omega0 * t);
-  const criticallyDampedPosition =
-    1 + criticallyDampedEnvelope * (x0 + (v0 + omega0 * x0) * t);
+  const criticallyDampedPosition = 1 + criticallyDampedEnvelope * (x0 + (v0 + omega0 * x0) * t);
 
   const criticallyDampedVelocity =
     criticallyDampedEnvelope * -omega0 * (x0 + (v0 + omega0 * x0) * t) +
@@ -216,15 +207,13 @@ export function underDampedSpringCalculations(precalculatedValues: {
   // under damped
   const underDampedEnvelope = Math.exp(-zeta * omega0 * t);
   const underDampedFrag1 =
-    underDampedEnvelope *
-    (sin1 * ((v0 + zeta * omega0 * x0) / omega1) + x0 * cos1);
+    underDampedEnvelope * (sin1 * ((v0 + zeta * omega0 * x0) / omega1) + x0 * cos1);
 
   const underDampedPosition = 1 + underDampedFrag1;
   // This looks crazy -- it's actually just the derivative of the oscillation function
   const underDampedVelocity =
     -zeta * omega0 * underDampedFrag1 +
-    underDampedEnvelope *
-      (cos1 * (v0 + zeta * omega0 * x0) - omega1 * x0 * sin1);
+    underDampedEnvelope * (cos1 * (v0 + zeta * omega0 * x0) - omega1 * x0 * sin1);
 
   return { position: underDampedPosition, velocity: underDampedVelocity };
 }
@@ -246,17 +235,9 @@ export function isAnimationTerminatingCalculation(
     }
   }
 
-  const currentEnergy = getEnergy(
-    toValue - current,
-    velocity,
-    config.stiffness,
-    config.mass,
-  );
+  const currentEnergy = getEnergy(toValue - current, velocity, config.stiffness, config.mass);
 
-  return (
-    initialEnergy === 0 ||
-    currentEnergy / initialEnergy <= config.energyThreshold
-  );
+  return initialEnergy === 0 || currentEnergy / initialEnergy <= config.energyThreshold;
 }
 
 /**

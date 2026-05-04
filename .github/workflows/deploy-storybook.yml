@@ -34,7 +34,7 @@ jobs:
       - uses: actions/setup-node@v6.0.0
         with:
           node-version-file: package.json
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

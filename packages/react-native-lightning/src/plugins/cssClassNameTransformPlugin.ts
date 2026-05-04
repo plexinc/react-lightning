@@ -45,11 +45,7 @@ export const cssClassNameTransformPlugin = (): Plugin => {
           let selectedRule: CSSStyleRule | null = null;
 
           for (const rule of sheet.cssRules) {
-            if (
-              rule &&
-              'selectorText' in rule &&
-              rule.selectorText === `.${value}`
-            ) {
+            if (rule && 'selectorText' in rule && rule.selectorText === `.${value}`) {
               selectedRule = rule as CSSStyleRule;
               break;
             }

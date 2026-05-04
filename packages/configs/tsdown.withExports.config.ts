@@ -1,4 +1,5 @@
 import { defineConfig, type UserConfig } from 'tsdown';
+
 // @ts-expect-error: Needed for unrun to resolve this module correctly
 import baseConfig from './tsdown.config.ts';
 
@@ -11,9 +12,7 @@ const config: UserConfig = defineConfig({
       // Remove 'exports/' prefix from export paths
       return Object.entries(pkg).reduce(
         (acc, [key, value]) => {
-          const newKey = key.startsWith('./exports/')
-            ? key.replace('./exports/', './')
-            : key;
+          const newKey = key.startsWith('./exports/') ? key.replace('./exports/', './') : key;
 
           acc[newKey] = value;
 

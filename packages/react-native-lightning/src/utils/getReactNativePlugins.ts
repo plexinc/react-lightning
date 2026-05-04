@@ -1,9 +1,7 @@
 import type { Plugin } from '@plextv/react-lightning';
 import { plugin as cssPlugin } from '@plextv/react-lightning-plugin-css-transform';
-import {
-  plugin as flexboxPlugin,
-  type YogaOptions,
-} from '@plextv/react-lightning-plugin-flexbox';
+import { plugin as flexboxPlugin, type YogaOptions } from '@plextv/react-lightning-plugin-flexbox';
+
 import { cssClassNameTransformPlugin } from '../plugins/cssClassNameTransformPlugin';
 import { domPolyfillsPlugin } from '../plugins/domPolyfillsPlugin';
 import { reactNativePolyfillsPlugin } from '../plugins/reactNativePolyfillsPlugin';

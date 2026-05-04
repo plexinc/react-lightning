@@ -1,3 +1,4 @@
+import type { ErrorInfo } from 'react';
 import { Component, type ReactNode } from 'react';
 
 interface Props {
@@ -20,7 +21,7 @@ class ErrorBoundary extends Component<Props, State> {
     return { hasError: true };
   }
 
-  public componentDidCatch(error: Error, info: React.ErrorInfo): void {
+  public componentDidCatch(error: Error, info: ErrorInfo): void {
     console.error(error, info.componentStack);
   }
 

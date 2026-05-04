@@ -1,9 +1,6 @@
-import {
-  type LightningElement,
-  useCombinedRef,
-  useFocus,
-} from '@plextv/react-lightning';
 import { forwardRef } from 'react';
+
+import { type LightningElement, useCombinedRef, useFocus } from '@plextv/react-lightning';
 
 export type FocusableImageProps = {
   disable?: boolean;

@@ -1,11 +1,11 @@
-import type { LightningElementStyle, Rect } from '@plextv/react-lightning';
 import { EventEmitter } from 'tseep';
 import { type Config, loadYoga, type Yoga } from 'yoga-layout/load';
+
+import type { LightningElementStyle, Rect } from '@plextv/react-lightning';
+
 import type { ManagerNode } from './types/ManagerNode';
 import type { YogaOptions } from './types/YogaOptions';
-import applyReactPropsToYoga, {
-  applyFlexPropToYoga,
-} from './util/applyReactPropsToYoga';
+import applyReactPropsToYoga, { applyFlexPropToYoga } from './util/applyReactPropsToYoga';
 import { SimpleDataView } from './util/SimpleDataView';
 
 export type BatchedUpdate = Record<number, Partial<Rect>>;
@@ -32,12 +32,11 @@ const MAX_SIZEOF_UPDATE = 1024 * 10;
 export class YogaManager {
   private _elementMap: Map<number, ManagerNode> = new Map();
   private _hiddenElements: Set<number> = new Set();
+  private _independentRoots: Set<ManagerNode> = new Set();
   private _yoga?: Yoga;
   private _config?: Config;
-  private _rootNode?: ManagerNode;
   private _initialized = false;
   private _isRenderQueued = false;
-  private _queueTimeout: NodeJS.Timeout | undefined;
   private _yogaOptions: Required<YogaOptions> = {
     useWebDefaults: false,
     errata: 'none',
@@ -48,22 +47,17 @@ export class YogaManager {
   private _eventEmitter: EventEmitter<YogaManagerEvents> = new EventEmitter();
   private _dataView: SimpleDataView;
 
-  public on: EventEmitter<YogaManagerEvents>['on'] = this._eventEmitter.on.bind(
+  public on: EventEmitter<YogaManagerEvents>['on'] = this._eventEmitter.on.bind(this._eventEmitter);
+  public off: EventEmitter<YogaManagerEvents>['off'] = this._eventEmitter.off.bind(
     this._eventEmitter,
   );
-  public off: EventEmitter<YogaManagerEvents>['off'] =
-    this._eventEmitter.off.bind(this._eventEmitter);
 
   public get initialized(): boolean {
     return this._initialized;
   }
 
   public constructor() {
-    this._dataView = new SimpleDataView(
-      MAX_SIZEOF_UPDATE,
-      true,
-      this._flushArrayBuffer,
-    );
+    this._dataView = new SimpleDataView(MAX_SIZEOF_UPDATE, true, this._flushArrayBuffer);
   }
 
   public async init(yogaOptions?: YogaOptions): Promise<void> {
@@ -84,14 +78,10 @@ export class YogaManager {
         this._config.setErrata(this._yoga.ERRATA_STRETCH_FLEX_BASIS);
         break;
       case 'absolute-percent-against-inner':
-        this._config.setErrata(
-          this._yoga.ERRATA_ABSOLUTE_PERCENT_AGAINST_INNER_SIZE,
-        );
+        this._config.setErrata(this._yoga.ERRATA_ABSOLUTE_PERCENT_AGAINST_INNER_SIZE);
         break;
       case 'absolute-position-without-insets':
-        this._config.setErrata(
-          this._yoga.ERRATA_ABSOLUTE_POSITION_WITHOUT_INSETS_EXCLUDES_PADDING,
-        );
+        this._config.setErrata(this._yoga.ERRATA_ABSOLUTE_POSITION_WITHOUT_INSETS_EXCLUDES_PADDING);
         break;
       default:
         this._config.setErrata(this._yoga.ERRATA_NONE);
@@ -103,7 +93,7 @@ export class YogaManager {
 
   public addNode(elementId: number): ManagerNode {
     if (this._elementMap.has(elementId)) {
-      // biome-ignore lint/style/noNonNullAssertion: Already checked
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- Already checked
       return this._elementMap.get(elementId)!;
     }
 
@@ -138,9 +128,7 @@ export class YogaManager {
     const childYogaNode = this._elementMap.get(childId);
 
     if (!parentYogaNode || !childYogaNode) {
-      throw new Error(
-        `Parent or child node not found for IDs ${parentId} and ${childId}.`,
-      );
+      throw new Error(`Parent or child node not found for IDs ${parentId} and ${childId}.`);
     }
 
     index ??= childYogaNode.children.length;
@@ -150,47 +138,79 @@ export class YogaManager {
     childYogaNode.parent = parentYogaNode;
   }
 
-  public queueRender(elementId: number, force = false): void {
+  public detachChildNode(parentId: number, childId: number): void {
+    const parentYogaNode = this._elementMap.get(parentId);
+    const childYogaNode = this._elementMap.get(childId);
+
+    if (!parentYogaNode || !childYogaNode) {
+      return;
+    }
+
+    const idx = parentYogaNode.children.indexOf(childYogaNode);
+
+    if (idx === -1) {
+      return;
+    }
+
+    parentYogaNode.node.removeChild(childYogaNode.node);
+    parentYogaNode.children.splice(idx, 1);
+    childYogaNode.parent = undefined;
+  }
+
+  public addIndependentRoot(elementId: number): void {
+    const node = this._elementMap.get(elementId);
+
+    if (node) {
+      this._independentRoots.add(node);
+    }
+  }
+
+  public removeIndependentRoot(elementId: number): void {
+    const node = this._elementMap.get(elementId);
+
+    if (node) {
+      this._independentRoots.delete(node);
+    }
+  }
+
+  public queueRender(_elementId: number, force = false): void {
     if (!this._initialized || !this._yoga) {
       throw new Error('Yoga is not initialized! Did you call `init()`?');
     }
 
-    if (this._isRenderQueued && this._queueTimeout) {
+    if (this._isRenderQueued) {
       return;
     }
 
     this._isRenderQueued = true;
 
-    this._queueTimeout = setTimeout(() => {
-      let root = this._rootNode;
+    // Microtask runs AFTER the current synchronous batch of style/node
+    // ops (arriving from postMessage handlers); setTimeout's 1ms+ minimum
+    // would fragment a batch into many render passes.
+    queueMicrotask(() => {
+      this._isRenderQueued = false;
 
-      if (!root) {
-        const node = this._elementMap.get(elementId);
-
-        if (!node) {
-          return;
-        }
-
-        root = node;
-        let curr: ManagerNode | undefined = node;
-
-        while (curr) {
-          root = curr;
-          curr = curr.parent;
-        }
-
-        this._rootNode = root;
+      if (this._independentRoots.size === 0) {
+        return;
       }
 
-      // biome-ignore lint/style/noNonNullAssertion: Already checked this._yoga above
-      root.node.calculateLayout(1920, 1080, this._yoga!.DIRECTION_LTR);
-
       this._initializeArrayBuffer();
-      this._getUpdatedStyles(root, force);
-      this._flushArrayBuffer(this._dataView.buffer);
 
-      this._isRenderQueued = false;
-    }, 1);
+      for (const independentRoot of this._independentRoots) {
+        // undefined available size → yoga uses the root's own w/h (or
+        // shrink-to-fit). Passing 1920×1080 would stretch any unset axis
+        // and break measurement-driven roots like VirtualList cells.
+        independentRoot.node.calculateLayout(
+          undefined,
+          undefined,
+          // oxlint-disable-next-line typescript/no-non-null-assertion -- Already checked this._yoga above
+          this._yoga!.DIRECTION_LTR,
+        );
+        this._getUpdatedStyles(independentRoot, force);
+      }
+
+      this._flushArrayBuffer(this._dataView.buffer);
+    });
   }
 
   public applyStyles(
@@ -201,10 +221,11 @@ export class YogaManager {
       throw new Error('Yoga was not initialized! Did you call `init()`?');
     }
 
-    const styleEntries = Object.entries(styles);
-
-    for (const [elementId, style] of styleEntries) {
-      this.applyStyle(Number(elementId), style, skipRender);
+    // `for...in` skips the [key, value] tuple allocation of Object.entries —
+    // this is a hot path on every flushBoth/applyStyles message.
+    for (const elementId in styles) {
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- key from for..in iteration of own props
+      this.applyStyle(+elementId, styles[elementId as unknown as number]!, skipRender);
     }
   }
 
@@ -225,6 +246,7 @@ export class YogaManager {
 
     if (!yogaNode) {
       console.warn(`Yoga node with ID ${elementId} not found.`);
+
       return;
     }
 
@@ -268,49 +290,6 @@ export class YogaManager {
     }
   }
 
-  public getClampedSize(elementId: number): number | null {
-    // Text elements will already have its height and width set on the
-    // node before loaded event is fired, so we need to set it on the yoga
-    // node. If there's a maxWidth set, we should clamp the text to that size.
-    const yogaNode = this._elementMap.get(elementId);
-
-    if (!this._initialized || !this._yoga) {
-      throw new Error('Yoga was not initialized! Did you call `init()`?');
-    }
-
-    if (!yogaNode) {
-      return null;
-    }
-
-    const maxWidth = yogaNode.node.getMaxWidth();
-
-    if (
-      !Number.isNaN(maxWidth.value) &&
-      maxWidth.unit !== this._yoga.UNIT_UNDEFINED
-    ) {
-      // If there is a max width specified, the width on the yogaNode will
-      // be the computed width
-      let computedWidth = yogaNode.node.getComputedWidth();
-      const isPercentage = maxWidth.unit === this._yoga.UNIT_PERCENT;
-
-      if (Number.isNaN(computedWidth) || isPercentage) {
-        const parentWidth = yogaNode.node.getParent()?.getComputedWidth();
-
-        if (parentWidth) {
-          computedWidth = isPercentage
-            ? parentWidth * (maxWidth.value / 100)
-            : parentWidth;
-        } else if (maxWidth.unit === this._yoga.UNIT_POINT) {
-          computedWidth = maxWidth.value;
-        }
-      }
-
-      return !Number.isNaN(computedWidth) ? computedWidth : null;
-    }
-
-    return null;
-  }
-
   private _flushArrayBuffer(buffer: ArrayBuffer) {
     // Emit the current buffer
     this._eventEmitter.emit('render', buffer);
@@ -339,34 +318,43 @@ export class YogaManager {
     return yogaNode;
   }
 
-  // returns the new offset in the dataView
+  // Recursion is unconditional — yoga's hasNewLayout is per-node, so a
+  // child's layout can change even when the parent's didn't (absolute
+  // children, just-attached subtrees from _reattachChildren).
   private _getUpdatedStyles(yogaNode: ManagerNode, force = false) {
     const skipHiddenNode =
-      !this._yogaOptions.processHiddenNodes &&
-      this._hiddenElements.has(yogaNode.id);
+      !this._yogaOptions.processHiddenNodes && this._hiddenElements.has(yogaNode.id);
 
-    if (!force && (skipHiddenNode || !yogaNode.node.hasNewLayout())) {
-      return;
+    if (!skipHiddenNode && (force || yogaNode.node.hasNewLayout())) {
+      if (!this._dataView.hasSpace(APPROX_SIZEOF_UPDATE)) {
+        this._flushArrayBuffer(this._dataView.buffer);
+      }
+
+      // Individual getters instead of getComputedLayout() — that allocates
+      // a {left, top, width, height} object per node, and we recurse the
+      // entire yoga tree every layout pass.
+      const node = yogaNode.node;
+
+      // Direct DataView writes — hasSpace above already validated the full
+      // 12-byte run, so per-call overflow checks are pure overhead here.
+      const view = this._dataView.dataView;
+      const offset = this._dataView.offset;
+
+      view.setUint32(offset, yogaNode.id, true);
+      view.setInt16(offset + 4, node.getComputedLeft(), true);
+      view.setInt16(offset + 6, node.getComputedTop(), true);
+      view.setInt16(offset + 8, node.getComputedWidth(), true);
+      view.setInt16(offset + 10, node.getComputedHeight(), true);
+      this._dataView.advance(APPROX_SIZEOF_UPDATE);
+
+      node.markLayoutSeen();
     }
 
-    // We want to keep chunks together, so check the size to ensure we have enough space
-    if (!this._dataView.hasSpace(APPROX_SIZEOF_UPDATE)) {
-      // If we don't have enough space, flush the current buffer
-      this._flushArrayBuffer(this._dataView.buffer);
-    }
+    const children = yogaNode.children;
 
-    const layout = yogaNode.node.getComputedLayout();
-
-    this._dataView.writeUint32(yogaNode.id);
-    this._dataView.writeInt16(layout.left);
-    this._dataView.writeInt16(layout.top);
-    this._dataView.writeInt16(layout.width);
-    this._dataView.writeInt16(layout.height);
-
-    yogaNode.node.markLayoutSeen();
-
-    for (const child of yogaNode.children) {
-      this._getUpdatedStyles(child, force);
+    for (let i = 0, len = children.length; i < len; i++) {
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- length-bounded
+      this._getUpdatedStyles(children[i]!, force);
     }
   }
 }

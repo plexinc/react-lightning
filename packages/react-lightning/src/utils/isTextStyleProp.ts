@@ -29,8 +29,6 @@ textProps satisfies Partial<Record<keyof LightningTextElementStyle, boolean>>;
 
 export type TextProps = keyof typeof textProps;
 
-export function isTextStyleProp(
-  prop: number | string | symbol,
-): prop is TextProps {
+export function isTextStyleProp(prop: number | string | symbol): prop is TextProps {
   return prop in textProps;
 }

@@ -1,10 +1,8 @@
 import type { RendererMain } from '@lightningjs/renderer';
 import { createContext } from 'react';
 import type { EventPriority, HostConfig } from 'react-reconciler';
-import {
-  DefaultEventPriority,
-  NoEventPriority,
-} from 'react-reconciler/constants';
+import { DefaultEventPriority, NoEventPriority } from 'react-reconciler/constants';
+
 import { createLightningElement } from '../element/createLightningElement';
 import { LightningTextElement } from '../element/LightningTextElement';
 import {
@@ -37,23 +35,19 @@ export type LightningHostConfig = HostConfig<
   unknown,
   unknown,
   unknown
->;
+> & {
+  rendererPackageName: string;
+  rendererVersion: string;
+  extraDevToolsConfig: unknown;
+};
 
-type LightningHostConfigOptions = Pick<
-  LightningHostConfig,
-  'isPrimaryRenderer'
->;
+type LightningHostConfigOptions = Pick<LightningHostConfig, 'isPrimaryRenderer'>;
 
-export function createHostConfig(
-  options?: LightningHostConfigOptions,
-): LightningHostConfig {
+export function createHostConfig(options?: LightningHostConfigOptions): LightningHostConfig {
   const HostTransitionContext = createContext(null);
   let currentUpdatePriority: EventPriority = NoEventPriority;
 
-  function appendChild(
-    parentInstance: LightningElement,
-    child: LightningElement,
-  ) {
+  function appendChild(parentInstance: LightningElement, child: LightningElement) {
     if (child.parent !== parentInstance) {
       parentInstance.insertChild(child);
     }
@@ -62,6 +56,12 @@ export function createHostConfig(
   return {
     isPrimaryRenderer: options?.isPrimaryRenderer ?? true,
     warnsIfNotActing: false,
+
+    // React DevTools integration — read by react-reconciler's
+    // injectIntoDevTools() to identify this renderer.
+    rendererPackageName: '@plextv/react-lightning',
+    rendererVersion: '0.4.0',
+    extraDevToolsConfig: null,
     supportsMutation: true,
     supportsPersistence: false,
     supportsHydration: false,
@@ -90,9 +90,9 @@ export function createHostConfig(
     NotPendingTransition: null,
     HostTransitionContext: {
       $$typeof: HostTransitionContext.$$typeof,
-      // biome-ignore lint/suspicious/noExplicitAny: Needs to be null
+      // oxlint-disable-next-line typescript/no-explicit-any -- Needs to be null
       Provider: null as any,
-      // biome-ignore lint/suspicious/noExplicitAny: Needs to be null
+      // oxlint-disable-next-line typescript/no-explicit-any -- Needs to be null
       Consumer: null as any,
       _currentValue: null,
       _currentValue2: null,
@@ -116,12 +116,11 @@ export function createHostConfig(
 
     appendChildToContainer(container, child) {
       if (container.renderer.root) {
-        const root = container.renderer
-          .root as unknown as RendererNode<LightningElement>;
+        const root = container.renderer.root as unknown as RendererNode<LightningElement>;
 
         child.setLightningNode(root);
 
-        // biome-ignore lint/suspicious/noExplicitAny: TODO
+        // oxlint-disable-next-line typescript/no-explicit-any -- TODO
         (window as any).rootElement = child;
       }
     },
@@ -140,12 +139,7 @@ export function createHostConfig(
     },
 
     createTextInstance(text, _rootContainerInstance, container, fiber) {
-      return new LightningTextElement(
-        { text },
-        container.renderer,
-        container.plugins,
-        fiber,
-      );
+      return new LightningTextElement({ text }, container.renderer, container.plugins, fiber);
     },
 
     finalizeInitialChildren() {
@@ -215,10 +209,7 @@ export function createHostConfig(
     },
 
     commitUpdate(instance, type, oldProps, newProps) {
-      const diffedProps: Partial<LightningElementProps> | null = simpleDiff(
-        oldProps,
-        newProps,
-      );
+      const diffedProps: Partial<LightningElementProps> | null = simpleDiff(oldProps, newProps);
 
       if (!diffedProps) {
         return null;

@@ -29,11 +29,7 @@ type Dimensions = {
  *  we would expect (2) to be the closest element, but if we calculate using the
  *  centers of elements of (2) and (3), (3) would be closer.
  */
-function getDistance(
-  direction: Direction,
-  source: Dimensions,
-  target: Dimensions,
-): number | null {
+function getDistance(direction: Direction, source: Dimensions, target: Dimensions): number | null {
   let targetX: number;
   let targetY: number;
 
@@ -112,11 +108,7 @@ function calculateShortestDistance(
   return euclidean + displacement - alignment - Math.sqrt(overlap);
 }
 
-function getAlignment(
-  direction: Direction,
-  source: Dimensions,
-  overlap: number,
-): number {
+function getAlignment(direction: Direction, source: Dimensions, overlap: number): number {
   const isHorizontal = direction & Direction.Horizontal;
   const bias = overlap / (isHorizontal ? source.w : source.h);
 
@@ -161,26 +153,39 @@ export function getOverlap(
   return Math.abs(length);
 }
 
-function isOverlap(
-  { x: x1, y: y1, w: w1, h: h1 }: Dimensions,
-  { x: x2, y: y2, w: w2, h: h2 }: Dimensions,
-) {
-  return {
-    x: x1 < x2 + w2 && x1 + w1 > x2,
-    y: y1 < y2 + h2 && y1 + h1 > y2,
-  };
-}
+// Scratch objects reused across calls to avoid per-element allocations
+const _scratchSource: Dimensions = {
+  w: 0,
+  h: 0,
+  x: 0,
+  y: 0,
+  centerX: 0,
+  centerY: 0,
+};
+const _scratchTarget: Dimensions = {
+  w: 0,
+  h: 0,
+  x: 0,
+  y: 0,
+  centerX: 0,
+  centerY: 0,
+};
 
-function getDimensions(
+function fillDimensions(
+  out: Dimensions,
   element: LightningElement,
   relativeElement: LightningElement | null,
 ): Dimensions {
   const { w, h } = element.node;
   const { x, y } = element.getRelativePosition(relativeElement);
-  const centerX = x + w / 2;
-  const centerY = y + h / 2;
+  out.w = w;
+  out.h = h;
+  out.x = x;
+  out.y = y;
+  out.centerX = x + w / 2;
+  out.centerY = y + h / 2;
 
-  return { w, h, x, y, centerX, centerY };
+  return out;
 }
 
 export function findClosestElement(
@@ -188,47 +193,65 @@ export function findClosestElement(
   elementsToCheck: Iterable<LightningElement>,
   parentElement: LightningElement | null,
   direction: Direction,
+  allowOffscreen = false,
 ): LightningElement | null {
-  let closest: LightningElement[] = [];
+  let closest: LightningElement[] | null = null;
   let closestDistance = Number.MAX_VALUE;
 
-  const sourceDimensions = getDimensions(sourceElement, parentElement);
+  const sourceDimensions = fillDimensions(_scratchSource, sourceElement, parentElement);
+  const isHorizontal = direction & Direction.Horizontal;
 
   for (const otherElement of elementsToCheck) {
-    if (
-      otherElement === sourceElement ||
-      otherElement.node.w === 0 ||
-      otherElement.node.h === 0 ||
-      !otherElement.focusable
-    ) {
+    if (otherElement === sourceElement) {
       continue;
     }
 
-    const otherDimensions = getDimensions(otherElement, parentElement);
-    const { x: isOverlappedX, y: isOverlappedY } = isOverlap(
-      sourceDimensions,
-      otherDimensions,
-    );
+    if (allowOffscreen) {
+      // When allowing offscreen focus, only skip elements that were never
+      // marked focusable. Visibility checks are skipped so virtualized/clipped
+      // children can still receive focus. Zero-dimension checks are kept
+      // because spatial navigation requires valid dimensions.
+      if (
+        otherElement.node.w === 0 ||
+        otherElement.node.h === 0 ||
+        (!otherElement.focusable && !otherElement.focusableIntent)
+      ) {
+        continue;
+      }
+    } else if (otherElement.node.w === 0 || otherElement.node.h === 0 || !otherElement.focusable) {
+      continue;
+    }
 
-    const distance = calculateShortestDistance(
-      direction,
-      sourceDimensions,
-      otherDimensions,
-    );
+    const otherDimensions = fillDimensions(_scratchTarget, otherElement, parentElement);
+
+    // Inline overlap check for the relevant axis to avoid object allocation
+    const isOverlapped = isHorizontal
+      ? sourceDimensions.y < otherDimensions.y + otherDimensions.h &&
+        sourceDimensions.y + sourceDimensions.h > otherDimensions.y
+      : sourceDimensions.x < otherDimensions.x + otherDimensions.w &&
+        sourceDimensions.x + sourceDimensions.w > otherDimensions.x;
+
+    const distance = calculateShortestDistance(direction, sourceDimensions, otherDimensions);
 
     if (distance === null) {
       continue;
     }
 
-    const isHorizontal = direction & Direction.Horizontal;
-    const isOverlapped = isHorizontal ? isOverlappedY : isOverlappedX;
-
     if (distance < closestDistance && isOverlapped) {
-      closest = [otherElement];
+      if (closest) {
+        closest.length = 0;
+      } else {
+        closest = [];
+      }
+      closest.push(otherElement);
       closestDistance = distance;
     } else if (distance === closestDistance) {
       closest?.push(otherElement);
     }
+  }
+
+  if (!closest || closest.length === 0) {
+    return null;
   }
 
   // If we have multiple elements with the same closeness, then try to pick the

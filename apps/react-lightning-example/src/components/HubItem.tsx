@@ -1,3 +1,5 @@
+import type { FC } from 'react';
+
 import {
   type LightningViewElement,
   type LightningViewElementProps,
@@ -5,7 +7,7 @@ import {
   useFocus,
 } from '@plextv/react-lightning';
 import { Column } from '@plextv/react-lightning-components';
-import type { FC } from 'react';
+
 import { getImageUrl } from '../api/getImageUrl';
 import type { Metadata } from '../api/types/Metadata';
 
@@ -25,10 +27,7 @@ export const HubItem: FC<Props> = ({ metadata, style, ...rest }) => {
       style={{ ...style, scale: focused ? 1.2 : 1 }}
       transition={{ scale: { duration: 250 } }}
     >
-      <lng-image
-        src={getImageUrl(poster?.url ?? metadata.art)}
-        style={{ width: 240 }}
-      />
+      <lng-image src={getImageUrl(poster?.url ?? metadata.art)} style={{ width: 240 }} />
 
       <lng-text
         style={{

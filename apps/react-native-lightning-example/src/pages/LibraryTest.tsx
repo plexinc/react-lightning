@@ -1,8 +1,11 @@
+import { type FC, useCallback, useMemo, useRef } from 'react';
+import { Image, Text } from 'react-native';
+
 import type { LightningElement } from '@plextv/react-lightning';
 import { useFocus } from '@plextv/react-lightning';
-import { Column, FlashList } from '@plextv/react-native-lightning-components';
-import { type FC, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Image, Text } from 'react-native';
+import type { VirtualListRef } from '@plextv/react-lightning-components/lists/VirtualList';
+import VirtualList from '@plextv/react-lightning-components/lists/VirtualList';
+import { Column } from '@plextv/react-native-lightning-components';
 
 const ITEM_COUNT = 150;
 
@@ -15,10 +18,6 @@ interface Props {
 
 const Poster: FC<Props> = ({ title, subtitle, seed, onFocus }) => {
   const { focused, ref } = useFocus();
-
-  useEffect(() => {
-    console.log(`Rendering poster ${seed}`);
-  });
 
   return (
     <Column
@@ -65,11 +64,17 @@ type PosterItem = {
 };
 
 const LibraryView = ({ items }: { items: PosterItem[] }) => {
-  const ref = useRef<FlashList<PosterItem>>(null);
+  const ref = useRef<VirtualListRef>(null);
 
-  const handleFocus = useCallback((element: PosterItem) => {
-    ref.current?.scrollToItem({ item: element, viewPosition: 0.5 });
-  }, []);
+  const handleFocus = useCallback(
+    (item: PosterItem) => {
+      const index = items.indexOf(item);
+      if (index >= 0) {
+        ref.current?.scrollToIndex({ index, viewPosition: 0.5 });
+      }
+    },
+    [items],
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: PosterItem }) => (
@@ -84,14 +89,15 @@ const LibraryView = ({ items }: { items: PosterItem[] }) => {
   );
 
   return (
-    <FlashList<PosterItem>
-      snapToAlignment="center"
+    <VirtualList<PosterItem>
       ref={ref}
+      snapToAlignment="center"
       drawDistance={100}
       numColumns={6}
-      centerContent={true}
-      estimatedItemSize={500}
-      estimatedListSize={{ height: 1080, width: 1670 }}
+      estimatedItemSize={400}
+      ItemSeparatorComponent={() => <lng-view style={{ w: 20, h: 1 }} />}
+      contentContainerStyle={{ paddingHorizontal: 25 }}
+      style={{ w: 1670, h: 1080 }}
       renderItem={renderItem}
       data={items}
     />

@@ -5,18 +5,14 @@ import {
   type Stage,
   type TextureMap,
 } from '@lightningjs/renderer';
-import {
-  CanvasCoreRenderer,
-  CanvasTextRenderer,
-} from '@lightningjs/renderer/canvas';
-import {
-  SdfTextRenderer,
-  WebGlCoreRenderer,
-} from '@lightningjs/renderer/webgl';
+import { CanvasCoreRenderer, CanvasTextRenderer } from '@lightningjs/renderer/canvas';
+import { SdfTextRenderer, WebGlCoreRenderer } from '@lightningjs/renderer/webgl';
 import type { ComponentType, Context, ReactNode } from 'react';
 import { createContext, createElement } from 'react';
 import createReconciler, { type Reconciler } from 'react-reconciler';
+
 import type { LightningTextElement } from '../element/LightningTextElement';
+import type { FocusManager } from '../focus/FocusManager';
 import type { LightningElement } from '../types';
 import { traceWrap } from '../utils/traceWrap';
 import { createHostConfig, type ReconcilerContainer } from './createHostConfig';
@@ -25,9 +21,22 @@ import type { Plugin } from './Plugin';
 // https://github.com/lightning-js/devtools/blob/main/src/types/globals.d.ts
 declare global {
   interface Window {
-    __LIGHTNINGJS_DEVTOOLS__?: {
-      renderer: RendererMain;
-      features?: string[];
+    __LIGHTNINGJS_DEVTOOLS_HOOK__?: {
+      config?: {
+        renderer?: RendererMain;
+        focusManager?: FocusManager<LightningElement>;
+        features?: string[];
+      };
+      injected?: boolean;
+      inject?: () => Promise<void>;
+    };
+  }
+}
+
+declare module 'react-reconciler' {
+  interface Fiber {
+    _debugInfo?: {
+      isLngNode?: boolean;
     };
   }
 }
@@ -53,10 +62,7 @@ export type RenderOptions = Omit<
 };
 
 export type LightningRoot = {
-  render(
-    component: ReactNode | ComponentType<unknown>,
-    callback?: () => void,
-  ): void;
+  render(component: ReactNode | ComponentType<unknown>, callback?: () => void): void;
   unmount(): void;
   configure(): void;
   renderer: RendererMain;
@@ -99,14 +105,15 @@ export async function createRoot(
   };
 
   // Don't use the lightning inspector, we have our own.
-  const { fonts, useCanvas, includeCanvasFontRenderer, ...finalOptions } =
-    allOptions;
+  const { fonts, useCanvas, includeCanvasFontRenderer, ...finalOptions } = allOptions;
 
   const fontEngines: RendererMainSettings['fontEngines'] = [];
   let renderEngine: RendererMainSettings['renderEngine'];
+  /* oxlint-disable typescript-eslint/consistent-type-imports -- typeof import() is the only way to type dynamic imports */
   let shaders:
     | typeof import('@lightningjs/renderer/webgl/shaders')
     | typeof import('@lightningjs/renderer/canvas/shaders');
+  /* oxlint-enable typescript-eslint/consistent-type-imports */
 
   if (useCanvas) {
     renderEngine = CanvasCoreRenderer;
@@ -133,13 +140,6 @@ export async function createRoot(
     },
     target,
   );
-
-  if (import.meta.env.DEV) {
-    window.__LIGHTNINGJS_DEVTOOLS__ = {
-      renderer,
-      features: ['react-lightning'],
-    };
-  }
 
   for (const font of fonts) {
     const { type, ...options } = font;
@@ -172,10 +172,7 @@ export async function createRoot(
 
   if (finalOptions.textures) {
     for (const [key, textureType] of Object.entries(finalOptions.textures)) {
-      renderer.stage.txManager.registerTextureType(
-        key as keyof TextureMap,
-        textureType,
-      );
+      renderer.stage.txManager.registerTextureType(key as keyof TextureMap, textureType);
     }
   }
 
@@ -193,13 +190,17 @@ export async function createRoot(
     }
 
     reconciler = createReconciler(hostConfig);
+
+    reconciler.injectIntoDevTools({
+      bundleType: import.meta.env.DEV ? 1 : 0,
+      version: '0.4.0',
+      rendererPackageName: '@plextv/react-lightning',
+    });
   }
 
   await Promise.all([
     import('../shim/resizeObserverShim'),
-    ...(finalOptions.plugins?.map?.((plugin) =>
-      plugin.init?.(renderer, reconciler),
-    ) ?? []),
+    ...(finalOptions.plugins?.map?.((plugin) => plugin.init?.(renderer, reconciler)) ?? []),
   ]);
 
   const root = reconciler.createContainer(
@@ -216,7 +217,6 @@ export async function createRoot(
     (error) => console.error(error),
     (error) => console.error(error),
     () => {},
-    null,
   );
 
   const lngRoot: LightningRoot = {

@@ -1,19 +1,16 @@
-import type { LightningElementStyle } from '@plextv/react-lightning';
 import { EventEmitter } from 'tseep';
+
+import type { LightningElementStyle } from '@plextv/react-lightning';
+
 import { NodeOperations } from './types/NodeOperations';
+import { isFlexStyleProp } from './util/isFlexStyleProp';
 import { SimpleDataView } from './util/SimpleDataView';
 import { toSerializableValue } from './util/toSerializableValue';
 import Worker from './worker?worker&inline';
 import type { YogaManager, YogaManagerEvents } from './YogaManager';
 
-const DELAY_DURATION = 1;
-
-// biome-ignore lint/suspicious/noExplicitAny: Basic type for function signatures
+// oxlint-disable-next-line typescript/no-explicit-any -- Basic type for function signatures
 type AnyFunc = (...args: any[]) => any;
-// biome-ignore lint/suspicious/noExplicitAny: We don't care about the first parameter type here
-type ParametersExceptFirst<T> = T extends (first: any, ...args: infer U) => any
-  ? U
-  : never;
 
 export type Workerized<T> = {
   [K in keyof T]: T[K] extends AnyFunc
@@ -23,27 +20,30 @@ export type Workerized<T> = {
     : never;
 };
 
-function delay<T extends (...args: unknown[]) => void | Promise<void>>(
-  fn: T,
-  delay: number,
-): T {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
+/**
+ * Coalesces calls within a sync task — runs `fn` once at the end of the
+ * current sync code with the latest args. Uses a microtask, not setTimeout,
+ * because the timer's 1ms+ minimum breaks coalescing during a React commit.
+ */
+function debounceMicrotask<T extends (...args: unknown[]) => void | Promise<void>>(fn: T): T {
+  let scheduled = false;
   let latestArgs: unknown[];
 
-  const delayedFn = function (this: unknown, ...args: unknown[]) {
+  const debouncedFn = function (this: unknown, ...args: unknown[]) {
     latestArgs = args;
 
-    if (timeout) {
+    if (scheduled) {
       return;
     }
 
-    timeout = setTimeout(() => {
-      timeout = null;
+    scheduled = true;
+    queueMicrotask(() => {
+      scheduled = false;
       fn.apply(this, latestArgs);
-    }, delay);
+    });
   };
 
-  return delayedFn as T;
+  return debouncedFn as T;
 }
 
 function wrapWorker<T>(worker: Worker): Workerized<T> {
@@ -52,26 +52,36 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
   let _stylesToSend: Record<number, Partial<LightningElementStyle>> = {};
   let _numStylesToSend = 0;
   let _needsRender = false;
-  const _childOperations = new SimpleDataView(
-    undefined,
-    undefined,
-    flushChildOperations,
-  );
-  const _sizeRequests = new SimpleDataView(
-    undefined,
-    undefined,
-    flushSizeRequests,
-  );
-  let _sizeRequestPromise: Promise<void> | null = null;
+  const _childOperations = new SimpleDataView(undefined, undefined, _onChildOpsOverflow);
+
+  /**
+   * Overflow flush is nodeOps-only — combining pending styles with a
+   * partial nodeOps batch would land styles before the remaining nodeOps,
+   * targeting nodes that don't exist yet ("node not found" warnings).
+   */
+  function _onChildOpsOverflow(filledBuffer: ArrayBuffer) {
+    worker.postMessage(
+      {
+        method: 'nodeOperations',
+        args: [filledBuffer],
+      },
+      [filledBuffer],
+    );
+  }
 
   function flushSendStyles() {
-    if (Object.keys(_stylesToSend).length === 0) {
+    // Cheap counter check instead of `Object.keys(_stylesToSend).length` —
+    // the latter walks every key in the record on each call.
+    if (_numStylesToSend === 0) {
       return;
     }
 
-    // If we need to send styles, make sure we send any pending
-    // child operations first
-    flushChildOperations();
+    // Combine with pending nodeOps — collapses two postMessages into one.
+    if (_childOperations.offset > 0) {
+      _flushBothInternal();
+
+      return;
+    }
 
     worker.postMessage({
       method: 'applyStyles',
@@ -83,7 +93,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     _numStylesToSend = 0;
   }
 
-  const queueSendStyles = delay(flushSendStyles, DELAY_DURATION);
+  const queueSendStyles = debounceMicrotask(flushSendStyles);
 
   function applyStyle(
     elementId: number,
@@ -99,9 +109,16 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
         _stylesToSend[elementId] = styleToSend;
       }
 
-      // Add style props if they're serializable
-      for (const [key, value] of Object.entries(style)) {
-        const serializedValue = toSerializableValue(key, value);
+      // `for...in` skips Object.entries' tuple allocation — hot path on
+      // every applyStyle. Filter non-flex keys here so we don't serialize
+      // them, ship them across postMessage, and let the worker re-filter.
+      for (const key in style) {
+        if (!isFlexStyleProp(key)) {
+          continue;
+        }
+
+        // oxlint-disable-next-line typescript/no-explicit-any -- intentional: style values can be many shapes; toSerializableValue guards
+        const serializedValue = toSerializableValue(key, (style as any)[key]);
 
         if (serializedValue != null) {
           // @ts-expect-error
@@ -109,6 +126,13 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
         }
       }
     } else {
+      // Existence check is required — `applyStyle(id, null)` fires from
+      // childRemoved regardless of whether anything was buffered, and a
+      // counter underflow breaks the > 50 / === 0 thresholds below.
+      if (!_stylesToSend[elementId]) {
+        return;
+      }
+
       delete _stylesToSend[elementId];
       _numStylesToSend--;
     }
@@ -116,7 +140,6 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     _needsRender ||= !skipRender;
 
     if (_numStylesToSend > 50) {
-      // Flush early if the object gets too large
       flushSendStyles();
     } else {
       queueSendStyles();
@@ -128,28 +151,95 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
 
     if (buffer.byteLength === 0) {
       return;
-    } else {
-      worker.postMessage(
-        {
-          method: 'nodeOperations',
-          args: [buffer],
-        },
-        [buffer],
-      );
     }
+
+    // Combine with pending styles if any. See `_flushBothInternal`.
+    if (_numStylesToSend > 0) {
+      _flushBothInternal();
+
+      return;
+    }
+
+    worker.postMessage(
+      {
+        method: 'nodeOperations',
+        args: [buffer],
+      },
+      [buffer],
+    );
 
     _childOperations.reset();
   }
 
-  const queueSendNodeOperations = delay(flushChildOperations, DELAY_DURATION);
+  /**
+   * Single 'flushBoth' postMessage — worker applies nodeOps then styles,
+   * preserving the causal ordering. Caller must have verified BOTH queues
+   * have data; this function blindly transfers and clears.
+   */
+  function _flushBothInternal() {
+    const buffer = _childOperations.buffer;
+
+    worker.postMessage(
+      {
+        method: 'flushBoth',
+        args: [buffer, _stylesToSend, !_needsRender],
+      },
+      [buffer],
+    );
+
+    _childOperations.reset();
+    _stylesToSend = {};
+    _numStylesToSend = 0;
+    _needsRender = false;
+  }
+
+  const queueSendNodeOperations = debounceMicrotask(flushChildOperations);
+
+  // Coalesce N synchronous queueRender calls into one postMessage —
+  // unmount cascades otherwise produce ~2 messages per destroyed node.
+  let _wantsRender = false;
+  let _renderElementId = 0;
+  let _renderForce = false;
+
+  function flushRender() {
+    if (!_wantsRender) {
+      return;
+    }
+
+    // Capture before flushSendStyles resets _needsRender. When applyStyles
+    // ships with skipRender=false the worker auto-renders, so the explicit
+    // queueRender below would be redundant.
+    const willAutoRender = _numStylesToSend > 0 && _needsRender;
+
+    flushChildOperations();
+    flushSendStyles();
+
+    if (!willAutoRender) {
+      worker.postMessage({
+        method: 'queueRender',
+        args: [_renderElementId, _renderForce],
+      });
+    }
+
+    _wantsRender = false;
+    _renderElementId = 0;
+    _renderForce = false;
+  }
+
+  const queueRenderDrain = debounceMicrotask(flushRender);
 
   function nodeOperation(
-    method: 'addNode' | 'removeNode' | 'addChildNode',
+    method:
+      | 'addNode'
+      | 'removeNode'
+      | 'addChildNode'
+      | 'detachChildNode'
+      | 'addIndependentRoot'
+      | 'removeIndependentRoot',
     elementOrParentId: number,
     childId?: number,
     index?: number,
   ) {
-    // Batch operations into a buffer for quick transfers and less postMessage calls
     switch (method) {
       case 'addNode':
         _childOperations.writeUint8(NodeOperations.AddNode);
@@ -159,17 +249,21 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
         _childOperations.writeUint8(NodeOperations.RemoveNode);
         _childOperations.writeUint32(elementOrParentId);
         break;
+      case 'addIndependentRoot':
+        _childOperations.writeUint8(NodeOperations.AddIndependentRoot);
+        _childOperations.writeUint32(elementOrParentId);
+        break;
+      case 'removeIndependentRoot':
+        _childOperations.writeUint8(NodeOperations.RemoveIndependentRoot);
+        _childOperations.writeUint32(elementOrParentId);
+        break;
       case 'addChildNode':
         if (childId === undefined) {
-          throw new Error(
-            'Child ID must be provided for addChildNode operation',
-          );
+          throw new Error('Child ID must be provided for addChildNode operation');
         }
 
         _childOperations.writeUint8(
-          index === undefined
-            ? NodeOperations.AddChildNode
-            : NodeOperations.AddChildNodeAtIndex,
+          index === undefined ? NodeOperations.AddChildNode : NodeOperations.AddChildNodeAtIndex,
         );
         _childOperations.writeUint32(elementOrParentId);
         _childOperations.writeUint32(childId);
@@ -178,6 +272,15 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
           _childOperations.writeUint32(index);
         }
         break;
+      case 'detachChildNode':
+        if (childId === undefined) {
+          throw new Error('Child ID must be provided for detachChildNode operation');
+        }
+
+        _childOperations.writeUint8(NodeOperations.DetachChildNode);
+        _childOperations.writeUint32(elementOrParentId);
+        _childOperations.writeUint32(childId);
+        break;
       default:
         throw new Error(`Unknown node operation: ${method}`);
     }
@@ -185,93 +288,13 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     queueSendNodeOperations();
   }
 
-  function flushSizeRequests() {
-    if (_sizeRequestPromise) {
-      return _sizeRequestPromise;
-    }
-
-    const buffer = _sizeRequests.buffer;
-
-    if (buffer.byteLength === 0) {
-      return;
-    }
-
-    _sizeRequestPromise = new Promise((resolve, reject) => {
-      const id = getId();
-
-      _callees[id] = [
-        (buffer: ArrayBuffer) => {
-          const dataView = new SimpleDataView(buffer);
-
-          while (dataView.hasSpace(4)) {
-            const callbackId = dataView.readUint32();
-            const size = dataView.readUint32();
-
-            const callee = _callees[callbackId];
-
-            if (!callee) {
-              console.error(
-                `No handler found for size request id: ${callbackId}`,
-              );
-              continue;
-            }
-
-            const [resolveCall] = callee;
-
-            delete _callees[callbackId];
-            resolveCall(size === 0 ? null : size);
-          }
-
-          _sizeRequestPromise = null;
-          resolve();
-        },
-        () => {
-          _sizeRequestPromise = null;
-          reject();
-        },
-      ];
-
-      worker.postMessage(
-        {
-          id,
-          method: 'getClampedSize',
-          args: [buffer],
-        },
-        [buffer],
-      );
-
-      _sizeRequests.reset();
-    });
-  }
-
-  const queueSendSizeRequests = delay(flushSizeRequests, DELAY_DURATION);
-
-  function getClampedSize(elementId: number) {
-    const callbackId = getId();
-
-    _sizeRequests.writeUint32(callbackId);
-    _sizeRequests.writeUint32(elementId);
-
-    queueSendSizeRequests();
-
-    return new Promise((resolve, reject) => {
-      _callees[callbackId] = [
-        (size: number) => {
-          resolve(size === -1 ? null : size);
-        },
-        reject,
-      ];
-    });
-  }
-
-  worker.onmessage = (
-    event: MessageEvent<{ id: string; result?: unknown; error?: string }>,
-  ) => {
+  worker.onmessage = (event: MessageEvent<{ id: string; result?: unknown; error?: string }>) => {
     const { id, result, error } = event.data;
 
     if (id === 'render') {
       // Special case for render updates
       _eventEmitter.emit('render', result as ArrayBuffer);
+
       return;
     }
 
@@ -279,6 +302,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
 
     if (!callee) {
       console.error(`No handler found for worker message id: ${id}`);
+
       return;
     }
 
@@ -293,47 +317,45 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     }
   };
 
-  // @ts-expect-error
-  const proxy: Workerized<T> = new Proxy(() => {}, {
-    get(_, prop) {
-      if (typeof prop !== 'string') {
-        return undefined;
-      }
+  // Used by `init` only — every other call is fire-and-forget on the
+  // buffered pipeline. Flushes pending ops/styles for causal ordering.
+  function _awaitable(method: string, args: unknown[]): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      const id = getId();
 
-      // Event handlers like 'on' are not wrapped
-      if (prop === 'on') {
-        return _eventEmitter.on.bind(_eventEmitter);
-      } else if (prop === 'off') {
-        return _eventEmitter.off.bind(_eventEmitter);
-      } else if (prop === 'applyStyle') {
-        // Special case for applyStyle
-        return applyStyle;
-      } else if (
-        prop === 'addNode' ||
-        prop === 'removeNode' ||
-        prop === 'addChildNode'
-      ) {
-        return (...args: ParametersExceptFirst<typeof nodeOperation>) =>
-          nodeOperation(prop, ...args);
-      } else if (prop === 'getClampedSize') {
-        return getClampedSize;
-      } else if (prop === 'then' || prop === 'catch' || prop === 'finally') {
-        // Ignore Promise methods
-        return undefined;
-      }
+      _callees[id] = [resolve, reject];
 
-      return (...args: unknown[]) =>
-        new Promise((resolve, reject) => {
-          const id = getId();
+      flushChildOperations();
+      flushSendStyles();
 
-          _callees[id] = [resolve, reject];
+      worker.postMessage({ id, method, args });
+    });
+  }
 
-          worker.postMessage({ id, method: prop, args });
-        });
+  // Pre-bound methods instead of a Proxy — Proxy.get + closure allocation
+  // per node-op call was measurable self-time in VL recycle bursts.
+  const proxy = {
+    on: _eventEmitter.on.bind(_eventEmitter),
+    off: _eventEmitter.off.bind(_eventEmitter),
+    applyStyle,
+    addNode: (elementId: number) => nodeOperation('addNode', elementId),
+    removeNode: (elementId: number) => nodeOperation('removeNode', elementId),
+    addChildNode: (parentId: number, childId: number, index?: number) =>
+      nodeOperation('addChildNode', parentId, childId, index),
+    detachChildNode: (parentId: number, childId: number) =>
+      nodeOperation('detachChildNode', parentId, childId),
+    queueRender: (elementId: number, force?: boolean) => {
+      _wantsRender = true;
+      _renderElementId = elementId;
+      _renderForce = !!force;
+      queueRenderDrain();
     },
-  });
+    addIndependentRoot: (elementId: number) => nodeOperation('addIndependentRoot', elementId),
+    removeIndependentRoot: (elementId: number) => nodeOperation('removeIndependentRoot', elementId),
+    init: (yogaOptions?: unknown) => _awaitable('init', [yogaOptions]),
+  };
 
-  return proxy;
+  return proxy as unknown as Workerized<T>;
 }
 
 let count = 0;
@@ -341,5 +363,4 @@ function getId(): number {
   return ++count;
 }
 
-export default (): Workerized<YogaManager> =>
-  wrapWorker<YogaManager>(new Worker());
+export default (): Workerized<YogaManager> => wrapWorker<YogaManager>(new Worker());

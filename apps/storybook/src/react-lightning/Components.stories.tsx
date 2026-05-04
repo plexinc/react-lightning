@@ -15,9 +15,7 @@ export const Primitives = () => (
 
 export const Styling = () => (
   <lng-view style={{ color: 0xff00ff55, w: 500, h: 100, borderRadius: 20 }}>
-    <lng-text
-      style={{ color: 0xffff00ff, fontSize: 50, mount: 0.5, x: 250, y: 50 }}
-    >
+    <lng-text style={{ color: 0xffff00ff, fontSize: 50, mount: 0.5, x: 250, y: 50 }}>
       I've got some style
     </lng-text>
   </lng-view>

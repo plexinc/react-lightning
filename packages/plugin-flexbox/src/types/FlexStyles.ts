@@ -10,12 +10,7 @@ export type AlignContent =
   | 'space-evenly'
   | 'stretch';
 
-export type AlignItems =
-  | 'baseline'
-  | 'center'
-  | 'flex-end'
-  | 'flex-start'
-  | 'stretch';
+export type AlignItems = 'baseline' | 'center' | 'flex-end' | 'flex-start' | 'stretch';
 
 export type JustifyContent =
   | 'center'

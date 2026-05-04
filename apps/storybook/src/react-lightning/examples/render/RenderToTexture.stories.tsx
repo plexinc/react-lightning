@@ -40,10 +40,7 @@ const content = (
 );
 
 export const WithRtt = ({ rtt }: Props) => (
-  <lng-view
-    style={{ width: 600, height: 400, color: 0xffffffff, borderRadius: 20 }}
-    rtt={rtt}
-  >
+  <lng-view style={{ width: 600, height: 400, color: 0xffffffff, borderRadius: 20 }} rtt={rtt}>
     {content}
   </lng-view>
 );
@@ -53,10 +50,7 @@ WithRtt.args = {
 };
 
 export const WithoutRtt = ({ rtt }: Props) => (
-  <lng-view
-    style={{ width: 600, height: 400, color: 0xffffffff, borderRadius: 20 }}
-    rtt={rtt}
-  >
+  <lng-view style={{ width: 600, height: 400, color: 0xffffffff, borderRadius: 20 }} rtt={rtt}>
     {content}
   </lng-view>
 );

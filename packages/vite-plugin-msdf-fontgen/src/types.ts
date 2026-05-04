@@ -74,10 +74,7 @@ export interface Options {
 
 type RequiredProps<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: T[P] };
 
-export type OptionsInputArg = RequiredProps<
-  Partial<OptionsInput>,
-  'src' | 'dest'
->;
+export type OptionsInputArg = RequiredProps<Partial<OptionsInput>, 'src' | 'dest'>;
 
 export type OptionsArg = Omit<Partial<Options>, 'inputs'> & {
   inputs: OptionsInputArg[];

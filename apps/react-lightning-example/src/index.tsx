@@ -1,17 +1,21 @@
-import { Canvas, type RenderOptions } from '@plextv/react-lightning';
-import { plugin as cssTransformPlugin } from '@plextv/react-lightning-plugin-css-transform';
-import { plugin as flexPlugin } from '@plextv/react-lightning-plugin-flexbox';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+
+import { Canvas, type RenderOptions } from '@plextv/react-lightning';
+import { plugin as cssTransformPlugin } from '@plextv/react-lightning-plugin-css-transform';
+import { FlexRoot, plugin as flexPlugin } from '@plextv/react-lightning-plugin-flexbox';
+
 import { keyMap } from './keyMap';
 import { AnimationPage } from './pages/AnimationPage';
 import { BrowsePage } from './pages/BrowsePage';
 import { LayoutPage } from './pages/LayoutPage';
+import { NestedListPage } from './pages/NestedListPage';
 import { Page60 } from './pages/Page60';
 import { PosterPage } from './pages/PosterPage';
 import { ShaderPage } from './pages/ShaderPage';
 import { TexturePage } from './pages/TexturePage';
 import { TransformsPage } from './pages/TransformsPage';
+import { VirtualListPage } from './pages/VirtualListPage';
 import { MyCustomShader } from './shaders/MyCustomShader';
 import { MyCustomTexture } from './shaders/MyCustomTexture';
 
@@ -23,6 +27,10 @@ const router = createBrowserRouter([
   {
     path: '/flex-test',
     element: <LayoutPage />,
+  },
+  {
+    path: '/virtual-list',
+    element: <VirtualListPage />,
   },
   {
     path: '/poster',
@@ -43,6 +51,10 @@ const router = createBrowserRouter([
   {
     path: '/transforms',
     element: <TransformsPage />,
+  },
+  {
+    path: '/nested-list',
+    element: <NestedListPage />,
   },
   {
     path: '/page60',
@@ -83,7 +95,9 @@ const options: RenderOptions = {
 
 const App = () => (
   <Canvas keyMap={keyMap} options={options}>
-    <RouterProvider router={router} />
+    <FlexRoot style={{ w: 1920, h: 1080 }}>
+      <RouterProvider router={router} />
+    </FlexRoot>
   </Canvas>
 );
 

@@ -15,9 +15,7 @@ export function withSequence(
   const returnAnimation = animations[0];
 
   if (!returnAnimation) {
-    throw new Error(
-      '[Reanimated] withSequence requires at least one animation.',
-    );
+    throw new Error('[Reanimated] withSequence requires at least one animation.');
   }
 
   return typeof returnAnimation === 'function'

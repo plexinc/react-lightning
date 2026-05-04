@@ -1,4 +1,5 @@
 import { defineConfig, type UserConfig } from 'tsdown';
+
 // @ts-expect-error: Needed for unrun to resolve this module correctly
 import baseConfig from './tsdown.config.ts';
 
@@ -7,7 +8,9 @@ const config: UserConfig = defineConfig({
   format: 'esm',
   target: 'node22',
   platform: 'node',
-  external: [/^node:.*/],
+  deps: {
+    neverBundle: [/^node:.*/],
+  },
   exports: {
     devExports: false,
   },

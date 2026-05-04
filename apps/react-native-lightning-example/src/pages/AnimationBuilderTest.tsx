@@ -1,5 +1,3 @@
-import { Button } from '@plextv/react-native-lightning';
-import { Column, Row } from '@plextv/react-native-lightning-components';
 import { type FC, useMemo, useState } from 'react';
 import Animated, {
   type EntryOrExitLayoutType,
@@ -22,6 +20,9 @@ import Animated, {
   SlideOutRight as SlideOutRightBuilder,
   SlideOutUp as SlideOutUpBuilder,
 } from 'react-native-reanimated';
+
+import { Button } from '@plextv/react-native-lightning';
+import { Column, Row } from '@plextv/react-native-lightning-components';
 
 type AnimatedProps = {
   visible: boolean;

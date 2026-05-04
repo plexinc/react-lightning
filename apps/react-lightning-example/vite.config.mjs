@@ -1,17 +1,20 @@
-import fontGen from '@plextv/vite-plugin-msdf-fontgen';
+import babel from '@rolldown/plugin-babel';
 import legacy from '@vitejs/plugin-legacy';
-import react from '@vitejs/plugin-react';
-import tsconfigPaths from 'vite-tsconfig-paths';
+import react, { reactCompilerPreset } from '@vitejs/plugin-react';
+
+import fontGen from '@plextv/vite-plugin-msdf-fontgen';
 
 /**
  * @type {import('vite').InlineConfig}
  */
 const config = {
   plugins: [
-    tsconfigPaths({
-      skip: (dir) => dir.includes('app-template'),
-    }),
     react(),
+    // React Compiler. @vitejs/plugin-react v6 dropped its built-in Babel
+    // pipeline in favour of oxc, so the legacy `react({ babel: { plugins: [...] } })`
+    // config is silently ignored. The compiler runs through @rolldown/plugin-babel
+    // with the preset exposed by @vitejs/plugin-react.
+    babel({ presets: [reactCompilerPreset()] }),
     fontGen({
       inputs: [
         {

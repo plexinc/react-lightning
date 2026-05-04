@@ -1,5 +1,5 @@
 export class EventEmitter<
-  // biome-ignore lint/suspicious/noExplicitAny: TODO
+  // oxlint-disable-next-line typescript/no-explicit-any -- TODO
   T extends Record<keyof T, (...args: any) => any>,
 > {
   private _eventListeners: Partial<Record<keyof T, Set<T[keyof T]>>> = {};
@@ -12,6 +12,7 @@ export class EventEmitter<
   public on<K extends keyof T>(name: K, listener: T[K]): () => void {
     if (!listener) {
       console.warn('[EventEmitter] Invalid argument specified as a listener');
+
       return () => {
         /* no-op */
       };
@@ -73,10 +74,7 @@ export class EventEmitter<
     }
   }
 
-  public async asyncEmit<K extends keyof T>(
-    name: K,
-    ...args: Parameters<T[K]>
-  ): Promise<void> {
+  public async asyncEmit<K extends keyof T>(name: K, ...args: Parameters<T[K]>): Promise<void> {
     const listeners = this._eventListeners[name];
     const promises: Promise<void>[] = [];
 

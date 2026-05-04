@@ -4,7 +4,4 @@ import type {
   LayoutAnimationFunction,
 } from 'react-native-reanimated-original';
 
-export type ReanimatedAnimation =
-  | ILayoutAnimationBuilder
-  | LayoutAnimationFunction
-  | Keyframe;
+export type ReanimatedAnimation = ILayoutAnimationBuilder | LayoutAnimationFunction | Keyframe;

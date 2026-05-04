@@ -5,9 +5,7 @@ import {
 } from '../types';
 import { isValidTextChild } from './isValidTextChild';
 
-function isIntlObject(
-  obj: unknown,
-): obj is { props: { defaultMessage?: string } } {
+function isIntlObject(obj: unknown): obj is { props: { defaultMessage?: string } } {
   return (
     typeof obj === 'object' &&
     obj !== null &&
@@ -42,14 +40,23 @@ export function mapReactPropsToLightning(
 
           if (isValidTextChild(children)) {
             textProps.text = String(children);
-          } else if (
-            Array.isArray(children) &&
-            children.every((child) => isValidTextChild(child))
-          ) {
-            textProps.text = children.reduce<string>(
-              (acc, child) => acc + String(child),
-              '',
-            );
+          } else if (Array.isArray(children)) {
+            // Single-pass: validate and concatenate simultaneously
+            let text = '';
+            let allValid = true;
+
+            for (let i = 0; i < children.length; i++) {
+              if (isValidTextChild(children[i])) {
+                text += String(children[i]);
+              } else {
+                allValid = false;
+                break;
+              }
+            }
+
+            if (allValid) {
+              textProps.text = text;
+            }
           } else if (isIntlObject(children)) {
             textProps.text = children.props.defaultMessage;
           } else if (children) {
@@ -65,7 +72,7 @@ export function mapReactPropsToLightning(
         break;
 
       default:
-        // biome-ignore lint/suspicious/noExplicitAny: TODO
+        // oxlint-disable-next-line typescript/no-explicit-any -- TODO
         mappedProps[prop] = props[prop] as any;
         break;
     }

@@ -1,4 +1,3 @@
-import { Column } from '@plextv/react-native-lightning-components';
 import type { Meta } from '@storybook/react-vite';
 import {
   SlideInDown,
@@ -10,6 +9,9 @@ import {
   SlideOutRight,
   SlideOutUp,
 } from 'react-native-reanimated';
+
+import { Column } from '@plextv/react-native-lightning-components';
+
 import { AnimationSampler } from './AnimationSampler';
 
 export default {

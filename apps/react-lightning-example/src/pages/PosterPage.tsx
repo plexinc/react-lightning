@@ -1,5 +1,7 @@
-import { Column, Row } from '@plextv/react-lightning-components';
 import type { FC } from 'react';
+
+import { Column, Row } from '@plextv/react-lightning-components';
+
 import Button from '../components/Button';
 
 export const PosterPage: FC = () => {

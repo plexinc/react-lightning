@@ -1,6 +1,8 @@
+import { type FC, useCallback, useState } from 'react';
+
 import type { LightningElement } from '@plextv/react-lightning';
 import { Column } from '@plextv/react-lightning-components';
-import { type FC, useCallback, useState } from 'react';
+
 import { useHubsData } from '../../../react-lightning-example/src/api/useHubsData';
 import { HubRow } from '../../../react-lightning-example/src/components/HubRow';
 
@@ -9,9 +11,7 @@ export const SimpleTest: FC = () => {
   const [verticalOffset, setVerticalOffset] = useState(0);
 
   const handleFocus = useCallback((element: LightningElement) => {
-    setVerticalOffset(
-      Math.min(0, -element.node.y - element.node.h / 2 + 1080 / 2),
-    );
+    setVerticalOffset(Math.min(0, -element.node.y - element.node.h / 2 + 1080 / 2));
   }, []);
 
   if (isLoading) {

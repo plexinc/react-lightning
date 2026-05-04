@@ -1,5 +1,7 @@
-import { Column, Row } from '@plextv/react-lightning-components';
 import type { Meta } from '@storybook/react-vite';
+
+import { Column, Row } from '@plextv/react-lightning-components';
+
 import Button from '../../../components/Button';
 
 export default {
@@ -23,17 +25,9 @@ export const SimpleFocusTree = () => {
 
   return (
     <Column key="root" focusable style={{ gap: 16 }}>
-      <Row
-        focusable
-        style={getStyle(0xff00ff20)}
-        focusedStyle={getFocusedStyle(0xff00ff40)}
-      >
+      <Row focusable style={getStyle(0xff00ff20)} focusedStyle={getFocusedStyle(0xff00ff40)}>
         <Button>Top-A</Button>
-        <Column
-          focusable
-          style={getStyle(0xffff0088)}
-          focusedStyle={getFocusedStyle(0xffff00aa)}
-        >
+        <Column focusable style={getStyle(0xffff0088)} focusedStyle={getFocusedStyle(0xffff00aa)}>
           <lng-text style={textStyle}>Top-B</lng-text>
           <Row style={{ gap: 16 }}>
             <Button>Top-B-1</Button>
@@ -42,11 +36,7 @@ export const SimpleFocusTree = () => {
         </Column>
         <Button>Top-C</Button>
       </Row>
-      <Row
-        focusable
-        style={getStyle(0x00ffff20)}
-        focusedStyle={getFocusedStyle(0x00ffff40)}
-      >
+      <Row focusable style={getStyle(0x00ffff20)} focusedStyle={getFocusedStyle(0x00ffff40)}>
         <Button>Bottom-A</Button>
         <Button>Bottom-B</Button>
         <Button>Bottom-C</Button>

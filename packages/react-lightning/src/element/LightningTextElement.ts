@@ -1,4 +1,5 @@
 import type { INodeProps } from '@lightningjs/renderer';
+
 import {
   LightningElementType,
   type LightningTextElementProps,
@@ -16,7 +17,7 @@ export class LightningTextElement extends LightningViewElement<
     return LightningElementType.Text;
   }
 
-  public declare node: TextRendererNode<LightningTextElement>;
+  declare public node: TextRendererNode<LightningTextElement>;
 
   public override get isTextElement() {
     return true;

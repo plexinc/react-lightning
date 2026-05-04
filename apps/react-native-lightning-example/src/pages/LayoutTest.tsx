@@ -1,7 +1,8 @@
-import { focusable, type LightningImageElement } from '@plextv/react-lightning';
-import { Column, Row } from '@plextv/react-lightning-components';
 import type { FC, ForwardedRef } from 'react';
 import { useMemo } from 'react';
+
+import { focusable, type LightningImageElement } from '@plextv/react-lightning';
+import { Column, Row } from '@plextv/react-lightning-components';
 
 const RandomImage = focusable<{ autoFocus?: boolean }>(({ focused }, ref) => {
   const seed = useMemo(() => Math.random() * 10000, []);

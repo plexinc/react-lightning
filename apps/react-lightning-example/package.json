@@ -1,19 +1,18 @@
 {
   "name": "@plextv/react-lightning-example",
-  "description": "Sample implementation of @plextv/react-lightning in a React app",
   "version": "0.4.0",
-  "author": "Plex Inc.",
+  "private": true,
+  "description": "Sample implementation of @plextv/react-lightning in a React app",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
-  "packageManager": "pnpm@10.12.3",
   "type": "module",
-  "private": true,
   "scripts": {
     "build": "vite build",
     "clean": "del ./dist",
@@ -23,26 +22,33 @@
     "test:unit": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@lightningjs/renderer": "3.0.0-beta20",
+    "@lightningjs/renderer": "catalog:apps",
     "@plextv/react-lightning": "workspace:*",
     "@plextv/react-lightning-components": "workspace:*",
     "@plextv/react-lightning-plugin-css-transform": "workspace:*",
     "@plextv/react-lightning-plugin-flexbox": "workspace:*",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "react-router-dom": "7.12.0",
-    "swr": "2.3.8"
+    "react": "catalog:apps",
+    "react-dom": "catalog:apps",
+    "react-router-dom": "7.14.1",
+    "swr": "2.4.1"
   },
   "devDependencies": {
     "@plextv/vite-plugin-msdf-fontgen": "workspace:*",
     "@repo/configs": "workspace:*",
-    "@types/react": "19.2.8",
-    "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-legacy": "7.2.1",
-    "@vitejs/plugin-react": "5.1.2",
-    "vite-tsconfig-paths": "6.0.4"
+    "@rolldown/plugin-babel": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-legacy": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "babel-plugin-react-compiler": "catalog:"
   },
   "volta": {
     "extends": "../../package.json"
+  },
+  "packageManager": "pnpm@10.12.3",
+  "depcheck": {
+    "ignoreMatches": [
+      "babel-plugin-react-compiler"
+    ]
   }
 }

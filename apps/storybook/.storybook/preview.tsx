@@ -1,4 +1,5 @@
 import type { Preview } from '@storybook/react-vite';
+
 import { StorybookDecorator } from '../src/components/StorybookDecorator';
 import theme from './theme';
 

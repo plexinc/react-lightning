@@ -5,6 +5,7 @@ import type {
   WithSpringConfig,
   WithTimingConfig,
 } from 'react-native-reanimated-original';
+
 import { AnimationType } from '../types/AnimationType';
 import { createSpringAnimation } from './spring';
 import { createTimingAnimation } from './timing';
@@ -32,9 +33,7 @@ export class AnimatedValue<TType extends AnimationType = AnimationType> {
     this.callback = callback;
   }
 
-  private _getLightningAnimationSettings(
-    config?: AnimationConfigType[TType],
-  ): AnimationSettings {
+  private _getLightningAnimationSettings(config?: AnimationConfigType[TType]): AnimationSettings {
     switch (this.type) {
       case AnimationType.Spring:
         return createSpringAnimation(config);

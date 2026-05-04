@@ -1,6 +1,8 @@
+import type { Meta } from '@storybook/react-vite';
+
 import { Row } from '@plextv/react-lightning-components';
 import flexboxLitePlugin from '@plextv/react-lightning-plugin-flexbox-lite';
-import type { Meta } from '@storybook/react-vite';
+
 import { StorybookDecorator } from '../components/StorybookDecorator';
 import {
   ColorPalette,
@@ -35,10 +37,7 @@ export default {
   title: 'Plugins/react-lightning-plugin-flexbox-lite/FlexBoxLite',
   decorators: [
     (Story) => (
-      <StorybookDecorator
-        story={Story}
-        canvasOptions={{ plugins: [flexboxLitePlugin()] }}
-      />
+      <StorybookDecorator story={Story} canvasOptions={{ plugins: [flexboxLitePlugin()] }} />
     ),
   ],
   argTypes: {

@@ -1,16 +1,19 @@
 {
   "name": "@plextv/react-lightning-components",
-  "description": "React components for react-lightning",
   "version": "0.4.0",
-  "author": "Plex Inc.",
+  "description": "React components for react-lightning",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
   "license": "MIT",
+  "author": "Plex Inc.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plexinc/react-lightning.git"
   },
-  "bugs": {
-    "url": "https://github.com/plexinc/react-lightning/issues/new"
-  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -19,36 +22,41 @@
     ".": "./src/index.ts",
     "./layout/Column": "./src/exports/layout/Column.tsx",
     "./layout/Row": "./src/exports/layout/Row.tsx",
+    "./lists/VirtualList": "./src/exports/lists/VirtualList.tsx",
     "./text/StyledText": "./src/exports/text/StyledText.tsx",
     "./util/FPSMonitor": "./src/exports/util/FPSMonitor.tsx",
     "./package.json": "./package.json"
   },
   "publishConfig": {
-    "provenance": true,
     "access": "public",
     "exports": {
       ".": {
-        "require": "./dist/index.cjs",
-        "import": "./dist/index.js"
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
       },
       "./layout/Column": {
-        "require": "./dist/exports/layout/Column.cjs",
-        "import": "./dist/exports/layout/Column.js"
+        "import": "./dist/exports/layout/Column.js",
+        "require": "./dist/exports/layout/Column.cjs"
       },
       "./layout/Row": {
-        "require": "./dist/exports/layout/Row.cjs",
-        "import": "./dist/exports/layout/Row.js"
+        "import": "./dist/exports/layout/Row.js",
+        "require": "./dist/exports/layout/Row.cjs"
+      },
+      "./lists/VirtualList": {
+        "import": "./dist/exports/lists/VirtualList.js",
+        "require": "./dist/exports/lists/VirtualList.cjs"
       },
       "./text/StyledText": {
-        "require": "./dist/exports/text/StyledText.cjs",
-        "import": "./dist/exports/text/StyledText.js"
+        "import": "./dist/exports/text/StyledText.js",
+        "require": "./dist/exports/text/StyledText.cjs"
       },
       "./util/FPSMonitor": {
-        "require": "./dist/exports/util/FPSMonitor.cjs",
-        "import": "./dist/exports/util/FPSMonitor.js"
+        "import": "./dist/exports/util/FPSMonitor.js",
+        "require": "./dist/exports/util/FPSMonitor.cjs"
       },
       "./package.json": "./package.json"
-    }
+    },
+    "provenance": true
   },
   "scripts": {
     "build": "tsdown --config-loader unrun",
@@ -57,17 +65,14 @@
     "check:types": "tsc --noEmit",
     "test:unit": "vitest run --passWithNoTests"
   },
-  "files": [
-    "dist"
-  ],
   "devDependencies": {
     "@repo/configs": "workspace:*",
-    "@types/react": "19.2.8"
+    "@types/react": "catalog:"
   },
   "peerDependencies": {
     "@plextv/react-lightning": "workspace:^",
     "@plextv/react-lightning-plugin-flexbox": "workspace:^",
-    "react": "^19.2.3"
+    "react": "catalog:"
   },
   "volta": {
     "extends": "../../package.json"

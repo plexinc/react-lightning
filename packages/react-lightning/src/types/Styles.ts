@@ -1,4 +1,5 @@
 import type { INodeProps, ITextNodeProps } from '@lightningjs/renderer';
+
 import type { Rect } from './Geometry';
 
 interface BorderStyleObject {
@@ -13,11 +14,10 @@ type RGBA = [r: number, g: number, b: number, a: number];
 // list exclusions, so if new lightning props get added, we immediately get
 // typing errors and know if new props are available.
 
-export interface LightningViewElementStyle
-  extends Omit<
-    Partial<INodeProps>,
-    'parent' | 'src' | 'shader' | 'data' | 'texture'
-  > {
+export interface LightningViewElementStyle extends Omit<
+  Partial<INodeProps>,
+  'parent' | 'src' | 'shader' | 'data' | 'texture'
+> {
   border?: BorderStyle;
   borderColor?: number;
   borderTop?: number;
@@ -40,11 +40,9 @@ export interface LightningViewElementStyle
 export interface LightningImageElementStyle extends LightningViewElementStyle {}
 
 export interface LightningTextElementStyle
-  extends LightningViewElementStyle,
-    Omit<
-      Partial<ITextNodeProps>,
-      'debug' | 'parent' | 'shader' | 'src' | 'text' | 'texture'
-    > {
+  extends
+    LightningViewElementStyle,
+    Omit<Partial<ITextNodeProps>, 'debug' | 'parent' | 'shader' | 'src' | 'text' | 'texture'> {
   shadow?: boolean;
   shadowColor?: RGBA | number;
   shadowOffsetX?: number;
