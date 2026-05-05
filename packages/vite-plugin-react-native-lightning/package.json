@@ -45,5 +45,8 @@
     "@rolldown/plugin-babel": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "vite": "catalog:"
+  },
+  "volta": {
+    "extends": "../../package.json"
   }
 }

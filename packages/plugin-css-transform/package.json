@@ -15,9 +15,7 @@
     "dist"
   ],
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.cts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": "./src/index.ts",
     "./package.json": "./package.json",
@@ -26,10 +24,7 @@
   "publishConfig": {
     "access": "public",
     "exports": {
-      ".": {
-        "import": "./dist/index.js",
-        "require": "./dist/index.cjs"
-      },
+      ".": "./dist/index.js",
       "./package.json": "./package.json",
       "./jsx": "./dist/types/jsx.d.ts"
     },

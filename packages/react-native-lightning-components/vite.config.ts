@@ -12,7 +12,7 @@ export default defineConfig((env) =>
       lib: {
         entry: 'src/exports/index.ts',
       },
-      rollupOptions: {
+      rolldownOptions: {
         output: {
           preserveModules: true,
           preserveModulesRoot: path.join('src', 'exports'),

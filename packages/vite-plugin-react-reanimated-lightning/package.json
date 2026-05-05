@@ -45,5 +45,8 @@
     "@plextv/react-lightning-plugin-reanimated": "workspace:^",
     "react-native-reanimated": "catalog:",
     "vite": "catalog:"
+  },
+  "volta": {
+    "extends": "../../package.json"
   }
 }

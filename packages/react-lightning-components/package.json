@@ -15,9 +15,7 @@
     "dist"
   ],
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.cts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": "./src/index.ts",
     "./layout/Column": "./src/exports/layout/Column.tsx",
@@ -30,30 +28,12 @@
   "publishConfig": {
     "access": "public",
     "exports": {
-      ".": {
-        "import": "./dist/index.js",
-        "require": "./dist/index.cjs"
-      },
-      "./layout/Column": {
-        "import": "./dist/exports/layout/Column.js",
-        "require": "./dist/exports/layout/Column.cjs"
-      },
-      "./layout/Row": {
-        "import": "./dist/exports/layout/Row.js",
-        "require": "./dist/exports/layout/Row.cjs"
-      },
-      "./lists/VirtualList": {
-        "import": "./dist/exports/lists/VirtualList.js",
-        "require": "./dist/exports/lists/VirtualList.cjs"
-      },
-      "./text/StyledText": {
-        "import": "./dist/exports/text/StyledText.js",
-        "require": "./dist/exports/text/StyledText.cjs"
-      },
-      "./util/FPSMonitor": {
-        "import": "./dist/exports/util/FPSMonitor.js",
-        "require": "./dist/exports/util/FPSMonitor.cjs"
-      },
+      ".": "./dist/index.js",
+      "./layout/Column": "./dist/exports/layout/Column.js",
+      "./layout/Row": "./dist/exports/layout/Row.js",
+      "./lists/VirtualList": "./dist/exports/lists/VirtualList.js",
+      "./text/StyledText": "./dist/exports/text/StyledText.js",
+      "./util/FPSMonitor": "./dist/exports/util/FPSMonitor.js",
       "./package.json": "./package.json"
     },
     "provenance": true
