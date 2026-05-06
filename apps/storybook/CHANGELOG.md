@@ -1,5 +1,20 @@
 # @plextv/react-lightning-storybook
 
+## 0.4.2
+
+### Patch Changes
+
+- 247d2e8: chore: Fix storybook builds
+- Updated dependencies [247d2e8]
+  - @plextv/react-native-lightning-components@0.4.2
+  - @plextv/react-lightning-components@0.4.2
+  - @plextv/react-native-lightning@0.4.2
+  - @plextv/react-lightning-plugin-css-transform@0.4.2
+  - @plextv/react-lightning-plugin-flexbox-lite@0.4.2
+  - @plextv/react-lightning-plugin-reanimated@0.4.2
+  - @plextv/react-lightning@0.4.2
+  - @plextv/react-lightning-plugin-flexbox@0.4.2
+
 ## 0.4.1
 
 ### Patch Changes

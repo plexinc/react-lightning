@@ -1,5 +1,13 @@
 # @plextv/vite-plugin-react-native-lightning
 
+## 0.4.3
+
+### Patch Changes
+
+- 247d2e8: chore: Fix missing volta extensions causing builds to fail
+- Updated dependencies [247d2e8]
+  - @plextv/react-native-lightning@0.4.2
+
 ## 0.4.2
 
 ### Patch Changes
