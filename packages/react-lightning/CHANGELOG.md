@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.4.2
+
+### Patch Changes
+
+- 247d2e8: chore: Remove .cjs from packages
+
 ## 0.4.1
 
 ### Patch Changes

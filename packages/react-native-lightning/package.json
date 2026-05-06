@@ -1,6 +1,6 @@
 {
   "name": "@plextv/react-native-lightning",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "@plextv/react-lightning implementation for react-native",
   "bugs": {
     "url": "https://github.com/plexinc/react-lightning/issues/new"

@@ -1,5 +1,16 @@
 # @plextv/react-lightning-example
 
+## 0.4.2
+
+### Patch Changes
+
+- 247d2e8: chore: Remove .cjs from packages
+- Updated dependencies [247d2e8]
+  - @plextv/react-lightning-components@0.4.2
+  - @plextv/react-lightning-plugin-css-transform@0.4.2
+  - @plextv/react-lightning@0.4.2
+  - @plextv/react-lightning-plugin-flexbox@0.4.2
+
 ## 0.4.1
 
 ### Patch Changes

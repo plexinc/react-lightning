@@ -1,5 +1,11 @@
 # @repo/configs
 
+## 0.0.3
+
+### Patch Changes
+
+- 247d2e8: chore: Remove .cjs from packages
+
 ## 0.0.2
 
 ### Patch Changes

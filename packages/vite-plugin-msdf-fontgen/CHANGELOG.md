@@ -1,5 +1,11 @@
 # @plextv/vite-plugin-msdf-fontgen
 
+## 1.3.7
+
+### Patch Changes
+
+- 247d2e8: chore: Fix missing volta extensions causing builds to fail
+
 ## 1.3.6
 
 ### Patch Changes

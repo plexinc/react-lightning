@@ -1,5 +1,14 @@
 # @plextv/vite-plugin-react-reanimated-lightning
 
+## 0.4.3
+
+### Patch Changes
+
+- 247d2e8: chore: Fix missing volta extensions causing builds to fail
+- 247d2e8: fix(reanimated-plugin): Fix reanimated plugin not replacing paths properly
+- Updated dependencies [247d2e8]
+  - @plextv/react-lightning-plugin-reanimated@0.4.2
+
 ## 0.4.2
 
 ### Patch Changes
