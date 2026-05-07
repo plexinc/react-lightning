@@ -34,7 +34,7 @@ describe('ViewabilityTracker', () => {
       getKey: (i) => String(i),
     });
 
-    tracker.update([0, 1, 2], 0, 250, false);
+    tracker.update([0, 1, 2], 0, 250);
 
     expect(onChange).toHaveBeenCalledTimes(1);
     const { viewableItems, changed } = getCallArgs(onChange, 0);
@@ -53,10 +53,10 @@ describe('ViewabilityTracker', () => {
       getKey: (i) => String(i),
     });
 
-    tracker.update([0, 1], 0, 300, false);
+    tracker.update([0, 1], 0, 300);
     onChange.mockClear();
 
-    tracker.update([0, 1], 0, 300, false);
+    tracker.update([0, 1], 0, 300);
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -73,7 +73,7 @@ describe('ViewabilityTracker', () => {
     });
 
     // Viewport 0–120: item 0 fully visible, item 1 only 20% visible
-    tracker.update([0, 1], 0, 120, false);
+    tracker.update([0, 1], 0, 120);
 
     const items = getCallArgs(onChange, 0).viewableItems;
     expect(items).toHaveLength(1);
@@ -93,7 +93,7 @@ describe('ViewabilityTracker', () => {
     });
 
     // Viewport 0–100, both items are 50px → each covers 50%
-    tracker.update([0, 1], 0, 100, false);
+    tracker.update([0, 1], 0, 100);
     expect(getCallArgs(onChange, 0).viewableItems).toHaveLength(2);
   });
 
@@ -109,11 +109,11 @@ describe('ViewabilityTracker', () => {
       getKey: (i) => String(i),
     });
 
-    tracker.update([0], 0, 200, false);
+    tracker.update([0], 0, 200);
     expect(onChange).not.toHaveBeenCalled();
 
     tracker.recordInteraction();
-    tracker.update([0], 0, 200, false);
+    tracker.update([0], 0, 200);
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
@@ -129,7 +129,7 @@ describe('ViewabilityTracker', () => {
       getKey: (i) => String(i),
     });
 
-    tracker.update([0], 0, 200, false);
+    tracker.update([0], 0, 200);
     expect(onChange).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(500);
@@ -148,9 +148,9 @@ describe('ViewabilityTracker', () => {
       getKey: (i) => String(i),
     });
 
-    tracker.update([0], 0, 200, false);
+    tracker.update([0], 0, 200);
     // Item leaves before timer fires
-    tracker.update([], 200, 200, false);
+    tracker.update([], 200, 200);
 
     vi.advanceTimersByTime(500);
     expect(onChange).not.toHaveBeenCalled();
@@ -167,11 +167,11 @@ describe('ViewabilityTracker', () => {
       getKey: (i) => String(i),
     });
 
-    tracker.update([0, 1], 0, 300, false);
+    tracker.update([0, 1], 0, 300);
     onChange.mockClear();
 
     // Only item 1 visible now
-    tracker.update([1], 100, 100, false);
+    tracker.update([1], 100, 100);
     const { changed } = getCallArgs(onChange, 0);
     const left = changed.find(
       (t: { index: number; isViewable: boolean }) => t.index === 0 && !t.isViewable,
@@ -192,8 +192,8 @@ describe('ViewabilityTracker', () => {
     });
 
     // Both items enter at t=0 — both timers start simultaneously
-    tracker.update([0], 0, 200, false);
-    tracker.update([0, 1], 0, 300, false);
+    tracker.update([0], 0, 200);
+    tracker.update([0, 1], 0, 300);
 
     // Both timers fire at t=500; each graduates its own item
     vi.advanceTimersByTime(500);
@@ -216,11 +216,11 @@ describe('ViewabilityTracker', () => {
     });
 
     // Item 0 enters at t=0
-    tracker.update([0], 0, 200, false);
+    tracker.update([0], 0, 200);
 
     // Item 1 enters at t=300
     vi.advanceTimersByTime(300);
-    tracker.update([0, 1], 0, 300, false);
+    tracker.update([0, 1], 0, 300);
 
     // At t=500, only T0 fires (item 0 visible 500ms, item 1 only 200ms)
     vi.advanceTimersByTime(200);
@@ -247,13 +247,13 @@ describe('ViewabilityTracker', () => {
       getKey: (i) => String(i),
     });
 
-    tracker.update([0], 0, 200, false);
+    tracker.update([0], 0, 200);
     vi.advanceTimersByTime(500);
     expect(onChange).toHaveBeenCalledTimes(1);
     onChange.mockClear();
 
     // Item 0 leaves — should be reported immediately
-    tracker.update([], 200, 200, false);
+    tracker.update([], 200, 200);
     expect(onChange).toHaveBeenCalledTimes(1);
     const { changed, viewableItems } = getCallArgs(onChange, 0);
     expect(viewableItems).toHaveLength(0);
@@ -274,7 +274,7 @@ describe('ViewabilityTracker', () => {
       getKey: (i) => String(i),
     });
 
-    tracker.update([0], 0, 200, false);
+    tracker.update([0], 0, 200);
     tracker.dispose();
 
     vi.advanceTimersByTime(500);

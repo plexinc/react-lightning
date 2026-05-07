@@ -5,6 +5,7 @@ import type { LightningViewElementStyle } from '@plextv/react-lightning';
 export interface VirtualListRenderItemInfo<T> {
   item: T;
   index: number;
+  target: RenderTarget;
   extraData?: unknown;
   /**
    * True when this item should receive focus on mount — set by VirtualList
@@ -60,15 +61,22 @@ export interface ScrollEvent {
   layoutMeasurement: { width: number; height: number };
 }
 
+/**
+ * Only 'Cell' is currently supported.
+ */
+export type RenderTarget = 'Cell' | 'StickyHeader' | 'Measurement';
+
+export type VirtualListRenderItem<T> = (info: VirtualListRenderItemInfo<T>) => ReactElement | null;
+
 export interface VirtualListProps<T> {
   /** Array of data items to render. */
   data: ReadonlyArray<T>;
   /** Render function for each item. */
-  renderItem: (info: VirtualListRenderItemInfo<T>) => ReactElement;
+  renderItem: ((info: VirtualListRenderItemInfo<T>) => ReactElement | null) | null | undefined;
   /** Average or median item size. Used before items are measured. Default 200. */
   estimatedItemSize?: number;
   /** Scroll horizontally instead of vertically. */
-  horizontal?: boolean;
+  horizontal?: boolean | null;
   /** Number of columns for grid layout. Default 1. */
   numColumns?: number;
   /** Pixels to render beyond the visible viewport. Default 250. */
@@ -99,25 +107,24 @@ export interface VirtualListProps<T> {
   /** Override size or span per-item. Must be fast — called frequently. */
   overrideItemLayout?: OverrideItemLayoutFn<T>;
   /** Return a type for recycling pools. Items of same type reuse views. */
-  getItemType?: (item: T, index: number, extraData?: unknown) => string | number;
+  getItemType?: (item: T, index: number, extraData?: unknown) => string | number | undefined;
 
   /** Scroll to this index on mount. */
-  initialScrollIndex?: number;
+  initialScrollIndex?: number | null;
   /** Additional params for initialScrollIndex. */
-  initialScrollIndexParams?: { viewOffset?: number };
+  initialScrollIndexParams?: { viewOffset?: number } | null;
   /** Called when the user scrolls near the end. */
-  onEndReached?: () => void;
+  onEndReached?: ((info: { distanceFromEnd: number }) => void) | null;
   /** How close to the end (in viewport fractions) triggers onEndReached. Default 0.5. */
-  onEndReachedThreshold?: number;
+  onEndReachedThreshold?: number | null;
   /** Called on every scroll position change. */
   onScroll?: (event: ScrollEvent) => void;
   /** Called when viewable items change. */
-  onViewableItemsChanged?: (info: {
-    viewableItems: ViewToken<T>[];
-    changed: ViewToken<T>[];
-  }) => void;
+  onViewableItemsChanged?:
+    | ((info: { viewableItems: ViewToken<T>[]; changed: ViewToken<T>[] }) => void)
+    | null;
   /** Configuration for viewability tracking. */
-  viewabilityConfig?: ViewabilityConfig;
+  viewabilityConfig?: ViewabilityConfig | null;
   /** Called once when the list first renders items. */
   onLoad?: (info: { elapsedTimeInMs: number }) => void;
 
@@ -148,4 +155,30 @@ export interface VirtualListRef {
   scrollToEnd: (params?: { animated?: boolean }) => void;
   getScrollOffset: () => number;
   getVisibleRange: () => { startIndex: number; endIndex: number };
+}
+
+export interface VirtualListCellProps<T> {
+  mainOffset: number;
+  crossOffset: number;
+  size: number;
+  crossSize: number;
+  renderItem: VirtualListRenderItem<T> | null | undefined;
+  item: T;
+  index: number;
+  /** Stable identity from VL's keyExtractor; keys measurements and provides VLCellKeyContext to descendants. */
+  userKey: string;
+  shouldFocus: boolean;
+  extraData?: unknown;
+  horizontal?: boolean | null;
+  isLastItem: boolean;
+  ItemSeparatorComponent?: ComponentType<any> | null;
+  /** True when a flex ancestor exists; cells wrap in FlexRoot for layout + measurement. False means pinned/silent. */
+  isInFlex: boolean;
+  onItemSizeChange?: (userKey: string, size: number) => void;
+  /** Distinct from `onItemSizeChange(_, 0)` (rejected) — this is the explicit empty-row path. */
+  onItemEmpty?: (userKey: string) => void;
+  onContentCrossLayout?: (size: number) => void;
+  onSeparatorLayout?: (size: number) => void;
+  /** Mounted offscreen for state preservation; outer FG is disabled so spatial nav skips it. */
+  pooled?: boolean;
 }

@@ -1,4 +1,4 @@
-import type { ComponentType, ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { memo, useLayoutEffect, useRef } from 'react';
 
 import type { LightningElement, LightningViewElementStyle } from '@plextv/react-lightning';
@@ -6,33 +6,7 @@ import { FocusGroup, useFocusManager } from '@plextv/react-lightning';
 import { FlexRoot } from '@plextv/react-lightning-plugin-flexbox';
 
 import { CellBoundsContext, VLCellKeyContext } from './VirtualListContext';
-import type { VirtualListRenderItemInfo } from './VirtualListTypes';
-
-export interface VirtualListCellProps<T> {
-  mainOffset: number;
-  crossOffset: number;
-  size: number;
-  crossSize: number;
-  renderItem: (info: VirtualListRenderItemInfo<T>) => ReactElement;
-  item: T;
-  index: number;
-  /** Stable identity from VL's keyExtractor; keys measurements and provides VLCellKeyContext to descendants. */
-  userKey: string;
-  shouldFocus: boolean;
-  extraData?: unknown;
-  horizontal: boolean;
-  isLastItem: boolean;
-  ItemSeparatorComponent?: ComponentType | null;
-  /** True when a flex ancestor exists; cells wrap in FlexRoot for layout + measurement. False means pinned/silent. */
-  isInFlex: boolean;
-  onItemSizeChange?: (userKey: string, size: number) => void;
-  /** Distinct from `onItemSizeChange(_, 0)` (rejected) — this is the explicit empty-row path. */
-  onItemEmpty?: (userKey: string) => void;
-  onContentCrossLayout?: (size: number) => void;
-  onSeparatorLayout?: (size: number) => void;
-  /** Mounted offscreen for state preservation; outer FG is disabled so spatial nav skips it. */
-  pooled?: boolean;
-}
+import type { VirtualListCellProps } from './VirtualListTypes';
 
 const VirtualListCellInner = <T,>({
   mainOffset,
@@ -72,8 +46,7 @@ const VirtualListCellInner = <T,>({
   const cellElementRef = useRef<LightningElement>(null);
   const prevShouldFocusRef = useRef(shouldFocus);
   const focusManager = useFocusManager();
-
-  const renderedItem = renderItem({ item, index, extraData, shouldFocus });
+  const renderedItem = renderItem?.({ item, index, extraData, target: 'Cell', shouldFocus });
   const isEmpty = renderedItem == null;
 
   // Imperative focus claim on shouldFocus false → true. Mount-time claims

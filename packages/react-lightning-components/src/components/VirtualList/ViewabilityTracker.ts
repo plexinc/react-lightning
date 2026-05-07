@@ -2,11 +2,10 @@ import type { ComputedLayout } from './LayoutManager';
 import type { ViewabilityConfig, ViewToken } from './VirtualListTypes';
 
 export interface ViewabilityTrackerConfig<T> {
-  viewabilityConfig?: ViewabilityConfig;
-  onViewableItemsChanged?: (info: {
-    viewableItems: ViewToken<T>[];
-    changed: ViewToken<T>[];
-  }) => void;
+  viewabilityConfig?: ViewabilityConfig | null;
+  onViewableItemsChanged?:
+    | ((info: { viewableItems: ViewToken<T>[]; changed: ViewToken<T>[] }) => void)
+    | null;
   getLayout: (index: number) => ComputedLayout | undefined;
   getData: (index: number) => T | undefined;
   getKey: (index: number) => string;
@@ -31,12 +30,7 @@ export class ViewabilityTracker<T> {
     this._hasInteracted = true;
   }
 
-  update(
-    visibleIndices: number[],
-    scrollOffset: number,
-    viewportSize: number,
-    _horizontal: boolean,
-  ): void {
+  update(visibleIndices: number[], scrollOffset: number, viewportSize: number): void {
     const { viewabilityConfig, onViewableItemsChanged } = this._config;
 
     if (!onViewableItemsChanged) {

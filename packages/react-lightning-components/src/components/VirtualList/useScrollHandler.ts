@@ -7,7 +7,7 @@ import type { ScrollEvent } from './VirtualListTypes';
 
 export interface UseScrollHandlerOptions {
   layoutManager: LayoutManager<unknown>;
-  horizontal: boolean;
+  horizontal: boolean | null;
   viewportSize: number;
   /** Offset from the top of the content container to the first item. */
   itemAreaOffset: number;
@@ -20,8 +20,8 @@ export interface UseScrollHandlerOptions {
   animationDuration: number;
   snapToAlignment: 'start' | 'center' | 'end';
   onScroll?: (event: ScrollEvent) => void;
-  onEndReached?: () => void;
-  onEndReachedThreshold: number;
+  onEndReached?: ((info: { distanceFromEnd: number }) => void) | null;
+  onEndReachedThreshold: number | null;
   /** Main-axis start padding (acts as scroll margin). */
   paddingStart: number;
   /** Main-axis end padding (acts as scroll margin). */
@@ -164,12 +164,12 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     setCommittedScrollOffset(clamped);
 
     if (onEndReached) {
-      const distFromEnd = totalContentSize - clamped - viewportSize;
+      const distanceFromEnd = totalContentSize - clamped - viewportSize;
 
-      if (distFromEnd <= viewportSize * onEndReachedThreshold) {
+      if (distanceFromEnd <= viewportSize * (onEndReachedThreshold ?? 0.5)) {
         if (!endReachedRef.current) {
           endReachedRef.current = true;
-          onEndReached();
+          onEndReached({ distanceFromEnd });
         }
       } else {
         endReachedRef.current = false;

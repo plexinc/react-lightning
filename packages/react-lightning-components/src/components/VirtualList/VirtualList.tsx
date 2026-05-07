@@ -104,9 +104,7 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   // Consumed on the next onChildFocused after a cellKey change so the FG's
   // auto-pick on row entry doesn't overwrite the restored index.
   const [skipNextFocus, setSkipNextFocus] = useState(false);
-
   const [ownStateCache] = useState<Map<string, VLPersistedState>>(() => new Map());
-
   const [measuredSize, setMeasuredSize] = useState({ w: 0, h: 0 });
   const [, setLayoutVersion] = useState(0);
   const [separatorSize, setSeparatorSize] = useState(0);

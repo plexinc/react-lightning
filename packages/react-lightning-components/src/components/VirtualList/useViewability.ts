@@ -5,18 +5,17 @@ import { ViewabilityTracker } from './ViewabilityTracker';
 import type { ViewabilityConfig, ViewToken } from './VirtualListTypes';
 
 export interface UseViewabilityOptions<T> {
-  viewabilityConfig?: ViewabilityConfig;
-  onViewableItemsChanged?: (info: {
-    viewableItems: ViewToken<T>[];
-    changed: ViewToken<T>[];
-  }) => void;
+  viewabilityConfig?: ViewabilityConfig | null;
+  onViewableItemsChanged?:
+    | ((info: { viewableItems: ViewToken<T>[]; changed: ViewToken<T>[] }) => void)
+    | null;
   getLayout: (index: number) => ComputedLayout | undefined;
   getData: (index: number) => T | undefined;
   getKey: (index: number) => string;
   visibleIndices: number[];
   scrollOffset: number;
   viewportSize: number;
-  horizontal: boolean;
+  horizontal: boolean | null | undefined;
 }
 
 export function useViewability<T>(options: UseViewabilityOptions<T>): void {
@@ -54,7 +53,7 @@ export function useViewability<T>(options: UseViewabilityOptions<T>): void {
   }, [viewabilityConfig, onViewableItemsChanged, getLayout, getData, getKey]);
 
   useEffect(() => {
-    tracker.update(visibleIndices, scrollOffset, viewportSize, horizontal);
+    tracker.update(visibleIndices, scrollOffset, viewportSize);
   }, [visibleIndices, scrollOffset, viewportSize, horizontal]);
 
   useEffect(() => {
