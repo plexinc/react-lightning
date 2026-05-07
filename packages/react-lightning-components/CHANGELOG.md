@@ -1,5 +1,11 @@
 # @plextv/react-lightning-components
 
+## 0.4.3
+
+### Patch Changes
+
+- cff7886: chore(virtuallist): A little cleanup and aligning typings with FlashList a little better
+
 ## 0.4.2
 
 ### Patch Changes
