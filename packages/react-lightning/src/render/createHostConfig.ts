@@ -12,6 +12,7 @@ import {
   type RendererNode,
 } from '../types';
 import { simpleDiff } from '../utils/simpleDiff';
+import { isPrimitiveTextContent } from './isValidTextChild';
 import { mapReactPropsToLightning } from './mapReactPropsToLightning';
 import type { Plugin } from './Plugin';
 
@@ -164,8 +165,18 @@ export function createHostConfig(options?: LightningHostConfigOptions): Lightnin
       return instance as LightningElement;
     },
 
-    shouldSetTextContent(type) {
-      return type === LightningElementType.Text;
+    shouldSetTextContent(type, props) {
+      // For text elements we normally take over their children as raw text
+      // content (the fast path — no child reconciliation). But that swallows
+      // children React still needs to render: a `<FormattedMessage>` only
+      // becomes a translated, interpolated string once React renders it. So
+      // when the children aren't already a flat string, return false and let
+      // the reconciler render them; their text is folded back into the node by
+      // `LightningTextElement` as the string children are appended.
+      return (
+        type === LightningElementType.Text &&
+        isPrimitiveTextContent((props as LightningElementProps)?.children)
+      );
     },
 
     setCurrentUpdatePriority(newPriority: EventPriority): void {
@@ -227,6 +238,14 @@ export function createHostConfig(options?: LightningHostConfigOptions): Lightnin
     commitTextUpdate(instance, oldText, newText) {
       if (instance.isTextElement && oldText !== newText) {
         instance.text = newText;
+
+        // When this text instance is a child fragment of a parent text element
+        // (e.g. the string a `<FormattedMessage>` resolved to), the parent owns
+        // the rendered text and must re-fold its children after the update.
+        const parent = instance.parent;
+        if (parent?.isTextElement) {
+          (parent as LightningTextElement).recomputeChildText();
+        }
       }
     },
 
