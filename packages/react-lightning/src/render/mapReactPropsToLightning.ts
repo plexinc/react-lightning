@@ -5,16 +5,6 @@ import {
 } from '../types';
 import { isValidTextChild } from './isValidTextChild';
 
-function isIntlObject(obj: unknown): obj is { props: { defaultMessage?: string } } {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'props' in obj &&
-    !!obj.props &&
-    'defaultMessage' in (obj.props as { defaultMessage?: string })
-  );
-}
-
 /**
  * Converts React props to work with LightningElements
  */
@@ -33,7 +23,11 @@ export function mapReactPropsToLightning(
   for (prop in props) {
     switch (prop) {
       case 'children':
-        // If it's text, we don't actually use children as text
+        // Text takes its children as raw text content rather than as rendered
+        // child nodes — but only the primitive cases reach us here. Anything
+        // React must render (a `<FormattedMessage>`, a ternary, a fragment) is
+        // routed through the reconciler by `shouldSetTextContent` and folded
+        // back in by `LightningTextElement`, so we never see it as a prop.
         if (type === LightningElementType.Text) {
           const textProps = mappedProps as LightningTextElementProps;
           const children = props[prop];
@@ -41,26 +35,15 @@ export function mapReactPropsToLightning(
           if (isValidTextChild(children)) {
             textProps.text = String(children);
           } else if (Array.isArray(children)) {
-            // Single-pass: validate and concatenate simultaneously
             let text = '';
-            let allValid = true;
 
             for (let i = 0; i < children.length; i++) {
               if (isValidTextChild(children[i])) {
                 text += String(children[i]);
-              } else {
-                allValid = false;
-                break;
               }
             }
 
-            if (allValid) {
-              textProps.text = text;
-            }
-          } else if (isIntlObject(children)) {
-            textProps.text = children.props.defaultMessage;
-          } else if (children) {
-            console.error('Unsupported child type found for text element');
+            textProps.text = text;
           }
         }
 
