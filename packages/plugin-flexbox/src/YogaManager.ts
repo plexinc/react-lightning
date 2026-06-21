@@ -3,6 +3,8 @@ import { type Config, loadYoga, type Yoga } from 'yoga-layout/load';
 
 import type { LightningElementStyle, Rect } from '@plextv/react-lightning';
 
+import { FontMetricsStore } from './text/FontMetricsStore';
+import { layoutText, type TextMeasureProps } from './text/layoutText';
 import type { ManagerNode } from './types/ManagerNode';
 import type { YogaOptions } from './types/YogaOptions';
 import applyReactPropsToYoga, { applyFlexPropToYoga } from './util/applyReactPropsToYoga';
@@ -43,9 +45,14 @@ export class YogaManager {
     processHiddenNodes: false,
     useWebWorker: false,
     expandToAutoFlexBasis: false,
+    fonts: [],
   };
   private _eventEmitter: EventEmitter<YogaManagerEvents> = new EventEmitter();
   private _dataView: SimpleDataView;
+  private _fontStore = new FontMetricsStore();
+  // Text leaves currently measured by Yoga, so we can re-dirty them when a
+  // font finishes loading.
+  private _textNodes: Set<number> = new Set();
 
   public on: EventEmitter<YogaManagerEvents>['on'] = this._eventEmitter.on.bind(this._eventEmitter);
   public off: EventEmitter<YogaManagerEvents>['off'] = this._eventEmitter.off.bind(
@@ -89,6 +96,124 @@ export class YogaManager {
     }
 
     this._initialized = true;
+
+    // Load fonts in the background; don't block init. As each arrives, re-dirty
+    // any text already laid out with it so its measurement updates.
+    if (this._yogaOptions.fonts) {
+      for (const font of this._yogaOptions.fonts) {
+        void this._fontStore.load(font.fontFamily, font.atlasDataUrl).then(() => {
+          this._remeasureFontFamily(font.fontFamily);
+        });
+      }
+    }
+  }
+
+  /**
+   * Set (or refresh) synchronous text measurement for a node. Installs a Yoga
+   * measure function the first time so wrapping/sizing happen during layout.
+   */
+  public setTextMeasure(elementId: number, fontFamily: string, props: TextMeasureProps): void {
+    const yogaNode = this._elementMap.get(elementId);
+
+    if (!yogaNode) {
+      return;
+    }
+
+    const isFirst = yogaNode.text === undefined;
+    yogaNode.text = { fontFamily, props };
+
+    if (isFirst) {
+      // A measured leaf can't have children. If any were added before this
+      // node became text (e.g. the font/family arrived after children
+      // mounted), detach them — text fragment children aren't layout nodes.
+      for (const child of yogaNode.children) {
+        yogaNode.node.removeChild(child.node);
+        child.parent = undefined;
+      }
+      yogaNode.children.length = 0;
+
+      this._textNodes.add(elementId);
+    }
+
+    // Clear any explicit width/height so the measure func is the sole source of
+    // this node's size. The renderer measures text asynchronously and pushes
+    // its texture dimensions back as an explicit `w`/`h` (see the
+    // `textureLoaded` handler) — if that ran before the node became measured
+    // text, Yoga sees a DEFINITE width and never calls the measure func, so the
+    // node keeps the renderer's (often container-clipped) size. Resetting to
+    // auto makes Yoga measure it. Done every call so a recycled node that
+    // briefly went through the texture path is corrected too.
+    yogaNode.node.setWidthAuto();
+    yogaNode.node.setHeightAuto();
+
+    // (Re)install the measure func every time. Re-setting it busts Yoga's
+    // cached measurement, which `markDirty` alone does not reliably do for a
+    // recycled node whose available width is unchanged — so changed text never
+    // re-measured and kept its stale width.
+    yogaNode.node.setMeasureFunc((width, widthMode) =>
+      this._measureText(elementId, width, widthMode),
+    );
+
+    yogaNode.node.markDirty();
+    this.queueRender(elementId);
+  }
+
+  /** Remove text measurement from a node (e.g. it's no longer a text leaf). */
+  public clearTextMeasure(elementId: number): void {
+    const yogaNode = this._elementMap.get(elementId);
+
+    this._textNodes.delete(elementId);
+
+    if (yogaNode?.text !== undefined) {
+      yogaNode.text = undefined;
+      yogaNode.node.setMeasureFunc(null);
+      this.queueRender(elementId);
+    }
+  }
+
+  // widthMode is Yoga's MeasureMode: 0 = Undefined (unconstrained), 1 = Exactly,
+  // 2 = AtMost. Only a bounded width should wrap the text.
+  private _measureText(
+    elementId: number,
+    availableWidth: number,
+    widthMode: number,
+  ): { width: number; height: number } {
+    const text = this._elementMap.get(elementId)?.text;
+
+    if (text === undefined) {
+      return { width: 0, height: 0 };
+    }
+
+    const font = this._fontStore.get(text.fontFamily);
+
+    if (font === undefined) {
+      // Font not loaded yet — measure empty; _remeasureFontFamily re-dirties
+      // this node once it arrives.
+      return { width: 0, height: 0 };
+    }
+
+    const maxWidth =
+      widthMode === 0 || !Number.isFinite(availableWidth) ? Infinity : availableWidth;
+
+    return layoutText(font, text.props, maxWidth);
+  }
+
+  private _remeasureFontFamily(fontFamily: string): void {
+    let dirtied = false;
+
+    for (const elementId of this._textNodes) {
+      const yogaNode = this._elementMap.get(elementId);
+
+      if (yogaNode?.text?.fontFamily === fontFamily) {
+        yogaNode.node.markDirty();
+        dirtied = true;
+      }
+    }
+
+    if (dirtied) {
+      // Force a relayout pass so the newly-measurable text resizes.
+      this.queueRender(0, true);
+    }
   }
 
   public addNode(elementId: number): ManagerNode {
@@ -105,6 +230,8 @@ export class YogaManager {
   }
 
   public removeNode(elementId: number): void {
+    this._textNodes.delete(elementId);
+
     const yogaNode = this._elementMap.get(elementId);
 
     if (yogaNode) {
@@ -129,6 +256,14 @@ export class YogaManager {
 
     if (!parentYogaNode || !childYogaNode) {
       throw new Error(`Parent or child node not found for IDs ${parentId} and ${childId}.`);
+    }
+
+    // A measured text leaf can't have Yoga children (Yoga forbids children on
+    // a node with a measure func). Text fragment children — e.g. the strings a
+    // <FormattedMessage> renders to — are folded into the parent's text by the
+    // renderer, so they're not layout participants here.
+    if (parentYogaNode.text !== undefined) {
+      return;
     }
 
     index ??= childYogaNode.children.length;
@@ -224,8 +359,11 @@ export class YogaManager {
     // `for...in` skips the [key, value] tuple allocation of Object.entries —
     // this is a hot path on every flushBoth/applyStyles message.
     for (const elementId in styles) {
-      // oxlint-disable-next-line typescript/no-non-null-assertion -- key from for..in iteration of own props
-      this.applyStyle(+elementId, styles[elementId as unknown as number]!, skipRender);
+      const style = styles[elementId as unknown as number];
+
+      if (style !== undefined) {
+        this.applyStyle(+elementId, style, skipRender);
+      }
     }
   }
 

@@ -352,6 +352,20 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     },
     addIndependentRoot: (elementId: number) => nodeOperation('addIndependentRoot', elementId),
     removeIndependentRoot: (elementId: number) => nodeOperation('removeIndependentRoot', elementId),
+    // Text measurement ops must land after the node's addNode (and any pending
+    // styles), so flush the buffered pipeline before posting them.
+    setTextMeasure: (elementId: number, fontFamily: string, props: unknown) => {
+      flushChildOperations();
+      flushSendStyles();
+      worker.postMessage({
+        method: 'setTextMeasure',
+        args: [elementId, fontFamily, props],
+      });
+    },
+    clearTextMeasure: (elementId: number) => {
+      flushChildOperations();
+      worker.postMessage({ method: 'clearTextMeasure', args: [elementId] });
+    },
     init: (yogaOptions?: unknown) => _awaitable('init', [yogaOptions]),
   };
 
