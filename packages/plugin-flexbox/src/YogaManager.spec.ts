@@ -33,6 +33,7 @@ const mockConfig = {
 const mockYogaOptions = {
   errata: 'none',
   expandToAutoFlexBasis: false,
+  fonts: [],
   processHiddenNodes: false,
   useWebDefaults: false,
   useWebWorker: false,

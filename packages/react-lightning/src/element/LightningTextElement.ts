@@ -29,12 +29,26 @@ export class LightningTextElement extends LightningViewElement<
   // derive `node.text` from the children so removing them clears it.
   private _aggregatesChildText = false;
 
+  // Last text we emitted a change for. Tracked separately from `node.text`
+  // because the base `_doUpdate` writes `node.text` directly (bypassing this
+  // setter), so comparing against `node.text` would miss real changes.
+  private _lastEmittedText: string | undefined;
+
   public get text(): string {
     return this.node.text;
   }
 
   public set text(v) {
     this.node.text = v;
+
+    // Text content can change without a `setProps`/`propsChanged` cycle — via
+    // `commitTextUpdate` (recycled nodes) or `recomputeChildText`. Emit a
+    // dedicated signal so consumers (e.g. the flexbox text-measure) re-measure
+    // on every value change, not just prop changes.
+    if (v !== this._lastEmittedText) {
+      this._lastEmittedText = v;
+      this.emit('textChanged', this);
+    }
   }
 
   /**
