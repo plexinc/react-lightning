@@ -134,3 +134,42 @@ describe('LightningViewElement paint withholding', () => {
     expect(el.hasLayout).toBe(false);
   });
 });
+
+describe('LightningViewElement border shader', () => {
+  // A renderer whose createShader returns a tagged shader so we can assert the
+  // node actually received it.
+  const borderShader = { props: {}, type: 'Border' };
+  const shaderRenderer = {
+    createNode: (props: Record<string, unknown>) => createMockNode(props),
+    createTextNode: (props: Record<string, unknown>) => createMockNode(props),
+    createShader: () => borderShader,
+    createTexture: () => ({}),
+    destroyNode() {},
+  } as unknown as RendererMain;
+
+  function createShaderElement(style: Partial<LightningViewElementStyle>) {
+    const props = {
+      style,
+    } as LightningViewElementProps<LightningViewElementStyle>;
+
+    return new LightningViewElement(props, shaderRenderer, [], {} as Fiber);
+  }
+
+  it('paints a border shader when one is added to an already-mounted node, then clears it on removal', async () => {
+    // Starts with no border — the focus-ring case toggles it on later.
+    const el = createShaderElement({ w: 100, h: 50 });
+
+    // Add a border (e.g. a focus ring). Without `border` forcing the slow path
+    // this would silently fast-path and never create a shader.
+    el.setProps({
+      style: { w: 100, h: 50, border: { w: 4, color: 0xffffffff } },
+    });
+    await flush();
+    expect(el.node.shader).toBe(borderShader);
+
+    // Remove the border (blur). The shader must be cleared, not left painting.
+    el.setProps({ style: { w: 100, h: 50 } });
+    await flush();
+    expect(el.node.shader).toBeNull();
+  });
+});
