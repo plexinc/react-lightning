@@ -32,11 +32,11 @@ The crucial discipline is that the cross-axis aggregation is **monotonic** (only
 
 **Three responsibilities:**
 
-| File | Responsibility |
-| - | - |
-| `LayoutManager.ts` | Pure layout math. Given data + sizes + cross-axis size, computes per-item offsets in O(n). |
+| File                  | Responsibility                                                                                                                                                                                                                                                                                                                                                                                       |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LayoutManager.ts`    | Pure layout math. Given data + sizes + cross-axis size, computes per-item offsets in O(n).                                                                                                                                                                                                                                                                                                           |
 | `VirtualListCell.tsx` | One `<lng-view>` per visible cell with explicit absolute position and dimensions. Wraps user content in `VLCellKeyContext` + `CellBoundsContext` providers. The renderItem subtree persists across slot recycles — the cell wrapper _and_ its descendants survive userKey changes; nested VLs read the new userKey via `VLCellKeyContext` and run their cellKey-change branch instead of remounting. |
-| `VirtualList.tsx` | Viewport derivation, scroll/focus state, recycling, the React glue. |
+| `VirtualList.tsx`     | Viewport derivation, scroll/focus state, recycling, the React glue.                                                                                                                                                                                                                                                                                                                                  |
 
 Supporting modules: `useScrollHandler.ts` (scroll math, animation, focus-driven scroll), `useViewability.ts` (onViewableItemsChanged), `RecyclerPool.ts` (slot reuse by item type), `parseContentStyle.ts` (RN-style padding props), `VirtualListContext.ts` (the three React contexts).
 
@@ -84,6 +84,7 @@ Supporting modules: `useScrollHandler.ts` (scroll math, animation, focus-driven 
 - **`onLoad`** — fires once when first items render (with elapsed ms since mount).
 - **`onLayout`** — fires when content dimensions change.
 - **`autoFocus` / `trapFocus{Up,Right,Down,Left}`** — forwarded to the FocusGroup wrapping the list.
+- **`skipChildFocusScroll?: boolean`** (default `false`) — opt out of VL's internal focus-follow scroll. When set, a focused child crossing a cell boundary still resolves and persists `focusedIndex`, but VL does not scroll the cell into view; the caller owns scrolling (e.g. drives `scrollToIndex` from its own authoritative focused index). Leaving VL's position-based follow on while the app also follows makes them fight — VL reads a just-recycled cell's not-yet-committed position as ~0 and snaps the row back to the start.
 
 ### Imperative — `VirtualListRef`
 
@@ -92,6 +93,7 @@ Supporting modules: `useScrollHandler.ts` (scroll math, animation, focus-driven 
 - `scrollToEnd({ animated? })`
 - `getScrollOffset()`
 - `getVisibleRange()`
+- `getLayout(index)` — scroll-space `{ x, y, width, height }` of the item at `index` (or `undefined` if out of range). Mirrors FlashList's per-item layout query; for callers that interpolate row positions against the scroll offset (crossfade/parallax). Coordinates are in the content container's space: main axis past the leading padding + header, cross axis past the cross padding.
 
 ---
 
@@ -186,7 +188,7 @@ For a list with no explicit cross AND no flex ancestor (pinned mode), no measure
   ref={cellElementRef}
   autoFocus={shouldFocus}
   style={{
-    position: 'absolute',
+    position: "absolute",
     x,
     y,
     // Both axes pinned by VL — cell wrapper has NO flex of its own.
@@ -200,13 +202,17 @@ For a list with no explicit cross AND no flex ancestor (pinned mode), no measure
        store) and cross-axis to onContentCrossLayout (VL maxContentCross). */
     <FlexRoot ref={flexRootRef} onResize={handleResize}>
       <VLCellKeyContext.Provider value={userKey}>
-        <CellBoundsContext.Provider value={cellBounds}>{renderedItem}</CellBoundsContext.Provider>
+        <CellBoundsContext.Provider value={cellBounds}>
+          {renderedItem}
+        </CellBoundsContext.Provider>
       </VLCellKeyContext.Provider>
     </FlexRoot>
   ) : (
     /* plain content — no flex, no measurement */
     <VLCellKeyContext.Provider value={userKey}>
-      <CellBoundsContext.Provider value={cellBounds}>{renderedItem}</CellBoundsContext.Provider>
+      <CellBoundsContext.Provider value={cellBounds}>
+        {renderedItem}
+      </CellBoundsContext.Provider>
     </VLCellKeyContext.Provider>
   )}
   {/* optional separator, position:absolute */}
