@@ -98,6 +98,8 @@ export class LightningViewElement<
   private _recycled = false;
   private _hasStagedUpdates = false;
   private _hasLayout = false;
+  private _paintWithheld = false;
+  private _withheldAlpha = 1;
   private _eventEmitter = new EventEmitter<LightningElementEvents>();
   private _deferTarget: LightningElement | null = null;
   private _deferNodeRemovalHandler: ((destroy: () => void) => void) | null = null;
@@ -259,6 +261,59 @@ export class LightningViewElement<
 
   public get hasLayout(): boolean {
     return this._hasLayout;
+  }
+
+  public get paintWithheld(): boolean {
+    return this._paintWithheld;
+  }
+
+  /**
+   * Hide this node (force rendered alpha to 0) until its first layout resolves,
+   * then restore the styled alpha. Flex layout is computed asynchronously (in a
+   * worker), so without this a node with a definite size mounts and paints at
+   * its pre-layout origin (0,0) for one or more frames before the layout result
+   * moves it — the "async-flex origin flash". Withholding paint until
+   * {@link _onLayout} fires removes that flash regardless of how long the
+   * layout round-trip takes.
+   *
+   * No-op once laid out, and a no-op for nodes that can't flash anyway (already
+   * invisible, or zero-sized — those paint nothing at their origin), so the
+   * common 0x0 mass-mount path is untouched.
+   */
+  public withholdPaintUntilLayout(): void {
+    if (this._hasLayout || this._paintWithheld) {
+      return;
+    }
+
+    const node = this.node;
+
+    if (node.alpha <= 0 || node.w <= 0 || node.h <= 0) {
+      return;
+    }
+
+    this._paintWithheld = true;
+    this._withheldAlpha = node.alpha;
+    node.alpha = 0;
+    this.recalculateVisibility();
+  }
+
+  /**
+   * Restore a withheld node's alpha immediately, without waiting for a layout.
+   * Used when a node leaves flex layout before its first layout resolves (e.g.
+   * its subtree is detached by a boundary) and so would otherwise never be
+   * revealed.
+   */
+  public releaseWithheldPaint(): void {
+    if (!this._paintWithheld) {
+      return;
+    }
+
+    this._paintWithheld = false;
+
+    if (this.node.alpha !== this._withheldAlpha) {
+      this.node.alpha = this._withheldAlpha;
+      this.recalculateVisibility();
+    }
   }
 
   public constructor(
@@ -772,6 +827,14 @@ export class LightningViewElement<
       delete lngProps.h;
     }
 
+    // While paint is withheld, a styled alpha change must update the alpha we
+    // restore on first layout, not the node's (which stays 0 so the node keeps
+    // hiding). See {@link withholdPaintUntilLayout}.
+    if (this._paintWithheld && lngProps.alpha !== undefined) {
+      this._withheldAlpha = lngProps.alpha;
+      delete lngProps.alpha;
+    }
+
     Object.assign(this.node, lngProps);
 
     // oxlint-disable-next-line typescript/no-explicit-any -- Required for accessing AllStyleProps symbol
@@ -881,6 +944,14 @@ export class LightningViewElement<
         continue;
       }
 
+      // While paint is withheld, capture a styled alpha change for restore on
+      // first layout instead of un-hiding the node. See
+      // {@link withholdPaintUntilLayout}.
+      if (key === 'alpha' && this._paintWithheld) {
+        this._withheldAlpha = value as number;
+        continue;
+      }
+
       if (transition?.[typedKey]) {
         this.animateStyle(typedKey, value as TStyleProps[typeof typedKey]);
       } else {
@@ -927,6 +998,18 @@ export class LightningViewElement<
 
   private _onLayout = (dimensions: Rect) => {
     this._hasLayout = true;
+
+    // First layout resolved — reveal a withheld node at its now-correct
+    // geometry. See {@link withholdPaintUntilLayout}.
+    if (this._paintWithheld) {
+      this._paintWithheld = false;
+
+      if (this.node.alpha !== this._withheldAlpha) {
+        this.node.alpha = this._withheldAlpha;
+        this.recalculateVisibility();
+      }
+    }
+
     this.props.onLayout?.(dimensions);
   };
 
