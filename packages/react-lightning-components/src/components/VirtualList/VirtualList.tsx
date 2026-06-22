@@ -19,6 +19,7 @@ import {
 } from '@plextv/react-lightning';
 import { FlexBoundary, useIsInFlex } from '@plextv/react-lightning-plugin-flexbox';
 
+import { computeItemRect } from './computeItemRect';
 import { LayoutManager } from './LayoutManager';
 import { parseContentStyle } from './parseContentStyle';
 import { RecyclerPool } from './RecyclerPool';
@@ -85,6 +86,7 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     trapFocusRight,
     trapFocusDown,
     trapFocusLeft,
+    skipChildFocusScroll = false,
   } = props;
 
   const parentCellBounds = useContext(CellBoundsContext);
@@ -381,7 +383,10 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   const handleVLFocus = (child: LightningElement) => {
     if (skipNextFocus) {
       setSkipNextFocus(false);
-      handleChildFocused(child);
+
+      if (!skipChildFocusScroll) {
+        handleChildFocused(child);
+      }
 
       return;
     }
@@ -397,7 +402,9 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
       resolvedIdx = layoutManager.findIndexAtOffset(offsetInItemSpace);
     }
 
-    handleChildFocused(child);
+    if (!skipChildFocusScroll) {
+      handleChildFocused(child);
+    }
 
     if (resolvedIdx >= 0) {
       setFocusedIndex(resolvedIdx);
@@ -461,6 +468,11 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     scrollToEnd: (params) => scrollToEnd(params?.animated),
     getScrollOffset: () => scrollOffsetRef.current,
     getVisibleRange: () => visibleRange,
+    getLayout: (index) => {
+      const layout = layoutManager.getLayout(index);
+
+      return layout ? computeItemRect(layout, itemAreaOffset, paddingCross, horizontal) : undefined;
+    },
   }));
 
   const loadTimeRef = useRef(Date.now());

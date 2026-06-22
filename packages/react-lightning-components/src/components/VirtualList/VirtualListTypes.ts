@@ -142,6 +142,26 @@ export interface VirtualListProps<T> {
   trapFocusRight?: boolean;
   trapFocusDown?: boolean;
   trapFocusLeft?: boolean;
+
+  /**
+   * Opt out of VirtualList's internal focus-follow scroll. When a focused
+   * child crosses a cell boundary VL still resolves and persists the focused
+   * index, but does NOT scroll the focused cell into view — the caller owns
+   * scrolling (e.g. a row that drives `scrollToIndex` from its own
+   * authoritative focused index). Leaving VL's position-based follow on while
+   * the app also follows makes the two fight: VL reads a just-recycled cell's
+   * not-yet-committed position as ~0 and snaps the row back to the start.
+   * Default `false` (VL follows focus itself).
+   */
+  skipChildFocusScroll?: boolean;
+}
+
+/** Scroll-space rectangle of an item, in the list's content coordinate space. */
+export interface ItemLayout {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 export interface VirtualListRef {
@@ -155,6 +175,13 @@ export interface VirtualListRef {
   scrollToEnd: (params?: { animated?: boolean }) => void;
   getScrollOffset: () => number;
   getVisibleRange: () => { startIndex: number; endIndex: number };
+  /**
+   * Scroll-space rectangle of the item at `index`, or `undefined` if the
+   * index is out of range. Mirrors FlashList's per-item layout query — used
+   * by callers that interpolate row positions against the scroll offset
+   * (e.g. crossfade/parallax effects).
+   */
+  getLayout: (index: number) => ItemLayout | undefined;
 }
 
 export interface VirtualListCellProps<T> {
