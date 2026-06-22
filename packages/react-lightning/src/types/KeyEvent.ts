@@ -7,6 +7,7 @@ export type KeyEvent = {
   keyCode: number;
   remoteKey: Keys | Keys[];
   target: LightningElement;
+  currentTarget: LightningElement;
   repeat: boolean;
   stopFocusHandling: boolean;
 
