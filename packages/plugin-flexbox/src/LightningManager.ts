@@ -72,6 +72,13 @@ export class LightningManager {
         }
       }
 
+      // The boundary's descendants no longer get a layout (until a nested flex
+      // root re-opts them in), so any that were withheld waiting for a first
+      // layout would never be revealed. Release them now.
+      for (let i = 0; i < element.children.length; i++) {
+        this._releaseWithheldSubtree(element.children[i]);
+      }
+
       // Tree shape changed — re-layout any flex roots that contain it.
       this._yogaManager.queueRender(element.id);
     }
@@ -106,6 +113,10 @@ export class LightningManager {
       this._yogaManager.addIndependentRoot(element.id);
 
       this._reattachChildren(element);
+
+      // A definite-sized root paints at its origin until its first layout
+      // resolves — withhold paint until then. No-op for 0x0 roots.
+      element.withholdPaintUntilLayout();
 
       // First layout pass — without this the root sits at 0,0 until
       // something else calls applyStyle.
@@ -217,11 +228,30 @@ export class LightningManager {
 
       this._yogaManager.addChildNode(parent.id, child.id, yogaIndex);
       this._setYogaParent(child.id, parent.id);
+      // Hide a definite-sized node until its first layout positions it, so it
+      // doesn't paint at its pre-layout origin while the (async) layout is in
+      // flight. No-op for 0x0 nodes — the common case.
+      child.withholdPaintUntilLayout();
       yogaIndex++;
 
       if (!this._boundaries.has(child.id)) {
         this._reattachChildren(child);
       }
+    }
+  }
+
+  /** Recursively reveal any withheld nodes in a subtree that has been detached
+   * from flex layout (and so would never receive the first layout that reveals
+   * them). Stops at nested flex roots, whose subtrees stay in layout. */
+  private _releaseWithheldSubtree(element: LightningElement | undefined): void {
+    if (!element || this._flexRoots.has(element.id)) {
+      return;
+    }
+
+    element.releaseWithheldPaint();
+
+    for (let i = 0; i < element.children.length; i++) {
+      this._releaseWithheldSubtree(element.children[i]);
     }
   }
 
@@ -320,6 +350,8 @@ export class LightningManager {
         // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
         this._yogaManager!.addChildNode(element.id, child.id, yogaIndex);
         this._setYogaParent(child.id, element.id);
+        // See _reattachChildren — withhold paint until first layout.
+        child.withholdPaintUntilLayout();
         this.applyStyle(element.id, element.style);
 
         // React mounts bottom-up: `child`'s descendants were inserted
