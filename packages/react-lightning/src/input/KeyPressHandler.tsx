@@ -6,6 +6,7 @@ import { bubbleEvent } from './bubbleEvent';
 import type { KeyMap } from './KeyMapContext';
 import { KeyMapContext } from './KeyMapContext';
 import { Keys } from './Keys';
+import { normalizeKeyEvent } from './normalizeKeyEvent';
 
 const LONG_PRESS_THRESHOLD = 500;
 
@@ -16,51 +17,42 @@ export const KeyPressHandler: FC<{ children: ReactNode }> = ({ children }) => {
 
   const createKeyHandler = (handler: 'onKeyDown' | 'onKeyUp', keyMap: KeyMap) => {
     return (event: KeyboardEvent) => {
-      if (event.repeat) {
-        return;
-      }
-
       const element = focusManager.focusPath.at(-1);
 
-      if (!element) {
+      if (!element || !(event instanceof KeyboardEvent)) {
         return;
       }
 
-      if (event instanceof KeyboardEvent) {
-        const remoteKey = keyMap[event.keyCode] ?? Keys.Unknown;
+      // Build the normalized event once and reuse for all bubbleEvent calls.
+      const keyEvent = normalizeKeyEvent(event, keyMap, element);
+      const { remoteKey } = keyEvent;
 
-        // Build the event object once and reuse for all bubbleEvent calls
-        const keyEvent = {
-          keyCode: event.keyCode,
-          key: event.key,
-          code: event.code,
-          remoteKey,
-          repeat: event.repeat,
-          target: element,
-          currentTarget: element,
-          stopFocusHandling: false,
-          preventDefault: event.preventDefault,
-        };
-
-        if (handler === 'onKeyDown') {
+      if (handler === 'onKeyDown') {
+        // Stamp the press time only on the initial press — not on the OS
+        // auto-repeats that follow while a key is held. Otherwise the
+        // long-press duration measured at key-up would reset to ~0 on every
+        // repeat and a held key would never register as a long press. The
+        // repeats still bubble below, so held directional keys keep navigating
+        // and handlers can read `repeat` to drive held-key behavior.
+        if (!event.repeat) {
           keyDownTime.current = event.timeStamp;
-        } else if (handler === 'onKeyUp') {
-          const duration = event.timeStamp - keyDownTime.current;
-
-          keyDownTime.current = 0;
-
-          bubbleEvent(duration > LONG_PRESS_THRESHOLD ? 'onLongPress' : 'onKeyPress', keyEvent);
-
-          // Reset stopFocusHandling for the next bubbleEvent call
-          keyEvent.stopFocusHandling = false;
         }
+      } else if (handler === 'onKeyUp') {
+        const duration = event.timeStamp - keyDownTime.current;
 
-        bubbleEvent(handler, keyEvent);
+        keyDownTime.current = 0;
 
-        if (remoteKey !== Keys.Unknown) {
-          event.stopPropagation();
-          event.preventDefault();
-        }
+        bubbleEvent(duration > LONG_PRESS_THRESHOLD ? 'onLongPress' : 'onKeyPress', keyEvent);
+
+        // Reset stopFocusHandling for the next bubbleEvent call
+        keyEvent.stopFocusHandling = false;
+      }
+
+      bubbleEvent(handler, keyEvent);
+
+      if (remoteKey !== Keys.Unknown) {
+        event.stopPropagation();
+        event.preventDefault();
       }
     };
   };
