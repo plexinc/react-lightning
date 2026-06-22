@@ -163,11 +163,9 @@ export class LightningViewElement<
   }
 
   public set shader(shader: INode['shader'] | null) {
-    if (shader === null) {
-      // TODO: Unset shader?
-    } else {
-      this.node.shader = shader;
-    }
+    // A null shader resets the node to the stage's default shader (CoreNode
+    // handles the null case), letting callers clear a previously-set shader.
+    this.node.shader = shader as INode['shader'];
   }
 
   public get parent(): LightningElement | null {
@@ -865,6 +863,8 @@ export class LightningViewElement<
 
   /** Style properties that may trigger shader creation — must use the slow path. */
   private static readonly _shaderStyleProps = new Set([
+    'border',
+    'borderColor',
     'borderRadius',
     'borderTop',
     'borderLeft',
@@ -879,6 +879,14 @@ export class LightningViewElement<
    */
   private _canFastPathStyle(payload: Partial<TProps>): boolean {
     if (!('style' in payload) || !payload.style) {
+      return false;
+    }
+
+    // A node that currently has a shader must take the slow path: the update
+    // may remove the border/radius that produced it, and only the slow path
+    // recomputes (or clears) the shader. The fast path assigns style keys to
+    // the node verbatim and would leave a stale shader painting.
+    if (this._shaderDef) {
       return false;
     }
 
@@ -1171,7 +1179,12 @@ export class LightningViewElement<
         this.animateShader(this._shaderDef.props);
       } else if (this._shaderDef.type === oldShader?.type && this.shader.props) {
         for (const [key, value] of Object.entries(this._shaderDef.props)) {
-          if (this.shader.props[key]) {
+          // Gate on key existence, not truthiness: a prop whose current value
+          // is falsy (e.g. a transparent `border-color` of 0) must still be
+          // updatable — otherwise toggling a focus-ring border from
+          // transparent to a visible color on an already-mounted node is
+          // silently dropped and the ring never appears.
+          if (key in this.shader.props) {
             this.shader.props[key] = value;
           }
         }
@@ -1181,6 +1194,12 @@ export class LightningViewElement<
           this._shaderDef.props,
         );
       }
+    } else if (oldShader) {
+      // The node had a style/explicit shader (e.g. a focus-ring border) and now
+      // has none — clear it so the previous shader stops painting. Setting the
+      // node's shader to null resets it to the stage's default shader. Without
+      // this a removed border would linger on an already-mounted node.
+      (finalStyle as { shader: INode['shader'] | null }).shader = null;
     }
 
     if (texture && texture !== this._textureDef) {

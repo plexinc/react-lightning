@@ -7,6 +7,7 @@ import type {
 } from 'react-native';
 
 import type { LightningElementStyle, LightningImageElement } from '@plextv/react-lightning';
+import { flattenStyles } from '@plextv/react-lightning-plugin-css-transform';
 
 import { useImageLoadedHandler } from '../hooks/useImageLoadedHandler';
 import { useLayoutHandler } from '../hooks/useLayoutHandler';
@@ -48,7 +49,10 @@ export const Image: ForwardRefExoticComponent<RNImageProps> = forwardRef<
       ref={ref}
       src={finalSource}
       style={{
-        ...(style as LightningElementStyle),
+        // RN allows array styles, but the lightning Image node takes a single
+        // plain object: spreading an array here would produce numeric-keyed
+        // garbage and silently drop width/height/borderRadius. Flatten first.
+        ...(flattenStyles(style) as LightningElementStyle),
         w: width,
         h: height,
       }}
