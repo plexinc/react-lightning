@@ -16,6 +16,7 @@ import type { AutoDimensionValue, Transform } from '../types/FlexStyles';
 import type { ManagerNode } from '../types/ManagerNode';
 import type { FlexProps } from './isFlexStyleProp';
 import { isFlexStyleProp } from './isFlexStyleProp';
+import { parseAspectRatio } from './parseAspectRatio';
 import { parseFlexValue } from './parseFlexValue';
 
 function mapDisplay(yoga: Yoga, value?: 'flex' | 'none'): Display {
@@ -219,9 +220,17 @@ export function applyFlexPropToYoga<K extends FlexProps>(
       case 'maxHeight':
         node.setMaxHeight(formatSizeValue<'maxHeight'>(value));
         return true;
-      case 'aspectRatio':
-        node.setAspectRatio(value as LightningViewElementStyle['aspectRatio']);
+      case 'aspectRatio': {
+        const ratio = parseAspectRatio(
+          value as NonNullable<LightningViewElementStyle['aspectRatio']>,
+        );
+
+        if (ratio != null) {
+          node.setAspectRatio(ratio);
+        }
+
         return true;
+      }
       case 'margin':
         node.setMargin(yoga.EDGE_ALL, value as LightningViewElementStyle['margin']);
         return true;

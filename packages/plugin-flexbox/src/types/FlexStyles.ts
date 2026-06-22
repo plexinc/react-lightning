@@ -53,7 +53,10 @@ export type FlexLightningBaseElementStyle = {
   paddingHorizontal?: DimensionValue;
   paddingVertical?: DimensionValue;
 
-  aspectRatio?: number;
+  // RN accepts a number (`1.5`), a ratio string (`'3/2'`), or a numeric string
+  // (`'1.5'`); Yoga only takes a number, so the string forms are parsed before
+  // being applied.
+  aspectRatio?: number | string;
   maxHeight?: number;
   maxWidth?: number;
   minHeight?: DimensionValue;
