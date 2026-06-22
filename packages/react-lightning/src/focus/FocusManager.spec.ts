@@ -367,6 +367,141 @@ describe('FocusManager', () => {
     });
   });
 
+  describe('focus-when-ready', () => {
+    it('fulfills a focus() request once the target element registers', () => {
+      const root = createMockElement(1, 'root');
+      const a = createMockElement(2, 'a');
+      const target = createMockElement(3, 'target');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(a, root, { autoFocus: true });
+      expect(focusManager.focusPath).toEqual([root, a]);
+
+      // Target hasn't mounted/registered yet — the request must not be dropped.
+      focusManager.focus(target);
+      expect(target.focused).toBe(false);
+
+      // Target registers a moment later; the queued request now resolves.
+      focusManager.addElement(target, root);
+      expect(target.focused).toBe(true);
+      expect(focusManager.focusPath).toEqual([root, target]);
+    });
+
+    it('cancels a pending focus when the target is removed', () => {
+      const root = createMockElement(1, 'root');
+      const a = createMockElement(2, 'a');
+      const target = createMockElement(3, 'target');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(a, root, { autoFocus: true });
+
+      focusManager.focus(target);
+      focusManager.removeElement(target);
+
+      // Re-registering must not retroactively fulfill the cancelled request.
+      focusManager.addElement(target, root);
+      expect(target.focused).toBe(false);
+      expect(focusManager.focusPath).toEqual([root, a]);
+    });
+
+    it('lets a later explicit focus supersede a pending request', () => {
+      const root = createMockElement(1, 'root');
+      const a = createMockElement(2, 'a');
+      const target = createMockElement(3, 'target');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(a, root, { autoFocus: true });
+
+      focusManager.focus(target); // queued (not registered)
+      focusManager.focus(a); // registered — supersedes the pending request
+
+      expect(a.focused).toBe(true);
+
+      focusManager.addElement(target, root);
+      expect(target.focused).toBe(false);
+      expect(focusManager.focusPath).toEqual([root, a]);
+    });
+  });
+
+  describe('arrival-not-mount autoFocus', () => {
+    it('does not let a later-mounting autoFocus child steal committed focus', () => {
+      const root = createMockElement(1, 'root');
+      const content = createMockElement(2, 'content');
+      const nav = createMockElement(3, 'nav');
+
+      focusManager.addElement(content, root);
+      focusManager.addElement(root, null);
+
+      // Focus is explicitly committed to content.
+      focusManager.focus(content);
+      expect(focusManager.focusPath).toEqual([root, content]);
+
+      // A nav bar mounts a frame later with autoFocus — native semantics say it
+      // only forwards focus on arrival, so it must not steal it on mount.
+      focusManager.addElement(nav, root, { autoFocus: true });
+      expect(content.focused).toBe(true);
+      expect(focusManager.focusPath).toEqual([root, content]);
+    });
+
+    it('still lets autoFocus upgrade a mount-default preferred child', () => {
+      const root = createMockElement(1, 'root');
+      const a = createMockElement(2, 'a');
+      const b = createMockElement(3, 'b');
+
+      focusManager.addElement(root, null);
+      // `a` becomes the preferred child only as a mount default (no explicit
+      // focus), so a later autoFocus child is still allowed to upgrade it.
+      focusManager.addElement(a, root);
+      focusManager.addElement(b, root, { autoFocus: true });
+
+      expect(focusManager.focusPath).toEqual([root, b]);
+      expect(b.focused).toBe(true);
+    });
+  });
+
+  describe('destinations on arrival', () => {
+    it('forwards to a destination on first arrival, then remembers the child', () => {
+      const root = createMockElement(1, 'root');
+      const group = createMockElement(2, 'group');
+      const child1 = createMockElement(3, 'child1');
+      const child2 = createMockElement(4, 'child2');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(group, root, { destinations: [child2] });
+      focusManager.addElement(child1, group);
+      focusManager.addElement(child2, group);
+
+      // First arrival forwards to the declared destination (child2), not the
+      // default first child (child1).
+      focusManager.focus(group);
+      expect(focusManager.focusPath).toEqual([root, group, child2]);
+
+      // Move focus to child1, then re-enter the group: it now remembers the
+      // last-focused child instead of redirecting again.
+      focusManager.focus(child1);
+      expect(focusManager.focusPath).toEqual([root, group, child1]);
+
+      focusManager.focus(group);
+      expect(focusManager.focusPath).toEqual([root, group, child1]);
+    });
+
+    it('always redirects with focusRedirect, every visit', () => {
+      const root = createMockElement(1, 'root');
+      const real = createMockElement(2, 'real');
+      const guide = createMockElement(3, 'guide');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(real, root);
+      focusManager.addElement(guide, root, {
+        focusRedirect: true,
+        destinations: [real],
+      });
+
+      focusManager.focus(guide);
+      expect(focusManager.focusPath).toEqual([root, real]);
+    });
+  });
+
   describe('Layer Management (Modal Support)', () => {
     it('should create a new layer when pushLayer is called', () => {
       const mainElement = createMockElement(1, 'main');

@@ -9,6 +9,14 @@ type RootNode<T> = {
   children: FocusNode<T>[];
   focusedElement: FocusNode<T> | null;
   hasFocusableChildren: boolean;
+  /**
+   * True once focus has been explicitly committed into this node's subtree via
+   * `focus()`/spatial navigation (as opposed to a mount-time default). While
+   * committed, a later-mounting `autoFocus` child must not steal live focus on
+   * registration — matching native `TVFocusGuideView`, which forwards focus on
+   * arrival, not on mount.
+   */
+  focusCommitted: boolean;
 };
 
 export type FocusNode<T> = Omit<RootNode<T>, 'element'> & {
@@ -73,6 +81,13 @@ export class FocusManager<
   private _childFocusEventHandlers: Map<T, ((child: T) => void) | undefined> = new Map();
   private _focusStack: FocusLayer<T>[] = [];
   private _eventEmitter = new EventEmitter<FocusEvents<T>>();
+  /**
+   * A focus request whose target was not yet registered (or not yet focusable)
+   * when `focus()` was called. Fulfilled the moment the element registers or
+   * becomes focusable, so callers don't have to poll across frames waiting for
+   * a node to mount/scroll into view. Last request wins.
+   */
+  private _pendingFocus: T | null = null;
 
   public get activeLayer(): FocusLayer<T> {
     if (this._focusStack.length === 0) {
@@ -94,6 +109,7 @@ export class FocusManager<
           children: [],
           focusedElement: null,
           hasFocusableChildren: false,
+          focusCommitted: false,
         },
         elements: new Map(),
         focusPath: [],
@@ -225,15 +241,24 @@ export class FocusManager<
 
     this._checkFocusableChildren(parentNode);
 
-    if (
-      child.focusable &&
-      !hasExternalRedirect(childNode) &&
-      (!parentNode.focusedElement || (!parentNode.focusedElement.autoFocus && autoFocus))
-    ) {
-      parentNode.focusedElement = childNode;
+    if (child.focusable && !hasExternalRedirect(childNode)) {
+      if (!parentNode.focusedElement) {
+        // No preferred child yet — take the slot regardless of autoFocus.
+        parentNode.focusedElement = childNode;
+      } else if (autoFocus && !parentNode.focusedElement.autoFocus && !parentNode.focusCommitted) {
+        // An autoFocus child upgrades a non-autoFocus preferred child only
+        // while focus hasn't been explicitly committed here. Once committed,
+        // a later-mounting autoFocus child must not steal live focus (it would
+        // diverge from native TVFocusGuideView, which forwards on arrival).
+        parentNode.focusedElement = childNode;
+      }
     }
 
     this._recalculateFocusPath();
+
+    // If a focus request was waiting on this element to register, fulfill it
+    // now that it's in the tree (and possibly focusable).
+    this._tryFulfillPendingFocus(child);
   }
 
   private _forAllNodes(element: T, callback: (node: FocusNode<T>) => void): void {
@@ -249,6 +274,10 @@ export class FocusManager<
   }
 
   public removeElement(element: T): void {
+    if (this._pendingFocus === element) {
+      this._pendingFocus = null;
+    }
+
     this._forAllNodes(element, (node) => {
       this._removeNode(node, true);
     });
@@ -328,6 +357,10 @@ export class FocusManager<
   }
 
   public pushLayer(): void {
+    // A pending focus targets the layer it was requested in; drop it on a
+    // layer change so it can't fulfill against the wrong layer.
+    this._pendingFocus = null;
+
     // Store the current layer before creating new one
     const previousLayer = this.activeLayer;
 
@@ -349,6 +382,7 @@ export class FocusManager<
         children: [],
         focusedElement: null,
         hasFocusableChildren: false,
+        focusCommitted: false,
       },
       elements: new Map(),
       focusPath: [],
@@ -366,6 +400,10 @@ export class FocusManager<
     if (this._focusStack.length <= 1) {
       return;
     }
+
+    // A pending focus targets the layer it was requested in; drop it on a
+    // layer change so it can't fulfill against the wrong layer.
+    this._pendingFocus = null;
 
     // Get current layer info before popping
     const currentLayer = this.activeLayer;
@@ -411,11 +449,34 @@ export class FocusManager<
   public focus(element: T): void {
     const node = this.activeLayer.elements.get(element);
 
-    if (!node) {
+    // Not registered yet, or registered but not focusable yet (e.g. just
+    // mounted / scrolled into view, dimensions not measured). Queue the
+    // request instead of dropping it; it resolves once the element is ready.
+    if (!node || !element.focusable) {
+      this._pendingFocus = element;
+
       return;
     }
 
+    this._pendingFocus = null;
     this._focusNode(node);
+  }
+
+  /**
+   * Fulfill a queued {@link focus} request for `element` if it is now
+   * registered and focusable. No-op otherwise (it stays queued).
+   */
+  private _tryFulfillPendingFocus(element: T): void {
+    if (this._pendingFocus !== element) {
+      return;
+    }
+
+    const node = this.activeLayer.elements.get(element);
+
+    if (node && element.focusable && !hasExternalRedirect(node)) {
+      this._pendingFocus = null;
+      this._focusNode(node);
+    }
   }
 
   // Print out the whole focus tree
@@ -503,6 +564,7 @@ export class FocusManager<
       traps,
       hasFocusableChildren: false,
       allowOffscreen,
+      focusCommitted: false,
     };
 
     this.activeLayer.elements.set(element, node);
@@ -538,6 +600,12 @@ export class FocusManager<
 
         this._checkFocusableChildren(currentNode.parent);
         this._recalculateFocusPath();
+
+        // A queued focus request may have been waiting on this element to
+        // become focusable.
+        if (isFocusable) {
+          this._tryFulfillPendingFocus(element);
+        }
       }),
       element.on('focusChanged', (_, isFocused) => {
         if (isFocused && !element.focused) {
@@ -567,47 +635,82 @@ export class FocusManager<
     }
   }
 
+  /**
+   * Forward focus to the first focusable destination of `node`, recursing
+   * through any further redirects. Returns true when focus was redirected (or
+   * the redirect was aborted on a missing node / cycle) and the caller should
+   * stop; false when there was no focusable destination and the caller should
+   * focus `node` normally.
+   */
+  private _redirectToDestination(node: FocusNode<T>, visitedRedirects?: Set<T>): boolean {
+    // TODO: Probably something smarter here to decide which destination to focus
+    const destination = node.destinations?.find((child) => child?.focusable);
+
+    if (!destination) {
+      return false;
+    }
+
+    const focusNode = this.activeLayer.elements.get(destination);
+
+    if (!focusNode) {
+      console.warn('FocusManager: No focus node found for destination', destination);
+
+      return true;
+    }
+
+    // Detect redirect cycles
+    const visited = visitedRedirects ?? new Set<T>();
+
+    if (visited.has(destination)) {
+      console.warn('FocusManager: Focus redirect cycle detected, aborting');
+
+      return true;
+    }
+
+    visited.add(destination);
+
+    this._focusNode(focusNode, visited);
+
+    return true;
+  }
+
   private _focusNode(childNode: FocusNode<T>, visitedRedirects?: Set<T>) {
+    // On arrival, forward to a declared destination. With focusRedirect this
+    // happens on every visit (a permanent redirect); without it, only on the
+    // first visit (no remembered child yet) — matching native
+    // TVFocusGuideView, which forwards focus on arrival then remembers the
+    // last-focused child for subsequent visits.
+    if (
+      childNode.destinations &&
+      (childNode.focusRedirect || !childNode.focusCommitted) &&
+      this._redirectToDestination(childNode, visitedRedirects)
+    ) {
+      return;
+    }
+
     let currParent = childNode.parent;
     let currChild: FocusNode<T> | RootNode<T> = childNode;
-    const elements = this.activeLayer.elements;
 
     if (currChild.children.length && !currChild.focusedElement) {
       currChild.focusedElement = this._findNextBestFocus(currChild);
     }
 
+    // Focus has now explicitly arrived at this node, so mark its subtree as
+    // committed: a later-mounting autoFocus sibling must not steal it on
+    // registration (see addElement / focusCommitted).
+    childNode.focusCommitted = true;
+
     while (currChild && !isRootNode(currChild) && currParent) {
-      if (currChild.focusRedirect && currChild.destinations) {
-        // TODO: Probably something smarter here to decide which destination to focus
-        const destination = currChild.destinations?.find((child) => child?.focusable);
-
-        if (destination) {
-          const focusNode = elements.get(destination);
-
-          if (!focusNode) {
-            console.warn('FocusManager: No focus node found for destination', destination);
-
-            return;
-          }
-
-          // Detect redirect cycles
-          const visited = visitedRedirects ?? new Set<T>();
-
-          if (visited.has(destination)) {
-            console.warn('FocusManager: Focus redirect cycle detected, aborting');
-
-            return;
-          }
-
-          visited.add(destination);
-
-          this._focusNode(focusNode, visited);
-
-          return;
-        }
+      if (
+        currChild.focusRedirect &&
+        currChild.destinations &&
+        this._redirectToDestination(currChild, visitedRedirects)
+      ) {
+        return;
       }
 
       currParent.focusedElement = currChild as FocusNode<T>;
+      currParent.focusCommitted = true;
       currChild = currParent;
       currParent = 'parent' in currChild ? currChild.parent : this.activeLayer.root;
     }
