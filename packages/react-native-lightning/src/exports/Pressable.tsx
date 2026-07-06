@@ -1,18 +1,22 @@
 import type { ForwardRefExoticComponent, RefAttributes } from 'react';
 import { useState } from 'react';
 import type { PressableProps as RNPressableProps } from 'react-native';
-
 import type { KeyEvent } from '@plextv/react-lightning';
-import { focusable, Keys, type LightningViewElement } from '@plextv/react-lightning';
-
+import {
+  Keys,
+  type LightningViewElement,
+  focusable,
+} from '@plextv/react-lightning';
 import { useBlurHandler, useFocusHandler } from '../hooks/useFocusHandler';
 import { useLayoutHandler } from '../hooks/useLayoutHandler';
 import { createGestureResponderEvent } from '../utils/createGestureResponderEvent';
 import { View, type ViewProps } from './View';
 
-export type PressableProps = RNPressableProps & RefAttributes<LightningViewElement>;
+export type PressableProps = RefAttributes<LightningViewElement> & RNPressableProps;
 
-function useEnterKeyHandler(handler: (e: KeyEvent) => void): (e: KeyEvent) => boolean {
+function useEnterKeyHandler(
+  handler: (e: KeyEvent) => void,
+): (e: KeyEvent) => boolean {
   return (e) => {
     if (e.remoteKey === Keys.Enter) {
       handler(e);
@@ -44,20 +48,37 @@ export const Pressable: ForwardRefExoticComponent<PressableProps> = focusable<
     },
     ref,
   ) {
-    const [state, setState] = useState({ pressed: false });
+    const [state, setState] = useState({ focused: false, pressed: false });
 
-    const handleFocus = useFocusHandler(onFocus);
-    const handleBlur = useBlurHandler(onBlur);
+    const forwardFocus = useFocusHandler(onFocus);
+    const forwardBlur = useBlurHandler(onBlur);
     const handleLayout = useLayoutHandler(onLayout);
+
+    // RN's Pressable exposes `focused` to its function children; mirror that by
+    // tracking it locally so focus-driven visuals (rings, scale) react. Wire the
+    // handlers unconditionally — consumer callbacks are optional and forwarded.
+    const handleFocus = (
+      element: Parameters<NonNullable<typeof forwardFocus>>[0],
+    ) => {
+      setState((s) => ({ ...s, focused: true }));
+      forwardFocus?.(element);
+    };
+
+    const handleBlur = (
+      element: Parameters<NonNullable<typeof forwardBlur>>[0],
+    ) => {
+      setState((s) => ({ ...s, focused: false }));
+      forwardBlur?.(element);
+    };
 
     const handleKeyDown = useEnterKeyHandler((e) => {
       onPressIn?.(createGestureResponderEvent(e, ref));
-      setState({ pressed: true });
+      setState((s) => ({ ...s, pressed: true }));
     });
 
     const handleKeyUp = useEnterKeyHandler((e) => {
       onPressOut?.(createGestureResponderEvent(e, ref));
-      setState({ pressed: false });
+      setState((s) => ({ ...s, pressed: false }));
     });
 
     const handleKeyPress = useEnterKeyHandler((e) => {
@@ -75,13 +96,13 @@ export const Pressable: ForwardRefExoticComponent<PressableProps> = focusable<
         ref={ref}
         style={finalStyle as ViewProps['style']}
         {...props}
-        onKeyDown={handleKeyDown}
-        onKeyUp={handleKeyUp}
-        onKeyPress={handleKeyPress}
-        onLongPress={handleLongPress}
-        onLayout={handleLayout}
-        onFocus={handleFocus}
         onBlur={handleBlur}
+        onFocus={handleFocus}
+        onKeyDown={handleKeyDown}
+        onKeyPress={handleKeyPress}
+        onKeyUp={handleKeyUp}
+        onLayout={handleLayout}
+        onLongPress={handleLongPress}
       >
         {typeof children === 'function' ? children(state) : children}
       </View>
