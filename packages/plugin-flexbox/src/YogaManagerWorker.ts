@@ -2,7 +2,9 @@ import { EventEmitter } from 'tseep';
 
 import type { LightningElementStyle } from '@plextv/react-lightning';
 
+import { resolveAtlasUrl } from './text/resolveAtlasUrl';
 import { NodeOperations } from './types/NodeOperations';
+import type { YogaOptions } from './types/YogaOptions';
 import { isFlexStyleProp } from './util/isFlexStyleProp';
 import { SimpleDataView } from './util/SimpleDataView';
 import { toSerializableValue } from './util/toSerializableValue';
@@ -366,10 +368,30 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
       flushChildOperations();
       worker.postMessage({ method: 'clearTextMeasure', args: [elementId] });
     },
-    init: (yogaOptions?: unknown) => _awaitable('init', [yogaOptions]),
+    init: (yogaOptions?: unknown) =>
+      _awaitable('init', [resolveFontUrls(yogaOptions as YogaOptions | undefined)]),
   };
 
   return proxy as unknown as Workerized<T>;
+}
+
+// The worker is inlined as a blob, so a root-relative atlas URL can't resolve
+// against its base once it's over there. Resolve here on the main thread, where
+// `location` is the real document URL, before the options cross postMessage.
+function resolveFontUrls(yogaOptions?: YogaOptions): YogaOptions | undefined {
+  if (!yogaOptions?.fonts?.length) {
+    return yogaOptions;
+  }
+
+  const baseHref = globalThis.location?.href;
+
+  return {
+    ...yogaOptions,
+    fonts: yogaOptions.fonts.map((font) => ({
+      ...font,
+      atlasDataUrl: resolveAtlasUrl(font.atlasDataUrl, baseHref),
+    })),
+  };
 }
 
 let count = 0;
