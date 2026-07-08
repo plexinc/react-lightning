@@ -3,6 +3,7 @@ import { useContext, useEffect, useRef } from 'react';
 
 import { useFocusManager } from '../focus/useFocusManager';
 import { bubbleEvent } from './bubbleEvent';
+import { hasModifierKey } from './hasModifierKey';
 import type { KeyMap } from './KeyMapContext';
 import { KeyMapContext } from './KeyMapContext';
 import { Keys } from './Keys';
@@ -20,6 +21,12 @@ export const KeyPressHandler: FC<{ children: ReactNode }> = ({ children }) => {
       const element = focusManager.focusPath.at(-1);
 
       if (!element || !(event instanceof KeyboardEvent)) {
+        return;
+      }
+
+      // Modifier combos (Cmd+Opt+I, etc.) are host shortcuts, not remote input.
+      // Let them through so devtools and browser/Storybook shortcuts still work.
+      if (hasModifierKey(event)) {
         return;
       }
 
