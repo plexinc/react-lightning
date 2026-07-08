@@ -235,16 +235,27 @@ export class YogaManager {
     const yogaNode = this._elementMap.get(elementId);
 
     if (yogaNode) {
-      yogaNode.node.free();
-
-      // Remove the node from its parent's children array
+      // Detach from the parent's yoga node before freeing. Splicing only the
+      // ManagerNode children array leaves the freed child in the parent's yoga
+      // child list, so the parent keeps laying it out and a shrink-fit parent
+      // never shrinks back.
       if (yogaNode.parent) {
         const index = yogaNode.parent.children.indexOf(yogaNode);
 
         if (index !== -1) {
           yogaNode.parent.children.splice(index, 1);
         }
+
+        // Only detach while the parent is still alive. React tears subtrees
+        // down root-first, so a descendant's parent can already be freed by
+        // the time we get here; removeChild on a freed node corrupts yoga's
+        // heap (surfaces as a re-mounted subtree that never lays out).
+        if (this._elementMap.has(yogaNode.parent.id)) {
+          yogaNode.parent.node.removeChild(yogaNode.node);
+        }
       }
+
+      yogaNode.node.free();
 
       this._elementMap.delete(elementId);
     }

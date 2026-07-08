@@ -200,6 +200,42 @@ describe('YogaManager', () => {
       expect(mockNode.free).toHaveBeenCalled();
     });
 
+    it('should detach the node from its yoga parent before freeing', () => {
+      const parentId = 1;
+      const childId = 2;
+
+      yogaManager.addNode(parentId);
+      yogaManager.addNode(childId);
+      yogaManager.addChildNode(parentId, childId, 0);
+
+      yogaManager.removeNode(childId);
+
+      // Splicing only the ManagerNode children array leaves the freed child in
+      // the parent's yoga child list, so a shrink-fit parent keeps laying it
+      // out and never shrinks back. Detach from the yoga parent too.
+      expect(mockNode.removeChild).toHaveBeenCalledWith(mockNode);
+    });
+
+    it('should not detach from a parent that was already freed', () => {
+      const parentId = 1;
+      const childId = 2;
+
+      yogaManager.addNode(parentId);
+      yogaManager.addNode(childId);
+      yogaManager.addChildNode(parentId, childId, 0);
+
+      // React tears a subtree down root-first: the parent's yoga node is
+      // freed (via childRemoved) before the child's removeNode runs. Removing
+      // the child must not call removeChild on the parent's freed node, which
+      // is a use-after-free in yoga's wasm heap.
+      yogaManager.removeNode(parentId);
+      mockNode.removeChild.mockClear();
+
+      yogaManager.removeNode(childId);
+
+      expect(mockNode.removeChild).not.toHaveBeenCalled();
+    });
+
     it('should handle removing non-existent node', () => {
       yogaManager.removeNode(999);
       expect(mockNode.free).not.toHaveBeenCalled();
