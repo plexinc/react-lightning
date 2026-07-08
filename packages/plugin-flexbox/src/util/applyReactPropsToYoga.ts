@@ -156,6 +156,14 @@ function applyFlex(node: Node, value?: string | number, expandToAutoFlexBasis = 
   }
 }
 
+function borderWidthOf(value: LightningViewElementStyle['border']): number {
+  if (value == null) {
+    return 0;
+  }
+
+  return typeof value === 'number' ? value : (value.w ?? 0);
+}
+
 export default function applyReactPropsToYoga(
   yoga: Yoga,
   config: YogaOptions,
@@ -196,7 +204,10 @@ export function applyFlexPropToYoga<K extends FlexProps>(
   }
 
   try {
-    const value = styleValue as Exclude<LightningViewElementStyle[K], Transform>;
+    const value = styleValue as Exclude<
+      LightningViewElementStyle[K],
+      Transform | { w: number; color: number }
+    >;
 
     switch (key) {
       case 'display':
@@ -288,6 +299,24 @@ export function applyFlexPropToYoga<K extends FlexProps>(
       case 'paddingVertical':
       case 'paddingBlock':
         node.setPadding(yoga.EDGE_VERTICAL, value as LightningViewElementStyle['paddingBlock']);
+        return true;
+      case 'border':
+        node.setBorder(
+          yoga.EDGE_ALL,
+          borderWidthOf(styleValue as LightningViewElementStyle['border']),
+        );
+        return true;
+      case 'borderTop':
+        node.setBorder(yoga.EDGE_TOP, (value as number) ?? 0);
+        return true;
+      case 'borderRight':
+        node.setBorder(yoga.EDGE_RIGHT, (value as number) ?? 0);
+        return true;
+      case 'borderBottom':
+        node.setBorder(yoga.EDGE_BOTTOM, (value as number) ?? 0);
+        return true;
+      case 'borderLeft':
+        node.setBorder(yoga.EDGE_LEFT, (value as number) ?? 0);
         return true;
       case 'flex':
         applyFlex(node, value, config.expandToAutoFlexBasis);
