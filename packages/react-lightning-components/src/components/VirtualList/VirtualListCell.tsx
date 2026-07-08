@@ -23,6 +23,7 @@ const VirtualListCellInner = <T,>({
   isLastItem,
   ItemSeparatorComponent,
   isInFlex,
+  pinCrossAxis = false,
   onItemSizeChange,
   onItemEmpty,
   onContentCrossLayout,
@@ -140,12 +141,20 @@ const VirtualListCellInner = <T,>({
     </VLCellKeyContext.Provider>
   );
 
-  // FlexRoot is unpinned on both axes so yoga shrinks-to-fit content;
-  // pinning the cross axis would create a cell→VL→cell feedback loop.
-  // Tradeoff: cross-axis percentages (`width: '100%'` in a vertical VL
-  // cell) need the caller to set `style.h`/`.w` on the VL.
+  // When the VL's cross size is definite (external, not content-derived) the
+  // cell pins the FlexRoot's cross axis so flex children can fill it, like a
+  // native list cell spanning the list width. A content-derived cross size
+  // must stay unpinned or it freezes at the estimate before content reports
+  // its real size (cell→VL→cell feedback loop). While unpinned, cross-axis
+  // percentages (`width: '100%'` in a vertical VL cell) need the caller to
+  // set `style.h`/`.w` on the VL.
+  const flexRootStyle: LightningViewElementStyle | null = pinCrossAxis
+    ? horizontal
+      ? { h: crossSize }
+      : { w: crossSize }
+    : null;
   const measuredContent = isInFlex ? (
-    <FlexRoot ref={flexRootRef} onResize={handleResize}>
+    <FlexRoot ref={flexRootRef} style={flexRootStyle} onResize={handleResize}>
       {innerContent}
     </FlexRoot>
   ) : (
@@ -209,6 +218,7 @@ function areCellPropsEqual(
     prev.isLastItem === next.isLastItem &&
     prev.ItemSeparatorComponent === next.ItemSeparatorComponent &&
     prev.isInFlex === next.isInFlex &&
+    prev.pinCrossAxis === next.pinCrossAxis &&
     prev.pooled === next.pooled
   );
 }

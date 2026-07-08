@@ -201,6 +201,8 @@ export interface VirtualListCellProps<T> {
   ItemSeparatorComponent?: ComponentType<any> | null;
   /** True when a flex ancestor exists; cells wrap in FlexRoot for layout + measurement. False means pinned/silent. */
   isInFlex: boolean;
+  /** Pin the FlexRoot's cross axis to `crossSize` so flex children can fill it. Only safe when the VL's cross size is definite (not content-derived). */
+  pinCrossAxis?: boolean;
   onItemSizeChange?: (userKey: string, size: number) => void;
   /** Distinct from `onItemSizeChange(_, 0)` (rejected) — this is the explicit empty-row path. */
   onItemEmpty?: (userKey: string) => void;
