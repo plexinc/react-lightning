@@ -372,6 +372,12 @@ export function applyFlexPropToYoga<K extends FlexProps>(
       case 'top':
         node.setPosition(yoga.EDGE_TOP, (value as LightningViewElementStyle['top']) ?? 0);
         return true;
+      case 'start':
+        node.setPosition(yoga.EDGE_START, (value as LightningViewElementStyle['left']) ?? 0);
+        return true;
+      case 'end':
+        node.setPosition(yoga.EDGE_END, (value as LightningViewElementStyle['right']) ?? 0);
+        return true;
     }
   } catch (err) {
     console.error(err);
