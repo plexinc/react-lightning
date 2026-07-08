@@ -1244,8 +1244,21 @@ export class LightningViewElement<
       );
     }
 
+    // Reanimated pushes partial style updates (just opacity/transform) straight
+    // to setProps. Recomputing the shader from that partial style finds no
+    // borderRadius/border and clears the Rounded shader, squaring off a node
+    // mid-animation. Keep the existing shader when this update carries no
+    // shader-relevant prop and no explicit shader override.
+    const updateTouchesShaderProp =
+      style != null &&
+      Object.keys(style).some((key) =>
+        LightningViewElement._shaderStyleProps.has(key),
+      );
     const oldShader = this._shaderDef;
-    this._shaderDef = shader || styleShader;
+    this._shaderDef =
+      shader === undefined && !updateTouchesShaderProp && !styleShader && oldShader
+        ? oldShader
+        : shader || styleShader;
 
     if (this._shaderDef?.props) {
       // if the shader is the same as the previous one, we don't need to recreate it
