@@ -19,12 +19,14 @@ import {
 } from '@plextv/react-lightning';
 import { FlexBoundary, FlexRoot, useIsInFlex } from '@plextv/react-lightning-plugin-flexbox';
 
+import { capSelfMeasuredViewport } from './capSelfMeasuredViewport';
 import { computeItemRect } from './computeItemRect';
 import { LayoutManager } from './LayoutManager';
 import { parseContentStyle } from './parseContentStyle';
 import { RecyclerPool } from './RecyclerPool';
 import { resolveCrossSize } from './resolveCrossSize';
 import { resolveSectionSize } from './resolveSectionSize';
+import { resolveVisibleMainSpan } from './resolveVisibleMainSpan';
 import { useScrollHandler } from './useScrollHandler';
 import { useViewability } from './useViewability';
 import { VirtualListCell } from './VirtualListCell';
@@ -110,6 +112,10 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   const [skipNextFocus, setSkipNextFocus] = useState(false);
   const [ownStateCache] = useState<Map<string, VLPersistedState>>(() => new Map());
   const [measuredSize, setMeasuredSize] = useState({ w: 0, h: 0 });
+  // Visible main-axis span from the list's stage position to the stage edge,
+  // tracked on resize. Caps the self-measured viewport fallback below.
+  const outerElementRef = useRef<LightningElement>(null);
+  const [visibleMainSpan, setVisibleMainSpan] = useState(0);
   const [, setLayoutVersion] = useState(0);
   const [separatorSize, setSeparatorSize] = useState(0);
   const separatorSizeRef = useRef(0);
@@ -139,7 +145,7 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   const parentMain = horizontal ? parentCellBounds?.width : parentCellBounds?.height;
   const measuredOuterMain = horizontal ? measuredSize.w : measuredSize.h;
   const viewportSize =
-    explicitMain ?? parentMain ?? (measuredOuterMain > 0 ? measuredOuterMain : 0);
+    explicitMain ?? parentMain ?? capSelfMeasuredViewport(measuredOuterMain, visibleMainSpan);
 
   const explicitCross = horizontal
     ? (style?.h as number | undefined)
@@ -478,6 +484,20 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
 
   const handleViewportResize = (event: { w: number; h: number }) => {
     setMeasuredSize((prev) => (prev.w === event.w && prev.h === event.h ? prev : event));
+
+    // A canvas-overflowing (or overflow-margin-inflated) list is flex-sized
+    // past the screen; capSelfMeasuredViewport needs the visible span to rein
+    // the viewport back to what is on screen. Horizontal too: the centered
+    // switch-user row inflates its width via a negative right margin.
+    const el = outerElementRef.current;
+
+    if (el) {
+      const root = el.rootElement;
+      const pos = el.getRelativePosition(root);
+      const span = resolveVisibleMainSpan(horizontal, root.node.w, root.node.h, pos.x, pos.y);
+
+      setVisibleMainSpan((prev) => (prev === span ? prev : span));
+    }
   };
 
   useImperativeHandle(ref, () => ({
@@ -633,6 +653,7 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   return (
     <VLStateCacheContext.Provider value={ownStateCache}>
       <FocusGroup
+        ref={outerElementRef}
         style={outerStyle}
         autoFocus={autoFocus}
         onChildFocused={handleVLFocus}

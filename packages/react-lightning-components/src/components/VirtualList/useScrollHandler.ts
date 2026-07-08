@@ -5,6 +5,7 @@ import type { LightningElement } from '@plextv/react-lightning';
 import type { LayoutManager } from './LayoutManager';
 import type { ScrollEvent } from './VirtualListTypes';
 
+import { resolveChildSnapAlignment } from './resolveChildSnapAlignment';
 import { resolveFocusScrollTarget } from './resolveFocusScrollTarget';
 
 // Lightning Magic Remote / mouse support (in the host app) installs this hook
@@ -243,7 +244,9 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
       childOffset,
       childSize,
       viewportSize,
-      snapToAlignment,
+      // A row's own scrollSnapAlign wins over the list-level alignment,
+      // matching react-native-tvos (snapToAlignment="item" defers to rows).
+      snapToAlignment: resolveChildSnapAlignment(child) ?? snapToAlignment,
       paddingStart,
       paddingEnd,
       headerSize,
