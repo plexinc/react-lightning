@@ -7,6 +7,17 @@ import type { ScrollEvent } from './VirtualListTypes';
 
 import { resolveFocusScrollTarget } from './resolveFocusScrollTarget';
 
+// Lightning Magic Remote / mouse support (in the host app) installs this hook
+// while a pointer is driving focus. Read it off globalThis so this subtree stays
+// free of app imports; undefined (a no-op) on every platform that never loads it.
+const isPointerFocusScrollSuppressed = (): boolean => {
+  const fn = (
+    globalThis as { __plexShouldSuppressPointerFocusScroll?: () => boolean }
+  ).__plexShouldSuppressPointerFocusScroll;
+
+  return typeof fn === 'function' && fn();
+};
+
 export interface UseScrollHandlerOptions {
   layoutManager: LayoutManager<unknown>;
   horizontal: boolean | null;
@@ -208,6 +219,12 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
   }
 
   function handleChildFocused(child: LightningElement): void {
+    // Pointer hover moves focus; don't scroll to follow it or the row slides out
+    // from under a stationary cursor and the next click misses.
+    if (isPointerFocusScrollSuppressed()) {
+      return;
+    }
+
     const el = contentRef.current;
 
     if (!el) {
