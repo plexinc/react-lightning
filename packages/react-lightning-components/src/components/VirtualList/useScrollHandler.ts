@@ -5,6 +5,8 @@ import type { LightningElement } from '@plextv/react-lightning';
 import type { LayoutManager } from './LayoutManager';
 import type { ScrollEvent } from './VirtualListTypes';
 
+import { resolveFocusScrollTarget } from './resolveFocusScrollTarget';
+
 export interface UseScrollHandlerOptions {
   layoutManager: LayoutManager<unknown>;
   horizontal: boolean | null;
@@ -216,28 +218,21 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     const childOffset = horizontal ? pos.x : pos.y;
     const childSize = horizontal ? child.node.w : child.node.h;
 
-    let target: number;
+    const headerSize = itemAreaOffset - paddingStart;
+    const footerSize =
+      totalContentSize - itemAreaOffset - layoutManager.totalSize - paddingEnd;
 
-    switch (snapToAlignment) {
-      case 'center':
-        target = childOffset + childSize / 2 - viewportSize / 2;
-        break;
-      case 'end':
-        target = childOffset + childSize - viewportSize + paddingEnd;
-        break;
-      default:
-        target = childOffset - paddingStart;
-        break;
-    }
-
-    // Snap to edges to keep header/footer visible when near them
-    const footerAreaSize = totalContentSize - itemAreaOffset - layoutManager.totalSize;
-
-    if (target > 0 && target <= itemAreaOffset) {
-      target = 0;
-    } else if (target < maxScroll && target >= maxScroll - footerAreaSize) {
-      target = maxScroll;
-    }
+    const target = resolveFocusScrollTarget({
+      childOffset,
+      childSize,
+      viewportSize,
+      snapToAlignment,
+      paddingStart,
+      paddingEnd,
+      headerSize,
+      footerSize,
+      maxScroll,
+    });
 
     scrollToOffset(target, true);
   }
