@@ -159,6 +159,16 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
 
   const cellCrossSize = (viewportCrossSize - crossPadding) / numColumns;
 
+  // Header/footer span the full cell area (all columns). Pin their FlexRoot's
+  // cross axis under the same definiteness rule as the cells, so flex content
+  // (e.g. a stretch Column) fills the list width instead of shrink-fitting.
+  const sectionCrossSize = viewportCrossSize - crossPadding;
+  const sectionFlexStyle = crossSizeIsDefinite
+    ? horizontal
+      ? { h: sectionCrossSize }
+      : { w: sectionCrossSize }
+    : undefined;
+
   // Lazy-init the LayoutManager via useState — the previous
   // `useRef(null) + if (!ref.current) ref.current = new ...` pattern is a
   // render-phase ref read AND write, which causes React Compiler to bail
@@ -644,7 +654,7 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
                 }}
               >
                 {isInFlex ? (
-                  <FlexRoot onResize={handleHeaderLayout}>
+                  <FlexRoot style={sectionFlexStyle} onResize={handleHeaderLayout}>
                     {renderListComponent(ListHeaderComponent)}
                   </FlexRoot>
                 ) : (
@@ -668,7 +678,7 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
                 }}
               >
                 {isInFlex ? (
-                  <FlexRoot onResize={handleFooterLayout}>
+                  <FlexRoot style={sectionFlexStyle} onResize={handleFooterLayout}>
                     {renderListComponent(ListFooterComponent)}
                   </FlexRoot>
                 ) : (
