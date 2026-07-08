@@ -30,6 +30,14 @@ export interface LightningViewElementStyle extends Omit<
    */
   borderRadius?: number | [number, number?, number?, number?];
 
+  /**
+   * Parsed linear-gradient, applied as a LinearGradient shader. Set by
+   * plugin-css-transform from a css `background-image` / RN
+   * `experimental_backgroundImage` value. Colors are in Lightning 0xRRGGBBAA
+   * format, stops are 0..1, angle is radians.
+   */
+  linearGradient?: { colors: number[]; stops: number[]; angle: number };
+
   /** Used as the initial dimensions for the element before yoga has calculated
    * where placement should actually go. This is to estimate where elements are
    * place on the screen so things like images don't all get loaded immediately

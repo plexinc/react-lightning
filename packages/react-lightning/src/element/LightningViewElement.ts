@@ -870,6 +870,7 @@ export class LightningViewElement<
     'borderLeft',
     'borderRight',
     'borderBottom',
+    'linearGradient',
   ]);
 
   /**
@@ -1043,8 +1044,16 @@ export class LightningViewElement<
     let type: ShaderDef['type'] | undefined;
     let hasRounded = false;
 
-    const { border, borderColor, borderTop, borderLeft, borderRight, borderBottom, borderRadius } =
-      style;
+    const {
+      border,
+      borderColor,
+      borderTop,
+      borderLeft,
+      borderRight,
+      borderBottom,
+      borderRadius,
+      linearGradient,
+    } = style;
 
     if (borderRadius) {
       type = 'Rounded';
@@ -1089,7 +1098,21 @@ export class LightningViewElement<
       props[hasRounded ? 'border-color' : 'color'] = borderColor;
     }
 
-    return type ? { type, props } : undefined;
+    if (type) {
+      if (linearGradient && import.meta.env.DEV) {
+        console.warn(
+          `Warning: element ${this.id} sets both a background gradient and a border/radius. A node can only carry one shader, so the border/radius wins and the gradient is dropped.`,
+        );
+      }
+
+      return { type, props };
+    }
+
+    if (linearGradient) {
+      return { type: 'LinearGradient', props: linearGradient };
+    }
+
+    return undefined;
   }
 
   public _toLightningNodeProps(

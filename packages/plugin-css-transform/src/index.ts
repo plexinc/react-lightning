@@ -12,6 +12,8 @@ export { parseTransform } from './utils/parseTransform';
 
 const CSS_HANDLED_STYLE_PROPS: ReadonlySet<string> = new Set([
   'backgroundColor',
+  'backgroundImage',
+  'experimental_backgroundImage',
   'color',
   'border',
   'borderWidth',

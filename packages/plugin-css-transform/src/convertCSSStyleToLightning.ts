@@ -3,6 +3,7 @@ import type { LightningElementStyle, LightningTextElementStyle } from '@plextv/r
 import type { AllStyleProps } from './types/ReactStyle';
 import { flattenStyles } from './utils/flattenStyles';
 import { htmlColorToLightningColor } from './utils/htmlColorToLightningColor';
+import { parseLinearGradient } from './utils/parseLinearGradient';
 import { parseTransform } from './utils/parseTransform';
 
 export function convertCSSStyleToLightning(
@@ -28,6 +29,8 @@ export function convertCSSStyleToLightning(
     transform,
     width,
     height,
+    backgroundImage,
+    experimental_backgroundImage,
     ...otherStyles
   } = flattenStyles(style);
   const finalStyle = {
@@ -44,6 +47,21 @@ export function convertCSSStyleToLightning(
     finalStyle.color = htmlColorToLightningColor(tintColor);
   } else if (typeof color === 'number') {
     finalStyle.color = color;
+  }
+
+  const gradientValue =
+    typeof backgroundImage === 'string'
+      ? backgroundImage
+      : typeof experimental_backgroundImage === 'string'
+        ? experimental_backgroundImage
+        : undefined;
+
+  if (gradientValue != null) {
+    const gradient = parseLinearGradient(gradientValue);
+
+    if (gradient) {
+      finalStyle.linearGradient = gradient;
+    }
   }
 
   if (shadowColor != null) {
