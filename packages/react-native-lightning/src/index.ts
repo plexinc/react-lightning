@@ -25,6 +25,7 @@ export {
   type TouchableWithoutFeedbackProps,
 } from './exports/TouchableWithoutFeedback';
 export { View, type ViewProps } from './exports/View';
+export { findNodeHandle } from './exports/findNodeHandle';
 export { VirtualizedList } from './exports/VirtualizedList';
 
 export { useBlurHandler, useFocusHandler } from './hooks/useFocusHandler';
