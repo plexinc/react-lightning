@@ -17,12 +17,13 @@ import {
   type LightningElement,
   type LightningViewElementStyle,
 } from '@plextv/react-lightning';
-import { FlexBoundary, useIsInFlex } from '@plextv/react-lightning-plugin-flexbox';
+import { FlexBoundary, FlexRoot, useIsInFlex } from '@plextv/react-lightning-plugin-flexbox';
 
 import { computeItemRect } from './computeItemRect';
 import { LayoutManager } from './LayoutManager';
 import { parseContentStyle } from './parseContentStyle';
 import { RecyclerPool } from './RecyclerPool';
+import { resolveSectionSize } from './resolveSectionSize';
 import { useScrollHandler } from './useScrollHandler';
 import { useViewability } from './useViewability';
 import { VirtualListCell } from './VirtualListCell';
@@ -111,6 +112,10 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   const [, setLayoutVersion] = useState(0);
   const [separatorSize, setSeparatorSize] = useState(0);
   const separatorSizeRef = useRef(0);
+  const [measuredHeaderSize, setMeasuredHeaderSize] = useState(0);
+  const measuredHeaderSizeRef = useRef(0);
+  const [measuredFooterSize, setMeasuredFooterSize] = useState(0);
+  const measuredFooterSizeRef = useRef(0);
   // Monotonic per-dataset: once a cell reports cross=N, stays at N or
   // larger until data/extraData identity changes.
   const [maxContentCross, setMaxContentCross] = useState(0);
@@ -122,8 +127,8 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   const paddingCross = horizontal ? padding.top : padding.left;
   const paddingCrossEnd = horizontal ? padding.bottom : padding.right;
   const crossPadding = paddingCross + paddingCrossEnd;
-  const headerSize = ListHeaderComponent ? listHeaderSize : 0;
-  const footerSize = ListFooterComponent ? listFooterSize : 0;
+  const headerSize = resolveSectionSize(!!ListHeaderComponent, measuredHeaderSize, listHeaderSize);
+  const footerSize = resolveSectionSize(!!ListFooterComponent, measuredFooterSize, listFooterSize);
   const itemAreaOffset = paddingStart + headerSize;
 
   // Main axis: explicit style > parent cell bounds > self-measured.
@@ -276,6 +281,24 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     if (size > maxContentCrossRef.current) {
       maxContentCrossRef.current = size;
       setMaxContentCross(size);
+    }
+  };
+
+  const handleHeaderLayout = (event: { w: number; h: number }) => {
+    const main = horizontal ? event.w : event.h;
+
+    if (main > 0 && Math.abs(main - measuredHeaderSizeRef.current) >= 1) {
+      measuredHeaderSizeRef.current = main;
+      setMeasuredHeaderSize(main);
+    }
+  };
+
+  const handleFooterLayout = (event: { w: number; h: number }) => {
+    const main = horizontal ? event.w : event.h;
+
+    if (main > 0 && Math.abs(main - measuredFooterSizeRef.current) >= 1) {
+      measuredFooterSizeRef.current = main;
+      setMeasuredFooterSize(main);
     }
   };
 
@@ -633,7 +656,13 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
                   y: horizontal ? paddingCross : paddingStart,
                 }}
               >
-                {renderListComponent(ListHeaderComponent)}
+                {isInFlex ? (
+                  <FlexRoot onResize={handleHeaderLayout}>
+                    {renderListComponent(ListHeaderComponent)}
+                  </FlexRoot>
+                ) : (
+                  renderListComponent(ListHeaderComponent)
+                )}
               </lng-view>
             )}
 
@@ -651,7 +680,13 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
                     : paddingStart + headerSize + layoutManager.totalSize,
                 }}
               >
-                {renderListComponent(ListFooterComponent)}
+                {isInFlex ? (
+                  <FlexRoot onResize={handleFooterLayout}>
+                    {renderListComponent(ListFooterComponent)}
+                  </FlexRoot>
+                ) : (
+                  renderListComponent(ListFooterComponent)
+                )}
               </lng-view>
             )}
           </FlexBoundary>
