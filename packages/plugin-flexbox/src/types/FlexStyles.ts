@@ -75,6 +75,10 @@ export type FlexLightningBaseElementStyle = {
   right?: DimensionValue;
   /** Only affects flex layouts */
   bottom?: DimensionValue;
+  /** Logical inline-start inset. LTR: same as `left`. */
+  start?: DimensionValue;
+  /** Logical inline-end inset. LTR: same as `right`. */
+  end?: DimensionValue;
 };
 
 export interface FlexContainer {

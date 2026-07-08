@@ -53,6 +53,8 @@ export const flexProps = {
   left: true,
   right: true,
   bottom: true,
+  start: true,
+  end: true,
 
   border: true,
   borderTop: true,
