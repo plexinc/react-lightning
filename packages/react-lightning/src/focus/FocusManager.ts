@@ -241,7 +241,7 @@ export class FocusManager<
 
     this._checkFocusableChildren(parentNode);
 
-    if (child.focusable && !hasExternalRedirect(childNode)) {
+    if (this._isEffectivelyFocusable(childNode) && !hasExternalRedirect(childNode)) {
       if (!parentNode.focusedElement) {
         // No preferred child yet — take the slot regardless of autoFocus.
         parentNode.focusedElement = childNode;
@@ -750,6 +750,12 @@ export class FocusManager<
     this.activeLayer.elements.delete(node.element);
 
     if (isTopMostParentNode) {
+      // Removing a child can empty a focus-group parent; recompute so its
+      // effective focusability and the ancestor chain update.
+      if (!isRootNode(node.parent) && node.parent.element.isFocusGroup) {
+        this._checkFocusableChildren(node.parent);
+      }
+
       this._recalculateFocusPath();
     }
 
@@ -760,15 +766,20 @@ export class FocusManager<
     this._removeEventListeners(node);
   }
 
+  // A focus group only delegates, so it's a target only with a focusable
+  // descendant. Leaves (Pressable, focusable View) always are.
+  private _isEffectivelyFocusable(node: FocusNode<T>): boolean {
+    if (!node.element.focusable) {
+      return false;
+    }
+
+    return !node.element.isFocusGroup || node.hasFocusableChildren;
+  }
+
   private _checkFocusableChildren(parentNode: FocusNode<T> | RootNode<T>) {
+    const previous = parentNode.hasFocusableChildren;
     const children = parentNode.children;
     const childrenLength = children.length;
-
-    if (childrenLength === 0) {
-      parentNode.hasFocusableChildren = false;
-
-      return;
-    }
 
     const leafNodes = new Set<number>();
     let hasFocusableChildren = false;
@@ -777,7 +788,7 @@ export class FocusManager<
       // oxlint-disable-next-line typescript/no-non-null-assertion -- Already asserted that child exists
       const child = children[i]!;
 
-      if (child.element.focusable) {
+      if (this._isEffectivelyFocusable(child)) {
         hasFocusableChildren = true;
       }
 
@@ -788,24 +799,45 @@ export class FocusManager<
 
     parentNode.hasFocusableChildren = hasFocusableChildren;
 
-    // Early return if no leaf nodes to check
-    if (leafNodes.size === 0) {
-      return;
-    }
-
     // Check each child for leaf node ancestry and update focusability
-    for (let i = 0; i < childrenLength; i++) {
-      // oxlint-disable-next-line typescript/no-non-null-assertion -- Already asserted that child exists
-      const child = children[i]!;
+    if (leafNodes.size > 0) {
+      for (let i = 0; i < childrenLength; i++) {
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- Already asserted that child exists
+        const child = children[i]!;
 
-      if (this._hasLeafParent(child.element, leafNodes, parentNode.element)) {
-        child.element.focusable = false;
+        if (this._hasLeafParent(child.element, leafNodes, parentNode.element)) {
+          child.element.focusable = false;
 
-        if (parentNode.focusedElement === child) {
-          parentNode.focusedElement = this._findNextBestFocus(parentNode, child);
+          if (parentNode.focusedElement === child) {
+            parentNode.focusedElement = this._findNextBestFocus(parentNode, child);
+          }
         }
       }
     }
+
+    // A group's effective focusability tracks hasFocusableChildren, so a flip
+    // here has to refresh the ancestor chain (non-group parents don't).
+    if (
+      previous !== hasFocusableChildren &&
+      !isRootNode(parentNode) &&
+      parentNode.element.isFocusGroup
+    ) {
+      this._propagateFocusableChange(parentNode);
+    }
+  }
+
+  private _propagateFocusableChange(node: FocusNode<T>) {
+    const parent = node.parent;
+
+    if (this._isEffectivelyFocusable(node)) {
+      if (!parent.focusedElement && !hasExternalRedirect(node)) {
+        parent.focusedElement = node;
+      }
+    } else if (parent.focusedElement === node) {
+      parent.focusedElement = this._findNextBestFocus(parent, node);
+    }
+
+    this._checkFocusableChildren(parent);
   }
 
   private _hasLeafParent(element: T, leafNodes: Set<number>, parentNode: T | null): boolean {
@@ -844,7 +876,8 @@ export class FocusManager<
       const newChild = parent.children[i];
 
       if (
-        newChild?.element.focusable &&
+        newChild &&
+        this._isEffectivelyFocusable(newChild) &&
         !hasExternalRedirect(newChild) &&
         newChild !== relativeNode
       ) {

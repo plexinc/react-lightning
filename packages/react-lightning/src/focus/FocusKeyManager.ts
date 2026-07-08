@@ -8,7 +8,15 @@ import type { FocusManager, FocusNode } from './FocusManager';
 function* childElements(children: FocusNode<LightningElement>[]): Iterable<LightningElement> {
   for (let i = 0; i < children.length; i++) {
     // oxlint-disable-next-line typescript/no-non-null-assertion -- bounds-checked loop
-    yield children[i]!.element;
+    const child = children[i]!;
+
+    // A focus group with no focusable descendant only wraps non-interactive
+    // content (a list header); skip it so nav lands on a real target.
+    if (child.element.isFocusGroup && !child.hasFocusableChildren) {
+      continue;
+    }
+
+    yield child.element;
   }
 }
 

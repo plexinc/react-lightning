@@ -5,6 +5,8 @@ export class MockElement implements Focusable, EventNotifier {
   private _focusable = true;
   private _focused = false;
 
+  public isFocusGroup = false;
+
   public constructor(
     public id = 0,
     public name = '',
