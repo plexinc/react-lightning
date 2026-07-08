@@ -1,10 +1,74 @@
-import type { LightningElementStyle, LightningTextElementStyle } from '@plextv/react-lightning';
-
+import type {
+  LightningElementStyle,
+  LightningTextElementStyle,
+} from '@plextv/react-lightning';
 import type { AllStyleProps } from './types/ReactStyle';
 import { flattenStyles } from './utils/flattenStyles';
 import { htmlColorToLightningColor } from './utils/htmlColorToLightningColor';
 import { parseLinearGradient } from './utils/parseLinearGradient';
 import { parseTransform } from './utils/parseTransform';
+
+// RN exposes per-corner radius longhands; Lightning's Rounded shader wants a single
+// borderRadius (number, or [tl, tr, br, bl]). Expand the longhands so they aren't dropped.
+// Logical start/end map to physical left/right (LTR only, which is all the app ships).
+// Non-numeric values (animated nodes, '50%') aren't supported by the shader, so they're skipped.
+interface CornerRadii {
+  borderRadius?: unknown;
+  borderTopLeftRadius?: unknown;
+  borderTopRightRadius?: unknown;
+  borderBottomLeftRadius?: unknown;
+  borderBottomRightRadius?: unknown;
+  borderTopStartRadius?: unknown;
+  borderTopEndRadius?: unknown;
+  borderBottomStartRadius?: unknown;
+  borderBottomEndRadius?: unknown;
+}
+
+function resolveBorderRadius(
+  radii: CornerRadii,
+): number | [number, number, number, number] | undefined {
+  const {
+    borderRadius,
+    borderTopLeftRadius,
+    borderTopRightRadius,
+    borderBottomLeftRadius,
+    borderBottomRightRadius,
+    borderTopStartRadius,
+    borderTopEndRadius,
+    borderBottomStartRadius,
+    borderBottomEndRadius,
+  } = radii;
+
+  const num = (value: unknown): number | undefined =>
+    typeof value === 'number' ? value : undefined;
+
+  const topLeft = num(borderTopLeftRadius) ?? num(borderTopStartRadius);
+  const topRight = num(borderTopRightRadius) ?? num(borderTopEndRadius);
+  const bottomRight =
+    num(borderBottomRightRadius) ?? num(borderBottomEndRadius);
+  const bottomLeft =
+    num(borderBottomLeftRadius) ?? num(borderBottomStartRadius);
+
+  const base = num(borderRadius);
+
+  if (
+    topLeft == null &&
+    topRight == null &&
+    bottomRight == null &&
+    bottomLeft == null
+  ) {
+    return base;
+  }
+
+  const fallback = base ?? 0;
+
+  return [
+    topLeft ?? fallback,
+    topRight ?? fallback,
+    bottomRight ?? fallback,
+    bottomLeft ?? fallback,
+  ];
+}
 
 export function convertCSSStyleToLightning(
   style: AllStyleProps,
@@ -31,6 +95,15 @@ export function convertCSSStyleToLightning(
     height,
     backgroundImage,
     experimental_backgroundImage,
+    borderRadius,
+    borderTopLeftRadius,
+    borderTopRightRadius,
+    borderBottomLeftRadius,
+    borderBottomRightRadius,
+    borderTopStartRadius,
+    borderTopEndRadius,
+    borderBottomStartRadius,
+    borderBottomEndRadius,
     ...otherStyles
   } = flattenStyles(style);
   const finalStyle = {
@@ -65,7 +138,8 @@ export function convertCSSStyleToLightning(
   }
 
   if (shadowColor != null) {
-    (finalStyle as LightningTextElementStyle).shadowColor = htmlColorToLightningColor(shadowColor);
+    (finalStyle as LightningTextElementStyle).shadowColor =
+      htmlColorToLightningColor(shadowColor);
   }
 
   if (border != null || borderWidth != null || borderColor != null) {
@@ -118,7 +192,9 @@ export function convertCSSStyleToLightning(
 
   if (otherStyles.top != null) {
     finalStyle.y =
-      typeof otherStyles.top === 'number' ? otherStyles.top : Number.parseInt(otherStyles.top, 10);
+      typeof otherStyles.top === 'number'
+        ? otherStyles.top
+        : Number.parseInt(otherStyles.top, 10);
   }
 
   if (fontWeight != null) {
@@ -129,7 +205,8 @@ export function convertCSSStyleToLightning(
   }
 
   if (transform != null) {
-    const { scaleX, scaleY, rotation, ...translateTransforms } = parseTransform(transform);
+    const { scaleX, scaleY, rotation, ...translateTransforms } =
+      parseTransform(transform);
 
     if (scaleX != null) {
       finalStyle.scaleX = scaleX;
@@ -147,8 +224,27 @@ export function convertCSSStyleToLightning(
   }
 
   // Disabled for now as some components set overflow to hidden while not having their size correctly calculated
-  if (overflow === 'hidden' || overflowX === 'hidden' || overflowY === 'hidden') {
+  if (
+    overflow === 'hidden' ||
+    overflowX === 'hidden' ||
+    overflowY === 'hidden'
+  ) {
     finalStyle.clipping = true;
+  }
+
+  const cornerRadii = resolveBorderRadius({
+    borderRadius,
+    borderTopLeftRadius,
+    borderTopRightRadius,
+    borderBottomLeftRadius,
+    borderBottomRightRadius,
+    borderTopStartRadius,
+    borderTopEndRadius,
+    borderBottomStartRadius,
+    borderBottomEndRadius,
+  });
+  if (cornerRadii != null) {
+    finalStyle.borderRadius = cornerRadii;
   }
 
   if (width != null) {
