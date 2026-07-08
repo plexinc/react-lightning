@@ -23,6 +23,7 @@ import { computeItemRect } from './computeItemRect';
 import { LayoutManager } from './LayoutManager';
 import { parseContentStyle } from './parseContentStyle';
 import { RecyclerPool } from './RecyclerPool';
+import { resolveCrossSize } from './resolveCrossSize';
 import { resolveSectionSize } from './resolveSectionSize';
 import { useScrollHandler } from './useScrollHandler';
 import { useViewability } from './useViewability';
@@ -146,30 +147,15 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   const parentCross = horizontal ? parentCellBounds?.height : parentCellBounds?.width;
   const measuredOuterCross = horizontal ? measuredSize.h : measuredSize.w;
 
-  let viewportCrossSize: number;
-
-  // Cross-axis priority differs by orientation. Vertical: parent/measured
-  // cross is reliable (parent flex allocates column width). Horizontal:
-  // parent/measured cross is the OUTER cell's full height (title + this VL
-  // + siblings) which is bigger than the cards themselves — prefer
-  // content-driven `maxContentCross` and only fall back when no content
-  // has measured yet. Without the asymmetry the cells oscillate as the
-  // outer cell's measured height churns during scroll/focus animations.
-  if (explicitCross != null && explicitCross > 0) {
-    viewportCrossSize = explicitCross;
-  } else if (!horizontal && parentCross != null && parentCross > 0) {
-    viewportCrossSize = parentCross;
-  } else if (!horizontal && measuredOuterCross > 0) {
-    viewportCrossSize = measuredOuterCross;
-  } else if (maxContentCross > 0) {
-    viewportCrossSize = maxContentCross + crossPadding;
-  } else if (parentCross != null && parentCross > 0) {
-    viewportCrossSize = parentCross;
-  } else if (measuredOuterCross > 0) {
-    viewportCrossSize = measuredOuterCross;
-  } else {
-    viewportCrossSize = estimatedItemSize;
-  }
+  const { viewportCrossSize, isDefinite: crossSizeIsDefinite } = resolveCrossSize({
+    horizontal,
+    explicitCross,
+    parentCross,
+    measuredOuterCross,
+    maxContentCross,
+    crossPadding,
+    estimatedItemSize,
+  });
 
   const cellCrossSize = (viewportCrossSize - crossPadding) / numColumns;
 
@@ -625,6 +611,7 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
         isLastItem={isLastItem}
         ItemSeparatorComponent={ItemSeparatorComponent}
         isInFlex={isInFlex}
+        pinCrossAxis={crossSizeIsDefinite}
         onItemSizeChange={handleItemSizeChange}
         onItemEmpty={handleItemEmpty}
         onContentCrossLayout={handleContentCrossLayout}

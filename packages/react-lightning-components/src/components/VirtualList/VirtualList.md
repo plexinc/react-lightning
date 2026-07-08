@@ -17,7 +17,7 @@ When the VL is rendered outside any flex parent (`useIsInFlex() === false`), no 
 When the VL is rendered inside a flex parent (`useIsInFlex() === true`), yoga is already laying out the surrounding tree. In this mode each cell wraps its content in a `FlexRoot`, which:
 
 - gives the user's `renderItem` real flex layout (children can `flexGrow`, `flexDirection`, etc.),
-- is **unpinned on both axes** so yoga shrinks-to-fit content (see [Cell rendering](#cell-rendering) for why),
+- is **unpinned on the main axis** so yoga shrinks-to-fit content there; the cross axis is pinned to `cellCrossSize` when the VL's cross size is definite (explicit/parent/outer-allocated) and left unpinned when it's content-derived (see [Cell rendering](#cell-rendering) for why),
 - emits `onResize` whenever its natural main-axis or cross-axis size changes.
 
 The cell forwards the main-axis size to `LayoutManager.reportItemSize(userKey, size)` (drives per-item layout offsets). The cross-axis size is forwarded separately to VL's `maxContentCross` aggregator (a monotonic, reset-on-data-change fallback for `viewportCrossSize` — see [Viewport resolution](#viewport-resolution)).
@@ -197,10 +197,12 @@ For a list with no explicit cross AND no flex ancestor (pinned mode), no measure
   }}
 >
   {isInFlex ? (
-    /* FlexRoot is unpinned on both axes — yoga shrinks-to-fit content.
+    /* FlexRoot is unpinned on the main axis — yoga shrinks-to-fit content.
+       The cross axis is pinned to crossSize when pinCrossAxis (definite
+       viewport cross), so flex children can fill the cell width/height.
        handleResize forwards main-axis to onItemSizeChange (LM per-key
        store) and cross-axis to onContentCrossLayout (VL maxContentCross). */
-    <FlexRoot ref={flexRootRef} onResize={handleResize}>
+    <FlexRoot ref={flexRootRef} style={flexRootStyle} onResize={handleResize}>
       <VLCellKeyContext.Provider value={userKey}>
         <CellBoundsContext.Provider value={cellBounds}>
           {renderedItem}
@@ -233,7 +235,7 @@ When the caller's `renderItem` includes an inner focusable, that inner is added 
 
 **Why FlexRoot is conditional on `isInFlex`.** When the VL has no flex ancestor, no yoga is running in this subtree. Adding a FlexRoot just for measurement would force yoga to spin up — pure overhead with no benefit, since the user's content isn't using flex either. So we skip it; the cell is silent and pinned.
 
-**Why FlexRoot is unpinned on both axes.** Yoga shrinks the FlexRoot to fit content on both axes. The cell forwards both dimensions: main goes into `LayoutManager`'s per-key measurement store; cross feeds VL's `maxContentCross` fallback (used only when no explicit cross source is available). Pinning cross to `cellCrossSize` would create the prior architecture's feedback loop — cell echoes its own pinned size back to VL, which uses that to compute the pin, etc. Leaving both unpinned lets cell content drive sizing without a loop. Tradeoff: flex-percentage layouts on cross axis (e.g. `width: '100%'` inside a horizontal VL's cell) won't work because the parent has no fixed cross dim — callers needing those should set `style.h` (or `.w`) on the VL, which flips the chain into the explicit branch.
+**Why FlexRoot's main axis is unpinned (and the cross axis only conditionally pinned).** Yoga shrinks the FlexRoot to fit content on the main axis; that measurement goes into `LayoutManager`'s per-key store. The cross axis is pinned to `crossSize` when the viewport cross resolved from a definite source (explicit `style`, parent cell bounds, or the flex-allocated outer size — `pinCrossAxis`), so flex children can fill the cell like they would a native list cell. When the cross size is content-derived (a horizontal VL with no explicit `style.h`), pinning would create the prior architecture's feedback loop — cell echoes its own pinned size back to VL, which uses that to compute the pin, etc. — so those cells stay unpinned and `maxContentCross` keeps driving the viewport cross. Tradeoff while unpinned: flex-percentage layouts on the cross axis (e.g. `width: '100%'` inside a horizontal VL's cell) won't work because the parent has no fixed cross dim — callers needing those should set `style.h` (or `.w`) on the VL, which flips the chain into the explicit (pinned) branch.
 
 **Why measure via `onResize`?** Lightning's universal `NodeResizeObserver` fires `onResize` whenever a node's size changes. The cell reports the main-axis number to `onItemSizeChange` (LayoutManager's per-key store) and the cross-axis number to `onContentCrossLayout` (VL's `maxContentCross` aggregator). Zero/negative reports are filtered before they reach VL — a transient FlexRoot zero during recycle would otherwise pollute the cache.
 
