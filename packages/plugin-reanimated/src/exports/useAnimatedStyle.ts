@@ -12,21 +12,37 @@ import { toLightningAnimationAndStyles } from '../utils/toLightningAnimationAndS
 
 type UseAnimatedStyleFn = (...args: Parameters<typeof useAnimatedStyleRN>) => AnimatedStyle;
 
+function setStyles(
+  view: LightningElement,
+  transition: ReturnType<typeof toLightningAnimationAndStyles>['transition'],
+  style: ReturnType<typeof toLightningAnimationAndStyles>['style'],
+): void {
+  view.setProps({
+    transition,
+    // setProps expects lightning props, but we will just pass through the raw
+    // styles from the useAnimatedStyle and let the transforms take care of
+    // converting the CSS styles to lightning
+    style: style as LightningElementStyle,
+  });
+}
+
+type AppliedStyles = {
+  transition: ReturnType<typeof toLightningAnimationAndStyles>['transition'];
+  style: ReturnType<typeof toLightningAnimationAndStyles>['style'];
+} | null;
+
 function computeAndSetStyles(
   updater: () => AnimatedObject<DefaultStyle>,
   views: Set<LightningElement>,
+  lastApplied: { current: AppliedStyles },
 ): void {
   const computedStyle = updater();
   const { transition, style } = toLightningAnimationAndStyles(computedStyle);
 
+  lastApplied.current = { transition, style };
+
   for (const view of views) {
-    view.setProps({
-      transition,
-      // setProps expects lightning props, but we will just pass through the raw
-      // styles from the useAnimatedStyle and let the transforms take care of
-      // converting the CSS styles to lightning
-      style: style as LightningElementStyle,
-    });
+    setStyles(view, transition, style);
   }
 }
 
@@ -36,6 +52,7 @@ export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
   const [views] = useState(() => new Set<LightningElement>());
   const inputs: DependencyList = dependencies ?? [];
   const timerRef = useRef(0);
+  const lastApplied = useRef<AppliedStyles>(null);
 
   // Debounce this call so we don't end up calculating the styles multiple times
   // when updating multiple properties in the same hook
@@ -45,7 +62,7 @@ export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
     }
 
     timerRef.current = window.setTimeout(() => {
-      computeAndSetStyles(updater, views);
+      computeAndSetStyles(updater, views, lastApplied);
       timerRef.current = 0;
     }, 2);
   };
@@ -74,5 +91,14 @@ export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
 
   return {
     viewsRef: views,
+    // A view registering after styles were already pushed (recycled cells,
+    // re-created nodes) missed that push and a resting shared value may never
+    // change again. Replay only what was already applied — never compute a
+    // fresh value here, that would push states the normal flow never emitted.
+    applyToView: (view: LightningElement) => {
+      if (lastApplied.current) {
+        setStyles(view, lastApplied.current.transition, lastApplied.current.style);
+      }
+    },
   };
 };
