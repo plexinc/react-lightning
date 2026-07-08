@@ -240,6 +240,9 @@ export function createAnimatedComponent<TProps extends {}>(
         }
 
         animatedStyle.viewsRef.add(newRef);
+        // A fresh node has none of the style's resting values (listeners only
+        // push on change), so apply the current value now.
+        animatedStyle.applyToView?.(newRef);
       }
 
       this._ref = newRef;
@@ -256,6 +259,7 @@ export function createAnimatedComponent<TProps extends {}>(
 
         for (const newAnimatedStyle of newAnimatedStyles) {
           newAnimatedStyle.viewsRef.add(this._ref);
+          newAnimatedStyle.applyToView?.(this._ref);
         }
       }
 

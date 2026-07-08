@@ -114,8 +114,10 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
       // `for...in` skips Object.entries' tuple allocation — hot path on
       // every applyStyle. Filter non-flex keys here so we don't serialize
       // them, ship them across postMessage, and let the worker re-filter.
+      // `transform` is not a flex prop but the worker applies it as a
+      // top/left offset on the laid-out position, so let it through.
       for (const key in style) {
-        if (!isFlexStyleProp(key)) {
+        if (key !== 'transform' && !isFlexStyleProp(key)) {
           continue;
         }
 
