@@ -53,6 +53,12 @@ export const flexProps = {
   left: true,
   right: true,
   bottom: true,
+
+  border: true,
+  borderTop: true,
+  borderRight: true,
+  borderBottom: true,
+  borderLeft: true,
 } as const;
 
 flexProps satisfies Partial<Record<keyof LightningViewElementStyle, boolean>>;
