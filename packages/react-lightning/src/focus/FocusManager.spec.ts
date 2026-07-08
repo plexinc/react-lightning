@@ -758,4 +758,62 @@ describe('FocusManager', () => {
       expect(focusManager.focusPath).toEqual([modalParent]);
     });
   });
+
+  describe('non-interactive focus groups', () => {
+    it('does not focus an empty focus group', () => {
+      const group = createMockElement(1, 'emptyGroup');
+      group.isFocusGroup = true;
+
+      focusManager.addElement(group, null, { autoFocus: true });
+
+      expect(group.focused).toBe(false);
+      expect(focusManager.focusPath).toEqual([]);
+    });
+
+    it('skips an empty focus group and focuses a real sibling', () => {
+      const group = createMockElement(1, 'emptyGroup');
+      group.isFocusGroup = true;
+      const leaf = createMockElement(2, 'leaf');
+
+      focusManager.addElement(group, null, { autoFocus: false });
+      focusManager.addElement(leaf, null, { autoFocus: false });
+
+      expect(focusManager.focusPath).toEqual([leaf]);
+    });
+
+    it('focuses a group once it gains a focusable child', () => {
+      const group = createMockElement(1, 'group');
+      group.isFocusGroup = true;
+      const child = createMockElement(2, 'child');
+
+      focusManager.addElement(group, null, { autoFocus: false });
+      expect(focusManager.focusPath).toEqual([]);
+
+      focusManager.addElement(child, group, { autoFocus: false });
+      expect(focusManager.focusPath).toEqual([group, child]);
+    });
+
+    it('moves focus off a group when its last focusable child is removed', () => {
+      const group = createMockElement(1, 'group');
+      group.isFocusGroup = true;
+      const child = createMockElement(2, 'child');
+      const sibling = createMockElement(3, 'sibling');
+
+      focusManager.addElement(group, null, { autoFocus: false });
+      focusManager.addElement(child, group, { autoFocus: false });
+      focusManager.addElement(sibling, null, { autoFocus: false });
+      expect(focusManager.focusPath).toEqual([group, child]);
+
+      focusManager.removeElement(child);
+      expect(focusManager.focusPath).toEqual([sibling]);
+    });
+
+    it('still focuses a normal leaf element that has no children', () => {
+      const leaf = createMockElement(1, 'leaf');
+
+      focusManager.addElement(leaf, null, { autoFocus: true });
+
+      expect(focusManager.focusPath).toEqual([leaf]);
+    });
+  });
 });
