@@ -8,6 +8,10 @@ import { layoutText, type TextMeasureProps } from './text/layoutText';
 import type { ManagerNode } from './types/ManagerNode';
 import type { YogaOptions } from './types/YogaOptions';
 import applyReactPropsToYoga, { applyFlexPropToYoga } from './util/applyReactPropsToYoga';
+import {
+  resolveHorizontalTranslate,
+  resolveVerticalTranslate,
+} from './util/resolveTranslateInset';
 import { SimpleDataView } from './util/SimpleDataView';
 
 export type BatchedUpdate = Record<number, Partial<Rect>>;
@@ -407,29 +411,31 @@ export class YogaManager {
       // Apply transforms after all the styles are applied
       if (transform) {
         const { translateX, translateY } = transform;
+        const yoga = this._yoga;
+        const node = yogaNode.node;
 
         if (translateX != null) {
-          const left = x ?? 0;
-
-          applyFlexPropToYoga(
-            this._yoga,
-            this._yogaOptions,
-            yogaNode.node,
-            'left',
-            left + translateX,
+          const right = node.getPosition(yoga.EDGE_RIGHT);
+          const { edge, value } = resolveHorizontalTranslate(
+            right.unit === yoga.UNIT_POINT,
+            x ?? 0,
+            right.value,
+            translateX,
           );
+
+          applyFlexPropToYoga(yoga, this._yogaOptions, node, edge, value);
         }
 
         if (translateY != null) {
-          const top = y ?? 0;
-
-          applyFlexPropToYoga(
-            this._yoga,
-            this._yogaOptions,
-            yogaNode.node,
-            'top',
-            top + translateY,
+          const bottom = node.getPosition(yoga.EDGE_BOTTOM);
+          const { edge, value } = resolveVerticalTranslate(
+            bottom.unit === yoga.UNIT_POINT,
+            y ?? 0,
+            bottom.value,
+            translateY,
           );
+
+          applyFlexPropToYoga(yoga, this._yogaOptions, node, edge, value);
         }
       }
     }
