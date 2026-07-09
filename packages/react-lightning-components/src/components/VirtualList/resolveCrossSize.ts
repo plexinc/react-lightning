@@ -61,11 +61,13 @@ export function resolveCrossSize({
     return { viewportCrossSize: maxContentCross + crossPadding, isDefinite: false };
   }
 
-  if (parentCross != null && parentCross > 0) {
+  // Horizontal cross must not come from parent/self measurement: both equal the
+  // outer VL cell height (header + this list), so it ratchets unbounded.
+  if (!horizontal && parentCross != null && parentCross > 0) {
     return { viewportCrossSize: parentCross, isDefinite: false };
   }
 
-  if (measuredOuterCross > 0) {
+  if (!horizontal && measuredOuterCross > 0) {
     return { viewportCrossSize: measuredOuterCross, isDefinite: false };
   }
 

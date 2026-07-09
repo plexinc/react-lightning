@@ -44,16 +44,19 @@ describe('resolveCrossSize', () => {
     expect(result).toEqual({ viewportCrossSize: 190, isDefinite: false });
   });
 
-  it('falls back to parent cross for a horizontal list before content measures', () => {
+  it('ignores parent cross for a horizontal list and falls back to the estimate', () => {
+    // parentCross is the outer VL cell height (header + this list + siblings);
+    // deriving the horizontal cross from it ratchets unbounded. Fall through to
+    // the estimate and let content report the real size.
     const result = resolveCrossSize({ ...base, horizontal: true, parentCross: 600 });
 
-    expect(result).toEqual({ viewportCrossSize: 600, isDefinite: false });
+    expect(result).toEqual({ viewportCrossSize: 50, isDefinite: false });
   });
 
-  it('falls back to the measured outer size for a horizontal list before content measures', () => {
+  it('ignores the measured outer size for a horizontal list and falls back to the estimate', () => {
     const result = resolveCrossSize({ ...base, horizontal: true, measuredOuterCross: 600 });
 
-    expect(result).toEqual({ viewportCrossSize: 600, isDefinite: false });
+    expect(result).toEqual({ viewportCrossSize: 50, isDefinite: false });
   });
 
   it('falls back to the estimated item size when nothing has measured', () => {
