@@ -1,24 +1,31 @@
 import type {
   AnimatableValue,
-  AnimationObject,
+  ReduceMotion,
   withSequence as withSequenceRN,
 } from 'react-native-reanimated-original';
 
+import { AnimatedValue } from '../animation/AnimatedValue';
+import { sequenceProgram } from '../animation/animationProgram';
+
 export function withSequence(
-  _reduceMotion: string,
-  ...animations: AnimatableValue[]
+  reduceMotionOrFirst: ReduceMotion | AnimatableValue,
+  ...rest: AnimatableValue[]
 ): ReturnType<typeof withSequenceRN> {
-  console.error(
-    '[Reanimated] withSequence is unsupported. Consider building a custom animation in lightning directly instead. Returning just the first animation.',
-  );
+  // reanimated allows an optional ReduceMotion string as the first arg
+  const animations =
+    typeof reduceMotionOrFirst === 'string'
+      ? rest
+      : [reduceMotionOrFirst, ...rest];
 
-  const returnAnimation = animations[0];
+  const values = animations.filter(
+    (animation) => animation instanceof AnimatedValue,
+  ) as unknown as AnimatedValue[];
 
-  if (!returnAnimation) {
+  if (!values.length) {
     throw new Error('[Reanimated] withSequence requires at least one animation.');
   }
 
-  return typeof returnAnimation === 'function'
-    ? (returnAnimation as () => AnimationObject)()
-    : (returnAnimation as AnimationObject);
+  return AnimatedValue.fromProgram(
+    sequenceProgram(values.map((value) => value.toProgram())),
+  ) as unknown as ReturnType<typeof withSequenceRN>;
 }
