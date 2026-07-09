@@ -5,6 +5,7 @@ import { convertCSSTransformToLightning } from '@plextv/react-lightning-plugin-c
 import type { Transform } from '@plextv/react-lightning-plugin-flexbox';
 
 import { AnimatedValue } from '../animation/AnimatedValue';
+import { type AnimationProgram, mapProgram } from '../animation/animationProgram';
 import type { AnimatedObject } from '../types/AnimatedObject';
 import { getTransitionProperty } from '../utils/getTransitionProperty';
 
@@ -16,23 +17,30 @@ type DefaultStyleWithLightningTransform = Omit<DefaultStyle, 'transform'> & {
   transform?: Transform;
 };
 
+export type ScheduledAnimation = {
+  prop: keyof LightningElementStyle;
+  program: AnimationProgram;
+};
+
 function applyTransforms(
   style: DefaultStyleWithLightningTransform,
   transition: LightningTransition,
+  schedules: ScheduledAnimation[],
   animatableTransforms: AnimatableTransform | AnimatableTransform[],
 ) {
   if (Array.isArray(animatableTransforms)) {
     for (const animatableTransform of animatableTransforms) {
-      applyTransform(style, transition, animatableTransform);
+      applyTransform(style, transition, schedules, animatableTransform);
     }
   } else {
-    applyTransform(style, transition, animatableTransforms);
+    applyTransform(style, transition, schedules, animatableTransforms);
   }
 }
 
 function applyTransform(
   style: DefaultStyleWithLightningTransform,
   transition: LightningTransition,
+  schedules: ScheduledAnimation[],
   animatableTransform: AnimatableTransform,
 ) {
   for (const [key, value] of Object.entries(animatableTransform)) {
@@ -42,6 +50,31 @@ function applyTransform(
       case 'translate':
       case 'translateX':
       case 'translateY':
+        // A composed program drives the axis step-by-step instead of a
+        // one-shot transition; map each step's px target onto x / y.
+        if (value instanceof AnimatedValue && value.program) {
+          const program = value.program;
+          const toAxis = (axis: 'x' | 'y') =>
+            mapProgram(program, (v) => {
+              const converted = convertCSSTransformToLightning(key, v) as Record<
+                string,
+                number | string
+              >;
+
+              return converted[axis] ?? v;
+            });
+
+          if (key === 'translate' || key === 'translateX') {
+            schedules.push({ prop: 'x', program: toAxis('x') });
+          }
+
+          if (key === 'translate' || key === 'translateY') {
+            schedules.push({ prop: 'y', program: toAxis('y') });
+          }
+
+          break;
+        }
+
         // Using our lightning style transform instead of RN
         style.transform = {
           ...style.transform,
@@ -63,18 +96,18 @@ function applyTransform(
       case 'scaleX':
       case 'scaleY':
         if (key === 'scale' || key === 'scaleX') {
-          applyStyle(style, transition, 'scaleX', value as AnimatedValue);
+          applyStyle(style, transition, schedules, 'scaleX', value as AnimatedValue);
         }
 
         if (key === 'scale' || key === 'scaleY') {
-          applyStyle(style, transition, 'scaleY', value as AnimatedValue);
+          applyStyle(style, transition, schedules, 'scaleY', value as AnimatedValue);
         }
         break;
       case 'rotate':
-        applyStyle(style, transition, 'rotation', value as AnimatedValue);
+        applyStyle(style, transition, schedules, 'rotation', value as AnimatedValue);
         break;
       default:
-        applyStyle(style, transition, key as keyof DefaultStyle, value);
+        applyStyle(style, transition, schedules, key as keyof DefaultStyle, value);
         break;
     }
   }
@@ -83,11 +116,19 @@ function applyTransform(
 function applyStyle<T extends DefaultStyle, K extends keyof T>(
   style: DefaultStyleWithLightningTransform,
   transition: LightningTransition,
+  schedules: ScheduledAnimation[],
   prop: K,
   value: AnimatedObject<T>[K] | (AnimatedObject<T>[K] & string),
 ) {
   if (value instanceof AnimatedValue) {
     const transitionProp = getTransitionProperty(prop as keyof DefaultStyle);
+
+    // A program plays step-by-step; a plain value takes the one-shot transition.
+    if (value.program) {
+      schedules.push({ prop: transitionProp, program: value.program });
+
+      return;
+    }
 
     // oxlint-disable-next-line typescript/no-explicit-any -- Just passing through
     (style as any)[transitionProp] = value.value as T[K];
@@ -101,9 +142,11 @@ function applyStyle<T extends DefaultStyle, K extends keyof T>(
 export function toLightningAnimationAndStyles(computedStyle: AnimatedObject<DefaultStyle>): {
   transition: LightningTransition;
   style: DefaultStyleWithLightningTransform;
+  schedules: ScheduledAnimation[];
 } {
   const style: DefaultStyleWithLightningTransform = {};
   const transition: LightningTransition = {};
+  const schedules: ScheduledAnimation[] = [];
 
   for (const key in computedStyle) {
     const prop = key as keyof AnimatedObject<DefaultStyle>;
@@ -116,12 +159,13 @@ export function toLightningAnimationAndStyles(computedStyle: AnimatedObject<Defa
       applyTransforms(
         style,
         transition,
+        schedules,
         value as unknown as AnimatableTransform | AnimatableTransform[],
       );
     } else {
-      applyStyle(style, transition, prop, value);
+      applyStyle(style, transition, schedules, prop, value);
     }
   }
 
-  return { transition, style };
+  return { transition, style, schedules };
 }

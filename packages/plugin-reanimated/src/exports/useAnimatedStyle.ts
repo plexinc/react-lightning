@@ -6,17 +6,33 @@ import type { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/c
 
 import type { LightningElement, LightningElementStyle } from '@plextv/react-lightning';
 
+import {
+  type CancelAnimation,
+  runAnimationProgram,
+} from '../animation/runAnimationProgram';
 import type { AnimatedObject } from '../types/AnimatedObject';
 import type { AnimatedStyle } from '../types/AnimatedStyle';
-import { toLightningAnimationAndStyles } from '../utils/toLightningAnimationAndStyles';
+import {
+  type ScheduledAnimation,
+  toLightningAnimationAndStyles,
+} from '../utils/toLightningAnimationAndStyles';
 
 type UseAnimatedStyleFn = (...args: Parameters<typeof useAnimatedStyleRN>) => AnimatedStyle;
+
+type Runners = WeakMap<LightningElement, CancelAnimation[]>;
 
 function setStyles(
   view: LightningElement,
   transition: ReturnType<typeof toLightningAnimationAndStyles>['transition'],
   style: ReturnType<typeof toLightningAnimationAndStyles>['style'],
+  schedules: ScheduledAnimation[],
+  runners: Runners,
 ): void {
+  // Cancel any program still playing on this view before re-applying, so a
+  // reset (e.g. a shared value set back to a static value) stops the old one.
+  runners.get(view)?.forEach((cancel) => cancel());
+  runners.delete(view);
+
   view.setProps({
     transition,
     // setProps expects lightning props, but we will just pass through the raw
@@ -24,25 +40,36 @@ function setStyles(
     // converting the CSS styles to lightning
     style: style as LightningElementStyle,
   });
+
+  if (schedules.length) {
+    runners.set(
+      view,
+      schedules.map((schedule) =>
+        runAnimationProgram(view, schedule.prop, schedule.program),
+      ),
+    );
+  }
 }
 
 type AppliedStyles = {
   transition: ReturnType<typeof toLightningAnimationAndStyles>['transition'];
   style: ReturnType<typeof toLightningAnimationAndStyles>['style'];
+  schedules: ScheduledAnimation[];
 } | null;
 
 function computeAndSetStyles(
   updater: () => AnimatedObject<DefaultStyle>,
   views: Set<LightningElement>,
   lastApplied: { current: AppliedStyles },
+  runners: Runners,
 ): void {
   const computedStyle = updater();
-  const { transition, style } = toLightningAnimationAndStyles(computedStyle);
+  const { transition, style, schedules } = toLightningAnimationAndStyles(computedStyle);
 
-  lastApplied.current = { transition, style };
+  lastApplied.current = { transition, style, schedules };
 
   for (const view of views) {
-    setStyles(view, transition, style);
+    setStyles(view, transition, style, schedules, runners);
   }
 }
 
@@ -50,6 +77,7 @@ let idCount = 0;
 
 export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
   const [views] = useState(() => new Set<LightningElement>());
+  const [runners] = useState<Runners>(() => new WeakMap());
   const inputs: DependencyList = dependencies ?? [];
   const timerRef = useRef(0);
   const lastApplied = useRef<AppliedStyles>(null);
@@ -62,7 +90,7 @@ export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
     }
 
     timerRef.current = window.setTimeout(() => {
-      computeAndSetStyles(updater, views, lastApplied);
+      computeAndSetStyles(updater, views, lastApplied, runners);
       timerRef.current = 0;
     }, 2);
   };
@@ -97,7 +125,13 @@ export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
     // fresh value here, that would push states the normal flow never emitted.
     applyToView: (view: LightningElement) => {
       if (lastApplied.current) {
-        setStyles(view, lastApplied.current.transition, lastApplied.current.style);
+        setStyles(
+          view,
+          lastApplied.current.transition,
+          lastApplied.current.style,
+          lastApplied.current.schedules,
+          runners,
+        );
       }
     },
   };
