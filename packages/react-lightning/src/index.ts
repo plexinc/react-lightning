@@ -17,3 +17,4 @@ export { createRoot, type LightningRoot, LightningRootContext, type RenderOption
 export type { Plugin } from './render/Plugin';
 export * from './types';
 export { simpleDiff } from './utils/simpleDiff';
+export { CanvasRoot } from './components/Canvas/CanvasRoot';
