@@ -7,8 +7,8 @@ settings:
 catalogs:
   apps:
     '@lightningjs/renderer':
-      specifier: 3.0.1
-      version: 3.0.1
+      specifier: 3.1.1
+      version: 3.1.1
     react:
       specifier: 19.2.5
       version: 19.2.5
@@ -23,8 +23,8 @@ catalogs:
       version: 4.3.0
   default:
     '@lightningjs/renderer':
-      specifier: 3.0.1
-      version: 3.0.1
+      specifier: 3.1.1
+      version: 3.1.1
     '@rolldown/plugin-babel':
       specifier: ^0.2.3
       version: 0.2.3
@@ -134,7 +134,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: catalog:apps
-        version: 3.0.1
+        version: 3.1.1
       '@plextv/react-lightning':
         specifier: workspace:*
         version: link:../../packages/react-lightning
@@ -189,7 +189,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: catalog:apps
-        version: 3.0.1
+        version: 3.1.1
       '@plextv/react-lightning':
         specifier: workspace:*
         version: link:../../packages/react-lightning
@@ -268,7 +268,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: catalog:apps
-        version: 3.0.1
+        version: 3.1.1
       '@plextv/react-lightning':
         specifier: workspace:*
         version: link:../../packages/react-lightning
@@ -359,7 +359,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: 'catalog:'
-        version: 3.0.1
+        version: 3.1.1
       '@plextv/react-lightning':
         specifier: workspace:^
         version: link:../react-lightning
@@ -422,7 +422,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: 'catalog:'
-        version: 3.0.1
+        version: 3.1.1
       '@plextv/react-lightning':
         specifier: workspace:^
         version: link:../react-lightning
@@ -459,7 +459,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: 'catalog:'
-        version: 3.0.1
+        version: 3.1.1
       react:
         specifier: 'catalog:'
         version: 19.2.5
@@ -506,7 +506,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: 'catalog:'
-        version: 3.0.1
+        version: 3.1.1
       '@plextv/react-lightning':
         specifier: workspace:^
         version: link:../react-lightning
@@ -1655,8 +1655,8 @@ packages:
     resolution: {integrity: sha512-FHIgj5rkOQPd9/wDXaiR0GOoWDEj7BytIzvYq5K8/wAh3z2bbW8gTNN+0J5kc1KXtqPrbyg1i87ksUVLrLEr1g==}
     engines: {node: '>=18.0.0'}
 
-  '@lightningjs/renderer@3.0.1':
-    resolution: {integrity: sha512-xAn5eVtYdAmpqA8rN5/f4LnF/48cqrC204s1Mv51KL6GylYHCdhzdGqX480Apgiq3ub+DzNDgNs/xhTASzi7hQ==}
+  '@lightningjs/renderer@3.1.1':
+    resolution: {integrity: sha512-L1+9ZN13+mH5vz7wQOF9+edghWA8N7ETi1d8cFC2SCp+7evmB7utz/NROfUCZyDhOLXlXREN2GPcELTBXeU0wg==}
     engines: {node: '>= 18.0.0', npm: '>= 10.0.0', pnpm: '>= 10.17.0'}
 
   '@manypkg/find-root@1.1.0':
@@ -6788,7 +6788,7 @@ snapshots:
       msdf-bmfont-xml: 2.8.0
       opentype.js: 1.3.4
 
-  '@lightningjs/renderer@3.0.1': {}
+  '@lightningjs/renderer@3.1.1': {}
 
   '@manypkg/find-root@1.1.0':
     dependencies:
