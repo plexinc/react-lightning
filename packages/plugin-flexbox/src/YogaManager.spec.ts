@@ -20,6 +20,8 @@ const mockNode = {
   getComputedWidth: vi.fn(),
   getComputedHeight: vi.fn(),
   getMaxWidth: vi.fn(),
+  // Unanchored edge (unit UNDEFINED), matching a node with no right/bottom set.
+  getPosition: vi.fn(() => ({ unit: 0, value: undefined })),
   getParent: vi.fn(),
   markLayoutSeen: vi.fn(),
 };
