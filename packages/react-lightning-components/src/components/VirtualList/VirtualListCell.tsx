@@ -23,6 +23,7 @@ const VirtualListCellInner = <T,>({
   isLastItem,
   ItemSeparatorComponent,
   isInFlex,
+  crossGeneration,
   pinCrossAxis = false,
   onItemSizeChange,
   onItemEmpty,
@@ -124,7 +125,7 @@ const VirtualListCellInner = <T,>({
     return () => {
       cancelAnimationFrame(rafId);
     };
-  }, [userKey, isInFlex, isEmpty, horizontal]);
+  }, [userKey, isInFlex, isEmpty, horizontal, crossGeneration]);
 
   const separatorPosition: { x: number } | { y: number } = horizontal ? { x: size } : { y: size };
 
