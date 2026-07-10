@@ -1,3 +1,5 @@
+import { DEFAULT_ITEM_SIZE } from './LayoutManager';
+
 export interface ResolveCrossSizeInput {
   horizontal: boolean | null | undefined;
   /** Cross-axis size from the VL's own style (`h` for horizontal, `w` for vertical). */
@@ -9,7 +11,6 @@ export interface ResolveCrossSizeInput {
   /** Largest cross-axis content measurement reported by cells so far. */
   maxContentCross: number;
   crossPadding: number;
-  estimatedItemSize: number;
 }
 
 export interface ResolvedCrossSize {
@@ -43,7 +44,6 @@ export function resolveCrossSize({
   measuredOuterCross,
   maxContentCross,
   crossPadding,
-  estimatedItemSize,
 }: ResolveCrossSizeInput): ResolvedCrossSize {
   if (explicitCross != null && explicitCross > 0) {
     return { viewportCrossSize: explicitCross, isDefinite: true };
@@ -71,5 +71,5 @@ export function resolveCrossSize({
     return { viewportCrossSize: measuredOuterCross, isDefinite: false };
   }
 
-  return { viewportCrossSize: estimatedItemSize, isDefinite: false };
+  return { viewportCrossSize: DEFAULT_ITEM_SIZE, isDefinite: false };
 }

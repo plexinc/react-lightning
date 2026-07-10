@@ -43,7 +43,6 @@ const Label = ({ text, w = 500, h = 30 }: { text: string; w?: number; h?: number
 export const Vertical = () => (
   <VirtualList
     data={makeItems(100)}
-    estimatedItemSize={50}
     style={{ w: 500, h: 500 }}
     renderItem={({ index, item }) => (
       <ScrollItem
@@ -67,7 +66,6 @@ export const Horizontal = () => (
   <VirtualList
     data={makeItems(100)}
     horizontal
-    estimatedItemSize={120}
     style={{ w: 800, h: 150 }}
     renderItem={({ index, item }) => (
       <ScrollItem
@@ -92,7 +90,6 @@ export const Grid = () => (
   <VirtualList
     data={makeItems(60)}
     numColumns={3}
-    estimatedItemSize={100}
     style={{ w: 600, h: 500 }}
     renderItem={({ index, item }) => (
       <ScrollItem
@@ -120,7 +117,6 @@ const ItemDivider = () => <lng-view style={{ w: 500, h: 4, color: COLORS.mid }} 
 export const HeaderFooterSeparator = () => (
   <VirtualList
     data={makeItems(30)}
-    estimatedItemSize={50}
     style={{ w: 500, h: 500 }}
     ListHeaderComponent={HeaderBanner}
     listHeaderSize={40}
@@ -156,7 +152,6 @@ const EmptyState = () => (
 export const EmptyList = () => (
   <VirtualList
     data={[]}
-    estimatedItemSize={50}
     style={{ w: 500, h: 300, color: COLORS.bg }}
     ListEmptyComponent={EmptyState}
     renderItem={() => <lng-view />}
@@ -170,7 +165,6 @@ export const EmptyList = () => (
 export const ContentPadding = () => (
   <VirtualList
     data={makeItems(40)}
-    estimatedItemSize={50}
     style={{ w: 540, h: 500 }}
     contentContainerStyle={{
       padding: 20,
@@ -198,7 +192,6 @@ export const ContentPadding = () => (
 export const SnapStart = () => (
   <VirtualList
     data={makeItems(50)}
-    estimatedItemSize={75}
     snapToAlignment="start"
     style={{ w: 500, h: 400 }}
     renderItem={({ index, item }) => (
@@ -218,7 +211,6 @@ export const SnapStart = () => (
 export const SnapCenter = () => (
   <VirtualList
     data={makeItems(50)}
-    estimatedItemSize={75}
     snapToAlignment="center"
     style={{ w: 500, h: 400 }}
     renderItem={({ index, item }) => (
@@ -238,7 +230,6 @@ export const SnapCenter = () => (
 export const SnapEnd = () => (
   <VirtualList
     data={makeItems(50)}
-    estimatedItemSize={75}
     snapToAlignment="end"
     style={{ w: 500, h: 400 }}
     renderItem={({ index, item }) => (
@@ -264,7 +255,6 @@ export const OverrideItemLayout = () => (
   <VirtualList
     data={makeItems(40)}
     numColumns={3}
-    estimatedItemSize={100}
     style={{ w: 600, h: 500 }}
     overrideItemLayout={(layout, _item, index) => {
       if (index === 0) {
@@ -313,7 +303,6 @@ export const InfiniteScroll = () => {
   return (
     <VirtualList
       data={items}
-      estimatedItemSize={50}
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.5}
       style={{ w: 500, h: 500 }}
@@ -381,7 +370,6 @@ const ImageCell = focusable<{ focused?: boolean; index: number }>(({ focused, in
 export const ItemTypes = () => (
   <VirtualList
     data={typedItems}
-    estimatedItemSize={60}
     style={{ w: 500, h: 500 }}
     keyExtractor={(item) => String(item.id)}
     getItemType={(item) => item.type}
@@ -405,7 +393,6 @@ export const ItemTypes = () => (
 export const InitialScrollIndex = () => (
   <VirtualList
     data={makeItems(100)}
-    estimatedItemSize={50}
     initialScrollIndex={42}
     style={{ w: 500, h: 500 }}
     renderItem={({ index, item }) => (
@@ -471,7 +458,6 @@ export const ImperativeScrolling = () => {
       <VirtualList
         ref={listRef}
         data={makeItems(100)}
-        estimatedItemSize={50}
         style={{ w: 500, h: 450 }}
         renderItem={({ index, item }) => (
           <ScrollItem
@@ -498,7 +484,6 @@ export const ImperativeScrolling = () => {
 export const DrawDistance = () => (
   <VirtualList
     data={makeItems(200)}
-    estimatedItemSize={50}
     drawDistance={600}
     style={{ w: 500, h: 500 }}
     renderItem={({ index, item }) => (
@@ -523,7 +508,6 @@ export const DrawDistance = () => (
 export const SlowAnimation = () => (
   <VirtualList
     data={makeItems(50)}
-    estimatedItemSize={75}
     animationDuration={600}
     style={{ w: 500, h: 400 }}
     renderItem={({ index, item }) => (

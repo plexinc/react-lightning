@@ -72,7 +72,6 @@ export const VirtualListPage = () => {
       <VirtualList
         data={horizontalItems}
         horizontal
-        estimatedItemSize={75}
         drawDistance={150}
         ListHeaderComponent={HorizontalHeader}
         listHeaderSize={46}
@@ -101,7 +100,6 @@ export const VirtualListPage = () => {
 
       <VirtualList
         data={items}
-        estimatedItemSize={50}
         drawDistance={200}
         ListHeaderComponent={Header}
         listHeaderSize={30}

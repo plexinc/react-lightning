@@ -73,8 +73,6 @@ export interface VirtualListProps<T> {
   data: ReadonlyArray<T>;
   /** Render function for each item. */
   renderItem: ((info: VirtualListRenderItemInfo<T>) => ReactElement | null) | null | undefined;
-  /** Average or median item size. Used before items are measured. Default 200. */
-  estimatedItemSize?: number;
   /** Scroll horizontally instead of vertically. */
   horizontal?: boolean | null;
   /** Number of columns for grid layout. Default 1. */
