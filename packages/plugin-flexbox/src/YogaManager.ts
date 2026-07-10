@@ -101,14 +101,19 @@ export class YogaManager {
 
     this._initialized = true;
 
-    // Load fonts in the background; don't block init. As each arrives, re-dirty
-    // any text already laid out with it so its measurement updates.
+    // Await the font metrics so the first layout measures text for real. An
+    // unloaded font measures 0x0 and the arrival re-measure reflows the whole
+    // tree while it is already visible. `load` never rejects (a failed fetch
+    // warns and leaves the font unmeasured), so this can't hang init. The
+    // re-dirty stays as a backstop for a font that resolves late anyway.
     if (this._yogaOptions.fonts) {
-      for (const font of this._yogaOptions.fonts) {
-        void this._fontStore.load(font.fontFamily, font.atlasDataUrl).then(() => {
-          this._remeasureFontFamily(font.fontFamily);
-        });
-      }
+      await Promise.all(
+        this._yogaOptions.fonts.map((font) =>
+          this._fontStore.load(font.fontFamily, font.atlasDataUrl).then(() => {
+            this._remeasureFontFamily(font.fontFamily);
+          }),
+        ),
+      );
     }
   }
 

@@ -133,4 +133,41 @@ describe('Yoga text measurement (real yoga)', () => {
     const computed = await nextRender(manager);
     expect(computed.get(2)?.h).toBe(40); // still measured as 2 lines
   });
+
+  it('awaits font metrics during init so the first layout measures text', async () => {
+    // If init resolves before the atlas JSON is registered, the first layout
+    // measures text 0x0 and the font-arrival re-measure reflows the whole
+    // tree while it is already visible (the boot-time position jump).
+    const originalFetch = globalThis.fetch;
+    // Resolve on a macrotask, like a real network fetch — a same-tick stub
+    // would land before the first layout microtask and mask the race.
+    globalThis.fetch = (async () => {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+
+      return { json: async () => atlas };
+    }) as unknown as typeof fetch;
+
+    try {
+      const manager = new YogaManager();
+      await manager.init({
+        fonts: [{ fontFamily: 'Test', atlasDataUrl: 'test://atlas.json' }],
+      });
+
+      manager.addNode(1);
+      manager.applyStyle(1, { display: 'flex', w: 100, h: 100 }, true);
+      manager.addIndependentRoot(1);
+
+      manager.addNode(2);
+      manager.addChildNode(1, 2);
+      manager.setTextMeasure(2, 'Test', textProps);
+
+      const computed = await nextRender(manager);
+
+      // "aa aa" at fontSize 20 with the synthetic atlas is 90px wide unwrapped.
+      expect(computed.get(2)?.w).toBeGreaterThan(0);
+      expect(computed.get(2)?.h).toBeGreaterThan(0);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
 });
