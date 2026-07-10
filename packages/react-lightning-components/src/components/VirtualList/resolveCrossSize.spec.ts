@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { DEFAULT_ITEM_SIZE } from './LayoutManager';
 import { resolveCrossSize } from './resolveCrossSize';
 
 const base = {
@@ -9,7 +10,6 @@ const base = {
   measuredOuterCross: 0,
   maxContentCross: 0,
   crossPadding: 0,
-  estimatedItemSize: 50,
 };
 
 describe('resolveCrossSize', () => {
@@ -44,25 +44,25 @@ describe('resolveCrossSize', () => {
     expect(result).toEqual({ viewportCrossSize: 190, isDefinite: false });
   });
 
-  it('ignores parent cross for a horizontal list and falls back to the estimate', () => {
+  it('ignores parent cross for a horizontal list and falls back to the default', () => {
     // parentCross is the outer VL cell height (header + this list + siblings);
     // deriving the horizontal cross from it ratchets unbounded. Fall through to
-    // the estimate and let content report the real size.
+    // the default and let content report the real size.
     const result = resolveCrossSize({ ...base, horizontal: true, parentCross: 600 });
 
-    expect(result).toEqual({ viewportCrossSize: 50, isDefinite: false });
+    expect(result).toEqual({ viewportCrossSize: DEFAULT_ITEM_SIZE, isDefinite: false });
   });
 
-  it('ignores the measured outer size for a horizontal list and falls back to the estimate', () => {
+  it('ignores the measured outer size for a horizontal list and falls back to the default', () => {
     const result = resolveCrossSize({ ...base, horizontal: true, measuredOuterCross: 600 });
 
-    expect(result).toEqual({ viewportCrossSize: 50, isDefinite: false });
+    expect(result).toEqual({ viewportCrossSize: DEFAULT_ITEM_SIZE, isDefinite: false });
   });
 
-  it('falls back to the estimated item size when nothing has measured', () => {
+  it('falls back to the default item size when nothing has measured', () => {
     const result = resolveCrossSize({ ...base });
 
-    expect(result).toEqual({ viewportCrossSize: 50, isDefinite: false });
+    expect(result).toEqual({ viewportCrossSize: DEFAULT_ITEM_SIZE, isDefinite: false });
   });
 
   it('treats a zero explicit cross as unset', () => {

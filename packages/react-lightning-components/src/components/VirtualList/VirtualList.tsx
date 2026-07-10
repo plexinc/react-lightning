@@ -58,7 +58,6 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   const {
     data,
     renderItem,
-    estimatedItemSize = 200,
     horizontal = false,
     numColumns = 1,
     drawDistance = 250,
@@ -160,7 +159,6 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     measuredOuterCross,
     maxContentCross,
     crossPadding,
-    estimatedItemSize,
   });
 
   const cellCrossSize = (viewportCrossSize - crossPadding) / numColumns;
@@ -184,7 +182,6 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   const [layoutManager] = useState<LayoutManager<T>>(() => {
     const lm = new LayoutManager<T>({
       data,
-      estimatedItemSize,
       numColumns,
       overrideItemLayout,
       extraData,
@@ -208,7 +205,6 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     if (
       layoutManager.updateConfig({
         data,
-        estimatedItemSize,
         numColumns,
         overrideItemLayout,
         extraData,
@@ -221,7 +217,6 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     }
   }, [
     data,
-    estimatedItemSize,
     numColumns,
     overrideItemLayout,
     extraData,
@@ -366,7 +361,6 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     // that calls updateConfig hasn't fired yet).
     layoutManager.updateConfig({
       data,
-      estimatedItemSize,
       numColumns,
       overrideItemLayout,
       extraData,

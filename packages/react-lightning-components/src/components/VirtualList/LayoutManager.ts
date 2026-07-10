@@ -13,9 +13,12 @@ export interface ComputedLayout {
   crossSize: number;
 }
 
+// Bootstrap main-axis size for unmeasured items before anything has measured.
+// Real sizes come from cell measurements or `overrideItemLayout`.
+export const DEFAULT_ITEM_SIZE = 200;
+
 export interface LayoutManagerConfig<T> {
   data: ReadonlyArray<T>;
-  estimatedItemSize: number;
   numColumns: number;
   overrideItemLayout?: OverrideItemLayoutFn<T>;
   extraData?: unknown;
@@ -28,7 +31,8 @@ export interface LayoutManagerConfig<T> {
 
 /**
  * Computes per-item offsets in O(n). Main-axis size is the per-userKey
- * measurement, then `overrideItemLayout`, then `estimatedItemSize`. Cross
+ * measurement, then `overrideItemLayout`, then the first measured size
+ * (`DEFAULT_ITEM_SIZE` until anything measures). Cross
  * is always `cellCrossSize` (× span); never measured or aggregated —
  * that's the rule that keeps the layout loop-free.
  */
@@ -39,7 +43,6 @@ export class LayoutManager<T> {
   private _totalSize = 0;
   private _dirty = true;
   private _data: ReadonlyArray<T>;
-  private _estimatedItemSize: number;
   private _numColumns: number;
   private _overrideItemLayout?: OverrideItemLayoutFn<T>;
   private _extraData?: unknown;
@@ -62,15 +65,14 @@ export class LayoutManager<T> {
   private _onChange?: () => void;
   private static readonly _STABILITY_MS = 120;
   /**
-   * Implicit fallback for unmeasured items once any cell has measured —
-   * usually a much better predictor than the caller's estimate. Locked on
-   * first measurement so subsequent cells don't cascade-shift the fallback.
+   * Implicit fallback for unmeasured items once any cell has measured.
+   * Locked on first measurement so subsequent cells don't cascade-shift
+   * the fallback.
    */
   private _firstMeasuredSize = 0;
 
   constructor(config: LayoutManagerConfig<T>) {
     this._data = config.data;
-    this._estimatedItemSize = config.estimatedItemSize;
     this._numColumns = Math.max(1, config.numColumns);
     this._overrideItemLayout = config.overrideItemLayout;
     this._extraData = config.extraData;
@@ -167,14 +169,6 @@ export class LayoutManager<T> {
 
     if (config.data !== undefined && config.data !== this._data) {
       this._data = config.data;
-      changed = true;
-    }
-
-    if (
-      config.estimatedItemSize !== undefined &&
-      config.estimatedItemSize !== this._estimatedItemSize
-    ) {
-      this._estimatedItemSize = config.estimatedItemSize;
       changed = true;
     }
 
@@ -507,11 +501,10 @@ export class LayoutManager<T> {
       return override.size;
     }
 
-    // Prefer the first-measured size over the caller's estimate once any
-    // cell has reported. Per-key measurements above still win for cells
-    // that have actually been seen — this is the fallback for unmeasured
-    // ones only.
-    return this._firstMeasuredSize > 0 ? this._firstMeasuredSize : this._estimatedItemSize;
+    // Prefer the first-measured size once any cell has reported. Per-key
+    // measurements above still win for cells that have actually been seen —
+    // this is the fallback for unmeasured ones only.
+    return this._firstMeasuredSize > 0 ? this._firstMeasuredSize : DEFAULT_ITEM_SIZE;
   }
 
   private _recomputeSingleColumn(count: number): void {
