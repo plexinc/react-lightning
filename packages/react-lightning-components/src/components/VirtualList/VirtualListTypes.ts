@@ -204,6 +204,8 @@ export interface VirtualListCellProps<T> {
   onItemSizeChange?: (userKey: string, size: number) => void;
   /** Distinct from `onItemSizeChange(_, 0)` (rejected) — this is the explicit empty-row path. */
   onItemEmpty?: (userKey: string) => void;
+  /** Bumped by the list to make the cell re-push its cross after a reset. */
+  crossGeneration?: number;
   onContentCrossLayout?: (size: number) => void;
   onSeparatorLayout?: (size: number) => void;
   /** Mounted offscreen for state preservation; outer FG is disabled so spatial nav skips it. */
