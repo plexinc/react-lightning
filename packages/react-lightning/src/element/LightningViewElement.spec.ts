@@ -173,3 +173,75 @@ describe('LightningViewElement border shader', () => {
     expect(el.node.shader).toBeNull();
   });
 });
+
+describe('LightningViewElement no-op animation skip', () => {
+  function createSpyElement(style: Partial<LightningViewElementStyle>) {
+    let animateCalls = 0;
+    const node = createMockNode({
+      animate() {
+        animateCalls++;
+
+        return { once() {}, start() {} };
+      },
+    });
+    const spyRenderer = {
+      createNode: () => node,
+      createTextNode: () => node,
+      createShader: () => ({ props: {} }),
+      createTexture: () => ({}),
+      destroyNode() {},
+    } as unknown as RendererMain;
+    const el = new LightningViewElement(
+      { style } as LightningViewElementProps<LightningViewElementStyle>,
+      spyRenderer,
+      [],
+      {} as Fiber,
+    );
+
+    return { el, node, calls: () => animateCalls };
+  }
+
+  it('skips animating a prop to its current value', () => {
+    const { el, node, calls } = createSpyElement({ alpha: 1 });
+
+    node.alpha = 1;
+    el.animateStyle('alpha', 1);
+
+    expect(calls()).toBe(0);
+    expect(node.alpha).toBe(1);
+  });
+
+  it('still animates a real value change', () => {
+    const { el, node, calls } = createSpyElement({ alpha: 1 });
+
+    node.alpha = 1;
+    el.animateStyle('alpha', 0.4);
+
+    expect(calls()).toBe(1);
+  });
+
+  it('does not skip when an in-flight animation targets a different value', () => {
+    const { el, node, calls } = createSpyElement({ alpha: 1 });
+
+    // In-flight: alpha animating toward 0.
+    el.animateStyle('alpha', 0);
+    expect(calls()).toBe(1);
+
+    // Node happens to sit at 0.5 mid-animation; a request for 0.5 must still
+    // start a new animation (otherwise the old one keeps running to 0).
+    (node as { alpha: number }).alpha = 0.5;
+    el.animateStyle('alpha', 0.5);
+    expect(calls()).toBe(2);
+  });
+
+  it('skips a repeat of the same in-flight target once the value arrived', () => {
+    const { el, node, calls } = createSpyElement({ alpha: 1 });
+
+    el.animateStyle('alpha', 0);
+    expect(calls()).toBe(1);
+
+    (node as { alpha: number }).alpha = 0;
+    el.animateStyle('alpha', 0);
+    expect(calls()).toBe(1);
+  });
+});

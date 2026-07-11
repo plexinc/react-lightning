@@ -74,6 +74,39 @@ function createTexture(
 
 let idCounter = 0;
 
+// Returned when a requested animation is a proven no-op; satisfies the
+// controller contract without registering anything with the renderer.
+const noopAnimationController = {
+  state: 'stopped',
+  start() {
+    return this;
+  },
+  stop() {
+    return this;
+  },
+  pause() {
+    return this;
+  },
+  restore() {
+    return this;
+  },
+  waitUntilStopped() {
+    return Promise.resolve();
+  },
+  on() {
+    return this;
+  },
+  once() {
+    return this;
+  },
+  off() {
+    return this;
+  },
+  emit() {
+    return this;
+  },
+} as unknown as IAnimationController;
+
 export class LightningViewElement<
   TStyleProps extends LightningViewElementStyle = LightningViewElementStyle,
   TProps extends
@@ -106,6 +139,8 @@ export class LightningViewElement<
   private _recycled = false;
   private _hasStagedUpdates = false;
   private _hasLayout = false;
+  /** Last requested animation target per style key, for the no-op-skip guard. */
+  private _animTargets = new Map<PropertyKey, unknown>();
   private _paintWithheld = false;
   private _withheldAlpha = 1;
   private _eventEmitter = new EventEmitter<LightningElementEvents>();
@@ -723,6 +758,22 @@ export class LightningViewElement<
     key: K,
     value: TStyleProps[K],
   ): IAnimationController {
+    // Skip no-op animations (target equals the node's current value, and no
+    // in-flight animation is heading somewhere else). A no-op still counts as
+    // an active animation for delay+duration, keeping the scene hot and
+    // full-redrawing every frame; focus moves fire several (e.g. a popover's
+    // delayed alpha 1 -> 1) and stall low-end devices for their whole window.
+    const inFlight = this._animTargets.get(key);
+
+    if (
+      (this.node as Record<PropertyKey, unknown>)[key] === value &&
+      (inFlight === undefined || inFlight === value)
+    ) {
+      return noopAnimationController;
+    }
+
+    this._animTargets.set(key, value);
+
     return this._createAnimation(
       {
         [key]: value,
