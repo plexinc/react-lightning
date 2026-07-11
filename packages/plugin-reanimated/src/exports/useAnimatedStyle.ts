@@ -79,20 +79,23 @@ export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
   const [views] = useState(() => new Set<LightningElement>());
   const [runners] = useState<Runners>(() => new WeakMap());
   const inputs: DependencyList = dependencies ?? [];
-  const timerRef = useRef(0);
+  const pendingRef = useRef(false);
   const lastApplied = useRef<AppliedStyles>(null);
 
-  // Debounce this call so we don't end up calculating the styles multiple times
-  // when updating multiple properties in the same hook
+  // Coalesce shared-value updates from the same JS turn into one style
+  // computation. Must be a microtask, not a timer: timers fire after the
+  // frame paints, so scroll-linked styles would trail the scroll by a frame.
   const applyStyles = () => {
-    if (timerRef.current) {
-      window.clearTimeout(timerRef.current);
+    if (pendingRef.current) {
+      return;
     }
 
-    timerRef.current = window.setTimeout(() => {
+    pendingRef.current = true;
+
+    queueMicrotask(() => {
+      pendingRef.current = false;
       computeAndSetStyles(updater, views, lastApplied, runners);
-      timerRef.current = 0;
-    }, 2);
+    });
   };
 
   useEffect(() => {
