@@ -58,6 +58,9 @@ type KerningTable = Map<number, Map<number, number>>;
 
 const isZeroWidthSpace = (codepoint: number): boolean => codepoint === 0x200b;
 
+// Matches the renderer's SdfFont.getGlyph fallback for glyphs missing from the atlas.
+const MISSING_GLYPH_FALLBACK_CODEPOINT = 0x3f; // '?'
+
 export class FontMetrics {
   public readonly designFontSize: number;
   public readonly metrics: LightningMetrics;
@@ -102,7 +105,7 @@ export class FontMetrics {
     }
 
     let width = 0;
-    let prevGlyphId = 0;
+    let prevCodepoint = 0;
 
     for (const char of text) {
       const codepoint = char.codePointAt(0);
@@ -111,7 +114,8 @@ export class FontMetrics {
         continue;
       }
 
-      const glyph = this._glyphs.get(codepoint);
+      const glyph =
+        this._glyphs.get(codepoint) ?? this._glyphs.get(MISSING_GLYPH_FALLBACK_CODEPOINT);
 
       if (glyph === undefined) {
         continue;
@@ -119,12 +123,14 @@ export class FontMetrics {
 
       let advance = glyph.xadvance;
 
-      if (prevGlyphId !== 0) {
-        advance += this.getKerning(prevGlyphId, glyph.id);
+      // Kerning stays keyed on the real codepoint (not the ? fallback): the
+      // renderer only substitutes the glyph used for the advance, not the pair.
+      if (prevCodepoint !== 0) {
+        advance += this.getKerning(prevCodepoint, codepoint);
       }
 
       width += advance + letterSpacing;
-      prevGlyphId = glyph.id;
+      prevCodepoint = codepoint;
     }
 
     return width;
