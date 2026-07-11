@@ -134,6 +134,31 @@ describe('Yoga text measurement (real yoga)', () => {
     expect(computed.get(2)?.h).toBe(40); // still measured as 2 lines
   });
 
+  it('keeps measuring text correctly after a parent style re-apply drops a prop', async () => {
+    // Starts unstretched (flex-start) so the child is sized to its own content.
+    const manager = await setup({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      w: 300,
+      h: 200,
+    });
+
+    const before = (await nextRender(manager)).get(2);
+
+    expect(before?.w).toBe(90); // shrink-to-content, unwrapped
+    expect(before?.h).toBe(20);
+
+    // Drop `alignItems`: resets to yoga's stretch default, shouldn't clobber
+    // the text's own measured sizing.
+    manager.applyStyle(1, { display: 'flex', flexDirection: 'column', w: 300, h: 200 }, true, true);
+
+    const after = (await nextRender(manager)).get(2);
+
+    expect(after?.w).toBe(300); // stretched to the container
+    expect(after?.h).toBe(20); // still measures a single line correctly
+  });
+
   it('awaits font metrics during init so the first layout measures text', async () => {
     // If init resolves before the atlas JSON is registered, the first layout
     // measures text 0x0 and the font-arrival re-measure reflows the whole

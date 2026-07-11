@@ -102,6 +102,7 @@ self.onmessage = async (
       manager.applyStyles(
         args?.[1] as Record<number, Partial<LightningElementStyle>>,
         args?.[2] as boolean,
+        args?.[3] as Record<number, 1> | undefined,
       );
       break;
     }

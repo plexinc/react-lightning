@@ -92,6 +92,33 @@ async function computedOrder(manager: LightningManager, ids: number[]): Promise<
     .map((entry) => entry.id);
 }
 
+type ManagerNodeLikeSize = { node: { getComputedLeft(): number; getComputedWidth(): number } };
+
+// Renders once and reads a single node's computed left/width, for tests
+// that only care about one element instead of a sibling ordering.
+async function computedBox(
+  manager: LightningManager,
+  id: number,
+): Promise<{ left: number; width: number }> {
+  const yoga = getYoga(manager);
+
+  await new Promise<void>((resolve) => {
+    const handler = () => {
+      yoga.off('render', handler);
+      resolve();
+    };
+
+    yoga.on('render', handler);
+    yoga.queueRender(1, true);
+  });
+
+  const elementMap = (yoga as unknown as { _elementMap: Map<number, ManagerNodeLikeSize> })
+    ._elementMap;
+  const node = elementMap.get(id)?.node;
+
+  return { left: node?.getComputedLeft() ?? Number.NaN, width: node?.getComputedWidth() ?? Number.NaN };
+}
+
 const CHILD_IDS = [2, 3, 4];
 
 async function setup() {
@@ -155,5 +182,114 @@ describe('LightningManager childMoved', () => {
     moveChild(parent, 1, 2);
 
     expect(await computedOrder(manager, CHILD_IDS)).toEqual([2, 4, 3]);
+  });
+});
+
+describe('LightningManager applyStyle resetMissing', () => {
+  it('resets gap to its yoga default (0) when a re-applied style drops it', async () => {
+    const manager = new LightningManager();
+    await manager.init();
+
+    const parent = new FakeElement(1);
+
+    parent.style = { display: 'flex', flexDirection: 'row', gap: 16, w: 100, h: 10 };
+    manager.trackElement(asElement(parent));
+    manager.markFlexRoot(asElement(parent));
+    manager.applyStyle(parent.id, parent.style, true, true);
+
+    for (const [index, id] of [2, 3].entries()) {
+      const child = new FakeElement(id);
+
+      child.parent = parent;
+      child.style = { w: 10, h: 10 };
+      parent.children.push(child);
+      manager.trackElement(asElement(child));
+      manager.applyStyle(child.id, child.style, true);
+      parent.emit('childAdded', child, index);
+    }
+
+    expect((await computedBox(manager, 3)).left).toBe(26); // 10 (first child) + 16 gap
+
+    // Re-apply without `gap`, as if a conditional style flipped off.
+    manager.applyStyle(
+      parent.id,
+      { display: 'flex', flexDirection: 'row', w: 100, h: 10 },
+      true,
+      true,
+    );
+
+    expect((await computedBox(manager, 3)).left).toBe(10); // gap back to yoga's default
+  });
+
+  it('resets alignItems to its yoga default (stretch) when a re-applied style drops it', async () => {
+    const manager = new LightningManager();
+    await manager.init();
+
+    const parent = new FakeElement(1);
+
+    parent.style = {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      w: 300,
+      h: 200,
+    };
+    manager.trackElement(asElement(parent));
+    manager.markFlexRoot(asElement(parent));
+    manager.applyStyle(parent.id, parent.style, true, true);
+
+    const child = new FakeElement(2);
+
+    child.parent = parent;
+    child.style = { h: 10 }; // no explicit width, follows alignItems on the cross axis
+    parent.children.push(child);
+    manager.trackElement(asElement(child));
+    manager.applyStyle(child.id, child.style, true);
+    parent.emit('childAdded', child, 0);
+
+    expect((await computedBox(manager, 2)).width).toBe(0); // flex-start: shrinks to content
+
+    // Re-apply without `alignItems`, falls back to yoga's stretch default.
+    manager.applyStyle(
+      parent.id,
+      { display: 'flex', flexDirection: 'column', w: 300, h: 200 },
+      true,
+      true,
+    );
+
+    expect((await computedBox(manager, 2)).width).toBe(300); // stretch: fills the parent
+  });
+
+  it('keeps a still-present prop untouched (no spurious reset)', async () => {
+    const manager = new LightningManager();
+    await manager.init();
+
+    const parent = new FakeElement(1);
+
+    parent.style = { display: 'flex', flexDirection: 'row', gap: 16, w: 100, h: 10 };
+    manager.trackElement(asElement(parent));
+    manager.markFlexRoot(asElement(parent));
+    manager.applyStyle(parent.id, parent.style, true, true);
+
+    for (const [index, id] of [2, 3].entries()) {
+      const child = new FakeElement(id);
+
+      child.parent = parent;
+      child.style = { w: 10, h: 10 };
+      parent.children.push(child);
+      manager.trackElement(asElement(child));
+      manager.applyStyle(child.id, child.style, true);
+      parent.emit('childAdded', child, index);
+    }
+
+    // Re-apply with the same gap value present, should not be reset.
+    manager.applyStyle(
+      parent.id,
+      { display: 'flex', flexDirection: 'row', gap: 16, w: 100, h: 10 },
+      true,
+      true,
+    );
+
+    expect((await computedBox(manager, 3)).left).toBe(26);
   });
 });

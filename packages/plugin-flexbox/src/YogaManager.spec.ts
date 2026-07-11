@@ -506,6 +506,7 @@ describe('YogaManager', () => {
           props: {},
         },
         style,
+        false,
       );
     });
 
@@ -561,6 +562,23 @@ describe('YogaManager', () => {
 
       const { default: applyReactPropsToYoga } = await import('./util/applyReactPropsToYoga');
       expect(applyReactPropsToYoga).toHaveBeenCalledTimes(2);
+    });
+
+    it('forwards per-element resets from the batched applyStyles path', () => {
+      const styles = {
+        123: { w: 100 },
+        456: { w: 200 },
+      };
+
+      yogaManager.addNode(123);
+      yogaManager.addNode(456);
+
+      const spy = vi.spyOn(yogaManager, 'applyStyle');
+
+      yogaManager.applyStyles(styles, true, { 123: 1 });
+
+      expect(spy).toHaveBeenCalledWith(123, styles[123], true, true);
+      expect(spy).toHaveBeenCalledWith(456, styles[456], true, false);
     });
   });
 

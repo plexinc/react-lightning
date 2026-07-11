@@ -52,6 +52,9 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
   const _callees: Record<string, [AnyFunc, AnyFunc]> = {};
   const _eventEmitter = new EventEmitter<YogaManagerEvents>();
   let _stylesToSend: Record<number, Partial<LightningElementStyle>> = {};
+  // Elements whose buffered style is a full snapshot: the worker resets
+  // previously-set flex props missing from it (see applyReactPropsToYoga).
+  let _resetsToSend: Record<number, 1> = {};
   let _numStylesToSend = 0;
   let _needsRender = false;
   const _childOperations = new SimpleDataView(undefined, undefined, _onChildOpsOverflow);
@@ -87,11 +90,12 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
 
     worker.postMessage({
       method: 'applyStyles',
-      args: [_stylesToSend, !_needsRender],
+      args: [_stylesToSend, !_needsRender, _resetsToSend],
     });
 
     _needsRender = false;
     _stylesToSend = {};
+    _resetsToSend = {};
     _numStylesToSend = 0;
   }
 
@@ -101,8 +105,13 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     elementId: number,
     style: Partial<LightningElementStyle> | null,
     skipRender = false,
+    resetMissing = false,
   ) {
     if (style) {
+      if (resetMissing) {
+        _resetsToSend[elementId] = 1;
+      }
+
       let styleToSend = _stylesToSend[elementId];
 
       if (!styleToSend) {
@@ -138,6 +147,7 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
       }
 
       delete _stylesToSend[elementId];
+      delete _resetsToSend[elementId];
       _numStylesToSend--;
     }
 
@@ -186,13 +196,14 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     worker.postMessage(
       {
         method: 'flushBoth',
-        args: [buffer, _stylesToSend, !_needsRender],
+        args: [buffer, _stylesToSend, !_needsRender, _resetsToSend],
       },
       [buffer],
     );
 
     _childOperations.reset();
     _stylesToSend = {};
+    _resetsToSend = {};
     _numStylesToSend = 0;
     _needsRender = false;
   }
