@@ -20,6 +20,8 @@ export interface LightningElementEvents extends FocusEvents<LightningElement> {
   deferredDestroyComplete: () => void;
   childAdded: (child: LightningElement, index: number) => void;
   childRemoved: (child: LightningElement, index: number) => void;
+  /** Same-parent reorder: children[] order changed but the child's node/lifecycle didn't. */
+  childMoved: (child: LightningElement, fromIndex: number, toIndex: number) => void;
   beforeRender: () => void;
   layout: (dimensions: Rect) => void;
   resized: (element: LightningElement, dimensions: { w: number; h: number }) => void;

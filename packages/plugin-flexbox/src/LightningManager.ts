@@ -381,6 +381,28 @@ export class LightningManager {
         this._yogaManager!.queueRender(element.id);
       }),
 
+      // Same-parent reorder (React's keyed move). Reindex in place, keep the yoga node alive.
+      element.on('childMoved', (child, _fromIndex, toIndex) => {
+        if (this._yogaParents.get(child.id) !== element.id) {
+          // Not one of this parent's yoga children (boundary or flex root), nothing to reindex.
+          return;
+        }
+
+        // Detach before computing the index: the append-at-end fast path in
+        // _yogaIndexFor reads the cached count, which must not include the child.
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
+        this._yogaManager!.detachChildNode(element.id, child.id);
+        this._clearYogaParent(child.id, element.id);
+
+        const yogaIndex = this._yogaIndexFor(element, toIndex);
+
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
+        this._yogaManager!.addChildNode(element.id, child.id, yogaIndex);
+        this._setYogaParent(child.id, element.id);
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
+        this._yogaManager!.queueRender(element.id);
+      }),
+
       element.on('inViewport', () => {
         if (!element.isTextElement && !element.isImageElement) {
           this.applyStyle(element.id, element.props.style);
