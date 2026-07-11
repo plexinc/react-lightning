@@ -5,7 +5,7 @@ import type {
   LightningViewElementStyle,
 } from '@plextv/react-lightning';
 import { FocusGroup, useFocusManager } from '@plextv/react-lightning';
-import { FlexRoot } from '@plextv/react-lightning-plugin-flexbox';
+import { FlexRoot, onFlexLayoutSettled } from '@plextv/react-lightning-plugin-flexbox';
 import { CellBoundsContext, VLCellKeyContext } from './VirtualListContext';
 import type { VirtualListCellProps } from './VirtualListTypes';
 
@@ -51,6 +51,8 @@ const VirtualListCellInner = <T,>({
 
   const flexRootRef = useRef<LightningElement>(null);
   const cellElementRef = useRef<LightningElement>(null);
+  const lastMainRef = useRef(0);
+  const lastCrossRef = useRef(0);
   const prevShouldFocusRef = useRef(shouldFocus);
   const focusManager = useFocusManager();
   const renderedItem = renderItem?.({
@@ -103,10 +105,13 @@ const VirtualListCellInner = <T,>({
     }
   }, [isEmpty, userKey]);
 
-  // One-shot push on userKey change for the same-size-recycle case:
-  // NodeResizeObserver stays silent when content lays out at the previous
-  // occupant's size, but LM still needs the new userKey's measurement.
-  // RAF defers past yoga's layout pass so node.w/h are post-render.
+  // Read the cell's final size off Yoga's `settled` signal (layout converged to
+  // a fixpoint), not a frame timer. `settled` fires after the whole grow chain
+  // is done, so the size is authoritative — reported `final` to skip dampening
+  // and the reveal quiet window. Subscribed before the first layout pass runs
+  // (markFlexRoot queues it as a microtask), so no settle is missed; stays
+  // subscribed to catch later re-converges (background refresh). Worker mode
+  // never emits `settled`, so this no-ops and the onResize path takes over.
   // oxlint-disable-next-line react-hooks/exhaustive-deps -- onItemSizeChange/onContentCrossLayout
   // omitted: see the previous effect for the rationale.
   useLayoutEffect(() => {
@@ -114,7 +119,10 @@ const VirtualListCellInner = <T,>({
       return;
     }
 
-    const rafId = requestAnimationFrame(() => {
+    lastMainRef.current = 0;
+    lastCrossRef.current = 0;
+
+    return onFlexLayoutSettled(() => {
       const node = flexRootRef.current?.node;
 
       if (!node) {
@@ -124,18 +132,16 @@ const VirtualListCellInner = <T,>({
       const main = horizontal ? node.w : node.h;
       const cross = horizontal ? node.h : node.w;
 
-      if (main > 0) {
-        onItemSizeChange(userKey, main);
+      if (main > 0 && Math.abs(main - lastMainRef.current) >= 1) {
+        lastMainRef.current = main;
+        onItemSizeChange(userKey, main, true);
       }
 
-      if (cross > 0) {
+      if (cross > 0 && Math.abs(cross - lastCrossRef.current) >= 1) {
+        lastCrossRef.current = cross;
         onContentCrossLayout?.(cross);
       }
     });
-
-    return () => {
-      cancelAnimationFrame(rafId);
-    };
   }, [userKey, isInFlex, isEmpty, horizontal, crossGeneration]);
 
   const separatorPosition: { x: number } | { y: number } = horizontal

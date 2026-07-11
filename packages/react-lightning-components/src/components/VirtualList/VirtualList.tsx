@@ -312,8 +312,20 @@ function VirtualListInner<T>(
   // Declared BEFORE `pool.reconcile(...)` below — that call is React
   // Compiler 1.0's optimization boundary in this function, so anything
   // declared after it is emitted unmemoized.
-  const handleItemSizeChange = (userKey: string, measuredSize: number) => {
-    if (layoutManager.reportItemSize(userKey, measuredSize)) {
+  const handleItemSizeChange = (
+    userKey: string,
+    measuredSize: number,
+    final = false,
+  ) => {
+    let changed = layoutManager.reportItemSize(userKey, measuredSize, final);
+
+    // A settled (final) size is authoritative — reveal it without the quiet
+    // window. markFinal returns true only the first time, so this bumps once.
+    if (final && revealGate.markFinal(userKey)) {
+      changed = true;
+    }
+
+    if (changed) {
       setLayoutVersion((v) => v + 1);
     }
   };

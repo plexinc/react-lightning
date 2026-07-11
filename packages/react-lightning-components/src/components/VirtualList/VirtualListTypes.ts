@@ -214,7 +214,8 @@ export interface VirtualListCellProps<T> {
   pinCrossAxis?: boolean;
   /** Hold the cell invisible (alpha 0) until its size has settled, so it never grows on screen. Still mounts and measures while withheld. */
   withholdPaint?: boolean;
-  onItemSizeChange?: (userKey: string, size: number) => void;
+  /** `final` = Yoga reported layout settled, so the size is authoritative (skip dampening + reveal now). */
+  onItemSizeChange?: (userKey: string, size: number, final?: boolean) => void;
   /** Distinct from `onItemSizeChange(_, 0)` (rejected) — this is the explicit empty-row path. */
   onItemEmpty?: (userKey: string) => void;
   /** Bumped by the list to make the cell re-push its cross after a reset. */
