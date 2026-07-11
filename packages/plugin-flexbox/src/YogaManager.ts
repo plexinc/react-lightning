@@ -28,12 +28,18 @@ export type YogaManagerEvents = {
   //   int16 - The width of the element
   //   int16 - The height of the element
   render: (updates: ArrayBuffer) => void;
+  // Fires once layout has converged (no pass produced a re-dirty). Deterministic
+  // replacement for the timer-based "has it settled yet" guesses downstream.
+  settled: () => void;
 };
 
 // elementId + x + y + width + height, as per spec above
 const APPROX_SIZEOF_UPDATE = 4 + 2 + 2 + 2 + 2;
 // 10KB, should be enough for most updates. If it's bigger than this, we'll chunk the updates
 const MAX_SIZEOF_UPDATE = 1024 * 10;
+// Grow-only text remeasure converges monotonically (1-3 passes in practice).
+// This is a runaway backstop, not an expected limit.
+const MAX_LAYOUT_PASSES = 10;
 
 export class YogaManager {
   private _elementMap: Map<number, ManagerNode> = new Map();
@@ -43,6 +49,8 @@ export class YogaManager {
   private _config?: Config;
   private _initialized = false;
   private _isRenderQueued = false;
+  private _isFlushing = false;
+  private _needsAnotherPass = false;
   private _yogaOptions: Required<YogaOptions> = {
     useWebDefaults: false,
     errata: 'none',
@@ -333,6 +341,15 @@ export class YogaManager {
       throw new Error('Yoga is not initialized! Did you call `init()`?');
     }
 
+    // Inside a synchronous flush, a re-dirty (e.g. the grow-only text remeasure
+    // reacting to this pass) just asks the flush loop for another pass rather
+    // than scheduling a separate microtask.
+    if (this._isFlushing) {
+      this._needsAnotherPass = true;
+
+      return;
+    }
+
     if (this._isRenderQueued) {
       return;
     }
@@ -349,23 +366,74 @@ export class YogaManager {
         return;
       }
 
-      this._initializeArrayBuffer();
+      this._runLayoutPass(force);
 
-      for (const independentRoot of this._independentRoots) {
-        // undefined available size → yoga uses the root's own w/h (or
-        // shrink-to-fit). Passing 1920×1080 would stretch any unset axis
-        // and break measurement-driven roots like VirtualList cells.
-        independentRoot.node.calculateLayout(
-          undefined,
-          undefined,
-          // oxlint-disable-next-line typescript/no-non-null-assertion -- Already checked this._yoga above
-          this._yoga!.DIRECTION_LTR,
-        );
-        this._getUpdatedStyles(independentRoot, force);
+      // A pass that drove no re-dirty (isRenderQueued still false) has
+      // converged. One pass per microtask keeps the async timing unchanged.
+      if (!this._isRenderQueued) {
+        this._eventEmitter.emit('settled');
       }
-
-      this._flushArrayBuffer(this._dataView.buffer);
     });
+  }
+
+  /**
+   * Lay out synchronously, looping until no pass re-dirties, then emit
+   * `settled`. Only possible on the main thread (worker mode has no sync
+   * round-trip). Callers that need a size before the next frame use this.
+   */
+  public flushLayout(force = false): void {
+    if (!this._initialized || !this._yoga) {
+      throw new Error('Yoga is not initialized! Did you call `init()`?');
+    }
+
+    // We are laying out now, so cancel any pending async flush.
+    this._isRenderQueued = false;
+    this._flushToFixpoint(force);
+  }
+
+  private _flushToFixpoint(force: boolean): void {
+    if (this._isFlushing || this._independentRoots.size === 0) {
+      return;
+    }
+
+    this._isFlushing = true;
+
+    let passes = 0;
+
+    do {
+      this._needsAnotherPass = false;
+      this._runLayoutPass(force);
+    } while (this._needsAnotherPass && ++passes < MAX_LAYOUT_PASSES);
+
+    const converged = !this._needsAnotherPass;
+
+    this._isFlushing = false;
+    this._needsAnotherPass = false;
+
+    if (!converged) {
+      console.warn(`Layout did not settle after ${MAX_LAYOUT_PASSES} passes.`);
+    }
+
+    this._eventEmitter.emit('settled');
+  }
+
+  private _runLayoutPass(force: boolean): void {
+    this._initializeArrayBuffer();
+
+    for (const independentRoot of this._independentRoots) {
+      // undefined available size → yoga uses the root's own w/h (or
+      // shrink-to-fit). Passing 1920×1080 would stretch any unset axis
+      // and break measurement-driven roots like VirtualList cells.
+      independentRoot.node.calculateLayout(
+        undefined,
+        undefined,
+        // oxlint-disable-next-line typescript/no-non-null-assertion -- Already checked this._yoga above
+        this._yoga!.DIRECTION_LTR,
+      );
+      this._getUpdatedStyles(independentRoot, force);
+    }
+
+    this._flushArrayBuffer(this._dataView.buffer);
   }
 
   public applyStyles(
