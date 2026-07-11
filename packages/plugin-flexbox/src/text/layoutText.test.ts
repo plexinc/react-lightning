@@ -20,8 +20,9 @@ const atlas: AtlasData = {
     { id: 98, xadvance: 10, xoffset: 0, yoffset: 0, width: 8, height: 8 }, // b
     { id: 32, xadvance: 5, xoffset: 0, yoffset: 0, width: 0, height: 0 }, //  (space)
     { id: 46, xadvance: 3, xoffset: 0, yoffset: 0, width: 2, height: 2 }, // .
+    { id: 63, xadvance: 7, xoffset: 0, yoffset: 0, width: 6, height: 8 }, // ?
   ],
-  kernings: [],
+  kernings: [{ first: 97, second: 63, amount: -2 }], // a? kerns; unrelated to any missing-glyph pair
 };
 
 const font = new FontMetrics(atlas);
@@ -49,6 +50,19 @@ describe('FontMetrics.measureText', () => {
 
   it('applies letter spacing per glyph (design units)', () => {
     expect(font.measureText('aa', 2)).toBe(24); // (10+2)+(10+2)
+  });
+
+  it('falls back to the ? glyph advance for a codepoint missing from the atlas', () => {
+    // 'z' (122) isn't in the atlas; renderer substitutes ?'s xadvance (7).
+    expect(font.measureText('z', 0)).toBe(7);
+    expect(font.measureText('az', 0)).toBe(font.measureText('a', 0) + 7);
+  });
+
+  it('keys kerning off the real codepoint, not the substituted glyph', () => {
+    // "a?" kerns (table has a 97/63 pair); "az" doesn't, since the renderer
+    // looks up kerning by the real (missing) codepoint, only the advance falls back.
+    expect(font.measureText('a?', 0)).toBe(10 + 7 - 2);
+    expect(font.measureText('az', 0)).toBe(10 + 7);
   });
 });
 
