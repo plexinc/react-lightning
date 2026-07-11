@@ -15,7 +15,7 @@ import type { YogaOptions } from '../types';
 import type { AutoDimensionValue, Transform } from '../types/FlexStyles';
 import type { ManagerNode } from '../types/ManagerNode';
 import type { FlexProps } from './isFlexStyleProp';
-import { isFlexStyleProp } from './isFlexStyleProp';
+import { flexProps, isFlexStyleProp } from './isFlexStyleProp';
 import { parseAspectRatio } from './parseAspectRatio';
 import { parseFlexValue } from './parseFlexValue';
 
@@ -164,11 +164,176 @@ function borderWidthOf(value: LightningViewElementStyle['border']): number {
   return typeof value === 'number' ? value : (value.w ?? 0);
 }
 
+// w/h are also driven by texture loads and VirtualList pinning, so resetting
+// them would clobber that. flex has no single safe default (shorthand over grow/shrink/basis).
+const RESETTABLE_FLEX_PROPS: ReadonlySet<FlexProps> = new Set(
+  (Object.keys(flexProps) as FlexProps[]).filter(
+    (prop) => prop !== 'w' && prop !== 'h' && prop !== 'flex',
+  ),
+);
+
+/** Restores a single yoga prop to its layout default (mirrors each `mapX(yoga)` no-value case). */
+function resetFlexPropToDefault(yoga: Yoga, node: Node, prop: FlexProps): void {
+  switch (prop) {
+    case 'display':
+      node.setDisplay(mapDisplay(yoga));
+      return;
+    case 'flexDirection':
+      node.setFlexDirection(mapDirection(yoga));
+      return;
+    case 'alignItems':
+      node.setAlignItems(mapAlignItems(yoga));
+      return;
+    case 'alignSelf':
+      node.setAlignSelf(mapAlignItems(yoga));
+      return;
+    case 'alignContent':
+      node.setAlignContent(mapAlignContent(yoga));
+      return;
+    case 'justifyContent':
+      node.setJustifyContent(mapJustify(yoga));
+      return;
+    case 'flexWrap':
+      node.setFlexWrap(mapWrap(yoga));
+      return;
+    case 'position':
+      node.setPositionType(mapPosition(yoga));
+      return;
+    case 'flexGrow':
+      node.setFlexGrow(undefined);
+      return;
+    case 'flexShrink':
+      node.setFlexShrink(undefined);
+      return;
+    case 'flexBasis':
+      node.setFlexBasisAuto();
+      return;
+    case 'aspectRatio':
+      node.setAspectRatio(undefined);
+      return;
+    case 'gap':
+      node.setGap(yoga.GUTTER_ALL, undefined);
+      return;
+    case 'rowGap':
+      node.setGap(yoga.GUTTER_ROW, undefined);
+      return;
+    case 'columnGap':
+      node.setGap(yoga.GUTTER_COLUMN, undefined);
+      return;
+    case 'minWidth':
+      node.setMinWidth(undefined);
+      return;
+    case 'minHeight':
+      node.setMinHeight(undefined);
+      return;
+    case 'maxWidth':
+      node.setMaxWidth(undefined);
+      return;
+    case 'maxHeight':
+      node.setMaxHeight(undefined);
+      return;
+    case 'margin':
+      node.setMargin(yoga.EDGE_ALL, undefined);
+      return;
+    case 'marginTop':
+      node.setMargin(yoga.EDGE_TOP, undefined);
+      return;
+    case 'marginBottom':
+      node.setMargin(yoga.EDGE_BOTTOM, undefined);
+      return;
+    case 'marginLeft':
+      node.setMargin(yoga.EDGE_LEFT, undefined);
+      return;
+    case 'marginRight':
+      node.setMargin(yoga.EDGE_RIGHT, undefined);
+      return;
+    case 'marginStart':
+      node.setMargin(yoga.EDGE_START, undefined);
+      return;
+    case 'marginEnd':
+      node.setMargin(yoga.EDGE_END, undefined);
+      return;
+    case 'marginHorizontal':
+    case 'marginInline':
+      node.setMargin(yoga.EDGE_HORIZONTAL, undefined);
+      return;
+    case 'marginVertical':
+    case 'marginBlock':
+      node.setMargin(yoga.EDGE_VERTICAL, undefined);
+      return;
+    case 'padding':
+      node.setPadding(yoga.EDGE_ALL, undefined);
+      return;
+    case 'paddingTop':
+      node.setPadding(yoga.EDGE_TOP, undefined);
+      return;
+    case 'paddingBottom':
+      node.setPadding(yoga.EDGE_BOTTOM, undefined);
+      return;
+    case 'paddingLeft':
+      node.setPadding(yoga.EDGE_LEFT, undefined);
+      return;
+    case 'paddingRight':
+      node.setPadding(yoga.EDGE_RIGHT, undefined);
+      return;
+    case 'paddingStart':
+      node.setPadding(yoga.EDGE_START, undefined);
+      return;
+    case 'paddingEnd':
+      node.setPadding(yoga.EDGE_END, undefined);
+      return;
+    case 'paddingHorizontal':
+    case 'paddingInline':
+      node.setPadding(yoga.EDGE_HORIZONTAL, undefined);
+      return;
+    case 'paddingVertical':
+    case 'paddingBlock':
+      node.setPadding(yoga.EDGE_VERTICAL, undefined);
+      return;
+    case 'border':
+      node.setBorder(yoga.EDGE_ALL, undefined);
+      return;
+    case 'borderTop':
+      node.setBorder(yoga.EDGE_TOP, undefined);
+      return;
+    case 'borderRight':
+      node.setBorder(yoga.EDGE_RIGHT, undefined);
+      return;
+    case 'borderBottom':
+      node.setBorder(yoga.EDGE_BOTTOM, undefined);
+      return;
+    case 'borderLeft':
+      node.setBorder(yoga.EDGE_LEFT, undefined);
+      return;
+    case 'top':
+      node.setPosition(yoga.EDGE_TOP, undefined);
+      return;
+    case 'left':
+      node.setPosition(yoga.EDGE_LEFT, undefined);
+      return;
+    case 'right':
+      node.setPosition(yoga.EDGE_RIGHT, undefined);
+      return;
+    case 'bottom':
+      node.setPosition(yoga.EDGE_BOTTOM, undefined);
+      return;
+    case 'start':
+      node.setPosition(yoga.EDGE_START, undefined);
+      return;
+    case 'end':
+      node.setPosition(yoga.EDGE_END, undefined);
+      return;
+    default:
+      return;
+  }
+}
+
 export default function applyReactPropsToYoga(
   yoga: Yoga,
   config: YogaOptions,
   managerNode: ManagerNode,
   style: Partial<LightningViewElementStyle>,
+  resetMissing = false,
 ): void {
   // `for...in` instead of `Object.entries(style)` to avoid the per-call
   // array allocation. This function runs on every applyStyle dispatch,
@@ -187,6 +352,19 @@ export default function applyReactPropsToYoga(
           prop,
           value as LightningViewElementStyle[typeof prop],
         );
+      }
+    }
+  }
+  // Only safe for a "full style" caller (see plugin transformProps): there, a
+  // key missing from `style` means removed, not just untouched this call.
+  if (resetMissing) {
+    for (const prop in managerNode.props) {
+      if (
+        RESETTABLE_FLEX_PROPS.has(prop as FlexProps) &&
+        style[prop as keyof LightningViewElementStyle] == null
+      ) {
+        delete managerNode.props[prop];
+        resetFlexPropToDefault(yoga, managerNode.node, prop as FlexProps);
       }
     }
   }

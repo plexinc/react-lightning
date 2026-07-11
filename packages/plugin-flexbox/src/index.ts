@@ -102,7 +102,14 @@ export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
         }
       }
 
-      lightningManager.applyStyle(instance.id, flexStyles as Partial<LightningElementStyle>, true);
+      // flexStyles is complete for this render, so a missing key means the
+      // prop was dropped: reset it instead of leaving yoga's stale value.
+      lightningManager.applyStyle(
+        instance.id,
+        flexStyles as Partial<LightningElementStyle>,
+        true,
+        true,
+      );
 
       return {
         ...props,

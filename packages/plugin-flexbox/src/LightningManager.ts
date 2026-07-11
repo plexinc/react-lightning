@@ -475,6 +475,7 @@ export class LightningManager {
     elementId: number,
     style?: Partial<LightningElementStyle> | null,
     skipRender = false,
+    resetMissing = false,
   ): void {
     if (!this._elements.has(elementId)) {
       return;
@@ -482,7 +483,7 @@ export class LightningManager {
 
     if (style) {
       // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
-      this._yogaManager!.applyStyle(elementId, style, skipRender);
+      this._yogaManager!.applyStyle(elementId, style, skipRender, resetMissing);
     }
   }
 

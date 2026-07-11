@@ -371,6 +371,7 @@ export class YogaManager {
   public applyStyles(
     styles: Record<number, Partial<LightningElementStyle>>,
     skipRender = false,
+    resets?: Record<number, 1>,
   ): void {
     if (!this._initialized) {
       throw new Error('Yoga was not initialized! Did you call `init()`?');
@@ -382,7 +383,7 @@ export class YogaManager {
       const style = styles[elementId as unknown as number];
 
       if (style !== undefined) {
-        this.applyStyle(+elementId, style, skipRender);
+        this.applyStyle(+elementId, style, skipRender, resets?.[elementId as unknown as number] === 1);
       }
     }
   }
@@ -391,6 +392,7 @@ export class YogaManager {
     elementId: number,
     style: Partial<LightningElementStyle> | null,
     skipRender = false,
+    resetMissing = false,
   ): void {
     if (!style) {
       return;
@@ -408,7 +410,7 @@ export class YogaManager {
       return;
     }
 
-    applyReactPropsToYoga(this._yoga, this._yogaOptions, yogaNode, style);
+    applyReactPropsToYoga(this._yoga, this._yogaOptions, yogaNode, style, resetMissing);
 
     if (style.transform) {
       const { x, y, transform } = style;
