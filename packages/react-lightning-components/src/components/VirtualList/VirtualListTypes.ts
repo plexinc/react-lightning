@@ -1,5 +1,4 @@
 import type { ComponentType, ReactElement } from 'react';
-
 import type { LightningViewElementStyle } from '@plextv/react-lightning';
 
 export interface VirtualListRenderItemInfo<T> {
@@ -64,15 +63,20 @@ export interface ScrollEvent {
 /**
  * Only 'Cell' is currently supported.
  */
-export type RenderTarget = 'Cell' | 'StickyHeader' | 'Measurement';
+export type RenderTarget = 'Cell' | 'Measurement' | 'StickyHeader';
 
-export type VirtualListRenderItem<T> = (info: VirtualListRenderItemInfo<T>) => ReactElement | null;
+export type VirtualListRenderItem<T> = (
+  info: VirtualListRenderItemInfo<T>,
+) => ReactElement | null;
 
 export interface VirtualListProps<T> {
   /** Array of data items to render. */
-  data: ReadonlyArray<T>;
+  data: readonly T[];
   /** Render function for each item. */
-  renderItem: ((info: VirtualListRenderItemInfo<T>) => ReactElement | null) | null | undefined;
+  renderItem:
+    | ((info: VirtualListRenderItemInfo<T>) => ReactElement | null)
+    | null
+    | undefined;
   /** Scroll horizontally instead of vertically. */
   horizontal?: boolean | null;
   /** Number of columns for grid layout. Default 1. */
@@ -105,7 +109,11 @@ export interface VirtualListProps<T> {
   /** Override size or span per-item. Must be fast — called frequently. */
   overrideItemLayout?: OverrideItemLayoutFn<T>;
   /** Return a type for recycling pools. Items of same type reuse views. */
-  getItemType?: (item: T, index: number, extraData?: unknown) => string | number | undefined;
+  getItemType?: (
+    item: T,
+    index: number,
+    extraData?: unknown,
+  ) => number | string | undefined;
 
   /** Scroll to this index on mount. */
   initialScrollIndex?: number | null;
@@ -119,7 +127,10 @@ export interface VirtualListProps<T> {
   onScroll?: (event: ScrollEvent) => void;
   /** Called when viewable items change. */
   onViewableItemsChanged?:
-    | ((info: { viewableItems: ViewToken<T>[]; changed: ViewToken<T>[] }) => void)
+    | ((info: {
+        viewableItems: ViewToken<T>[];
+        changed: ViewToken<T>[];
+      }) => void)
     | null;
   /** Configuration for viewability tracking. */
   viewabilityConfig?: ViewabilityConfig | null;
@@ -130,7 +141,7 @@ export interface VirtualListProps<T> {
   onLayout?: (rect: { w: number; h: number }) => void;
 
   /** Snap scroll alignment when focusing items. Default 'start'. */
-  snapToAlignment?: 'start' | 'center' | 'end';
+  snapToAlignment?: 'center' | 'end' | 'start';
   /** Duration of scroll animations in ms. Default 300. */
   animationDuration?: number;
 
@@ -201,6 +212,8 @@ export interface VirtualListCellProps<T> {
   isInFlex: boolean;
   /** Pin the FlexRoot's cross axis to `crossSize` so flex children can fill it. Only safe when the VL's cross size is definite (not content-derived). */
   pinCrossAxis?: boolean;
+  /** Hold the cell invisible (alpha 0) until its size has settled, so it never grows on screen. Still mounts and measures while withheld. */
+  withholdPaint?: boolean;
   onItemSizeChange?: (userKey: string, size: number) => void;
   /** Distinct from `onItemSizeChange(_, 0)` (rejected) — this is the explicit empty-row path. */
   onItemEmpty?: (userKey: string) => void;

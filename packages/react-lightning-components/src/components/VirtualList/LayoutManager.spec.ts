@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { DEFAULT_ITEM_SIZE, LayoutManager } from './LayoutManager';
 
-const makeData = (n: number) => Array.from({ length: n }, (_, i) => ({ id: i }));
+const makeData = (n: number) =>
+  Array.from({ length: n }, (_, i) => ({ id: i }));
 
 describe('LayoutManager', () => {
   describe('single column', () => {
@@ -14,13 +15,23 @@ describe('LayoutManager', () => {
       });
 
       expect(lm.getLayout(0)).toEqual(
-        expect.objectContaining({ offset: 0, size: DEFAULT_ITEM_SIZE, crossSize: 200 }),
+        expect.objectContaining({
+          offset: 0,
+          size: DEFAULT_ITEM_SIZE,
+          crossSize: 200,
+        }),
       );
       expect(lm.getLayout(1)).toEqual(
-        expect.objectContaining({ offset: DEFAULT_ITEM_SIZE, size: DEFAULT_ITEM_SIZE }),
+        expect.objectContaining({
+          offset: DEFAULT_ITEM_SIZE,
+          size: DEFAULT_ITEM_SIZE,
+        }),
       );
       expect(lm.getLayout(2)).toEqual(
-        expect.objectContaining({ offset: DEFAULT_ITEM_SIZE * 2, size: DEFAULT_ITEM_SIZE }),
+        expect.objectContaining({
+          offset: DEFAULT_ITEM_SIZE * 2,
+          size: DEFAULT_ITEM_SIZE,
+        }),
       );
       expect(lm.totalSize).toBe(DEFAULT_ITEM_SIZE * 3);
     });
@@ -69,7 +80,11 @@ describe('LayoutManager', () => {
     });
 
     it('collapses undefined data entries to size 0', () => {
-      const data: Array<{ id: number } | undefined> = [{ id: 0 }, undefined, { id: 2 }];
+      const data: Array<{ id: number } | undefined> = [
+        { id: 0 },
+        undefined,
+        { id: 2 },
+      ];
       const lm = new LayoutManager({
         data,
         numColumns: 1,
@@ -179,10 +194,16 @@ describe('LayoutManager', () => {
         expect.objectContaining({ offset: 0, size: DEFAULT_ITEM_SIZE }),
       );
       expect(lm.getLayout(1)).toEqual(
-        expect.objectContaining({ offset: DEFAULT_ITEM_SIZE + 10, size: DEFAULT_ITEM_SIZE }),
+        expect.objectContaining({
+          offset: DEFAULT_ITEM_SIZE + 10,
+          size: DEFAULT_ITEM_SIZE,
+        }),
       );
       expect(lm.getLayout(2)).toEqual(
-        expect.objectContaining({ offset: DEFAULT_ITEM_SIZE * 2 + 20, size: DEFAULT_ITEM_SIZE }),
+        expect.objectContaining({
+          offset: DEFAULT_ITEM_SIZE * 2 + 20,
+          size: DEFAULT_ITEM_SIZE,
+        }),
       );
       expect(lm.totalSize).toBe(DEFAULT_ITEM_SIZE * 3 + 20);
     });
@@ -354,6 +375,39 @@ describe('LayoutManager', () => {
       expect(lm.reportItemSize('0', 0)).toBe(false);
       expect(lm.reportItemSize('0', -5)).toBe(false);
       expect(lm.getLayout(0)?.size).toBe(DEFAULT_ITEM_SIZE);
+    });
+
+    it('isMeasured flips once a real size commits (keyed by userKey)', () => {
+      const lm = new LayoutManager({
+        data: makeData(2),
+        numColumns: 1,
+        cellCrossSize: 200,
+        keyExtractor: (item) => String(item.id),
+      });
+
+      expect(lm.isMeasured(0)).toBe(false);
+      lm.reportItemSize('0', 150);
+      expect(lm.isMeasured(0)).toBe(true);
+      expect(lm.isMeasured(1)).toBe(false);
+    });
+
+    it('hasOverrideSize reflects whether the caller pins the main-axis size', () => {
+      const pinned = new LayoutManager({
+        data: makeData(2),
+        numColumns: 1,
+        cellCrossSize: 200,
+        overrideItemLayout: (layout) => {
+          layout.size = 80;
+        },
+      });
+      const unpinned = new LayoutManager({
+        data: makeData(2),
+        numColumns: 1,
+        cellCrossSize: 200,
+      });
+
+      expect(pinned.hasOverrideSize(0)).toBe(true);
+      expect(unpinned.hasOverrideSize(0)).toBe(false);
     });
 
     it('returns false on no-op reports and defers different values via dampening', () => {

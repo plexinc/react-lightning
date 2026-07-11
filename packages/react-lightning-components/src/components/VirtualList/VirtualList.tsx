@@ -1,9 +1,9 @@
 import type { ComponentType, Ref } from 'react';
 import {
   type ForwardedRef,
+  type ReactElement,
   forwardRef,
   isValidElement,
-  type ReactElement,
   useContext,
   useEffect,
   useImperativeHandle,
@@ -11,32 +11,45 @@ import {
   useRef,
   useState,
 } from 'react';
-
 import {
   FocusGroup,
   type LightningElement,
   type LightningViewElementStyle,
 } from '@plextv/react-lightning';
-import { FlexBoundary, FlexRoot, useIsInFlex } from '@plextv/react-lightning-plugin-flexbox';
-
+import {
+  FlexBoundary,
+  FlexRoot,
+  useIsInFlex,
+} from '@plextv/react-lightning-plugin-flexbox';
+import { LayoutManager } from './LayoutManager';
+import { RecyclerPool } from './RecyclerPool';
+import { RevealGate } from './RevealGate';
+import { VirtualListCell } from './VirtualListCell';
+import {
+  CellBoundsContext,
+  VLCellKeyContext,
+  type VLPersistedState,
+  VLStateCacheContext,
+} from './VirtualListContext';
+import type { VirtualListProps, VirtualListRef } from './VirtualListTypes';
 import { capSelfMeasuredViewport } from './capSelfMeasuredViewport';
 import { computeItemRect } from './computeItemRect';
-import { LayoutManager } from './LayoutManager';
 import { parseContentStyle } from './parseContentStyle';
-import { RecyclerPool } from './RecyclerPool';
 import { resolveCrossSize } from './resolveCrossSize';
+import { resolveRevealBoundary } from './resolveRevealBoundary';
 import { resolveSectionSize } from './resolveSectionSize';
 import { resolveVisibleMainSpan } from './resolveVisibleMainSpan';
 import { useScrollHandler } from './useScrollHandler';
 import { useViewability } from './useViewability';
-import { VirtualListCell } from './VirtualListCell';
-import {
-  CellBoundsContext,
-  type VLPersistedState,
-  VLCellKeyContext,
-  VLStateCacheContext,
-} from './VirtualListContext';
-import type { VirtualListProps, VirtualListRef } from './VirtualListTypes';
+
+// A cell reveals once its size has held steady this long — matches the
+// LayoutManager's own stability window, so a size that's been quiet this long
+// has no pending change left in flight.
+const REVEAL_QUIET_MS = 120;
+// Backstop so content that never stops resizing still reveals eventually.
+const REVEAL_MAX_MS = 1000;
+// Wake a touch after the computed deadline so the quiet window is safely past.
+const REVEAL_CHECK_SLOP_MS = 8;
 
 function renderListComponent(
   component: VirtualListProps<unknown>['ListHeaderComponent'],
@@ -54,7 +67,10 @@ function renderListComponent(
   return <Component />;
 }
 
-function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<VirtualListRef>) {
+function VirtualListInner<T>(
+  props: VirtualListProps<T>,
+  ref: ForwardedRef<VirtualListRef>,
+) {
   const {
     data,
     renderItem,
@@ -99,7 +115,9 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   const cellKey = useContext(VLCellKeyContext);
   const parentStateCache = useContext(VLStateCacheContext);
   const initialRestoredState =
-    cellKey != null && parentStateCache ? parentStateCache.get(cellKey) : undefined;
+    cellKey != null && parentStateCache
+      ? parentStateCache.get(cellKey)
+      : undefined;
   const initialScrollOffset = initialRestoredState?.scrollOffset ?? 0;
   // State (not ref) — render-phase ref reads bail React Compiler on the
   // whole function, leaving every cell prop closure unmemoized.
@@ -109,7 +127,9 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   // Consumed on the next onChildFocused after a cellKey change so the FG's
   // auto-pick on row entry doesn't overwrite the restored index.
   const [skipNextFocus, setSkipNextFocus] = useState(false);
-  const [ownStateCache] = useState<Map<string, VLPersistedState>>(() => new Map());
+  const [ownStateCache] = useState<Map<string, VLPersistedState>>(
+    () => new Map(),
+  );
   const [measuredSize, setMeasuredSize] = useState({ w: 0, h: 0 });
   // Visible main-axis span from the list's stage position to the stage edge,
   // tracked on resize. Caps the self-measured viewport fallback below.
@@ -129,6 +149,16 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   // Bumped whenever the cross measurement is reset, to make mounted cells
   // re-push their current cross so it climbs back (see the reset effect).
   const [crossGeneration, setCrossGeneration] = useState(0);
+  // A row measures bottom-up and async: it reports a placeholder size, then
+  // grows to its real height. `revealGate` tracks how long each cell's size has
+  // held steady so the list can keep a cell hidden until it settles, then paint
+  // it once at its final height instead of on-screen growing (which shoves the
+  // rows below it down). Starts at -1: nothing paints until the gate settles it.
+  const [revealGate] = useState(() => new RevealGate());
+  const [revealThrough, setRevealThrough] = useState(-1);
+  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const padding = parseContentStyle(contentContainerStyle);
 
   const paddingStart = horizontal ? padding.left : padding.top;
@@ -136,33 +166,48 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   const paddingCross = horizontal ? padding.top : padding.left;
   const paddingCrossEnd = horizontal ? padding.bottom : padding.right;
   const crossPadding = paddingCross + paddingCrossEnd;
-  const headerSize = resolveSectionSize(!!ListHeaderComponent, measuredHeaderSize, listHeaderSize);
-  const footerSize = resolveSectionSize(!!ListFooterComponent, measuredFooterSize, listFooterSize);
+  const headerSize = resolveSectionSize(
+    !!ListHeaderComponent,
+    measuredHeaderSize,
+    listHeaderSize,
+  );
+  const footerSize = resolveSectionSize(
+    !!ListFooterComponent,
+    measuredFooterSize,
+    listFooterSize,
+  );
   const itemAreaOffset = paddingStart + headerSize;
 
   // Main axis: explicit style > parent cell bounds > self-measured.
   const explicitMain = horizontal
     ? (style?.w as number | undefined)
     : (style?.h as number | undefined);
-  const parentMain = horizontal ? parentCellBounds?.width : parentCellBounds?.height;
+  const parentMain = horizontal
+    ? parentCellBounds?.width
+    : parentCellBounds?.height;
   const measuredOuterMain = horizontal ? measuredSize.w : measuredSize.h;
   const viewportSize =
-    explicitMain ?? parentMain ?? capSelfMeasuredViewport(measuredOuterMain, visibleMainSpan);
+    explicitMain ??
+    parentMain ??
+    capSelfMeasuredViewport(measuredOuterMain, visibleMainSpan);
 
   const explicitCross = horizontal
     ? (style?.h as number | undefined)
     : (style?.w as number | undefined);
-  const parentCross = horizontal ? parentCellBounds?.height : parentCellBounds?.width;
+  const parentCross = horizontal
+    ? parentCellBounds?.height
+    : parentCellBounds?.width;
   const measuredOuterCross = horizontal ? measuredSize.h : measuredSize.w;
 
-  const { viewportCrossSize, isDefinite: crossSizeIsDefinite } = resolveCrossSize({
-    horizontal,
-    explicitCross,
-    parentCross,
-    measuredOuterCross,
-    maxContentCross,
-    crossPadding,
-  });
+  const { viewportCrossSize, isDefinite: crossSizeIsDefinite } =
+    resolveCrossSize({
+      horizontal,
+      explicitCross,
+      parentCross,
+      measuredOuterCross,
+      maxContentCross,
+      crossPadding,
+    });
 
   const cellCrossSize = (viewportCrossSize - crossPadding) / numColumns;
 
@@ -230,14 +275,22 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
 
   const [pool] = useState<RecyclerPool>(() => new RecyclerPool());
   const getKey = (index: number): string =>
-    keyExtractor && data[index] !== undefined ? keyExtractor(data[index], index) : String(index);
+    keyExtractor && data[index] !== undefined
+      ? keyExtractor(data[index], index)
+      : String(index);
   const getData = (i: number) => data[i];
   const getLayout = (i: number) => layoutManager.getLayout(i);
 
   const totalContentSize =
-    paddingStart + headerSize + layoutManager.totalSize + footerSize + paddingEnd;
+    paddingStart +
+    headerSize +
+    layoutManager.totalSize +
+    footerSize +
+    paddingEnd;
   const finalCross =
-    viewportCrossSize > 0 ? viewportCrossSize : cellCrossSize * numColumns + crossPadding;
+    viewportCrossSize > 0
+      ? viewportCrossSize
+      : cellCrossSize * numColumns + crossPadding;
 
   // While true, contentStyle omits x/y so reconciliation can't clobber the
   // imperative scroll animation in flight.
@@ -247,6 +300,7 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     layoutManager.setBatching(true);
     setIsScrollAnimating(true);
   };
+
   const handleAnimationEnd = () => {
     setIsScrollAnimating(false);
 
@@ -343,7 +397,13 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
       focusedIndex,
       measurements: layoutManager.getMeasurements(),
     });
-  }, [cellKey, committedScrollOffset, focusedIndex, parentStateCache, layoutManager]);
+  }, [
+    cellKey,
+    committedScrollOffset,
+    focusedIndex,
+    parentStateCache,
+    layoutManager,
+  ]);
 
   // Recycle into a different row: save outgoing state and restore incoming.
   // setState during render so this render uses the new state — avoids a
@@ -373,7 +433,9 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     });
 
     const incoming =
-      cellKey != null && parentStateCache ? parentStateCache.get(cellKey) : undefined;
+      cellKey != null && parentStateCache
+        ? parentStateCache.get(cellKey)
+        : undefined;
 
     resetScroll(incoming?.scrollOffset ?? 0);
     // The `?? 0` fallback is load-bearing. The outer FG's `focusedElement`
@@ -442,7 +504,11 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   };
 
   const scrollInItemSpace = Math.max(0, committedScrollOffset - itemAreaOffset);
-  const visibleRange = layoutManager.getVisibleRange(scrollInItemSpace, viewportSize, drawDistance);
+  const visibleRange = layoutManager.getVisibleRange(
+    scrollInItemSpace,
+    viewportSize,
+    drawDistance,
+  );
   const visibleIndices: number[] = [];
 
   if (data.length > 0 && visibleRange.endIndex >= visibleRange.startIndex) {
@@ -463,7 +529,84 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     horizontal,
   });
 
-  const getType = (index: number): string | number =>
+  // Reveal gate: paint the visible cells only up to the first one whose size
+  // hasn't settled, so a growing row stays hidden until it reaches its final
+  // height. Runs after every commit (measurements arrive between renders) and
+  // schedules a re-check for the soonest pending cell. Fixed-size lists
+  // (override-pinned cells) are all exempt, so this is a no-op there.
+  useLayoutEffect(() => {
+    const now = Date.now();
+    const order: number[] = [];
+
+    for (const index of visibleIndices) {
+      const item = data[index];
+
+      if (item == null) {
+        continue;
+      }
+
+      const layout = layoutManager.getLayout(index);
+
+      if (!layout || layout.size === 0) {
+        continue;
+      }
+
+      order.push(index);
+
+      if (layoutManager.isMeasured(index)) {
+        revealGate.note(getKey(index), layout.size, now);
+      }
+    }
+
+    const { revealThrough: nextRevealThrough, nextCheckMs } =
+      resolveRevealBoundary(
+        order,
+        (index) => layoutManager.hasOverrideSize(index),
+        (index) =>
+          layoutManager.isMeasured(index)
+            ? revealGate.timeUntilSettled(
+                getKey(index),
+                now,
+                REVEAL_QUIET_MS,
+                REVEAL_MAX_MS,
+              )
+            : Infinity,
+      );
+
+    // Latch every cell up to the boundary as revealed so a later re-measure
+    // (background refresh of an already-visible row) can't hide it again.
+    for (const index of order) {
+      if (index > nextRevealThrough) {
+        break;
+      }
+
+      revealGate.markRevealed(getKey(index));
+    }
+
+    setRevealThrough((prev) =>
+      prev === nextRevealThrough ? prev : nextRevealThrough,
+    );
+
+    if (revealTimerRef.current != null) {
+      clearTimeout(revealTimerRef.current);
+      revealTimerRef.current = undefined;
+    }
+
+    if (Number.isFinite(nextCheckMs) && nextCheckMs > 0) {
+      revealTimerRef.current = setTimeout(() => {
+        setLayoutVersion((v) => v + 1);
+      }, nextCheckMs + REVEAL_CHECK_SLOP_MS);
+    }
+
+    return () => {
+      if (revealTimerRef.current != null) {
+        clearTimeout(revealTimerRef.current);
+        revealTimerRef.current = undefined;
+      }
+    };
+  });
+
+  const getType = (index: number): number | string =>
     // oxlint-disable-next-line typescript/no-non-null-assertion -- index is within data bounds
     getItemType?.(data[index]!, index, extraData) ?? 0;
 
@@ -488,7 +631,9 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
   }, [data, extraData]);
 
   const handleViewportResize = (event: { w: number; h: number }) => {
-    setMeasuredSize((prev) => (prev.w === event.w && prev.h === event.h ? prev : event));
+    setMeasuredSize((prev) =>
+      prev.w === event.w && prev.h === event.h ? prev : event,
+    );
 
     // A canvas-overflowing (or overflow-margin-inflated) list is flex-sized
     // past the screen; capSelfMeasuredViewport needs the visible span to rein
@@ -499,7 +644,13 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     if (el) {
       const root = el.rootElement;
       const pos = el.getRelativePosition(root);
-      const span = resolveVisibleMainSpan(horizontal, root.node.w, root.node.h, pos.x, pos.y);
+      const span = resolveVisibleMainSpan(
+        horizontal,
+        root.node.w,
+        root.node.h,
+        pos.x,
+        pos.y,
+      );
 
       setVisibleMainSpan((prev) => (prev === span ? prev : span));
     }
@@ -507,7 +658,12 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
 
   useImperativeHandle(ref, () => ({
     scrollToIndex: (params) =>
-      scrollToIndex(params.index, params.animated, params.viewPosition, params.viewOffset),
+      scrollToIndex(
+        params.index,
+        params.animated,
+        params.viewPosition,
+        params.viewOffset,
+      ),
     scrollToOffset: (params) => scrollToOffset(params.offset, params.animated),
     scrollToEnd: (params) => scrollToEnd(params?.animated),
     getScrollOffset: () => scrollOffsetRef.current,
@@ -515,7 +671,9 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     getLayout: (index) => {
       const layout = layoutManager.getLayout(index);
 
-      return layout ? computeItemRect(layout, itemAreaOffset, paddingCross, horizontal) : undefined;
+      return layout
+        ? computeItemRect(layout, itemAreaOffset, paddingCross, horizontal)
+        : undefined;
     },
   }));
 
@@ -567,19 +725,21 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
       ? [0, drawDistance * 2, 0, drawDistance * 2]
       : [drawDistance * 2, 0, drawDistance * 2, 0],
     ...style,
-    ...(padding.backgroundColor != null ? { color: padding.backgroundColor } : undefined),
+    ...(padding.backgroundColor != null
+      ? { color: padding.backgroundColor }
+      : undefined),
   };
 
   if (data.length === 0 && ListEmptyComponent) {
     return (
       <VLStateCacheContext.Provider value={ownStateCache}>
         <FocusGroup
-          style={outerStyle}
           autoFocus={autoFocus}
-          trapFocusUp={trapFocusUp}
-          trapFocusRight={trapFocusRight}
+          style={outerStyle}
           trapFocusDown={trapFocusDown}
           trapFocusLeft={trapFocusLeft}
+          trapFocusRight={trapFocusRight}
+          trapFocusUp={trapFocusUp}
         >
           {renderListComponent(ListEmptyComponent)}
         </FocusGroup>
@@ -632,25 +792,26 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     return (
       <VirtualListCell
         key={slotKey}
-        mainOffset={mainPos}
+        ItemSeparatorComponent={ItemSeparatorComponent}
+        crossGeneration={crossGeneration}
         crossOffset={crossPos}
-        size={layout.size}
         crossSize={layout.crossSize}
-        renderItem={renderItem}
-        item={item}
-        index={index}
-        userKey={getKey(index)}
-        shouldFocus={focusedIndex === index}
         extraData={extraData}
         horizontal={horizontal}
-        isLastItem={isLastItem}
-        ItemSeparatorComponent={ItemSeparatorComponent}
+        index={index}
         isInFlex={isInFlex}
-        crossGeneration={crossGeneration}
+        isLastItem={isLastItem}
+        item={item}
+        mainOffset={mainPos}
         pinCrossAxis={crossSizeIsDefinite}
-        onItemSizeChange={handleItemSizeChange}
-        onItemEmpty={handleItemEmpty}
+        renderItem={renderItem}
+        shouldFocus={focusedIndex === index}
+        size={layout.size}
+        userKey={getKey(index)}
+        withholdPaint={index > revealThrough && focusedIndex !== index}
         onContentCrossLayout={handleContentCrossLayout}
+        onItemEmpty={handleItemEmpty}
+        onItemSizeChange={handleItemSizeChange}
         onSeparatorLayout={handleSeparatorLayout}
       />
     );
@@ -660,19 +821,19 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
     <VLStateCacheContext.Provider value={ownStateCache}>
       <FocusGroup
         ref={outerElementRef}
-        style={outerStyle}
+        allowOffscreen={true}
         autoFocus={autoFocus}
-        onChildFocused={handleVLFocus}
-        onResize={handleViewportResize}
-        allowOffscreen
-        trapFocusUp={trapFocusUp}
-        trapFocusRight={trapFocusRight}
+        style={outerStyle}
         trapFocusDown={trapFocusDown}
         trapFocusLeft={trapFocusLeft}
+        trapFocusRight={trapFocusRight}
+        trapFocusUp={trapFocusUp}
+        onChildFocused={handleVLFocus}
+        onResize={handleViewportResize}
       >
         <lng-view ref={contentRef} style={contentStyle}>
           <FlexBoundary>
-            {ListHeaderComponent && (
+            {ListHeaderComponent ? (
               <lng-view
                 style={{
                   position: 'absolute',
@@ -681,18 +842,21 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
                 }}
               >
                 {isInFlex ? (
-                  <FlexRoot style={sectionFlexStyle} onResize={handleHeaderLayout}>
+                  <FlexRoot
+                    style={sectionFlexStyle}
+                    onResize={handleHeaderLayout}
+                  >
                     {renderListComponent(ListHeaderComponent)}
                   </FlexRoot>
                 ) : (
                   renderListComponent(ListHeaderComponent)
                 )}
               </lng-view>
-            )}
+            ) : null}
 
             {cells}
 
-            {ListFooterComponent && (
+            {ListFooterComponent ? (
               <lng-view
                 style={{
                   position: 'absolute',
@@ -705,14 +869,17 @@ function VirtualListInner<T>(props: VirtualListProps<T>, ref: ForwardedRef<Virtu
                 }}
               >
                 {isInFlex ? (
-                  <FlexRoot style={sectionFlexStyle} onResize={handleFooterLayout}>
+                  <FlexRoot
+                    style={sectionFlexStyle}
+                    onResize={handleFooterLayout}
+                  >
                     {renderListComponent(ListFooterComponent)}
                   </FlexRoot>
                 ) : (
                   renderListComponent(ListFooterComponent)
                 )}
               </lng-view>
-            )}
+            ) : null}
           </FlexBoundary>
         </lng-view>
       </FocusGroup>
