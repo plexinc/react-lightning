@@ -1,0 +1,6 @@
+{
+  "home": { "nodeCount": 875, "layoutPasses": 50, "settles": 25, "maxPassesToSettle": 2, "reflows": 0, "textRemeasures": 425 },
+  "details": { "nodeCount": 670, "layoutPasses": 40, "settles": 20, "maxPassesToSettle": 2, "reflows": 0, "textRemeasures": 326 },
+  "grid": { "nodeCount": 570, "layoutPasses": 60, "settles": 30, "maxPassesToSettle": 2, "reflows": 0, "textRemeasures": 180 },
+  "epg": { "nodeCount": 832, "layoutPasses": 64, "settles": 32, "maxPassesToSettle": 2, "reflows": 0, "textRemeasures": 512 }
+}

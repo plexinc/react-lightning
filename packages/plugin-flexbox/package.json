@@ -46,7 +46,10 @@
     "build:copy-dts": "copyfiles -f src/types/jsx.d.ts dist/types/types",
     "clean": "del ./dist",
     "check:types": "tsc --noEmit",
-    "test:unit": "vitest run --passWithNoTests"
+    "test:unit": "vitest run --passWithNoTests",
+    "bench": "tsx bench/cli.ts",
+    "bench:update": "tsx bench/cli.ts --update",
+    "bench:save": "tsx bench/cli.ts save"
   },
   "dependencies": {
     "tseep": "catalog:",
