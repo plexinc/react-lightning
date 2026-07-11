@@ -521,6 +521,10 @@ export class LightningViewElement<
     beforeChild?: LightningElement | null,
   ): void {
     if (child.parent === this && child.parent.node === this.node) {
+      // Already ours: a same-parent reorder, not a real (re)parent. Reshuffle
+      // children[] only, keep the node/Yoga subtree alive.
+      this._moveChild(child, beforeChild);
+
       return;
     }
 
@@ -541,6 +545,35 @@ export class LightningViewElement<
     }
 
     this._eventEmitter.emit('childAdded', child, index);
+  }
+
+  private _moveChild(
+    child: LightningElement,
+    beforeChild?: LightningElement | null,
+  ): void {
+    if (child === beforeChild) {
+      return;
+    }
+
+    const fromIndex = this.children.indexOf(child);
+
+    if (fromIndex < 0) {
+      return;
+    }
+
+    this.children.splice(fromIndex, 1);
+
+    // Look up beforeChild after removing child, so its index already is the
+    // destination position in the shortened array.
+    const toIndex = beforeChild
+      ? this.children.indexOf(beforeChild)
+      : this.children.length;
+
+    this.children.splice(toIndex, 0, child);
+
+    if (toIndex !== fromIndex) {
+      this._eventEmitter.emit('childMoved', child, fromIndex, toIndex);
+    }
   }
 
   public removeChild(child: LightningElement): void {
