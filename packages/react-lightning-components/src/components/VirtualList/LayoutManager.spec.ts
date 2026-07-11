@@ -431,6 +431,23 @@ describe('LayoutManager', () => {
       expect(lm.getLayout(0)?.size).toBe(150);
     });
 
+    it('commits a final report immediately, bypassing dampening', () => {
+      const lm = new LayoutManager({
+        data: makeData(2),
+        numColumns: 1,
+        cellCrossSize: 200,
+        keyExtractor: (item) => String(item.id),
+      });
+
+      expect(lm.reportItemSize('0', 150)).toBe(true);
+      // A differing report normally sits in dampening (returns false, stays 150).
+      expect(lm.reportItemSize('0', 152)).toBe(false);
+      expect(lm.getLayout(0)?.size).toBe(150);
+      // A final report (Yoga settled) commits synchronously, no window.
+      expect(lm.reportItemSize('0', 152, true)).toBe(true);
+      expect(lm.getLayout(0)?.size).toBe(152);
+    });
+
     it('measurements survive index shifts (keyed by userKey)', () => {
       const data = makeData(3);
       const lm = new LayoutManager({

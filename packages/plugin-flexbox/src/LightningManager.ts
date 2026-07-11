@@ -53,6 +53,23 @@ export class LightningManager {
   }
 
   /**
+   * Subscribe to Yoga's `settled` event (layout converged to a fixpoint).
+   * Main-thread only — the worker proxy never emits it, so the callback
+   * simply never fires there and callers fall back to their timers.
+   */
+  public onSettled(callback: () => void): () => void {
+    const manager = this._yogaManager;
+
+    if (!manager) {
+      return () => {};
+    }
+
+    manager.on('settled', callback);
+
+    return () => manager.off('settled', callback);
+  }
+
+  /**
    * Detaches the element's subtree from yoga (and excludes future
    * descendants). A nested {@link markFlexRoot} re-enables flex below it.
    * No-op outside a flex root since those elements are already excluded.

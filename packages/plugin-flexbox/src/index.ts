@@ -1,7 +1,7 @@
 import type { LightningElement, LightningElementStyle, Plugin } from '@plextv/react-lightning';
 
 import { LightningManager } from './LightningManager';
-import { setFlexboxManager } from './manager';
+import { getFlexboxManager, setFlexboxManager } from './manager';
 import type { YogaOptions } from './types/YogaOptions';
 import { flexProps, isFlexStyleProp } from './util/isFlexStyleProp';
 
@@ -117,6 +117,14 @@ export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
       };
     },
   };
+}
+
+/**
+ * Subscribe to the flexbox layout-settled signal (Yoga converged). Returns an
+ * unsubscribe fn. A no-op unsubscribe when no manager is mounted yet.
+ */
+export function onFlexLayoutSettled(callback: () => void): () => void {
+  return getFlexboxManager()?.onSettled(callback) ?? (() => {});
 }
 
 export { FlexBoundary, FlexRoot, useIsInFlex } from './wrappers';

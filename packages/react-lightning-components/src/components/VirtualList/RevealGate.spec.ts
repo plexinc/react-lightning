@@ -87,4 +87,33 @@ describe('RevealGate', () => {
 
     expect(gate.timeUntilSettled('a', 0, QUIET, MAX)).toBe(Infinity);
   });
+
+  it('reveals a final-marked key immediately, skipping the quiet window', () => {
+    const gate = new RevealGate();
+
+    gate.note('a', 456, 0);
+    // Yoga reported layout settled — the size is authoritative, no quiet wait.
+    expect(gate.markFinal('a')).toBe(true);
+
+    expect(gate.timeUntilSettled('a', 0, QUIET, MAX)).toBe(0);
+  });
+
+  it('markFinal returns false the second time (already final)', () => {
+    const gate = new RevealGate();
+
+    gate.note('a', 456, 0);
+
+    expect(gate.markFinal('a')).toBe(true);
+    expect(gate.markFinal('a')).toBe(false);
+  });
+
+  it('forget clears the final flag so a recycled slot re-gates', () => {
+    const gate = new RevealGate();
+
+    gate.note('a', 456, 0);
+    gate.markFinal('a');
+    gate.forget('a');
+
+    expect(gate.timeUntilSettled('a', 0, QUIET, MAX)).toBe(Infinity);
+  });
 });

@@ -238,9 +238,11 @@ export class LayoutManager<T> {
    * Records the rendered main-axis size keyed by `userKey`. Returns `true`
    * when the size committed synchronously (caller should bump
    * layoutVersion). Rejects size ≤ 0 / non-finite — use `reportItemEmpty`
-   * for genuinely-empty rows.
+   * for genuinely-empty rows. `final` (Yoga reported layout settled) commits
+   * the size immediately, bypassing the stability window — the size can't
+   * grow further, so there's nothing to dampen.
    */
-  reportItemSize(userKey: string, size: number): boolean {
+  reportItemSize(userKey: string, size: number, final = false): boolean {
     if (!Number.isFinite(size) || size <= 0) {
       return false;
     }
@@ -259,8 +261,9 @@ export class LayoutManager<T> {
       return false;
     }
 
-    // First measurement — apply immediately, nothing to thrash against.
-    if (existing == null) {
+    // First measurement, or a fixpoint-settled size — apply immediately,
+    // nothing to thrash against.
+    if (existing == null || final) {
       this._measuredSizes.set(userKey, size);
 
       if (this._firstMeasuredSize === 0) {

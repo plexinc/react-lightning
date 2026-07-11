@@ -12,6 +12,8 @@ export class RevealGate {
   private readonly _stableSince = new Map<string, number>();
   private readonly _firstSeenAt = new Map<string, number>();
   private readonly _revealed = new Set<string>();
+  /** Keys whose size Yoga has reported settled (authoritative, skip the quiet window). */
+  private readonly _final = new Set<string>();
 
   /** Record a measured size for a key. Restarts the quiet window on any real change. */
   note(key: string, size: number, now: number): void {
@@ -40,6 +42,21 @@ export class RevealGate {
   }
 
   /**
+   * Mark a key's size as authoritative because Yoga reported layout settled
+   * (converged to a fixpoint), so `timeUntilSettled` skips the quiet window.
+   * Returns true only the first time, so the caller can re-render to paint it.
+   */
+  markFinal(key: string): boolean {
+    if (this._final.has(key)) {
+      return false;
+    }
+
+    this._final.add(key);
+
+    return true;
+  }
+
+  /**
    * ms until the key counts as settled: 0 once it has been revealed, otherwise
    * the sooner of the quiet window elapsing since the last change and the max
    * window since first seen (the backstop for content that never stops
@@ -51,7 +68,9 @@ export class RevealGate {
     quietMs: number,
     maxMs: number,
   ): number {
-    if (this._revealed.has(key)) {
+    // A fixpoint-settled size is authoritative: reveal without the quiet
+    // window. `revealed` latches after paint; `final` short-circuits before it.
+    if (this._revealed.has(key) || this._final.has(key)) {
       return 0;
     }
 
@@ -73,6 +92,7 @@ export class RevealGate {
     this._stableSince.delete(key);
     this._firstSeenAt.delete(key);
     this._revealed.delete(key);
+    this._final.delete(key);
   }
 
   clear(): void {
@@ -80,5 +100,6 @@ export class RevealGate {
     this._stableSince.clear();
     this._firstSeenAt.clear();
     this._revealed.clear();
+    this._final.clear();
   }
 }
