@@ -58,7 +58,10 @@ export function resolveCrossSize({
   }
 
   if (maxContentCross > 0) {
-    return { viewportCrossSize: maxContentCross + crossPadding, isDefinite: false };
+    return {
+      viewportCrossSize: maxContentCross + crossPadding,
+      isDefinite: false,
+    };
   }
 
   // Horizontal cross must not come from parent/self measurement: both equal the

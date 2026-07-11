@@ -1,10 +1,11 @@
 import type { ReactElement } from 'react';
 import { memo, useLayoutEffect, useRef } from 'react';
-
-import type { LightningElement, LightningViewElementStyle } from '@plextv/react-lightning';
+import type {
+  LightningElement,
+  LightningViewElementStyle,
+} from '@plextv/react-lightning';
 import { FocusGroup, useFocusManager } from '@plextv/react-lightning';
 import { FlexRoot } from '@plextv/react-lightning-plugin-flexbox';
-
 import { CellBoundsContext, VLCellKeyContext } from './VirtualListContext';
 import type { VirtualListCellProps } from './VirtualListTypes';
 
@@ -25,6 +26,7 @@ const VirtualListCellInner = <T,>({
   isInFlex,
   crossGeneration,
   pinCrossAxis = false,
+  withholdPaint = false,
   onItemSizeChange,
   onItemEmpty,
   onContentCrossLayout,
@@ -37,6 +39,9 @@ const VirtualListCellInner = <T,>({
     y: horizontal ? crossOffset : mainOffset,
     w: horizontal ? size : crossSize,
     h: horizontal ? crossSize : size,
+    // Always explicit: a Lightning style key set to undefined isn't repainted,
+    // so revealing must push alpha 1, not drop the key.
+    alpha: withholdPaint ? 0 : 1,
   };
 
   const cellBounds = {
@@ -48,7 +53,13 @@ const VirtualListCellInner = <T,>({
   const cellElementRef = useRef<LightningElement>(null);
   const prevShouldFocusRef = useRef(shouldFocus);
   const focusManager = useFocusManager();
-  const renderedItem = renderItem?.({ item, index, extraData, target: 'Cell', shouldFocus });
+  const renderedItem = renderItem?.({
+    item,
+    index,
+    extraData,
+    target: 'Cell',
+    shouldFocus,
+  });
   const isEmpty = renderedItem == null;
 
   // Imperative focus claim on shouldFocus false → true. Mount-time claims
@@ -127,7 +138,9 @@ const VirtualListCellInner = <T,>({
     };
   }, [userKey, isInFlex, isEmpty, horizontal, crossGeneration]);
 
-  const separatorPosition: { x: number } | { y: number } = horizontal ? { x: size } : { y: size };
+  const separatorPosition: { x: number } | { y: number } = horizontal
+    ? { x: size }
+    : { y: size };
 
   // Return null AFTER the hooks so we don't paint an empty cell wrapper.
   // The empty-row effect above signals LM via `onItemEmpty` so the row
@@ -138,7 +151,9 @@ const VirtualListCellInner = <T,>({
 
   const innerContent = (
     <VLCellKeyContext.Provider value={userKey}>
-      <CellBoundsContext.Provider value={cellBounds}>{renderedItem}</CellBoundsContext.Provider>
+      <CellBoundsContext.Provider value={cellBounds}>
+        {renderedItem}
+      </CellBoundsContext.Provider>
     </VLCellKeyContext.Provider>
   );
 
@@ -183,12 +198,19 @@ const VirtualListCellInner = <T,>({
     );
 
     separatorEl = (
-      <lng-view style={{ position: 'absolute', ...separatorPosition }}>{separatorContent}</lng-view>
+      <lng-view style={{ position: 'absolute', ...separatorPosition }}>
+        {separatorContent}
+      </lng-view>
     );
   }
 
   return (
-    <FocusGroup ref={cellElementRef} style={cellStyle} autoFocus={shouldFocus} disable={pooled}>
+    <FocusGroup
+      ref={cellElementRef}
+      autoFocus={shouldFocus}
+      disable={pooled}
+      style={cellStyle}
+    >
       {measuredContent}
       {separatorEl}
     </FocusGroup>
@@ -220,12 +242,16 @@ function areCellPropsEqual(
     prev.ItemSeparatorComponent === next.ItemSeparatorComponent &&
     prev.isInFlex === next.isInFlex &&
     prev.pinCrossAxis === next.pinCrossAxis &&
+    prev.withholdPaint === next.withholdPaint &&
     prev.pooled === next.pooled
   );
 }
 
-export const VirtualListCell = memo(VirtualListCellInner, areCellPropsEqual) as (<T>(
-  props: VirtualListCellProps<T>,
-) => ReactElement | null) & { displayName?: string };
+export const VirtualListCell = memo(
+  VirtualListCellInner,
+  areCellPropsEqual,
+) as (<T>(props: VirtualListCellProps<T>) => ReactElement | null) & {
+  displayName?: string;
+};
 
 VirtualListCell.displayName = 'VirtualListCell';

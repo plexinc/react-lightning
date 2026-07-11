@@ -18,7 +18,7 @@ export interface ComputedLayout {
 export const DEFAULT_ITEM_SIZE = 200;
 
 export interface LayoutManagerConfig<T> {
-  data: ReadonlyArray<T>;
+  data: readonly T[];
   numColumns: number;
   overrideItemLayout?: OverrideItemLayoutFn<T>;
   extraData?: unknown;
@@ -37,31 +37,37 @@ export interface LayoutManagerConfig<T> {
  * that's the rule that keeps the layout loop-free.
  */
 export class LayoutManager<T> {
-  private static _overrideScratch: { size?: number; span?: number } = {};
+  private static _overrideScratch: {
+    size?: number;
+    span?: number;
+  } = {};
   private _layouts: ComputedLayout[] = [];
   private _layoutCount = 0;
   private _totalSize = 0;
   private _dirty = true;
-  private _data: ReadonlyArray<T>;
+  private _data: readonly T[];
   private _numColumns: number;
   private _overrideItemLayout?: OverrideItemLayoutFn<T>;
   private _extraData?: unknown;
   private _separatorSize: number;
   private _cellCrossSize: number;
   private _keyExtractor?: (item: T, index: number) => string;
-  private _measuredSizes: Map<string, number> = new Map();
+  private _measuredSizes = new Map<string, number>();
   /** While true, reports accumulate per-userKey and skip dampening. Drained on `setBatching(false)`. */
   private _batching = false;
-  private _batchedSizes: Map<string, number> = new Map();
+  private _batchedSizes = new Map<string, number>();
   /**
    * Per-userKey stability window. A different incoming value sits pending
    * until either matched after `_STABILITY_MS` or the backstop timer
    * fires. Filters multi-frame measurement cascades during scroll/focus
    * animations and async content settling.
    */
-  private _pendingSizes: Map<string, { size: number; firstSeenAt: number }> = new Map();
+  private _pendingSizes = new Map<
+    string,
+    { size: number; firstSeenAt: number }
+  >();
   /** Backstop timers — required because a cell can push once and go quiet (props stable). */
-  private _pendingTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+  private _pendingTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private _onChange?: () => void;
   private static readonly _STABILITY_MS = 120;
   /**
@@ -189,22 +195,34 @@ export class LayoutManager<T> {
       changed = true;
     }
 
-    if (config.extraData !== undefined && config.extraData !== this._extraData) {
+    if (
+      config.extraData !== undefined &&
+      config.extraData !== this._extraData
+    ) {
       this._extraData = config.extraData;
       changed = true;
     }
 
-    if (config.separatorSize !== undefined && config.separatorSize !== this._separatorSize) {
+    if (
+      config.separatorSize !== undefined &&
+      config.separatorSize !== this._separatorSize
+    ) {
       this._separatorSize = config.separatorSize;
       changed = true;
     }
 
-    if (config.cellCrossSize !== undefined && config.cellCrossSize !== this._cellCrossSize) {
+    if (
+      config.cellCrossSize !== undefined &&
+      config.cellCrossSize !== this._cellCrossSize
+    ) {
       this._cellCrossSize = config.cellCrossSize;
       changed = true;
     }
 
-    if (config.keyExtractor !== undefined && config.keyExtractor !== this._keyExtractor) {
+    if (
+      config.keyExtractor !== undefined &&
+      config.keyExtractor !== this._keyExtractor
+    ) {
       this._keyExtractor = config.keyExtractor;
       changed = true;
     }
@@ -368,6 +386,28 @@ export class LayoutManager<T> {
     return this._layouts[index];
   }
 
+  private _userKeyFor(index: number): string | undefined {
+    const item = this._data[index];
+
+    if (item == null) {
+      return undefined;
+    }
+
+    return this._keyExtractor ? this._keyExtractor(item, index) : String(index);
+  }
+
+  /** True once the cell has reported a real (committed) main-axis size. */
+  isMeasured(index: number): boolean {
+    const userKey = this._userKeyFor(index);
+
+    return userKey != null && this._measuredSizes.has(userKey);
+  }
+
+  /** True when the caller pins the main-axis size via `overrideItemLayout` (no measurement needed). */
+  hasOverrideSize(index: number): boolean {
+    return this._getOverride(index).size != null;
+  }
+
   /**
    * Returns the layout index whose [offset, offset+size) range contains the
    * given offset (in item-space). Used to map a focused descendant's
@@ -478,7 +518,11 @@ export class LayoutManager<T> {
     }
   }
 
-  private _resolveSize(index: number, isEmpty: boolean, override: { size?: number }): number {
+  private _resolveSize(
+    index: number,
+    isEmpty: boolean,
+    override: { size?: number },
+  ): number {
     if (isEmpty) {
       return 0;
     }
@@ -489,7 +533,9 @@ export class LayoutManager<T> {
       // Match VirtualListCell: it reports with String(index) when no
       // keyExtractor is configured, so per-item lookup must use the same
       // key. Without this, measurements would be stored but never found.
-      const userKey = this._keyExtractor ? this._keyExtractor(item, index) : String(index);
+      const userKey = this._keyExtractor
+        ? this._keyExtractor(item, index)
+        : String(index);
       const measured = this._measuredSizes.get(userKey);
 
       if (measured != null) {
@@ -504,7 +550,9 @@ export class LayoutManager<T> {
     // Prefer the first-measured size once any cell has reported. Per-key
     // measurements above still win for cells that have actually been seen —
     // this is the fallback for unmeasured ones only.
-    return this._firstMeasuredSize > 0 ? this._firstMeasuredSize : DEFAULT_ITEM_SIZE;
+    return this._firstMeasuredSize > 0
+      ? this._firstMeasuredSize
+      : DEFAULT_ITEM_SIZE;
   }
 
   private _recomputeSingleColumn(count: number): void {
@@ -560,7 +608,10 @@ export class LayoutManager<T> {
         const item = this._data[i];
         const isEmpty = item === undefined || item === null;
         const override = this._getOverride(i);
-        const span = Math.min(override.span ?? 1, this._numColumns - columnsUsed);
+        const span = Math.min(
+          override.span ?? 1,
+          this._numColumns - columnsUsed,
+        );
         const size = this._resolveSize(i, isEmpty, override);
 
         layout.offset = offset;
@@ -582,7 +633,10 @@ export class LayoutManager<T> {
     this._totalSize = offset;
   }
 
-  private _getOverride(index: number): { size?: number; span?: number } {
+  private _getOverride(index: number): {
+    size?: number;
+    span?: number;
+  } {
     LayoutManager._overrideScratch.size = undefined;
     LayoutManager._overrideScratch.span = undefined;
 
