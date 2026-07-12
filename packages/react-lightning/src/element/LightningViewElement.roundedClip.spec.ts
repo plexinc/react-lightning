@@ -13,6 +13,7 @@ function createMockNode(props: Record<string, unknown> = {}) {
     h: 0,
     alpha: 1,
     color: 0,
+    clipRadius: 0,
     shader: { props: {} },
     parent: null,
     on() {},
@@ -25,21 +26,12 @@ function createMockNode(props: Record<string, unknown> = {}) {
   };
 }
 
-const createdNodes: Record<string, unknown>[] = [];
-const destroyedNodes: unknown[] = [];
-
 const renderer = {
-  createNode: (props: Record<string, unknown>) => {
-    createdNodes.push(props);
-
-    return createMockNode(props);
-  },
+  createNode: (props: Record<string, unknown>) => createMockNode(props),
   createTextNode: (props: Record<string, unknown>) => createMockNode(props),
   createShader: () => ({ props: {} }),
   createTexture: () => ({}),
-  destroyNode(node: unknown) {
-    destroyedNodes.push(node);
-  },
+  destroyNode() {},
 } as unknown as RendererMain;
 
 function createElement(style: Partial<LightningViewElementStyle>) {
@@ -53,10 +45,7 @@ function createElement(style: Partial<LightningViewElementStyle>) {
 // setProps stages the update and flushes on a microtask.
 const flush = () => Promise.resolve();
 
-const lastBackgroundNode = () =>
-  createdNodes.filter((n) => n.zIndex === -1).pop();
-
-describe('rounded clipping (borderRadius + clipping -> rtt)', () => {
+describe('rounded clipping (borderRadius + clipping -> clipRadius)', () => {
   beforeEach(() => {
     LightningViewElement.roundedClippingEnabled = true;
   });
@@ -70,46 +59,46 @@ describe('rounded clipping (borderRadius + clipping -> rtt)', () => {
 
     const el = createElement({ w: 100, h: 50, clipping: true, borderRadius: 16 });
 
-    expect(el.node.rtt).not.toBe(true);
+    expect(el.node.clipRadius || 0).toBe(0);
   });
 
-  it('enables rtt when clipping and borderRadius are both set at mount', () => {
+  it('sets clipRadius when clipping and borderRadius are both set at mount', () => {
     const el = createElement({ w: 100, h: 50, clipping: true, borderRadius: 16 });
 
-    expect(el.node.rtt).toBe(true);
+    expect(el.node.clipRadius).toBe(16);
   });
 
-  it('does not enable rtt for borderRadius alone', () => {
+  it('does not clip for borderRadius alone', () => {
     const el = createElement({ w: 100, h: 50, borderRadius: 16 });
 
-    expect(el.node.rtt).not.toBe(true);
+    expect(el.node.clipRadius || 0).toBe(0);
   });
 
-  it('does not enable rtt for clipping alone', () => {
+  it('does not clip for clipping alone', () => {
     const el = createElement({ w: 100, h: 50, clipping: true });
 
-    expect(el.node.rtt).not.toBe(true);
+    expect(el.node.clipRadius || 0).toBe(0);
   });
 
-  it('enables rtt when clipping arrives after mount (fast path)', async () => {
+  it('sets clipRadius when clipping arrives after mount (fast path)', async () => {
     const el = createElement({ w: 100, h: 50, borderRadius: 16 });
 
     el.setProps({ style: { clipping: true } });
     await flush();
 
-    expect(el.node.rtt).toBe(true);
+    expect(el.node.clipRadius).toBe(16);
   });
 
-  it('disables rtt when the borderRadius is removed', async () => {
+  it('clears clipRadius when the borderRadius is removed', async () => {
     const el = createElement({ w: 100, h: 50, clipping: true, borderRadius: 16 });
 
     el.setProps({ style: { borderRadius: 0 } });
     await flush();
 
-    expect(el.node.rtt).toBe(false);
+    expect(el.node.clipRadius).toBe(0);
   });
 
-  it('keeps rtt with a rounded border (RoundedWithBorder shader)', () => {
+  it('keeps clipping with a rounded border (RoundedWithBorder shader)', () => {
     const el = createElement({
       w: 100,
       h: 50,
@@ -118,10 +107,21 @@ describe('rounded clipping (borderRadius + clipping -> rtt)', () => {
       border: { w: 2, color: 0xffffffff },
     });
 
-    expect(el.node.rtt).toBe(true);
+    expect(el.node.clipRadius).toBe(16);
   });
 
-  it('composites untinted: forces the node color white while rtt is on', () => {
+  it('clips a per-corner radius array to the largest corner', () => {
+    const el = createElement({
+      w: 100,
+      h: 50,
+      clipping: true,
+      borderRadius: [4, 8, 24, 12] as unknown as number,
+    });
+
+    expect(el.node.clipRadius).toBe(24);
+  });
+
+  it('leaves the node color alone (stencil clip, no tint games)', () => {
     const el = createElement({
       w: 100,
       h: 50,
@@ -130,63 +130,6 @@ describe('rounded clipping (borderRadius + clipping -> rtt)', () => {
       color: 0x1c1f26ff,
     });
 
-    expect(el.node.color).toBe(0xffffffff);
-  });
-
-  it('paints the background inside the texture via a managed first child', () => {
-    createdNodes.length = 0;
-
-    const el = createElement({
-      w: 100,
-      h: 50,
-      clipping: true,
-      borderRadius: 16,
-      color: 0x1c1f26ff,
-    });
-
-    const bg = lastBackgroundNode();
-
-    expect(bg).toBeDefined();
-    expect(bg?.color).toBe(0x1c1f26ff);
-    expect(bg?.parent).toBe(el.node);
-  });
-
-  it('creates no background child for a transparent container', () => {
-    createdNodes.length = 0;
-    createElement({ w: 100, h: 50, clipping: true, borderRadius: 16 });
-
-    expect(lastBackgroundNode()).toBeUndefined();
-  });
-
-  it('restores the styled color and drops the background when rtt turns off', async () => {
-    createdNodes.length = 0;
-    destroyedNodes.length = 0;
-
-    const el = createElement({
-      w: 100,
-      h: 50,
-      clipping: true,
-      borderRadius: 16,
-      color: 0x1c1f26ff,
-    });
-    const bg = lastBackgroundNode();
-
-    el.setProps({ style: { borderRadius: 0 } });
-    await flush();
-
-    expect(el.node.rtt).toBe(false);
     expect(el.node.color).toBe(0x1c1f26ff);
-    expect(destroyedNodes).toContain(bg === undefined ? Symbol('none') : destroyedNodes[0]);
-    expect(destroyedNodes.length).toBe(1);
-  });
-
-  it('respects an explicit rtt prop over the derived value', () => {
-    const props = {
-      rtt: false,
-      style: { w: 100, h: 50, clipping: true, borderRadius: 16 },
-    } as unknown as LightningViewElementProps<LightningViewElementStyle>;
-    const el = new LightningViewElement(props, renderer, [], {} as Fiber);
-
-    expect(el.node.rtt).toBe(false);
   });
 });
