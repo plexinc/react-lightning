@@ -535,6 +535,12 @@ export class LightningViewElement<
    * before the node is removed.
    */
   public set deferNodeRemoval(handler: ((destroy: () => void) => void) | null) {
+    // A deferred handler animates the node out then destroys it; a placeholder
+    // can't animate or signal done, so materialize or the subtree leaks.
+    if (handler && this._flattened) {
+      this._materialize();
+    }
+
     this._deferNodeRemovalHandler = handler;
 
     this.deferTarget = handler ? this : null;
