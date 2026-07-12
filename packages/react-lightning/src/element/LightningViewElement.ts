@@ -34,6 +34,7 @@ import {
   type TextureDef,
 } from '../types';
 import { AllStyleProps } from './AllStyleProps';
+import { createFlattenedNode } from './FlattenedRendererNode';
 
 const __bannedProps: Record<string, boolean> = {};
 let __bannedPropsInitialized = false;
@@ -150,6 +151,102 @@ export class LightningViewElement<
   private _resizeObserver: NodeResizeObserver | null = null;
   /** Rounded clipping (borderRadius + clipping -> clipRadius) opt-in; set by createRoot. */
   public static roundedClippingEnabled = false;
+
+  /**
+   * When true (set from RenderOptions.flattenLayoutViews), layout-only Views
+   * skip renderer node creation entirely: the element keeps a placeholder
+   * node, descendants attach to the nearest materialized ancestor, and layout
+   * positions accumulate across the flattened chain.
+   */
+  public static flattenLayoutViewsEnabled = false;
+
+  // Node props with render semantics. Anything else that lands on the node
+  // (RN-layer junk like handlers, testID, fsTagName) is inert and a flattened
+  // placeholder can carry it just as well.
+  private static readonly _visualNodeProps = new Set([
+    'color',
+    'colorTop',
+    'colorBottom',
+    'colorLeft',
+    'colorRight',
+    'colorTl',
+    'colorTr',
+    'colorBl',
+    'colorBr',
+    'alpha',
+    'shader',
+    'texture',
+    'src',
+    'text',
+    'clipping',
+    'clipRadius',
+    'rtt',
+    'zIndex',
+    'zIndexLocked',
+    'scale',
+    'scaleX',
+    'scaleY',
+    'rotation',
+    'pivot',
+    'pivotX',
+    'pivotY',
+    'mount',
+    'mountX',
+    'mountY',
+    'autosize',
+    'imageType',
+    'srcX',
+    'srcY',
+    'srcWidth',
+    'srcHeight',
+    'strictBounds',
+    'boundsMargin',
+  ]);
+
+  // A visual prop at its neutral value still needs no node (color 0 is
+  // stamped on every mount, reanimated pushes alpha 1 constantly).
+  private static _needsRealNode(key: string, value: unknown): boolean {
+    if (!LightningViewElement._visualNodeProps.has(key) || value == null) {
+      return false;
+    }
+
+    switch (key) {
+      case 'color':
+      case 'rotation':
+      case 'clipRadius':
+      case 'zIndex':
+        return value !== 0;
+      case 'alpha':
+      case 'scale':
+      case 'scaleX':
+      case 'scaleY':
+        return value !== 1;
+      case 'clipping':
+      case 'rtt':
+      case 'zIndexLocked':
+        return value !== false;
+      default:
+        return true;
+    }
+  }
+
+  private static _isLayoutOnlyNodeProps(props: Record<string, unknown>): boolean {
+    for (const key in props) {
+      if (LightningViewElement._needsRealNode(key, props[key])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private _flattened = false;
+  // Parent-relative layout position (what layout/styles asked for); node.x/y
+  // may differ by the accumulated offsets of flattened ancestors.
+  public _layoutX = 0;
+  public _layoutY = 0;
+  public _flatOffsetX = 0;
+  public _flatOffsetY = 0;
   private _isObservingResize = false;
 
   public get visible(): boolean {
@@ -179,6 +276,148 @@ export class LightningViewElement<
 
   public set recycled(value: boolean) {
     this._recycled = value;
+  }
+
+  public get isFlattened(): boolean {
+    return this._flattened;
+  }
+
+  /** The renderer node this element's real descendants attach to. */
+  public _hostNode(): RendererNode<LightningElement> | null {
+    if (!this._flattened) {
+      return this.node as RendererNode<LightningElement>;
+    }
+
+    return this._parent ? this._parent._hostNode() : null;
+  }
+
+  /**
+   * (Re)link this element below a (possibly flattened) parent: absorb the
+   * accumulated offsets of the flattened chain above and attach the real node
+   * to `host`. Recurses through flattened elements to the real-node frontier.
+   * `force` relinks the host even when offsets are unchanged (reparent,
+   * materialize); positions are only rewritten when offsets changed, so
+   * direct node.x writers (scroll) are left alone.
+   */
+  public _applyFlattenedLink(
+    offsetX: number,
+    offsetY: number,
+    host: RendererNode<LightningElement> | null,
+    force: boolean,
+  ): void {
+    const offsetsChanged =
+      this._flatOffsetX !== offsetX || this._flatOffsetY !== offsetY;
+
+    if (!force && !offsetsChanged) {
+      return;
+    }
+
+    this._flatOffsetX = offsetX;
+    this._flatOffsetY = offsetY;
+
+    if (this._flattened) {
+      this._refreshFlattenedChildren(force);
+
+      return;
+    }
+
+    if (this.node.parent !== host) {
+      this.node.parent = host;
+    }
+
+    if (offsetsChanged) {
+      this.node.x = this._layoutX + offsetX;
+      this.node.y = this._layoutY + offsetY;
+    }
+  }
+
+  // Push this flattened element's fold (own offsets + own layout position)
+  // down to its children.
+  private _refreshFlattenedChildren(force: boolean): void {
+    const offsetX = this._flatOffsetX + this._layoutX;
+    const offsetY = this._flatOffsetY + this._layoutY;
+    const host = this._hostNode();
+
+    for (let i = 0; i < this.children.length; i++) {
+      this.children[i]?._applyFlattenedLink(offsetX, offsetY, host, force);
+    }
+  }
+
+  /** Write a layout axis, folding flattened-ancestor offsets into the node. */
+  private _writeAxis(key: 'x' | 'y', value: number): boolean {
+    const previous = key === 'x' ? this._layoutX : this._layoutY;
+
+    if (key === 'x') {
+      this._layoutX = value;
+    } else {
+      this._layoutY = value;
+    }
+
+    if (this._flattened) {
+      if (previous === value) {
+        return false;
+      }
+
+      this.node[key] = value;
+      this._refreshFlattenedChildren(false);
+
+      return true;
+    }
+
+    const applied =
+      value + (key === 'x' ? this._flatOffsetX : this._flatOffsetY);
+
+    if (this.node[key] === applied) {
+      return false;
+    }
+
+    this.node[key] = applied;
+
+    return true;
+  }
+
+  /**
+   * Swap the flattened placeholder for a real renderer node. Triggered by the
+   * first prop that needs one (a background, border, alpha, interaction
+   * visual). Sticky: once materialized an element never re-flattens, so a
+   * style that toggles per focus doesn't churn nodes.
+   */
+  public _materialize(): void {
+    if (!this._flattened) {
+      return;
+    }
+
+    this._flattened = false;
+
+    const placeholder = this.node;
+    const node = this._createNode({
+      x: this._layoutX + this._flatOffsetX,
+      y: this._layoutY + this._flatOffsetY,
+      w: placeholder.w,
+      h: placeholder.h,
+      alpha: placeholder.alpha,
+      // The renderer's default node color is white; mount stamps 0 on every
+      // element and so must we.
+      color: 0,
+    });
+
+    if (import.meta.env.DEV) {
+      node.__reactNode = this;
+    }
+
+    node.__reactFiber = placeholder.__reactFiber;
+    node.parent = this._parent ? this._parent._hostNode() : null;
+    node.on('inViewport', this._onInViewport);
+    node.on('loaded', this._onTextureLoaded);
+    node.on('failed', this._onTextureFailed);
+
+    this.node = node;
+
+    for (let i = 0; i < this.children.length; i++) {
+      this.children[i]?._applyFlattenedLink(0, 0, node, true);
+    }
+
+    this.recalculateVisibility();
   }
 
   public set focusable(value: boolean) {
@@ -228,7 +467,20 @@ export class LightningViewElement<
     }
 
     this._parent = parent;
-    this.node.parent = parent?.node ?? null;
+
+    if (LightningViewElement.flattenLayoutViewsEnabled) {
+      const host = parent ? parent._hostNode() : null;
+      const offsetX = parent?.isFlattened
+        ? parent._flatOffsetX + parent._layoutX
+        : 0;
+      const offsetY = parent?.isFlattened
+        ? parent._flatOffsetY + parent._layoutY
+        : 0;
+
+      this._applyFlattenedLink(offsetX, offsetY, host, true);
+    } else {
+      this.node.parent = parent?.node ?? null;
+    }
 
     this.recalculateVisibility();
   }
@@ -407,7 +659,27 @@ export class LightningViewElement<
       __checkProps(Object.keys(lngProps));
     }
 
-    this.node = this._createNode(lngProps);
+    if (
+      LightningViewElement.flattenLayoutViewsEnabled &&
+      !this.isTextElement &&
+      !this.isImageElement &&
+      this.props.transition === undefined &&
+      LightningViewElement._isLayoutOnlyNodeProps(
+        lngProps as Record<string, unknown>,
+      )
+    ) {
+      this._flattened = true;
+      this.node = createFlattenedNode<this>(
+        lngProps as Record<string, unknown>,
+      );
+    } else {
+      this.node = this._createNode(lngProps);
+    }
+
+    if (LightningViewElement.flattenLayoutViewsEnabled) {
+      this._layoutX = typeof lngProps.x === 'number' ? lngProps.x : 0;
+      this._layoutY = typeof lngProps.y === 'number' ? lngProps.y : 0;
+    }
 
     if (import.meta.env.DEV) {
       this.node.__reactNode = this;
@@ -448,7 +720,7 @@ export class LightningViewElement<
       this._deferNodeRemovalHandler(() => {
         this.emit('deferredDestroyComplete');
       });
-    } else if (!this._deferTarget) {
+    } else if (!this._deferTarget && !this._flattened) {
       this._renderer.destroyNode(this.node);
     }
 
@@ -508,7 +780,13 @@ export class LightningViewElement<
     for (let i = 0; i < this.children.length; i++) {
       const child = this.children[i];
 
-      if (child) {
+      if (!child) {
+        continue;
+      }
+
+      if (LightningViewElement.flattenLayoutViewsEnabled) {
+        child._applyFlattenedLink(0, 0, node, true);
+      } else {
         child.node.parent = node;
       }
     }
@@ -635,7 +913,25 @@ export class LightningViewElement<
       totalX += curr.node.x;
       totalY += curr.node.y;
 
-      curr = curr.parent;
+      let next: LightningElement | null = curr.parent;
+
+      // A real node's x already folds in its flattened ancestors' offsets;
+      // skip those so they don't double-count. If the requested ancestor IS
+      // one of them, back its own fold out of the running total.
+      if (LightningViewElement.flattenLayoutViewsEnabled && !curr.isFlattened) {
+        while (next && next.isFlattened) {
+          if (next === ancestor) {
+            totalX -= next._flatOffsetX + next._layoutX;
+            totalY -= next._flatOffsetY + next._layoutY;
+            next = null;
+            break;
+          }
+
+          next = next.parent;
+        }
+      }
+
+      curr = next;
     }
 
     return {
@@ -720,6 +1016,23 @@ export class LightningViewElement<
       __checkProps([key]);
     }
 
+    if (LightningViewElement.flattenLayoutViewsEnabled) {
+      if (
+        this._flattened &&
+        LightningViewElement._needsRealNode(key as string, value)
+      ) {
+        this._materialize();
+      }
+
+      if (
+        (key === 'x' || key === 'y') &&
+        typeof value === 'number' &&
+        !(animate && this.props.transition?.[key as keyof TStyleProps])
+      ) {
+        return this._writeAxis(key as 'x' | 'y', value);
+      }
+    }
+
     if (this.node[key] === value) {
       return false;
     }
@@ -744,9 +1057,12 @@ export class LightningViewElement<
   }
 
   public emitLayoutEvent(): void {
+    // onLayout stays parent-relative; node.x may fold in flattened-ancestor
+    // offsets.
+    const flag = LightningViewElement.flattenLayoutViewsEnabled;
     const dimensions = {
-      x: this.node.x,
-      y: this.node.y,
+      x: flag ? this._layoutX : this.node.x,
+      y: flag ? this._layoutY : this.node.y,
       h: this.node.h,
       w: this.node.w,
     };
@@ -809,9 +1125,25 @@ export class LightningViewElement<
 
     this._animTargets.set(key, value);
 
+    let target = value;
+
+    if (
+      LightningViewElement.flattenLayoutViewsEnabled &&
+      (key === 'x' || key === 'y') &&
+      typeof value === 'number'
+    ) {
+      if (key === 'x') {
+        this._layoutX = value;
+        target = (value + this._flatOffsetX) as TStyleProps[K];
+      } else {
+        this._layoutY = value;
+        target = (value + this._flatOffsetY) as TStyleProps[K];
+      }
+    }
+
     return this._createAnimation(
       {
-        [key]: value,
+        [key]: target,
       },
       this.props.transition?.[key],
     ).start();
@@ -835,7 +1167,10 @@ export class LightningViewElement<
   private _destroyFinalize = () => {
     this._deferTarget?.off('deferredDestroyComplete', this._destroyFinalize);
     this.node.parent = null;
-    this._renderer.destroyNode(this.node);
+
+    if (!this._flattened) {
+      this._renderer.destroyNode(this.node);
+    }
   };
 
   private _reconcileResizeObserving(): void {
@@ -949,7 +1284,44 @@ export class LightningViewElement<
       delete lngProps.alpha;
     }
 
+    let flattenedMoved = false;
+
+    if (LightningViewElement.flattenLayoutViewsEnabled) {
+      if (
+        this._flattened &&
+        (this.props.transition !== undefined ||
+          !LightningViewElement._isLayoutOnlyNodeProps(
+            lngProps as Record<string, unknown>,
+          ))
+      ) {
+        this._materialize();
+      }
+
+      if (typeof lngProps.x === 'number') {
+        flattenedMoved = this._flattened && this._layoutX !== lngProps.x;
+        this._layoutX = lngProps.x;
+
+        if (!this._flattened) {
+          lngProps.x += this._flatOffsetX;
+        }
+      }
+
+      if (typeof lngProps.y === 'number') {
+        flattenedMoved =
+          flattenedMoved || (this._flattened && this._layoutY !== lngProps.y);
+        this._layoutY = lngProps.y;
+
+        if (!this._flattened) {
+          lngProps.y += this._flatOffsetY;
+        }
+      }
+    }
+
     Object.assign(this.node, lngProps);
+
+    if (flattenedMoved) {
+      this._refreshFlattenedChildren(false);
+    }
 
     // oxlint-disable-next-line typescript/no-explicit-any -- Required for accessing AllStyleProps symbol
     Object.assign((this.style as any)[AllStyleProps], this.props.style);
@@ -1045,6 +1417,21 @@ export class LightningViewElement<
    */
   private _applyStyleFastPath(payload: Partial<TProps>): boolean {
     const style = payload.style as Partial<TStyleProps>;
+
+    if (LightningViewElement.flattenLayoutViewsEnabled && this._flattened) {
+      for (const key in style) {
+        if (
+          LightningViewElement._needsRealNode(
+            key,
+            style[key as keyof TStyleProps],
+          )
+        ) {
+          this._materialize();
+          break;
+        }
+      }
+    }
+
     const previousOpacity = this.node.alpha;
     let changed = false;
 
@@ -1082,6 +1469,12 @@ export class LightningViewElement<
 
       if (transition?.[typedKey]) {
         this.animateStyle(typedKey, value as TStyleProps[typeof typedKey]);
+      } else if (
+        LightningViewElement.flattenLayoutViewsEnabled &&
+        (key === 'x' || key === 'y') &&
+        typeof value === 'number'
+      ) {
+        this._writeAxis(key as 'x' | 'y', value);
       } else {
         // oxlint-disable-next-line typescript/no-explicit-any -- direct node property assignment
         (this.node as any)[key] = value;

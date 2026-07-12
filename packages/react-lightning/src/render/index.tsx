@@ -65,6 +65,13 @@ export type RenderOptions = Omit<
    * still has rough edges with late-mounting content.
    */
   roundedClipping?: boolean;
+  /**
+   * Layout-only Views (no background, border, clip, alpha, transform or
+   * transition) skip renderer node creation; their children attach to the
+   * nearest materialized ancestor with positions folded in. Off by default
+   * while the optimization is validated per app.
+   */
+  flattenLayoutViews?: boolean;
   shaders?: ShaderMap[];
   textures?: Partial<TextureMap>;
 };
@@ -102,6 +109,7 @@ const defaultOptions: Partial<RenderOptions> = {
   isPrimaryRenderer: true,
   debug: false,
   roundedClipping: false,
+  flattenLayoutViews: false,
 };
 
 export async function createRoot(
@@ -114,6 +122,8 @@ export async function createRoot(
   };
 
   LightningViewElement.roundedClippingEnabled = allOptions.roundedClipping === true;
+  LightningViewElement.flattenLayoutViewsEnabled =
+    allOptions.flattenLayoutViews === true;
 
   // Don't use the lightning inspector, we have our own.
   const { fonts, useCanvas, includeCanvasFontRenderer, ...finalOptions } = allOptions;
