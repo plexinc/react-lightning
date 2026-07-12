@@ -1,3 +1,4 @@
+import { LightningViewElement } from '../element/LightningViewElement';
 import {
   type CoreShaderType,
   RendererMain,
@@ -57,6 +58,13 @@ export type RenderOptions = Omit<
   isPrimaryRenderer?: boolean;
   plugins?: Plugin<LightningElement>[];
   debug?: boolean;
+  /**
+   * borderRadius + overflow hidden clips children to the rounded rect (RN
+   * semantics) by rendering the subtree to a texture. Off by default: every
+   * such container costs a GPU framebuffer, and renderer RTT invalidation
+   * still has rough edges with late-mounting content.
+   */
+  roundedClipping?: boolean;
   shaders?: ShaderMap[];
   textures?: Partial<TextureMap>;
 };
@@ -93,6 +101,7 @@ const defaultOptions: Partial<RenderOptions> = {
   plugins: [],
   isPrimaryRenderer: true,
   debug: false,
+  roundedClipping: false,
 };
 
 export async function createRoot(
@@ -103,6 +112,8 @@ export async function createRoot(
     ...defaultOptions,
     ...(typeof options === 'function' ? options() : options),
   };
+
+  LightningViewElement.roundedClippingEnabled = allOptions.roundedClipping === true;
 
   // Don't use the lightning inspector, we have our own.
   const { fonts, useCanvas, includeCanvasFontRenderer, ...finalOptions } = allOptions;

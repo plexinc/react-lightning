@@ -148,6 +148,11 @@ export class LightningViewElement<
   private _deferNodeRemovalHandler: ((destroy: () => void) => void) | null =
     null;
   private _resizeObserver: NodeResizeObserver | null = null;
+  /** Rounded clipping (borderRadius + clipping -> rtt) opt-in; set by createRoot. */
+  public static roundedClippingEnabled = false;
+
+  /** Background quad rendered INSIDE the rtt texture (see rounded clipping below). */
+  private _rttBackground: INode | null = null;
   private _isObservingResize = false;
 
   public get visible(): boolean {
@@ -417,6 +422,8 @@ export class LightningViewElement<
     this.node.on('failed', this._onTextureFailed);
 
     LightningViewElement.allElements[this.id] = this;
+
+    this._syncRttBackground();
 
     if (this.props.onResize) {
       this._reconcileResizeObserving();
@@ -832,9 +839,45 @@ export class LightningViewElement<
 
   private _destroyFinalize = () => {
     this._deferTarget?.off('deferredDestroyComplete', this._destroyFinalize);
+
+    if (this._rttBackground) {
+      this._renderer.destroyNode(this._rttBackground);
+      this._rttBackground = null;
+    }
+
     this.node.parent = null;
     this._renderer.destroyNode(this.node);
   };
+
+  /**
+   * The rtt framebuffer clears to transparent and renders children only, so a
+   * clipped container's own background must be painted INSIDE the texture.
+   * The quad is oversized instead of size-mirrored — the framebuffer is
+   * exactly node-sized and clips it for free.
+   */
+  private _syncRttBackground(): void {
+    const rttOn = this.node.rtt === true && this.props.rtt === undefined;
+    const bgColor = rttOn ? this.style.color : undefined;
+
+    if (rttOn && bgColor != null && bgColor !== 0) {
+      if (this._rttBackground) {
+        this._rttBackground.color = bgColor;
+      } else {
+        this._rttBackground = this._renderer.createNode({
+          parent: this.node as unknown as INode,
+          x: 0,
+          y: 0,
+          w: 8192,
+          h: 8192,
+          zIndex: -1,
+          color: bgColor,
+        });
+      }
+    } else if (this._rttBackground) {
+      this._renderer.destroyNode(this._rttBackground);
+      this._rttBackground = null;
+    }
+  }
 
   private _reconcileResizeObserving(): void {
     const shouldObserve =
@@ -951,6 +994,8 @@ export class LightningViewElement<
 
     // oxlint-disable-next-line typescript/no-explicit-any -- Required for accessing AllStyleProps symbol
     Object.assign((this.style as any)[AllStyleProps], this.props.style);
+
+    this._syncRttBackground();
 
     if (previousOpacity !== this.node.alpha) {
       this.recalculateVisibility();
@@ -1088,6 +1133,26 @@ export class LightningViewElement<
 
     // oxlint-disable-next-line typescript/no-explicit-any -- Required for accessing AllStyleProps symbol
     Object.assign((this.style as any)[AllStyleProps], style);
+
+    // A direct `clipping` change must keep rounded clipping in sync. Shader
+    // props force the slow path, so the shader is stable here; `color` is
+    // css-handled, so it can't arrive on this path either.
+    if (
+      LightningViewElement.roundedClippingEnabled &&
+      'clipping' in style &&
+      this.props.rtt === undefined
+    ) {
+      const shaderType = this._shaderDef?.type;
+      const wantsRtt =
+        style.clipping === true &&
+        (shaderType === 'Rounded' || shaderType === 'RoundedWithBorder');
+
+      if ((this.node.rtt ?? false) !== wantsRtt) {
+        this.node.rtt = wantsRtt;
+        this.node.color = wantsRtt ? 0xffffffff : (this.style.color ?? 0);
+        this._syncRttBackground();
+      }
+    }
 
     if (previousOpacity !== this.node.alpha) {
       this.recalculateVisibility();
@@ -1385,6 +1450,44 @@ export class LightningViewElement<
     if (texture && texture !== this._textureDef) {
       this._textureDef = texture;
       finalStyle.texture = createTexture(this._renderer, texture);
+    }
+
+    // borderRadius + clipping (overflow: hidden) = rounded clipping, like the
+    // other RN platforms. The scissor clip is rectangular, so render the
+    // subtree to a texture and let the Rounded shader clip the composite.
+    // Skipped when the caller manages rtt explicitly, and for texture-bearing
+    // elements (image/text) whose texture rtt would replace.
+    if (
+      LightningViewElement.roundedClippingEnabled &&
+      otherProps.rtt === undefined &&
+      !this.isTextElement &&
+      !this.isImageElement &&
+      !texture &&
+      !this._textureDef
+    ) {
+      const shaderType = this._shaderDef?.type;
+      // At mount the style proxy doesn't exist yet; the passed style is full.
+      const effectiveClipping = initial
+        ? style?.clipping
+        : (style?.clipping ?? this.style.clipping);
+      const wantsRtt =
+        effectiveClipping === true &&
+        (shaderType === 'Rounded' || shaderType === 'RoundedWithBorder');
+
+      if (wantsRtt) {
+        // The composite is tinted by the node color, so keep it white; the
+        // background is painted inside the texture (_syncRttBackground). An
+        // animated backgroundColor on a clipped container is not supported.
+        finalStyle.color = 0xffffffff;
+      } else if (!initial && (this.node.rtt ?? false) === true) {
+        // Turning off: the styled color was diverted while rtt was on.
+        finalStyle.color =
+          (style && 'color' in style ? style.color : this.style.color) ?? 0;
+      }
+
+      if (initial ? wantsRtt : (this.node.rtt ?? false) !== wantsRtt) {
+        finalStyle.rtt = wantsRtt;
+      }
     }
 
     const finalProps = Object.assign(otherProps, finalStyle);
