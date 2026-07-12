@@ -48,8 +48,11 @@ export {
   SlideOutUp,
 } from './builders/Slide';
 
+export { useAnimatedReaction } from './exports/useAnimatedReaction';
 export { useAnimatedScrollHandler } from './exports/useAnimatedScrollHandler';
 export { useAnimatedStyle } from './exports/useAnimatedStyle';
+export { useDerivedValue } from './exports/useDerivedValue';
+export { makeMutable, useSharedValue } from './exports/useSharedValue';
 export { useComposedEventHandler } from './exports/useComposedEventHandler';
 export { withDelay } from './exports/withDelay';
 export { withRepeat } from './exports/withRepeat';

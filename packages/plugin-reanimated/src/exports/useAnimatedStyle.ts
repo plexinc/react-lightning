@@ -16,6 +16,7 @@ import {
   type ScheduledAnimation,
   toLightningAnimationAndStyles,
 } from '../utils/toLightningAnimationAndStyles';
+import { useTrackedReaction } from './useTrackedReaction';
 
 type UseAnimatedStyleFn = (...args: Parameters<typeof useAnimatedStyleRN>) => AnimatedStyle;
 
@@ -57,13 +58,12 @@ type AppliedStyles = {
   schedules: ScheduledAnimation[];
 } | null;
 
-function computeAndSetStyles(
-  updater: () => AnimatedObject<DefaultStyle>,
+function applyComputedStyle(
+  computedStyle: AnimatedObject<DefaultStyle>,
   views: Set<LightningElement>,
   lastApplied: { current: AppliedStyles },
   runners: Runners,
 ): void {
-  const computedStyle = updater();
   const { transition, style, schedules } = toLightningAnimationAndStyles(computedStyle);
 
   lastApplied.current = { transition, style, schedules };
@@ -78,6 +78,9 @@ let idCount = 0;
 export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
   const [views] = useState(() => new Set<LightningElement>());
   const [runners] = useState<Runners>(() => new WeakMap());
+  // Without explicit deps we infer them by tracking which shared values the
+  // updater reads (no babel plugin runs on Lightning to infer from closure).
+  const autoTrack = dependencies === undefined;
   const inputs: DependencyList = dependencies ?? [];
   const pendingRef = useRef(false);
   const lastApplied = useRef<AppliedStyles>(null);
@@ -94,11 +97,19 @@ export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
 
     queueMicrotask(() => {
       pendingRef.current = false;
-      computeAndSetStyles(updater, views, lastApplied, runners);
+      applyComputedStyle(updater(), views, lastApplied, runners);
     });
   };
 
+  useTrackedReaction(autoTrack ? updater : null, (computedStyle) => {
+    applyComputedStyle(computedStyle, views, lastApplied, runners);
+  });
+
   useEffect(() => {
+    if (autoTrack) {
+      return;
+    }
+
     const id = idCount;
     idCount += 1;
 
@@ -118,7 +129,7 @@ export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
       }
       applyStyles();
     };
-  }, [inputs, applyStyles]);
+  }, [autoTrack, inputs, applyStyles]);
 
   return {
     viewsRef: views,
