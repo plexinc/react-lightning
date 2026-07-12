@@ -21,8 +21,10 @@ export type JustifyContent =
   | 'space-evenly';
 
 export type Transform = {
-  translateX?: number;
-  translateY?: number;
+  // A string is a percentage of the node's OWN size (RN semantics), resolved at
+  // layout readback. A number is pixels, baked into the yoga position directly.
+  translateX?: number | `${number}%`;
+  translateY?: number | `${number}%`;
   scaleX?: number;
   scaleY?: number;
   rotation?: number;
