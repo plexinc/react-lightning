@@ -269,4 +269,38 @@ describe('flattenLayoutViews', () => {
 
     expect(scroller.node.x).toBe(-640);
   });
+
+  it('folds a direct node.x/y write on a flattened content node to its children', () => {
+    const root = createElement({ w: 1920, h: 1080, color: 0x000000ff });
+    // A layout-only content container (what a VirtualList scrolls) flattens.
+    const content = createElement({ w: 5000, h: 500 });
+    const tileA = createElement({ w: 100, h: 100, color: 0xffffffff });
+    const tileB = createElement({ w: 100, h: 100, color: 0xffffffff });
+
+    root.insertChild(content);
+    content.insertChild(tileA);
+    content.insertChild(tileB);
+
+    tileA.setNodeProp('x', 0, false);
+    tileB.setNodeProp('x', 272, false);
+
+    expect(content.isFlattened).toBe(true);
+    expect(tileA.node.x).toBe(0);
+    expect(tileB.node.x).toBe(272);
+
+    // The scroll handler translates the content node directly, bypassing
+    // setProps. The placeholder can't paint, so the children must follow.
+    content.node.x = -300;
+
+    expect(tileA.node.x).toBe(-300);
+    expect(tileB.node.x).toBe(-28);
+
+    // A vertical write folds on its own axis.
+    content.node.y = -50;
+
+    expect(tileA.node.y).toBe(-50);
+    expect(tileB.node.y).toBe(-50);
+    // The placeholder keeps the raw scroll offset it was handed.
+    expect(content.node.x).toBe(-300);
+  });
 });

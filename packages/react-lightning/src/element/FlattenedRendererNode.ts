@@ -33,6 +33,11 @@ const noopAnimationController = {
   state: 'stopped',
 };
 
+/** Element hook a placeholder calls when its position is written directly. */
+export interface FlattenedNodeOwner {
+  onFlattenedAxisWrite(axis: 'x' | 'y', value: number): void;
+}
+
 /**
  * Placeholder standing in for a renderer node on a flattened (layout-only)
  * element. Stores the handful of props the element layer reads back (position,
@@ -42,8 +47,8 @@ const noopAnimationController = {
 export class FlattenedRendererNode {
   public readonly isFlattenedNode = true;
   public id: number = --flattenedIdCounter;
-  public x = 0;
-  public y = 0;
+  private _x = 0;
+  private _y = 0;
   public w = 0;
   public h = 0;
   public alpha = 1;
@@ -53,6 +58,36 @@ export class FlattenedRendererNode {
   // Assigned by the element constructor, mirrored on materialize.
   public __reactFiber: unknown = null;
   public __reactNode: unknown = null;
+  // The owning element. A direct node.x/node.y write (a scroll handler moving
+  // the content node straight through node.x, bypassing setProps) has to fold
+  // through to the hoisted children, which only the element can do.
+  public owner: FlattenedNodeOwner | null = null;
+
+  public get x(): number {
+    return this._x;
+  }
+
+  public set x(value: number) {
+    if (this._x === value) {
+      return;
+    }
+
+    this._x = value;
+    this.owner?.onFlattenedAxisWrite('x', value);
+  }
+
+  public get y(): number {
+    return this._y;
+  }
+
+  public set y(value: number) {
+    if (this._y === value) {
+      return;
+    }
+
+    this._y = value;
+    this.owner?.onFlattenedAxisWrite('y', value);
+  }
 
   public constructor(props: Record<string, unknown>) {
     for (const key in props) {

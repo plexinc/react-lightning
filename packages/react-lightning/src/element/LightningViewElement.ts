@@ -377,6 +377,29 @@ export class LightningViewElement<
   }
 
   /**
+   * A direct write to a flattened placeholder's x/y (a scroll handler moving
+   * the content node straight through node.x, bypassing setProps) has to fold
+   * through to the hoisted children. The placeholder forwards the write here.
+   */
+  public onFlattenedAxisWrite(axis: 'x' | 'y', value: number): void {
+    if (axis === 'x') {
+      if (this._layoutX === value) {
+        return;
+      }
+
+      this._layoutX = value;
+    } else {
+      if (this._layoutY === value) {
+        return;
+      }
+
+      this._layoutY = value;
+    }
+
+    this._refreshFlattenedChildren(false);
+  }
+
+  /**
    * Swap the flattened placeholder for a real renderer node. Triggered by the
    * first prop that needs one (a background, border, alpha, interaction
    * visual). Sticky: once materialized an element never re-flattens, so a
@@ -672,6 +695,7 @@ export class LightningViewElement<
       this.node = createFlattenedNode<this>(
         lngProps as Record<string, unknown>,
       );
+      (this.node as unknown as { owner: LightningViewElement }).owner = this;
     } else {
       this.node = this._createNode(lngProps);
     }
