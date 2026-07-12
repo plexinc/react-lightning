@@ -489,7 +489,21 @@ export class YogaManager {
         const yoga = this._yoga;
         const node = yogaNode.node;
 
-        if (translateX != null) {
+        // A string translate is a percentage of the node's OWN size, which
+        // yoga can't express as a position edge — stash it and resolve at
+        // readback (_getUpdatedStyles). Recomputed on every transform push.
+        yogaNode.translatePercent = undefined;
+        yogaNode.resolvedTranslate = undefined;
+
+        if (typeof translateX === 'string') {
+          const pct = Number.parseFloat(translateX);
+
+          // A garbage percentage (e.g. arithmetic on an animation object
+          // upstream produced 'NaN%') must not move the node.
+          if (!Number.isNaN(pct)) {
+            (yogaNode.translatePercent ??= {}).x = pct;
+          }
+        } else if (translateX != null) {
           const right = node.getPosition(yoga.EDGE_RIGHT);
           const { edge, value } = resolveHorizontalTranslate(
             right.unit === yoga.UNIT_POINT,
@@ -501,7 +515,13 @@ export class YogaManager {
           applyFlexPropToYoga(yoga, this._yogaOptions, node, edge, value);
         }
 
-        if (translateY != null) {
+        if (typeof translateY === 'string') {
+          const pct = Number.parseFloat(translateY);
+
+          if (!Number.isNaN(pct)) {
+            (yogaNode.translatePercent ??= {}).y = pct;
+          }
+        } else if (translateY != null) {
           const bottom = node.getPosition(yoga.EDGE_BOTTOM);
           const { edge, value } = resolveVerticalTranslate(
             bottom.unit === yoga.UNIT_POINT,
@@ -554,30 +574,71 @@ export class YogaManager {
   private _getUpdatedStyles(yogaNode: ManagerNode, force = false) {
     const skipHiddenNode =
       !this._yogaOptions.processHiddenNodes && this._hiddenElements.has(yogaNode.id);
+    // A percent translate never dirties yoga (there's no edge to write), so a
+    // percent node is visited on every pass; the dedupe below keeps it from
+    // re-emitting while its resolved position holds.
+    const translatePercent = yogaNode.translatePercent;
+    const hasNewLayout = force || yogaNode.node.hasNewLayout();
 
-    if (!skipHiddenNode && (force || yogaNode.node.hasNewLayout())) {
-      if (!this._dataView.hasSpace(APPROX_SIZEOF_UPDATE)) {
-        this._flushArrayBuffer(this._dataView.buffer);
-      }
-
+    if (!skipHiddenNode && (hasNewLayout || translatePercent !== undefined)) {
       // Individual getters instead of getComputedLayout() — that allocates
       // a {left, top, width, height} object per node, and we recurse the
       // entire yoga tree every layout pass.
       const node = yogaNode.node;
 
-      // Direct DataView writes — hasSpace above already validated the full
-      // 12-byte run, so per-call overflow checks are pure overhead here.
-      const view = this._dataView.dataView;
-      const offset = this._dataView.offset;
+      let left = node.getComputedLeft();
+      let top = node.getComputedTop();
+      const width = node.getComputedWidth();
+      const height = node.getComputedHeight();
 
-      view.setUint32(offset, yogaNode.id, true);
-      view.setInt16(offset + 4, node.getComputedLeft(), true);
-      view.setInt16(offset + 6, node.getComputedTop(), true);
-      view.setInt16(offset + 8, node.getComputedWidth(), true);
-      view.setInt16(offset + 10, node.getComputedHeight(), true);
-      this._dataView.advance(APPROX_SIZEOF_UPDATE);
+      // A percentage translate is a fraction of the node's OWN size (RN
+      // semantics), resolvable only now that layout has computed that size.
+      if (translatePercent !== undefined) {
+        if (translatePercent.x !== undefined) {
+          left += (translatePercent.x / 100) * width;
+        }
 
-      node.markLayoutSeen();
+        if (translatePercent.y !== undefined) {
+          top += (translatePercent.y / 100) * height;
+        }
+      }
+
+      const resolved = yogaNode.resolvedTranslate;
+      const skipWrite =
+        !hasNewLayout &&
+        translatePercent !== undefined &&
+        resolved !== undefined &&
+        resolved.left === left &&
+        resolved.top === top;
+
+      if (!skipWrite) {
+        if (!this._dataView.hasSpace(APPROX_SIZEOF_UPDATE)) {
+          this._flushArrayBuffer(this._dataView.buffer);
+        }
+
+        // Direct DataView writes — hasSpace above already validated the full
+        // 12-byte run, so per-call overflow checks are pure overhead here.
+        const view = this._dataView.dataView;
+        const offset = this._dataView.offset;
+
+        view.setUint32(offset, yogaNode.id, true);
+        view.setInt16(offset + 4, left, true);
+        view.setInt16(offset + 6, top, true);
+        view.setInt16(offset + 8, width, true);
+        view.setInt16(offset + 10, height, true);
+        this._dataView.advance(APPROX_SIZEOF_UPDATE);
+
+        if (translatePercent !== undefined) {
+          if (resolved === undefined) {
+            yogaNode.resolvedTranslate = { left, top };
+          } else {
+            resolved.left = left;
+            resolved.top = top;
+          }
+        }
+
+        node.markLayoutSeen();
+      }
     }
 
     const children = yogaNode.children;
