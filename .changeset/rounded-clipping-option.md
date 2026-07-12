@@ -2,4 +2,4 @@
 '@plextv/react-lightning': patch
 ---
 
-Add an opt-in `roundedClipping` render option: a node with borderRadius + clipping (overflow hidden) renders its subtree to a texture so the Rounded shader clips children to the rounded rect, like the other RN platforms. The composite is kept untinted and the node's background is painted inside the texture via a managed child. Off by default: each such container costs a GPU framebuffer, and renderer RTT invalidation still has rough edges with late-mounting content.
+Add an opt-in `roundedClipping` render option: a node with borderRadius + clipping (overflow hidden) clips its children to the rounded rect, like the other RN platforms. Implemented via the renderer's stencil clip (`clipRadius`), so it costs no extra textures, nests, and works for text and images.
