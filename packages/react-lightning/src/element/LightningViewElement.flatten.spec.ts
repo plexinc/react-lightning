@@ -19,7 +19,20 @@ function createMockNode(props: Record<string, unknown> = {}) {
     on() {},
     off() {},
     animate() {
-      return { once() {}, start() {} };
+      let stopped: ((controller: unknown) => void) | null = null;
+      const controller = {
+        once(event: string, cb: (controller: unknown) => void) {
+          if (event === 'stopped') {
+            stopped = cb;
+          }
+          return controller;
+        },
+        start() {
+          stopped?.(controller);
+          return controller;
+        },
+      };
+      return controller;
     },
     destroy() {},
     ...props,
@@ -302,5 +315,49 @@ describe('flattenLayoutViews', () => {
     expect(tileB.node.y).toBe(-50);
     // The placeholder keeps the raw scroll offset it was handed.
     expect(content.node.x).toBe(-300);
+  });
+  it('materializes a flattened element when a deferred removal handler is attached', () => {
+    const root = createElement({ w: 1920, h: 1080, color: 0x000000ff });
+    const wrapper = createElement({ w: 500, h: 500 });
+
+    root.insertChild(wrapper);
+
+    expect(wrapper.isFlattened).toBe(true);
+
+    // Reanimated sets this on unmount to fade the node out before destroying it.
+    // A placeholder can neither run nor finish an animation, so it has to become
+    // a real node first.
+    wrapper.deferNodeRemoval = () => {};
+
+    expect(wrapper.isFlattened).toBe(false);
+    expect(
+      (wrapper.node as unknown as { isFlattenedNode?: boolean }).isFlattenedNode,
+    ).toBeUndefined();
+  });
+
+  it('tears down a flattened exit-animated subtree once its animation finishes', () => {
+    // parent(real) -> wrapper(layout-only, exit-animated) -> leaf(real image)
+    const root = createElement({ w: 1920, h: 1080, color: 0x000000ff });
+    const wrapper = createElement({ w: 500, h: 500 });
+    const leaf = createElement({ w: 100, h: 100, color: 0xffffffff });
+
+    root.insertChild(wrapper);
+    wrapper.insertChild(leaf);
+
+    const leafNode = leaf.node;
+
+    // Mirror createAnimatedComponent's exit path: run the animation, then
+    // destroy once it reports finished.
+    wrapper.deferNodeRemoval = (destroy) => {
+      wrapper.once('animationFinished', destroy);
+      wrapper.animateStyle('alpha', 0);
+    };
+
+    destroyNode.mockClear();
+    wrapper.destroy();
+
+    // Without a real node the animation never finishes, the deferred destroy
+    // never runs, and the leaf leaks on the scene. It must be released.
+    expect(destroyNode).toHaveBeenCalledWith(leafNode);
   });
 });
