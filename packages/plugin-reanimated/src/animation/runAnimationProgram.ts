@@ -26,11 +26,15 @@ export function runAnimationProgram(
     try {
       view.setProps({ transition: { [prop]: leaf.lngAnimation } } as never);
 
-      const animateStyle = view.animateStyle as (
-        key: keyof LightningElementStyle,
-        value: unknown,
-      ) => IAnimationController;
-      const controller = animateStyle(prop, leaf.toValue);
+      // Call as a method: extracting animateStyle drops `this`, so it throws
+      // and the catch below silently freezes the whole composed animation.
+      const animatableView = view as unknown as {
+        animateStyle: (
+          key: keyof LightningElementStyle,
+          value: unknown,
+        ) => IAnimationController;
+      };
+      const controller = animatableView.animateStyle(prop, leaf.toValue);
 
       current = controller;
 
