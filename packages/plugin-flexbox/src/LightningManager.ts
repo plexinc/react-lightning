@@ -511,14 +511,14 @@ export class LightningManager {
     const length = buffer.byteLength;
     let offset = 0;
 
-    // See YogaManager.ts for the structure of the updates (12 bytes/entry)
-    while (offset + 12 <= length) {
+    // See YogaManager.ts for the structure of the updates (20 bytes/entry)
+    while (offset + 20 <= length) {
       const elementId = view.getUint32(offset, true);
-      const x = view.getInt16(offset + 4, true);
-      const y = view.getInt16(offset + 6, true);
-      const width = view.getUint16(offset + 8, true);
-      const height = view.getUint16(offset + 10, true);
-      offset += 12;
+      const x = view.getInt32(offset + 4, true);
+      const y = view.getInt32(offset + 8, true);
+      const width = view.getInt32(offset + 12, true);
+      const height = view.getInt32(offset + 16, true);
+      offset += 20;
 
       const el = this._elements.get(elementId);
 

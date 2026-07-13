@@ -381,10 +381,10 @@ describe('YogaManager', () => {
           // Check each node's data
           for (let i = 0; i < numNodes; i++) {
             expect(dataView.readUint32()).toBe(i); // Node ID
-            expect(dataView.readInt16()).toBe(10); // x
-            expect(dataView.readInt16()).toBe(20); // y
-            expect(dataView.readInt16()).toBe(100); // width
-            expect(dataView.readInt16()).toBe(50); // height
+            expect(dataView.readInt32()).toBe(10); // x
+            expect(dataView.readInt32()).toBe(20); // y
+            expect(dataView.readInt32()).toBe(100); // width
+            expect(dataView.readInt32()).toBe(50); // height
           }
 
           resolve();
