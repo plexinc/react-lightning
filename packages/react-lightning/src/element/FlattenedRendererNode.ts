@@ -5,31 +5,27 @@ import type { LightningElement } from '../types/Element';
 // node (renderer ids start at 1).
 let flattenedIdCounter = 0;
 
-const noopAnimationController = {
-  start() {
-    return noopAnimationController;
-  },
-  stop() {
-    return noopAnimationController;
-  },
-  pause() {
-    return noopAnimationController;
-  },
-  restore() {
-    return noopAnimationController;
-  },
-  once() {
-    return noopAnimationController;
-  },
-  on() {
-    return noopAnimationController;
-  },
-  off() {
-    return noopAnimationController;
-  },
-  waitUntilStopped() {
-    return Promise.resolve();
-  },
+type NoopAnimationController = {
+  start(): NoopAnimationController;
+  stop(): NoopAnimationController;
+  pause(): NoopAnimationController;
+  restore(): NoopAnimationController;
+  once(): NoopAnimationController;
+  on(): NoopAnimationController;
+  off(): NoopAnimationController;
+  waitUntilStopped(): Promise<void>;
+  state: string;
+};
+
+const noopAnimationController: NoopAnimationController = {
+  start: () => noopAnimationController,
+  stop: () => noopAnimationController,
+  pause: () => noopAnimationController,
+  restore: () => noopAnimationController,
+  once: () => noopAnimationController,
+  on: () => noopAnimationController,
+  off: () => noopAnimationController,
+  waitUntilStopped: () => Promise.resolve(),
   state: 'stopped',
 };
 

@@ -38,7 +38,7 @@ describe('toLightningAnimationAndStyles', () => {
       opacity: timing(0.3),
     } as never);
 
-    expect(style.alpha).toBe(0.3);
+    expect((style as { alpha?: number }).alpha).toBe(0.3);
     expect(transition.alpha).toBeDefined();
     expect(schedules).toHaveLength(0);
   });
