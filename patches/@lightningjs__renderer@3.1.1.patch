@@ -1,0 +1,96 @@
+diff --git a/dist/src/core/CoreNode.js b/dist/src/core/CoreNode.js
+index d4bb6f75a8c58b6b1409556d8ed2730c3a6fe551..61d3faddf3ff2969a9fdd25be9df2ad51b023eda 100644
+--- a/dist/src/core/CoreNode.js
++++ b/dist/src/core/CoreNode.js
+@@ -979,12 +979,12 @@ export class CoreNode extends EventEmitter {
+             const ownRadius = clippingRect.clipRadius;
+             intersectRect(parentClippingRect, clippingRect, clippingRect);
+             clippingRect.clipRadius = ownRadius;
+-            // intersectRect writes {0,0,0,0} when the rects don't overlap but does
+-            // not touch the valid flag.  An empty intersection means nothing is
+-            // visible — mark the rect invalid so children are not clipped to a
+-            // zero-area region and the stencil pass is skipped.
++            // An empty intersection means the subtree is fully clipped. Keep the
++            // rect valid with zero area so the scissor rejects everything;
++            // valid=false here would render children unclipped instead.
+             if (clippingRect.w <= 0 || clippingRect.h <= 0) {
+-                clippingRect.valid = false;
++                clippingRect.w = 0;
++                clippingRect.h = 0;
+                 clippingRect.clipRadius = 0;
+             }
+         }
+@@ -1139,7 +1139,9 @@ export class CoreNode extends EventEmitter {
+             autosizeTarget.attach(node);
+         }
+         if (inRttCluster === true) {
+-            node.markChildrenWithRTT(this);
++            // Walk the NEW child's subtree: nodes attach bottom-up, so its
++            // descendants were stamped false before this attach.
++            node.markChildrenWithRTT();
+         }
+         children.push(node);
+         if (children.length === 1) {
+diff --git a/dist/src/core/renderers/webgl/WebGlRenderer.js b/dist/src/core/renderers/webgl/WebGlRenderer.js
+index 27f1d49d8096157c29b223dd0327f7b0f598d002..693f1e6eb8a6261716cff83d85c5d0459274a401 100644
+--- a/dist/src/core/renderers/webgl/WebGlRenderer.js
++++ b/dist/src/core/renderers/webgl/WebGlRenderer.js
+@@ -688,7 +688,9 @@ export class WebGlRenderer extends CoreRenderer {
+         op.w = Math.round(cr.w * pixelRatio);
+         op.h = Math.round(cr.h * pixelRatio);
+         op.y = Math.round(canvas.height - op.h - cr.y * pixelRatio);
+-        op.clipRadius = cr.clipRadius * pixelRatio;
++        // Clamp to half the min side: a radius past that (e.g. borderRadius
++        // 9999 for a circle) breaks the rounded-rect SDF and clips everything.
++        op.clipRadius = Math.min(cr.clipRadius * pixelRatio, op.w / 2, op.h / 2);
+         op.pixelRatio = pixelRatio;
+         op.canvasHeight = canvas.height;
+         op.parentHasRenderTexture = node.parentHasRenderTexture;
+diff --git a/src/core/CoreNode.ts b/src/core/CoreNode.ts
+index fad32fb4acff160677c74eb91de43bf90e6f022b..3ee522354a33889e9a8bd2aa70184ff2164952f5 100644
+--- a/src/core/CoreNode.ts
++++ b/src/core/CoreNode.ts
+@@ -1805,12 +1805,12 @@ export class CoreNode extends EventEmitter {
+       const ownRadius = clippingRect.clipRadius;
+       intersectRect(parentClippingRect, clippingRect, clippingRect);
+       clippingRect.clipRadius = ownRadius;
+-      // intersectRect writes {0,0,0,0} when the rects don't overlap but does
+-      // not touch the valid flag.  An empty intersection means nothing is
+-      // visible — mark the rect invalid so children are not clipped to a
+-      // zero-area region and the stencil pass is skipped.
++      // An empty intersection means the subtree is fully clipped. Keep the
++      // rect valid with zero area so the scissor rejects everything;
++      // valid=false here would render children unclipped instead.
+       if (clippingRect.w <= 0 || clippingRect.h <= 0) {
+-        clippingRect.valid = false;
++        clippingRect.w = 0;
++        clippingRect.h = 0;
+         clippingRect.clipRadius = 0;
+       }
+     } else if (parentClippingRect.valid === true) {
+@@ -1995,7 +1995,9 @@ export class CoreNode extends EventEmitter {
+     }
+ 
+     if (inRttCluster === true) {
+-      node.markChildrenWithRTT(this);
++      // Walk the NEW child's subtree: nodes attach bottom-up, so its
++      // descendants were stamped false before this attach.
++      node.markChildrenWithRTT();
+     }
+ 
+     children.push(node);
+diff --git a/src/core/renderers/webgl/WebGlRenderer.ts b/src/core/renderers/webgl/WebGlRenderer.ts
+index 2780b17b4233d760f97f963133abbf5b6a0bd8c9..797518e33ab767fc777e9e65a6ee01ef3c8846da 100644
+--- a/src/core/renderers/webgl/WebGlRenderer.ts
++++ b/src/core/renderers/webgl/WebGlRenderer.ts
+@@ -865,7 +865,9 @@ export class WebGlRenderer extends CoreRenderer {
+     op.w = Math.round(cr.w * pixelRatio);
+     op.h = Math.round(cr.h * pixelRatio);
+     op.y = Math.round(canvas.height - op.h - cr.y * pixelRatio);
+-    op.clipRadius = cr.clipRadius * pixelRatio;
++    // Clamp to half the min side: a radius past that (e.g. borderRadius
++    // 9999 for a circle) breaks the rounded-rect SDF and clips everything.
++    op.clipRadius = Math.min(cr.clipRadius * pixelRatio, op.w / 2, op.h / 2);
+     op.pixelRatio = pixelRatio;
+     op.canvasHeight = canvas.height;
+     op.parentHasRenderTexture = node.parentHasRenderTexture;

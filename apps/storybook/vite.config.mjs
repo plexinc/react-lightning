@@ -41,6 +41,9 @@ const config = defineConfig((env) => ({
     // dep optimizer can't resolve. Exclude it so Vite handles it via its
     // normal transform pipeline instead.
     exclude: ['@plextv/react-lightning-plugin-flexbox'],
+    // CJS-only; without pre-bundling it is served as raw CJS and named
+    // imports (reanimated's controlEdgeToEdgeValues) fail to resolve.
+    include: ['react-native-is-edge-to-edge'],
   },
 
   server: {
