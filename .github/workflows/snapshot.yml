@@ -1,9 +1,8 @@
 name: Snapshot Release
 
 # Comment `/snapshot` on a pull request to publish an alpha of the changed
-# packages under the `snapshot` dist-tag (never `latest`). Only org members with
-# write access to the repo can trigger it (org membership gates the job, the
-# collaborator-permission check narrows it to write access).
+# packages to GitHub Packages (the plextv org registry, not public npm) under
+# the `snapshot` dist-tag. Only org members with write access can trigger it.
 #
 # Note: issue_comment workflows always run the copy of this file on the default
 # branch, so this only takes effect once merged to main.
@@ -17,7 +16,6 @@ concurrency: ${{ github.workflow }}-${{ github.event.issue.number }}
 
 permissions:
   contents: read
-  id-token: write
   pull-requests: write
 
 jobs:
@@ -44,7 +42,7 @@ jobs:
             *) echo "::error::@${user} needs write access to run /snapshot (has: ${level})"; exit 1 ;;
           esac
 
-      # Publish runs on the PR's head code with npm credentials in scope, so
+      # Publish runs on the PR's head code with a publish token in scope, so
       # refuse forks: only same-repo branches can be snapshotted.
       - name: Refuse fork PRs
         env:
@@ -80,11 +78,13 @@ jobs:
 
       - uses: pnpm/action-setup@v4
 
+      # Route the @plextv scope to GitHub Packages (plextv org) for publish.
       - uses: actions/setup-node@v4
         with:
           node-version-file: package.json
           cache: "pnpm"
-          registry-url: "https://registry.npmjs.org"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@plextv"
 
       - run: pnpm install --frozen-lockfile
 
@@ -100,17 +100,37 @@ jobs:
           body: |
             :x: A snapshot needs a changeset. Add one (`pnpm changeset`), rebase on `origin/main`, then comment `/snapshot` again.
 
-      - name: Publish snapshot
+      - name: Publish snapshot to GitHub Packages
         id: publish
         env:
-          # OIDC (trusted publishing) handles npm auth, same as release-packages.yml.
-          NPM_TOKEN: ""
+          # PAT with write:packages on the plextv org. @plextv/* map to the
+          # plextv GitHub org (not plexinc), so GITHUB_TOKEN can't publish them.
+          NODE_AUTH_TOKEN: ${{ secrets.PLEXTV_PACKAGES_TOKEN }}
+          # GitHub Packages has no sigstore attestation, so provenance must be off.
+          NPM_CONFIG_PROVENANCE: "false"
         run: |
           pnpm exec changeset version --snapshot ${{ github.event.issue.number }}
           pnpm install --no-frozen-lockfile
           version=$(node -p "require('./packages/react-lightning/package.json').version")
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-          # --tag snapshot keeps these off the `latest` dist-tag; --no-git-tag skips tagging the throwaway release.
+
+          # Point every publishable package at GitHub Packages and drop the
+          # provenance flag its publishConfig sets (npmjs-only).
+          node -e '
+            const fs = require("fs"), cp = require("child_process");
+            const files = cp
+              .execSync("find packages -maxdepth 2 -name package.json -not -path \"*/node_modules/*\"")
+              .toString().trim().split("\n").filter(Boolean);
+            for (const f of files) {
+              const p = JSON.parse(fs.readFileSync(f, "utf8"));
+              if (p.private) continue;
+              p.publishConfig = p.publishConfig || {};
+              delete p.publishConfig.provenance;
+              p.publishConfig.registry = "https://npm.pkg.github.com/";
+              fs.writeFileSync(f, JSON.stringify(p, null, 2) + "\n");
+            }
+          '
+
           pnpm run ci:publish --tag snapshot --no-git-tag
 
       - name: Report published version
@@ -119,8 +139,14 @@ jobs:
           comment-id: ${{ github.event.comment.id }}
           reactions: rocket
           body: |
-            :rocket: Published `${{ steps.publish.outputs.version }}` under the `snapshot` dist-tag.
+            :rocket: Published `${{ steps.publish.outputs.version }}` to GitHub Packages (plextv org).
+
+            To try it in the Plex client, point the `@plextv` scope at GitHub Packages and pin the version:
 
             ```
-            pnpm add @plextv/react-lightning@${{ steps.publish.outputs.version }}
+            # .npmrc
+            @plextv:registry=https://npm.pkg.github.com/
+
+            # pnpm-workspace.yaml catalog: set each @plextv/* entry to
+            ${{ steps.publish.outputs.version }}
             ```
