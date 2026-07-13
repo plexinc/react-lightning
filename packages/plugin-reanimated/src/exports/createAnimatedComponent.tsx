@@ -13,6 +13,7 @@ import type {
   LayoutAnimationFunction,
 } from 'react-native-reanimated-original';
 
+import { PARTIAL_STYLE } from '@plextv/react-lightning';
 import type {
   LightningElement,
   LightningElementProps,
@@ -306,6 +307,9 @@ export function createAnimatedComponent<TProps extends {}>(
         for (const [key, value] of Object.entries(layoutAnimation.initialValues)) {
           el.setNodeProp(key as keyof RendererNode<NativeLightningElement>, value, false);
         }
+
+        // Layout-animation styles are partial too; keep static flex props.
+        (lightningAnimation.style as Record<PropertyKey, unknown>)[PARTIAL_STYLE] = true;
 
         el?.setProps({
           style: lightningAnimation.style as LightningViewElementStyle,

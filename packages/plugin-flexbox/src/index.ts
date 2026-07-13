@@ -1,3 +1,4 @@
+import { PARTIAL_STYLE } from '@plextv/react-lightning';
 import type { LightningElement, LightningElementStyle, Plugin } from '@plextv/react-lightning';
 
 import { LightningManager } from './LightningManager';
@@ -104,11 +105,16 @@ export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
 
       // flexStyles is complete for this render, so a missing key means the
       // prop was dropped: reset it instead of leaving yoga's stale value.
+      // Styles marked PARTIAL_STYLE (animated pushes) only carry the changed
+      // keys, so resetting the rest would wipe static flex props like
+      // `position: 'absolute'`.
+      const isPartialStyle = (styles as Record<PropertyKey, unknown>)[PARTIAL_STYLE] === true;
+
       lightningManager.applyStyle(
         instance.id,
         flexStyles as Partial<LightningElementStyle>,
         true,
-        true,
+        !isPartialStyle,
       );
 
       return {

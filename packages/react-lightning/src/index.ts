@@ -5,6 +5,7 @@ export { createLightningElement } from './element/createLightningElement';
 export { LightningImageElement } from './element/LightningImageElement';
 export { LightningTextElement } from './element/LightningTextElement';
 export { LightningViewElement } from './element/LightningViewElement';
+export { PARTIAL_STYLE } from './element/partialStyle';
 export { FocusGroup, type FocusGroupProps } from './focus/FocusGroup';
 export { FocusGroupContext } from './focus/FocusGroupContext';
 export { FocusManager } from './focus/FocusManager';
