@@ -32,6 +32,16 @@ export class RevealGate {
   }
 
   /**
+   * Record that a cell is visible before it has measured, starting the backstop clock so an
+   * unmeasured cell (async content still pending) can't strand the rows below it forever.
+   */
+  markSeen(key: string, now: number): void {
+    if (!this._firstSeenAt.has(key)) {
+      this._firstSeenAt.set(key, now);
+    }
+  }
+
+  /**
    * Latch a key as revealed once it has painted. The gate only guards a cell's
    * first appearance; a later re-measure (e.g. a background refresh of an
    * already-visible row) must NOT hide it again — hiding sets alpha 0, which
@@ -60,7 +70,8 @@ export class RevealGate {
    * ms until the key counts as settled: 0 once it has been revealed, otherwise
    * the sooner of the quiet window elapsing since the last change and the max
    * window since first seen (the backstop for content that never stops
-   * changing). `Infinity` until the key has been measured at all.
+   * changing). A key that is only seen (not yet measured) still counts down
+   * the max window; `Infinity` only until the key has been seen at all.
    */
   timeUntilSettled(
     key: string,
@@ -75,14 +86,18 @@ export class RevealGate {
     }
 
     const stableSince = this._stableSince.get(key);
+    const firstSeenAt = this._firstSeenAt.get(key);
 
     if (stableSince == null) {
-      return Infinity;
+      // Seen but never measured: settle by the max window. Never seen: unknown.
+      return firstSeenAt == null
+        ? Infinity
+        : Math.max(0, maxMs - (now - firstSeenAt));
     }
 
-    const firstSeenAt = this._firstSeenAt.get(key) ?? stableSince;
+    const seenAt = firstSeenAt ?? stableSince;
     const quietRemaining = Math.max(0, quietMs - (now - stableSince));
-    const forcedRemaining = Math.max(0, maxMs - (now - firstSeenAt));
+    const forcedRemaining = Math.max(0, maxMs - (now - seenAt));
 
     return Math.min(quietRemaining, forcedRemaining);
   }

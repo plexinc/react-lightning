@@ -565,8 +565,14 @@ function VirtualListInner<T>(
 
       order.push(index);
 
+      const key = getKey(index);
+
       if (layoutManager.isMeasured(index)) {
-        revealGate.note(getKey(index), layout.size, now);
+        revealGate.note(key, layout.size, now);
+      } else {
+        // Visible but not measured yet: start the backstop so a stuck async
+        // cell can't hold the rows below it hidden forever.
+        revealGate.markSeen(key, now);
       }
     }
 
@@ -575,14 +581,12 @@ function VirtualListInner<T>(
         order,
         (index) => layoutManager.hasOverrideSize(index),
         (index) =>
-          layoutManager.isMeasured(index)
-            ? revealGate.timeUntilSettled(
-                getKey(index),
-                now,
-                REVEAL_QUIET_MS,
-                REVEAL_MAX_MS,
-              )
-            : Infinity,
+          revealGate.timeUntilSettled(
+            getKey(index),
+            now,
+            REVEAL_QUIET_MS,
+            REVEAL_MAX_MS,
+          ),
       );
 
     // Latch every cell up to the boundary as revealed so a later re-measure
