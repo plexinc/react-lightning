@@ -2,6 +2,7 @@ import { LightningManager } from '../src/LightningManager';
 import type { YogaManager } from '../src/YogaManager';
 import { BENCH_FONT, benchAtlasUrl } from './atlas';
 import type { Fixture, NodeSpec } from './fixtures';
+import type { LightningElement } from '@plextv/react-lightning';
 
 // Minimal element surface LightningManager reads. Mirrors the fake used in the
 // unit tests, plus text fields so the grow-only remeasure path runs.
@@ -31,7 +32,8 @@ class BenchElement {
       this._handlers.set(event, set);
     }
     set.add(handler);
-    return () => set!.delete(handler);
+    const handlers = set;
+    return () => handlers.delete(handler);
   }
 
   public emit(event: string, ...args: unknown[]): void {
@@ -63,7 +65,7 @@ export type Metrics = {
   ms: number;
 };
 
-const asLng = (el: BenchElement) => el as unknown as import('@plextv/react-lightning').LightningElement;
+const asLng = (el: BenchElement) => el as unknown as LightningElement;
 
 function makeElement(spec: NodeSpec): BenchElement {
   const el = new BenchElement();
@@ -115,7 +117,7 @@ function mountCell(manager: LightningManager, spec: NodeSpec, crossSize?: number
 
 function destroyCell(manager: LightningManager, els: BenchElement[]): void {
   for (let i = els.length - 1; i >= 0; i--) {
-    els[i]!.emit('destroy');
+    els[i]?.emit('destroy');
   }
 }
 
