@@ -83,7 +83,9 @@ describe('rounded clipping (borderRadius + clipping -> clipRadius)', () => {
   it('sets clipRadius when clipping arrives after mount (fast path)', async () => {
     const el = createElement({ w: 100, h: 50, borderRadius: 16 });
 
-    el.setProps({ style: { clipping: true } });
+    // Imperative toggle: a marked-partial push, so the Rounded shader is kept
+    // and its radius drives clipRadius.
+    el.style.clipping = true;
     await flush();
 
     expect(el.node.clipRadius).toBe(16);

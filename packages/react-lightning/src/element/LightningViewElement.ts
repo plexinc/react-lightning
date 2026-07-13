@@ -14,6 +14,7 @@ import type {
 } from '@lightningjs/renderer';
 import type { Fiber } from 'react-reconciler';
 import { EventEmitter, type IEventEmitter } from 'tseep';
+import { PARTIAL_STYLE } from './partialStyle';
 
 import {
   getNodeResizeObserver,
@@ -1771,19 +1772,16 @@ export class LightningViewElement<
       );
     }
 
-    // Reanimated pushes partial style updates (just opacity/transform) straight
-    // to setProps. Recomputing the shader from that partial style finds no
-    // borderRadius/border and clears the Rounded shader, squaring off a node
-    // mid-animation. Keep the existing shader when this update carries no
-    // shader-relevant prop and no explicit shader override.
-    const updateTouchesShaderProp =
+    // Reanimated and imperative style.set pushes are marked partial: they carry
+    // only the changed keys, so keep the current shader unless the update itself
+    // names one. A full restyle (reconciler snapshot) isn't marked, so a dropped
+    // border falls through and clears the stale shader.
+    const isPartialStyle =
       style != null &&
-      Object.keys(style).some((key) =>
-        LightningViewElement._shaderStyleProps.has(key),
-      );
+      (style as Record<PropertyKey, unknown>)[PARTIAL_STYLE] === true;
     const oldShader = this._shaderDef;
     this._shaderDef =
-      shader === undefined && !updateTouchesShaderProp && !styleShader && oldShader
+      shader === undefined && isPartialStyle && !styleShader && oldShader
         ? oldShader
         : shader || styleShader;
 
@@ -1890,11 +1888,12 @@ export class LightningViewElement<
 
       target[key] = value;
 
-      this.setProps({
-        style: {
-          [key]: value,
-        },
-      } as Partial<TProps>);
+      // Single-key imperative set: mark it partial so shader/flex processors
+      // keep the props this push omits.
+      const style = { [key]: value } as Partial<TStyleProps>;
+      (style as Record<PropertyKey, unknown>)[PARTIAL_STYLE] = true;
+
+      this.setProps({ style } as Partial<TProps>);
 
       return true;
     },
