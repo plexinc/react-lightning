@@ -85,7 +85,7 @@ export function convertCSSTransformToLightning(
     for (const key in transformValue) {
       const value = (transformValue as Record<string, number | string | number[]>)[key];
 
-      if (value) {
+      if (value != null) {
         const result = convertCSSTransformToLightning(key, value);
 
         Object.assign(transformResult, result);

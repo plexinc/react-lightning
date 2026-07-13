@@ -5,6 +5,9 @@ import { htmlColorCodes } from './htmlColorCodes';
 const hexRgbRegex = /^#?([a-f0-9]{6})$/i;
 const hexShortRgbRegex = /^#?([a-f0-9]{3})$/i;
 const rgbRegex = /^rgba?\(([0-9.]+)[, ]+([0-9.]+)[, ]+([0-9.]+)[, ]*([0-9.]+)?\)$/i;
+// Keyword colors (inherit, currentColor, …) have no fixed value to resolve, so
+// they reach the throw below and take the whole screen down. Drop them instead.
+const cssKeywordColorRegex = /^(inherit|initial|unset|revert|currentcolor)$/i;
 
 function withAlphaOverride(color: number, overrideAlpha?: number | string): number {
   if (overrideAlpha == null) {
@@ -24,7 +27,7 @@ function withAlphaOverride(color: number, overrideAlpha?: number | string): numb
 export function htmlColorToLightningColor(
   color?: ColorValue | number,
   overrideAlpha?: number | string,
-): number {
+): number | undefined {
   if (!color) {
     return 0;
   }
@@ -67,6 +70,10 @@ export function htmlColorToLightningColor(
     const rgbText = `${shortRgbText[0]}${shortRgbText[0]}${shortRgbText[1]}${shortRgbText[1]}${shortRgbText[2]}${shortRgbText[2]}ff`;
 
     return withAlphaOverride(Number.parseInt(rgbText, 16), overrideAlpha);
+  }
+
+  if (cssKeywordColorRegex.test(colorLower)) {
+    return undefined;
   }
 
   throw new Error(`Invalid hex value specified for conversion: ${color.toString()}`);

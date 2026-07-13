@@ -153,7 +153,7 @@ export function convertCSSStyleToLightning(
 
       finalStyle.border = {
         w: w != null ? Number.parseInt(w, 10) : 0,
-        color: htmlColorToLightningColor(c),
+        color: htmlColorToLightningColor(c) ?? 0,
       };
     } else if (border) {
       finalStyle.border = border;
@@ -169,7 +169,7 @@ export function convertCSSStyleToLightning(
     }
 
     if (borderColor) {
-      finalStyle.border.color = htmlColorToLightningColor(borderColor);
+      finalStyle.border.color = htmlColorToLightningColor(borderColor) ?? 0;
     }
   }
 

@@ -95,4 +95,10 @@ describe('htmlColorToLightningColor', () => {
 
     expect(run).toThrow('Invalid hex value');
   });
+
+  it('should return undefined for unresolvable css keyword colors', () => {
+    for (const value of ['inherit', 'initial', 'unset', 'revert', 'currentColor', 'CurrentColor']) {
+      expect(htmlColorToLightningColor(value)).toBeUndefined();
+    }
+  });
 });
