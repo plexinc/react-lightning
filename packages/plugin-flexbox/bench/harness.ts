@@ -144,10 +144,10 @@ export async function runFixture(fixture: Fixture): Promise<Metrics> {
     layoutPasses++;
     passesSinceAction++;
     const view = new DataView(buffer);
-    for (let o = 0; o + 12 <= buffer.byteLength; o += 12) {
+    for (let o = 0; o + 20 <= buffer.byteLength; o += 20) {
       const id = view.getUint32(o, true);
-      const w = view.getInt16(o + 8, true);
-      const h = view.getInt16(o + 10, true);
+      const w = view.getInt32(o + 12, true);
+      const h = view.getInt32(o + 16, true);
       const key = `${w}x${h}`;
       const prev = lastSize.get(id);
       if (prev !== undefined && prev !== key) reflows++;

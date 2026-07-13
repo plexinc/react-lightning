@@ -10,13 +10,13 @@ function readNode(buffer: ArrayBuffer | undefined, id: number) {
 
   const view = new DataView(buffer);
 
-  for (let o = 0; o + 12 <= buffer.byteLength; o += 12) {
+  for (let o = 0; o + 20 <= buffer.byteLength; o += 20) {
     if (view.getUint32(o, true) === id) {
       return {
-        x: view.getInt16(o + 4, true),
-        y: view.getInt16(o + 6, true),
-        w: view.getInt16(o + 8, true),
-        h: view.getInt16(o + 10, true),
+        x: view.getInt32(o + 4, true),
+        y: view.getInt32(o + 8, true),
+        w: view.getInt32(o + 12, true),
+        h: view.getInt32(o + 16, true),
       };
     }
   }
@@ -107,7 +107,7 @@ describe('percentage translate (own-size, RN semantics)', () => {
     const { manager, flush } = await setup();
 
     flush();
-    manager.applyStyle(2, { transform: { translateX: 'NaN%' } }, true);
+    manager.applyStyle(2, { transform: { translateX: 'NaN%' as `${number}%` } }, true);
 
     expect(readNode(flush(), 2)).toBeUndefined();
   });

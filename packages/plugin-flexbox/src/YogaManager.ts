@@ -23,10 +23,10 @@ export type YogaManagerEvents = {
   // array are reserved for the number of elements being updated. The rest of the
   // array contains the updates for each element. The data structure is as follows:
   //   uint32 - The element ID of the element being updated
-  //   int16 - The x coordinate of the element
-  //   int16 - The y coordinate of the element
-  //   int16 - The width of the element
-  //   int16 - The height of the element
+  //   int32 - The x coordinate of the element
+  //   int32 - The y coordinate of the element
+  //   int32 - The width of the element
+  //   int32 - The height of the element
   render: (updates: ArrayBuffer) => void;
   // Fires once layout has converged (no pass produced a re-dirty). Deterministic
   // replacement for the timer-based "has it settled yet" guesses downstream.
@@ -34,7 +34,7 @@ export type YogaManagerEvents = {
 };
 
 // elementId + x + y + width + height, as per spec above
-const APPROX_SIZEOF_UPDATE = 4 + 2 + 2 + 2 + 2;
+const APPROX_SIZEOF_UPDATE = 4 + 4 + 4 + 4 + 4;
 // 10KB, should be enough for most updates. If it's bigger than this, we'll chunk the updates
 const MAX_SIZEOF_UPDATE = 1024 * 10;
 // Grow-only text remeasure converges monotonically (1-3 passes in practice).
@@ -622,10 +622,13 @@ export class YogaManager {
         const offset = this._dataView.offset;
 
         view.setUint32(offset, yogaNode.id, true);
-        view.setInt16(offset + 4, left, true);
-        view.setInt16(offset + 6, top, true);
-        view.setInt16(offset + 8, width, true);
-        view.setInt16(offset + 10, height, true);
+        // Int32, not Int16: a long list lays out well past 32767px and the
+        // narrower field wraps those positions negative (rows paint over the
+        // screen top and spans computed from them go haywire).
+        view.setInt32(offset + 4, left, true);
+        view.setInt32(offset + 8, top, true);
+        view.setInt32(offset + 12, width, true);
+        view.setInt32(offset + 16, height, true);
         this._dataView.advance(APPROX_SIZEOF_UPDATE);
 
         if (translatePercent !== undefined) {

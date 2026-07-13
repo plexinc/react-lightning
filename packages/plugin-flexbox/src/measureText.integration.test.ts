@@ -42,12 +42,12 @@ function nextRender(manager: YogaManager): Promise<Computed> {
       const view = new DataView(buffer);
       const out: Computed = new Map();
 
-      for (let offset = 0; offset + 12 <= buffer.byteLength; offset += 12) {
+      for (let offset = 0; offset + 20 <= buffer.byteLength; offset += 20) {
         out.set(view.getUint32(offset, true), {
-          x: view.getInt16(offset + 4, true),
-          y: view.getInt16(offset + 6, true),
-          w: view.getUint16(offset + 8, true),
-          h: view.getUint16(offset + 10, true),
+          x: view.getInt32(offset + 4, true),
+          y: view.getInt32(offset + 8, true),
+          w: view.getInt32(offset + 12, true),
+          h: view.getInt32(offset + 16, true),
         });
       }
 
