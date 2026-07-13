@@ -116,4 +116,41 @@ describe('RevealGate', () => {
 
     expect(gate.timeUntilSettled('a', 0, QUIET, MAX)).toBe(Infinity);
   });
+
+  it('backstops a seen-but-unmeasured key so it never blocks forever', () => {
+    const gate = new RevealGate();
+
+    // Visible with an estimated size but never measured (async content pending); it must
+    // settle by the max window or the rows below stay hidden until an unrelated commit.
+    gate.markSeen('a', 0);
+
+    expect(gate.timeUntilSettled('a', 0, QUIET, MAX)).toBe(MAX);
+    expect(gate.timeUntilSettled('a', 400, QUIET, MAX)).toBe(600);
+    expect(gate.timeUntilSettled('a', 1000, QUIET, MAX)).toBe(0);
+  });
+
+  it('markSeen does not restart the backstop clock on repeat', () => {
+    const gate = new RevealGate();
+
+    gate.markSeen('a', 0);
+    gate.markSeen('a', 500);
+
+    expect(gate.timeUntilSettled('a', 500, QUIET, MAX)).toBe(500);
+  });
+
+  it('keeps the first-seen backstop clock when a measurement arrives later', () => {
+    const gate = new RevealGate();
+
+    gate.markSeen('a', 0);
+    gate.note('a', 456, 200);
+
+    // quiet from 200 -> 320; backstop from first-seen 0 -> 1000; quiet wins.
+    expect(gate.timeUntilSettled('a', 200, QUIET, MAX)).toBe(QUIET);
+  });
+
+  it('stays Infinity for a key that was never seen or noted', () => {
+    const gate = new RevealGate();
+
+    expect(gate.timeUntilSettled('a', 999, QUIET, MAX)).toBe(Infinity);
+  });
 });
