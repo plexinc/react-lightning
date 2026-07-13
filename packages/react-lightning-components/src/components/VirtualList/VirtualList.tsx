@@ -782,13 +782,13 @@ function VirtualListInner<T>(
       return null;
     }
 
-    // oxlint-disable-next-line typescript/no-non-null-assertion -- layout exists for all visible indices
-    const layout = layoutManager.getLayout(index)!;
+    const layout = layoutManager.getLayout(index);
 
-    // Skip cells that the LayoutManager has collapsed to zero (null/undef
-    // data or override.size === 0). Returning null here keeps them out of
-    // the React tree entirely.
-    if (layout.size === 0) {
+    // Skip cells the LayoutManager has collapsed to zero (null/undef data or
+    // override.size === 0), and indices gone stale mid-render (the cellKey
+    // restore path updates the config synchronously after visibleIndices was
+    // computed, so a data shrink can leave indices past the new count).
+    if (!layout || layout.size === 0) {
       return null;
     }
 
