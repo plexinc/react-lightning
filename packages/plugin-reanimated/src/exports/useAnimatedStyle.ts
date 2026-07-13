@@ -4,6 +4,7 @@ import type { useAnimatedStyle as useAnimatedStyleRN } from 'react-native-reanim
 import type { Mutable } from 'react-native-reanimated/lib/typescript/commonTypes';
 import type { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/commonTypes';
 
+import { PARTIAL_STYLE } from '@plextv/react-lightning';
 import type { LightningElement, LightningElementStyle } from '@plextv/react-lightning';
 
 import {
@@ -33,6 +34,10 @@ function setStyles(
   // reset (e.g. a shared value set back to a static value) stops the old one.
   runners.get(view)?.forEach((cancel) => cancel());
   runners.delete(view);
+
+  // Animated styles only carry the keys the updater computed; mark them so
+  // the flexbox plugin doesn't reset the element's other flex props.
+  (style as Record<PropertyKey, unknown>)[PARTIAL_STYLE] = true;
 
   view.setProps({
     transition,
