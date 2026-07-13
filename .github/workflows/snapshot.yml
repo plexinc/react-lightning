@@ -1,0 +1,126 @@
+name: Snapshot Release
+
+# Comment `/snapshot` on a pull request to publish an alpha of the changed
+# packages under the `snapshot` dist-tag (never `latest`). Only org members with
+# write access to the repo can trigger it (org membership gates the job, the
+# collaborator-permission check narrows it to write access).
+#
+# Note: issue_comment workflows always run the copy of this file on the default
+# branch, so this only takes effect once merged to main.
+
+on:
+  issue_comment:
+    types:
+      - created
+
+concurrency: ${{ github.workflow }}-${{ github.event.issue.number }}
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+
+jobs:
+  snapshot:
+    name: Snapshot Release
+    runs-on: ubuntu-latest
+    # Org membership (MEMBER/OWNER is set by GitHub for org-owned repos, private
+    # members included) gates the job before anything runs.
+    if: >-
+      github.event.issue.pull_request &&
+      github.event.comment.body == '/snapshot' &&
+      (github.event.comment.author_association == 'MEMBER' ||
+      github.event.comment.author_association == 'OWNER')
+    steps:
+      - name: Verify commenter has write access
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          user='${{ github.event.comment.user.login }}'
+          level=$(gh api "repos/${{ github.repository }}/collaborators/${user}/permission" --jq '.permission')
+          echo "$user has permission: $level"
+          case "$level" in
+            admin|maintain|write) echo "authorized" ;;
+            *) echo "::error::@${user} needs write access to run /snapshot (has: ${level})"; exit 1 ;;
+          esac
+
+      # Publish runs on the PR's head code with npm credentials in scope, so
+      # refuse forks: only same-repo branches can be snapshotted.
+      - name: Refuse fork PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          head=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}" --jq '.head.repo.full_name // "unknown"')
+          echo "PR head repo: $head (base: ${{ github.repository }})"
+          if [ "$head" != "${{ github.repository }}" ]; then
+            echo "::error::/snapshot only runs on same-repo branches, not forks (${head}). Push the branch to ${{ github.repository }} and retry."
+            exit 1
+          fi
+
+      - name: Acknowledge
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: eyes
+          body: |
+            Building a snapshot release. Progress: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # issue_comment doesn't check out the PR branch on its own.
+      - name: Check out the PR branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr checkout ${{ github.event.issue.number }}
+          git fetch origin main
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: "pnpm"
+          registry-url: "https://registry.npmjs.org"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Require a changeset
+        run: pnpm exec changeset status --since origin/main
+
+      - name: Comment on missing changeset
+        if: failure()
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: confused
+          body: |
+            :x: A snapshot needs a changeset. Add one (`pnpm changeset`), rebase on `origin/main`, then comment `/snapshot` again.
+
+      - name: Publish snapshot
+        id: publish
+        env:
+          # OIDC (trusted publishing) handles npm auth, same as release-packages.yml.
+          NPM_TOKEN: ""
+        run: |
+          pnpm exec changeset version --snapshot ${{ github.event.issue.number }}
+          pnpm install --no-frozen-lockfile
+          version=$(node -p "require('./packages/react-lightning/package.json').version")
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          # --tag snapshot keeps these off the `latest` dist-tag; --no-git-tag skips tagging the throwaway release.
+          pnpm run ci:publish --tag snapshot --no-git-tag
+
+      - name: Report published version
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        with:
+          comment-id: ${{ github.event.comment.id }}
+          reactions: rocket
+          body: |
+            :rocket: Published `${{ steps.publish.outputs.version }}` under the `snapshot` dist-tag.
+
+            ```
+            pnpm add @plextv/react-lightning@${{ steps.publish.outputs.version }}
+            ```
