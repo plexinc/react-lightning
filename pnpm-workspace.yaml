@@ -28,6 +28,9 @@ catalogs:
     react-native: 0.85.1
     react-native-reanimated: 4.3.0
 
+patchedDependencies:
+  '@lightningjs/renderer@3.1.1': patches/@lightningjs__renderer@3.1.1.patch
+
 onlyBuiltDependencies:
   - core-js
   - esbuild

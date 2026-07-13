@@ -33,7 +33,11 @@ const preview: Preview = {
       context.tags.includes('overrideDecorator') ? (
         <Story />
       ) : (
-        <StorybookDecorator story={Story} tags={context.tags} />
+        <StorybookDecorator
+          story={Story}
+          tags={context.tags}
+          canvasOptions={context.parameters.canvasOptions}
+        />
       ),
   ],
 };
