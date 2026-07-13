@@ -5,6 +5,12 @@ import { describe, expect, it } from 'vitest';
 import type { LightningViewElementProps, LightningViewElementStyle } from '../types';
 import { LightningViewElement } from './LightningViewElement';
 
+type ThreeChildren = [
+  LightningViewElement,
+  LightningViewElement,
+  LightningViewElement,
+];
+
 // A minimal stand-in for a renderer CoreNode: just the props the element
 // reads/writes plus no-op event/animation hooks.
 function createMockNode(props: Record<string, unknown> = {}) {
@@ -260,27 +266,27 @@ describe('LightningViewElement same-parent child moves', () => {
 
   it('reorders children[] when a same-parent move targets an earlier sibling', () => {
     const { parent, children } = createParentAndChildren(3);
-    const [a, b, c] = children;
+    const [a, b, c] = children as ThreeChildren;
 
     // Move c before a — a keyed reorder React performs via insertBefore.
-    parent.insertChild(c!, a!);
+    parent.insertChild(c, a);
 
     expect(parent.children).toEqual([c, a, b]);
   });
 
   it('reorders children[] when a same-parent move targets the end', () => {
     const { parent, children } = createParentAndChildren(3);
-    const [a, b, c] = children;
+    const [a, b, c] = children as ThreeChildren;
 
     // Move a to the end (no beforeChild).
-    parent.insertChild(a!);
+    parent.insertChild(a);
 
     expect(parent.children).toEqual([b, c, a]);
   });
 
   it('emits childMoved (not childAdded/childRemoved) so the flexbox plugin reindexes without tearing down the node', () => {
     const { parent, children } = createParentAndChildren(3);
-    const [a, , c] = children;
+    const [a, , c] = children as ThreeChildren;
 
     const moved: Array<[unknown, number, number]> = [];
     const added: unknown[] = [];
@@ -292,7 +298,7 @@ describe('LightningViewElement same-parent child moves', () => {
     parent.on('childAdded', (child) => added.push(child));
     parent.on('childRemoved', (child) => removed.push(child));
 
-    parent.insertChild(c!, a!);
+    parent.insertChild(c, a);
 
     expect(moved).toEqual([[c, 2, 0]]);
     expect(added).toEqual([]);
@@ -301,23 +307,23 @@ describe('LightningViewElement same-parent child moves', () => {
 
   it('does not touch the child node parent/lifecycle on a same-parent move', () => {
     const { parent, children } = createParentAndChildren(3);
-    const [a, , c] = children;
-    const nodeBefore = c!.node;
+    const [a, , c] = children as ThreeChildren;
+    const nodeBefore = c.node;
 
-    parent.insertChild(c!, a!);
+    parent.insertChild(c, a);
 
-    expect(c!.parent).toBe(parent);
-    expect(c!.node).toBe(nodeBefore);
+    expect(c.parent).toBe(parent);
+    expect(c.node).toBe(nodeBefore);
   });
 
   it('is a no-op inserting a child before itself', () => {
     const { parent, children } = createParentAndChildren(3);
-    const [a, b, c] = children;
+    const [a, b, c] = children as ThreeChildren;
 
     const moved: unknown[] = [];
     parent.on('childMoved', () => moved.push(true));
 
-    parent.insertChild(b!, b!);
+    parent.insertChild(b, b);
 
     expect(parent.children).toEqual([a, b, c]);
     expect(moved).toEqual([]);

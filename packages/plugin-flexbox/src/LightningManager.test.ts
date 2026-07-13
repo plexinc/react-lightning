@@ -87,7 +87,7 @@ async function computedOrder(manager: LightningManager, ids: number[]): Promise<
   const elementMap = (yoga as unknown as { _elementMap: Map<number, ManagerNodeLike> })._elementMap;
 
   return [...ids]
-    .map((id) => ({ id, x: elementMap.get(id)!.node.getComputedLeft() }))
+    .map((id) => ({ id, x: (elementMap.get(id) as ManagerNodeLike).node.getComputedLeft() }))
     .sort((a, b) => a.x - b.x)
     .map((entry) => entry.id);
 }
@@ -149,7 +149,7 @@ async function setup() {
 function moveChild(parent: FakeElement, fromIndex: number, toIndex: number): void {
   const [child] = parent.children.splice(fromIndex, 1);
 
-  parent.children.splice(toIndex, 0, child!);
+  parent.children.splice(toIndex, 0, child as FakeElement);
   parent.emit('childMoved', child, fromIndex, toIndex);
 }
 
