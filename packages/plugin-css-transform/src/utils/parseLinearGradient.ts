@@ -211,7 +211,13 @@ export function parseLinearGradient(
     const colorText = posMatch ? segment.slice(0, posMatch.index).trim() : segment;
 
     try {
-      colors.push(htmlColorToLightningColor(colorText));
+      const color = htmlColorToLightningColor(colorText);
+
+      if (color == null) {
+        return undefined;
+      }
+
+      colors.push(color);
     } catch {
       return undefined;
     }
