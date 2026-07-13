@@ -1147,7 +1147,7 @@ export class LightningViewElement<
     const inFlight = this._animTargets.get(key);
 
     if (
-      (this.node as Record<PropertyKey, unknown>)[key] === value &&
+      (this.node as unknown as Record<PropertyKey, unknown>)[key] === value &&
       (inFlight === undefined || inFlight === value)
     ) {
       return noopAnimationController;
