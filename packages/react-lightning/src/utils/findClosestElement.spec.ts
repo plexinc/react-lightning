@@ -436,3 +436,29 @@ suite('getOverlap', () => {
     });
   });
 });
+
+describe('perpendicular-axis clamping (beam semantics)', () => {
+  // EPG-shaped layout: moving down from an airing cell must land on the next
+  // row's wide airings group (which overlaps the source), not the small
+  // channel-header leaf sitting far to the left. Center-based cross-axis
+  // distance used to pick the header. Same shape sideways for the tall case.
+  describe('wide overlapping group beats a small off-axis leaf going down', () => {
+    const elements = createLayout(1920, 1080, [
+      { x: 900, y: 700, w: 400, h: 88 }, // source: focused airing cell
+      { x: 431, y: 796, w: 104, h: 88 }, // next row's channel header
+      { x: 543, y: 796, w: 1376, h: 88 }, // next row's airings group
+    ]);
+
+    runTestsOnElements(elements, [[1, Direction.Down, 3]]);
+  });
+
+  describe('tall overlapping group beats a small off-axis leaf going right', () => {
+    const elements = createLayout(1920, 1080, [
+      { x: 100, y: 500, w: 200, h: 100 }, // source
+      { x: 400, y: 100, w: 100, h: 100 }, // small leaf far above
+      { x: 400, y: 150, w: 100, h: 800 }, // tall group overlapping the source row
+    ]);
+
+    runTestsOnElements(elements, [[1, Direction.Right, 3]]);
+  });
+});

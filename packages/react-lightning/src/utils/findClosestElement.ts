@@ -1,6 +1,10 @@
 import { Direction } from '../focus/Direction';
 import type { LightningElement } from '../types';
 
+function clampToSpan(value: number, start: number, size: number): number {
+  return Math.max(start, Math.min(value, start + size));
+}
+
 type Dimensions = {
   w: number;
   h: number;
@@ -33,9 +37,13 @@ function getDistance(direction: Direction, source: Dimensions, target: Dimension
   let targetX: number;
   let targetY: number;
 
+  // On the axis perpendicular to the direction, measure to the closest point
+  // of the target's span instead of its center (native beam semantics). A
+  // row-spanning group whose center sits far off-axis would otherwise lose to
+  // a small nearby leaf even when it overlaps the source dead-on.
   switch (direction) {
     case Direction.Up:
-      targetX = target.centerX;
+      targetX = clampToSpan(source.centerX, target.x, target.w);
       targetY = target.y + target.h;
 
       if (targetY > source.centerY) {
@@ -45,7 +53,7 @@ function getDistance(direction: Direction, source: Dimensions, target: Dimension
       break;
     case Direction.Right:
       targetX = target.x;
-      targetY = target.centerY;
+      targetY = clampToSpan(source.centerY, target.y, target.h);
 
       if (targetX < source.centerX) {
         return null;
@@ -53,7 +61,7 @@ function getDistance(direction: Direction, source: Dimensions, target: Dimension
 
       break;
     case Direction.Down:
-      targetX = target.centerX;
+      targetX = clampToSpan(source.centerX, target.x, target.w);
       targetY = target.y;
 
       if (targetY < source.centerY) {
@@ -63,7 +71,7 @@ function getDistance(direction: Direction, source: Dimensions, target: Dimension
       break;
     case Direction.Left:
       targetX = target.x + target.w;
-      targetY = target.centerY;
+      targetY = clampToSpan(source.centerY, target.y, target.h);
 
       if (targetX > source.centerX) {
         return null;
@@ -115,14 +123,14 @@ function getAlignment(direction: Direction, source: Dimensions, overlap: number)
   return bias * 5;
 }
 
-function getDisplacement(
-  direction: Direction,
-  { w: w1, h: h1, centerX: cx1, centerY: cy1 }: Dimensions,
-  { centerX: cx2, centerY: cy2 }: Dimensions,
-) {
+function getDisplacement(direction: Direction, source: Dimensions, target: Dimensions) {
   const isHorizontal = direction & Direction.Horizontal;
-  const distance = isHorizontal ? cy2 - cy1 : cx2 - cx1;
-  const bias = isHorizontal ? h1 / 2 : w1 / 2;
+  // Same clamped-point rule as getDistance: an overlapping target has no
+  // perpendicular displacement, however wide or tall it is.
+  const distance = isHorizontal
+    ? clampToSpan(source.centerY, target.y, target.h) - source.centerY
+    : clampToSpan(source.centerX, target.x, target.w) - source.centerX;
+  const bias = isHorizontal ? source.h / 2 : source.w / 2;
   const weight = isHorizontal ? 30 : 2;
 
   return Math.abs((distance + bias) * weight);
@@ -143,7 +151,7 @@ export function getOverlap(
       length = x1 + w1 > x2 && x1 + w1 < x2 + w2 ? x1 + w1 - x2 : 0;
       break;
     case Direction.Down:
-      length = y1 + w1 > y2 && y1 + w1 < y2 + h2 ? y1 + h1 - y2 : 0;
+      length = y1 + h1 > y2 && y1 + h1 < y2 + h2 ? y1 + h1 - y2 : 0;
       break;
     case Direction.Left:
       length = x1 > x2 && x1 < x2 + w2 ? x2 + w2 - x1 : 0;
