@@ -428,6 +428,37 @@ export class LayoutManager<T> {
     return this._binarySearchStart(offset);
   }
 
+  /**
+   * Exact item at a main+cross position. `findIndexAtOffset` alone returns the row's column 0
+   * in a multi-column grid regardless of the caller's cross position.
+   */
+  findIndexAt(offset: number, crossOffset: number): number {
+    const start = this.findIndexAtOffset(offset);
+
+    if (start < 0 || this._numColumns === 1) {
+      return start;
+    }
+
+    const rowOffset = this._layouts[start]?.offset;
+    let last = start;
+
+    for (let i = start; i < this._layoutCount; i++) {
+      const layout = this._layouts[i];
+
+      if (!layout || layout.offset !== rowOffset) {
+        break;
+      }
+
+      last = i;
+
+      if (crossOffset < layout.crossOffset + layout.crossSize) {
+        return i;
+      }
+    }
+
+    return last;
+  }
+
   getVisibleRange(
     scrollOffset: number,
     viewportSize: number,
