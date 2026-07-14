@@ -6,6 +6,11 @@ export interface Focusable extends EventNotifier<FocusEvents<Focusable>> {
   focusable: boolean;
   focus: () => void;
   blur: () => void;
+  /**
+   * Invoked for focus/blur bubbling up from a focused descendant (tvOS/web parity; the focus
+   * path alone doesn't reach plain wrapper views). `target` is the originating element.
+   */
+  bubbleFocusEvent?(type: 'focus' | 'blur', target: Focusable): void;
 }
 
 export interface FocusEvents<T> {

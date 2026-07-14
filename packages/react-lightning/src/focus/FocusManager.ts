@@ -931,6 +931,10 @@ export class FocusManager<
       curr = curr!.focusedElement;
     }
 
+    const oldLeaf = oldPath.length > 0 ? (oldPath[oldPath.length - 1] ?? null) : null;
+    const newLeaf = newLength > 0 ? (newPath[newLength - 1] ?? null) : null;
+    const leafChanged = oldLeaf !== newLeaf;
+
     // Blur removed elements (leaf-first)
     for (let i = oldPath.length - 1; i >= divergenceIndex; i--) {
       const removedFocus = oldPath[i];
@@ -939,6 +943,10 @@ export class FocusManager<
         removedFocus.blur();
         this._eventEmitter.emit('blurred', removedFocus);
       }
+    }
+
+    if (leafChanged && oldLeaf) {
+      this._bubbleFocusEvent('blur', oldLeaf, oldPath, divergenceIndex);
     }
 
     // Focus newly added elements (root-first)
@@ -951,7 +959,27 @@ export class FocusManager<
       }
     }
 
+    if (leafChanged && newLeaf) {
+      this._bubbleFocusEvent('focus', newLeaf, newPath, divergenceIndex);
+    }
+
     layer.focusPath = newPath;
     this._eventEmitter.emit('focusPathChanged', newPath);
+  }
+
+  /**
+   * tvOS/web bubble focus through plain wrapper views; the focus path only reaches focus nodes,
+   * so deliver to the remaining ancestors (skip at/past `divergenceIndex`, they fired their own).
+   */
+  private _bubbleFocusEvent(type: 'focus' | 'blur', target: T, path: T[], divergenceIndex: number): void {
+    let curr: T | null | undefined = target.parent;
+
+    while (curr) {
+      if (path.indexOf(curr, divergenceIndex) === -1) {
+        curr.bubbleFocusEvent?.(type, target);
+      }
+
+      curr = curr.parent;
+    }
   }
 }

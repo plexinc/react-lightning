@@ -816,4 +816,104 @@ describe('FocusManager', () => {
       expect(focusManager.focusPath).toEqual([leaf]);
     });
   });
+  describe('focus event bubbling', () => {
+    it('bubbles focus to ancestor elements that are not focus nodes', () => {
+      const group = createMockElement(1, 'group');
+      const wrapper = createMockElement(2, 'wrapper');
+      const tile = createMockElement(3, 'tile');
+
+      wrapper.parent = group;
+      tile.parent = wrapper;
+
+      const groupBubble = (group.bubbleFocusEvent = vi.fn());
+      const wrapperBubble = (wrapper.bubbleFocusEvent = vi.fn());
+
+      // Registers the group node implicitly; group and tile join the path in
+      // one recalculation.
+      focusManager.addElement(tile, group, { autoFocus: true });
+
+      // The wrapper sits between two focus nodes in the element tree; it must
+      // hear the focus the way a plain View does on tvOS/web.
+      expect(wrapperBubble).toHaveBeenCalledWith('focus', tile);
+      // Elements that just joined the path fired their own focus(); no
+      // duplicate bubbled call.
+      expect(groupBubble).not.toHaveBeenCalled();
+    });
+
+    it('re-fires on path ancestors when the leaf changes under them', () => {
+      const group = createMockElement(1, 'group');
+      const wrapperA = createMockElement(2, 'wrapperA');
+      const wrapperB = createMockElement(3, 'wrapperB');
+      const tileA = createMockElement(4, 'tileA');
+      const tileB = createMockElement(5, 'tileB');
+
+      wrapperA.parent = group;
+      wrapperB.parent = group;
+      tileA.parent = wrapperA;
+      tileB.parent = wrapperB;
+
+      const groupBubble = (group.bubbleFocusEvent = vi.fn());
+      const wrapperABubble = (wrapperA.bubbleFocusEvent = vi.fn());
+      const wrapperBBubble = (wrapperB.bubbleFocusEvent = vi.fn());
+
+      focusManager.addElement(tileA, group, { autoFocus: true });
+      focusManager.addElement(tileB, group);
+
+      groupBubble.mockClear();
+      wrapperABubble.mockClear();
+
+      focusManager.focus(tileB);
+
+      expect(wrapperABubble).toHaveBeenCalledWith('blur', tileA);
+      expect(wrapperBBubble).toHaveBeenCalledWith('focus', tileB);
+      // The group stayed on the path, so it hears both, like a wrapper on
+      // tvOS hears focus/blur per leaf change.
+      expect(groupBubble).toHaveBeenCalledWith('blur', tileA);
+      expect(groupBubble).toHaveBeenCalledWith('focus', tileB);
+    });
+
+    it('bubbles the old leaf blur before the new leaf focus', () => {
+      const group = createMockElement(1, 'group');
+      const wrapperA = createMockElement(2, 'wrapperA');
+      const wrapperB = createMockElement(3, 'wrapperB');
+      const tileA = createMockElement(4, 'tileA');
+      const tileB = createMockElement(5, 'tileB');
+
+      wrapperA.parent = group;
+      wrapperB.parent = group;
+      tileA.parent = wrapperA;
+      tileB.parent = wrapperB;
+
+      const order: string[] = [];
+
+      wrapperA.bubbleFocusEvent = (type) => order.push(`a:${type}`);
+      wrapperB.bubbleFocusEvent = (type) => order.push(`b:${type}`);
+
+      focusManager.addElement(tileA, group, { autoFocus: true });
+      focusManager.addElement(tileB, group);
+      order.length = 0;
+
+      focusManager.focus(tileB);
+
+      expect(order).toEqual(['a:blur', 'b:focus']);
+    });
+
+    it('does not bubble when the leaf is unchanged', () => {
+      const group = createMockElement(1, 'group');
+      const wrapper = createMockElement(2, 'wrapper');
+      const tile = createMockElement(3, 'tile');
+
+      wrapper.parent = group;
+      tile.parent = wrapper;
+
+      const wrapperBubble = (wrapper.bubbleFocusEvent = vi.fn());
+
+      focusManager.addElement(tile, group, { autoFocus: true });
+      wrapperBubble.mockClear();
+
+      focusManager.focus(tile);
+
+      expect(wrapperBubble).not.toHaveBeenCalled();
+    });
+  });
 });

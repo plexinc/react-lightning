@@ -926,6 +926,15 @@ export class LightningViewElement<
     }
   }
 
+  /** Deliver a focus/blur event bubbling up from a focused descendant. */
+  public bubbleFocusEvent(type: 'focus' | 'blur', target: LightningElement): void {
+    if (type === 'focus') {
+      this.props.onFocus?.(target);
+    } else {
+      this.props.onBlur?.(target);
+    }
+  }
+
   public render(): void {
     this._scheduleUpdate();
   }
