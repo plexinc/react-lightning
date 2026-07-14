@@ -1,5 +1,56 @@
 # @plextv/react-lightning
 
+## 0.4.3-alpha.0
+
+### Patch Changes
+
+- e2a5e11: Fix flattened elements leaking when they run a reanimated exit animation. A layout-only view flattens to a placeholder node, and a placeholder's `animate()` is a no-op that never emits `stopped`. Reanimated defers node removal until the exit animation finishes, so on a flattened wrapper the finish never fired, the deferred destroy never ran, and the subtree (and its real image descendants) stayed on the scene forever, stacking on every remount. Materialize the element when a deferred-removal handler is attached so the exit animation runs on a real node and completes.
+- 5237e31: Add a `flattenLayoutViews` render option: layout-only Views (no background, border, clip, non-neutral alpha/transform, or transition) skip renderer node creation entirely. The element keeps a lightweight placeholder, descendants attach to the nearest materialized ancestor, and layout positions accumulate across the flattened chain (folded at the layout write funnels, unwound in `getRelativePosition`/`onLayout`). A flattened element materializes a real node on the first prop that needs one (sticky, so per-focus style toggles don't churn nodes). Inert RN-layer props (handlers, testID) don't prevent flattening; visual props at neutral values (color 0, alpha 1, scale 1) don't either. Off by default.
+- 8d0b8e8: Fix flattened content not scrolling: a scroll handler (or any code) that writes a flattened element's position straight through `node.x`/`node.y`, bypassing `setProps`, now folds through to the hoisted children. The placeholder's `x`/`y` are accessors that notify the owning element, which re-pushes the offset to descendants. Without this, a direct write landed on the inert placeholder and the content only jumped to its final position on the next React commit (no animation).
+- 3a9a0c7: A FocusGroup with no focusable descendant is now skipped by spatial navigation and autoFocus instead of acting as a focus stop. Groups only delegate focus to their children, so a group wrapping non-interactive content (e.g. a list section header) shouldn't be a target; real leaves (Pressable, a `focusable` View) are unaffected. Effective focusability tracks `hasFocusableChildren` and propagates up the ancestor chain, so a group flips back the moment a focusable child mounts (or its last one is removed).
+- 01a42e4: fix(react-lightning): clear a removed border's shader on full restyles
+
+  The keep-shader guard (added so reanimated's partial pushes don't square off a rounded node) inferred "partial" from "no shader-relevant prop present". A full restyle that dropped a border matched that too, so a removed focus-ring border kept painting. It now gates on the PARTIAL_STYLE marker: a reconciler snapshot recomputes (and clears) the shader, while reanimated and imperative single-key style sets keep it. Imperative `el.style.x =` pushes are marked PARTIAL_STYLE too.
+
+- 7005125: fix(flexbox): withhold paint until first layout to avoid the async-flex origin flash
+
+  Flex layout is computed asynchronously (in a worker), so a definite-sized node mounts and paints at its pre-layout origin (0,0) for a frame or two before the layout result moves it. A node now keeps its rendered alpha at 0 from mount until its first layout resolves, then restores the styled alpha (`withholdPaintUntilLayout` / `releaseWithheldPaint`). Zero-sized and already-invisible nodes are skipped, and subtrees detached from flex layout are released so they can never be stranded invisible.
+
+- 66c2c93: feat(focus): focus-when-ready, arrival-not-mount autoFocus, and destinations-on-arrival
+
+  `FocusManager.focus()` no longer drops a request for an element that isn't registered or focusable yet — it queues it and resolves the moment the element becomes ready, so callers don't have to poll across frames. A later-mounting `autoFocus` child no longer steals live focus on registration (a new `focusCommitted` flag gates the upgrade), matching native `TVFocusGuideView`, which forwards focus on arrival rather than on mount. And `destinations` are now honoured on arrival (first visit without `focusRedirect`, every visit with it), so focus forwards to a declared destination then remembers the last-focused child.
+
+- 9beb550: fix(image+border): flatten array styles on Image and paint/clear border shaders on live nodes
+
+  The RN `Image` component built its node style with an object spread (`{ ...style, w, h }`), so an RN style array (`style={[a, b]}`) became numeric-keyed garbage and its `width`/`height`/`borderRadius` were silently dropped (the array-flatten polyfill only ran when the style reached `setProps` still an array). `Image` now flattens with `flattenStyles` before spreading.
+
+  Border shaders can now be toggled on an already-mounted node. `border` and `borderColor` were missing from the set of style props that force the shader-creating slow path, so toggling a plain border (e.g. a focus ring) fast-pathed straight onto the node and never created a `Border` shader. A node that already carries a shader now always takes the slow path, and removing the border clears the shader (resetting the node to the stage default) instead of leaving it painting.
+
+  Updating an existing shader's props in place now keys off whether the prop exists, not whether its current value is truthy. Previously a prop whose current value was falsy (e.g. a transparent `border-color` of `0`) was skipped, so toggling a focus-ring border from transparent to a visible color on a mounted node was silently dropped and the ring never appeared.
+
+- 6e50057: fix(input): normalize key events and stop swallowing held-key auto-repeat
+
+  The key pipeline no longer drops OS auto-repeat events. Holding a directional key now keeps bubbling `onKeyDown` events (with `repeat: true`) through the focus tree, so held keys keep navigating and handlers can implement held-key/long-press behavior without re-deriving repeats from raw DOM listeners. The long-press duration is now measured from the initial press (the press timestamp is no longer reset by each repeat), so a held key still resolves to `onLongPress` on release.
+
+  Key events are also normalized into a consistent shape via a new `normalizeKeyEvent` helper: `keyCode` maps to `remoteKey` (falling back to `Keys.Unknown`), `repeat` is preserved, and `preventDefault` is now bound — previously the raw DOM method was copied unbound, so calling `event.preventDefault()` from a handler threw "Illegal invocation". `currentTarget` is now part of the `KeyEvent` type rather than bolted on during bubbling.
+
+- b2492c6: Handle same-parent insertChild as a move so reordered children re-layout in the new order
+- 3f4ed43: fix(react-lightning): keep the rounded/border shader on partial style updates
+
+  A partial style update (reanimated pushing just opacity/transform straight to
+  setProps) recomputed the node's shader from that partial style, found no
+  borderRadius/border, and cleared the Rounded shader. Any animated rounded node
+  squared off the moment reanimated touched it. Only rebuild or clear the shader
+  when the update actually carries a shader-relevant prop (or an explicit shader
+  override); otherwise keep the existing one.
+
+- 660ae8d: feat(flexbox): measure text synchronously in Yoga for wrapping and intrinsic sizing
+
+  Text leaves are now measured during Yoga layout (via msdf font metrics passed through the new `fonts` option) instead of relying solely on the renderer's async texture measurement, so text wraps and sizes correctly within flex layouts. The text node's explicit width/height is cleared when it becomes a measured leaf so the measure function — not a stale renderer-set width — drives its size, and `react-lightning` emits a `textChanged` signal so recycled/updated text re-measures.
+
+- f6bee05: Add an opt-in `roundedClipping` render option: a node with borderRadius + clipping (overflow hidden) clips its children to the rounded rect, like the other RN platforms. Implemented via the renderer's stencil clip (`clipRadius`), so it costs no extra textures, nests, and works for text and images.
+- 43594e7: fix(text): support FormattedMessage
+
 ## 0.4.2
 
 ### Patch Changes

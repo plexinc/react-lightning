@@ -1,5 +1,58 @@
 # @plextv/react-native-lightning
 
+## 0.4.3-alpha.0
+
+### Patch Changes
+
+- 58a3c4d: Add a findNodeHandle export that returns the element ref instead of throwing (react-native-web's re-export throws unconditionally). Lightning focus APIs (setDestinations, focus hints) take element refs directly, so shared RN code that funnels refs through findNodeHandle now works unchanged.
+- 9beb550: fix(image+border): flatten array styles on Image and paint/clear border shaders on live nodes
+
+  The RN `Image` component built its node style with an object spread (`{ ...style, w, h }`), so an RN style array (`style={[a, b]}`) became numeric-keyed garbage and its `width`/`height`/`borderRadius` were silently dropped (the array-flatten polyfill only ran when the style reached `setProps` still an array). `Image` now flattens with `flattenStyles` before spreading.
+
+  Border shaders can now be toggled on an already-mounted node. `border` and `borderColor` were missing from the set of style props that force the shader-creating slow path, so toggling a plain border (e.g. a focus ring) fast-pathed straight onto the node and never created a `Border` shader. A node that already carries a shader now always takes the slow path, and removing the border clears the shader (resetting the node to the stage default) instead of leaving it painting.
+
+  Updating an existing shader's props in place now keys off whether the prop exists, not whether its current value is truthy. Previously a prop whose current value was falsy (e.g. a transparent `border-color` of `0`) was skipped, so toggling a focus-ring border from transparent to a visible color on a mounted node was silently dropped and the ring never appeared.
+
+- 48f2025: fix(pressable): expose `focused` to function children
+
+  `Pressable` tracked only `{ pressed }` in state and passed that to its style/children render functions, so `focused` was always `undefined`. Every focus-driven visual built on RN's `({ focused }) => …` contract — focus rings, focus scale — was dead on Lightning. It also only wired `onFocus`/`onBlur` to the node when the consumer passed those callbacks, so a focusable with no listeners tracked nothing.
+
+  `Pressable` now tracks `focused` in state, updates it on focus/blur regardless of whether the consumer passes `onFocus`/`onBlur` (still forwarding to them), and passes `{ focused, pressed }` to its function children — matching React Native. The `pressed` setters no longer replace the whole state object, so a keypress can't clobber `focused`.
+
+- Updated dependencies [6ced46f]
+- Updated dependencies [e2a5e11]
+- Updated dependencies [5237e31]
+- Updated dependencies [8d0b8e8]
+- Updated dependencies [df7da6a]
+- Updated dependencies [69653c6]
+- Updated dependencies [5e69f9c]
+- Updated dependencies [c34f03c]
+- Updated dependencies [ec4f817]
+- Updated dependencies [3a9a0c7]
+- Updated dependencies [4a7e3a4]
+- Updated dependencies [f31d1d1]
+- Updated dependencies [01a42e4]
+- Updated dependencies [7005125]
+- Updated dependencies [15fb74a]
+- Updated dependencies [66c2c93]
+- Updated dependencies [9beb550]
+- Updated dependencies [6e50057]
+- Updated dependencies [b2492c6]
+- Updated dependencies [3f4ed43]
+- Updated dependencies [660ae8d]
+- Updated dependencies [658f68e]
+- Updated dependencies [dded826]
+- Updated dependencies [8d993ca]
+- Updated dependencies [f6bee05]
+- Updated dependencies [43594e7]
+- Updated dependencies [0647e88]
+- Updated dependencies [7f54f81]
+- Updated dependencies [f2f0c11]
+  - @plextv/react-lightning-plugin-css-transform@0.4.3-alpha.0
+  - @plextv/react-lightning@0.4.3-alpha.0
+  - @plextv/react-lightning-plugin-flexbox@0.4.3-alpha.0
+  - @plextv/react-lightning-components@0.4.4-alpha.0
+
 ## 0.4.2
 
 ### Patch Changes

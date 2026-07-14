@@ -1,5 +1,44 @@
 # @plextv/react-lightning-components
 
+## 0.4.4-alpha.0
+
+### Patch Changes
+
+- 658f68e: feat(virtuallist): getLayout ref API and skipChildFocusScroll opt-out for FlashList parity
+
+  `VirtualListRef` now exposes `getLayout(index)`, returning the scroll-space `{ x, y, width, height }` rectangle of an item (or `undefined` when out of range) — mirroring FlashList's per-item layout query for callers that interpolate row positions against the scroll offset (crossfade/parallax). A new `skipChildFocusScroll` prop opts out of VirtualList's internal focus-follow scroll: a focused child crossing a cell boundary still resolves and persists `focusedIndex`, but the list no longer scrolls the cell into view, letting the app layer own scrolling (e.g. a row that drives `scrollToIndex` from its own authoritative focused index). Both are additive — default behaviour is unchanged.
+
+- 0647e88: VirtualList cells now pin their FlexRoot's cross axis to the cell's cross size when the list's cross size is definite (explicit style, parent cell bounds, or the flex-allocated outer size), so flex children can fill the cell width/height like a native list cell. Content-derived cross sizes stay unpinned to avoid the measure feedback loop.
+- 7f54f81: VirtualList header and footer now pin their FlexRoot's cross axis under the same definiteness rule as the cells, so flex content (e.g. a stretch Column) fills the list width instead of shrink-fitting to its widest child.
+- f2f0c11: Reveal VirtualList cells off Yoga's `settled` signal instead of wall-clock timers. A cell now reads its final size once layout has converged to a fixpoint and reports it as authoritative, so the LayoutManager skips its stability window and the RevealGate skips its quiet window. Cuts content-paint latency on the main-thread (worker-off) path; worker mode never emits `settled`, so it falls back to the existing timers.
+- Updated dependencies [e2a5e11]
+- Updated dependencies [5237e31]
+- Updated dependencies [8d0b8e8]
+- Updated dependencies [df7da6a]
+- Updated dependencies [69653c6]
+- Updated dependencies [5e69f9c]
+- Updated dependencies [c34f03c]
+- Updated dependencies [ec4f817]
+- Updated dependencies [3a9a0c7]
+- Updated dependencies [4a7e3a4]
+- Updated dependencies [f31d1d1]
+- Updated dependencies [01a42e4]
+- Updated dependencies [7005125]
+- Updated dependencies [15fb74a]
+- Updated dependencies [66c2c93]
+- Updated dependencies [9beb550]
+- Updated dependencies [6e50057]
+- Updated dependencies [b2492c6]
+- Updated dependencies [3f4ed43]
+- Updated dependencies [660ae8d]
+- Updated dependencies [dded826]
+- Updated dependencies [8d993ca]
+- Updated dependencies [f6bee05]
+- Updated dependencies [43594e7]
+- Updated dependencies [f2f0c11]
+  - @plextv/react-lightning@0.4.3-alpha.0
+  - @plextv/react-lightning-plugin-flexbox@0.4.3-alpha.0
+
 ## 0.4.3
 
 ### Patch Changes

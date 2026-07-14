@@ -1,5 +1,13 @@
 # @plextv/vite-plugin-react-reanimated-lightning
 
+## 0.4.4-alpha.0
+
+### Patch Changes
+
+- Updated dependencies [4a7e3a4]
+- Updated dependencies [e1a8ad2]
+  - @plextv/react-lightning-plugin-reanimated@0.4.3-alpha.0
+
 ## 0.4.3
 
 ### Patch Changes
