@@ -1,5 +1,57 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.4.3-alpha.0
+
+### Patch Changes
+
+- df7da6a: Add a deterministic layout benchmark (synthetic home/details/grid/epg pages run through the real managers) with a baseline gate, so layout changes are checked instead of eyeballed.
+- 69653c6: Logical `start`/`end` position insets now map to yoga's `EDGE_START`/`EDGE_END` (LTR), matching the existing logical margin/padding handling. Previously they were silently dropped, so an absolutely positioned box pinned with `end: 0` fell back to the left edge.
+- 5e69f9c: Measure missing glyphs at the ? fallback advance so text boxes match painted output
+- c34f03c: Reset yoga props to their defaults when a style re-apply drops them
+- ec4f817: Add a synchronous flushLayout() that lays out to a fixpoint, and a settled event that fires once layout converges. Deterministic replacement for the timer-based "has it settled yet" guesses in VirtualList.
+- 4a7e3a4: fix(reanimated): apply animated transforms and replay resting styles to late-attached nodes
+
+  Two gaps stopped a reanimated `transform` (e.g. a scroll-linked `translateY`) from reaching a laid-out node. The flexbox worker proxy filtered every non-flex style key before postMessage, so `transform` was dropped even though the worker-side Yoga already applies it as a top/left offset (and the serializer special-cases transform objects) — let it through. And `useAnimatedStyle` only pushed styles when a shared value changed, so a view that registers after the fact (recycled cell, re-created node) never got the current resting value; `AnimatedStyle` now exposes `applyToView`, which `createAnimatedComponent` calls on registration to replay the last-applied styles. Replay-only on purpose: computing a fresh value at attach time pushed states the normal flow never emitted and broke focus on some nodes.
+
+- f31d1d1: fix(flexbox): parse string `aspectRatio` values so ratio-sized nodes get a box
+
+  React Native accepts `aspectRatio` as a number (`1.5`), a ratio string (`'3/2'`), or a numeric string (`'1.5'`), but the value was passed straight to Yoga's `setAspectRatio`, which only takes a number. String forms became `NaN` and the ratio was silently dropped — so a node sized only by `aspectRatio` plus one dimension (e.g. an image with `aspectRatio: '3/2'` and `height: '65%'` but no width) resolved to zero width and never painted. String ratios are now parsed to a number before being applied.
+
+- 7005125: fix(flexbox): withhold paint until first layout to avoid the async-flex origin flash
+
+  Flex layout is computed asynchronously (in a worker), so a definite-sized node mounts and paints at its pre-layout origin (0,0) for a frame or two before the layout result moves it. A node now keeps its rendered alpha at 0 from mount until its first layout resolves, then restores the styled alpha (`withholdPaintUntilLayout` / `releaseWithheldPaint`). Zero-sized and already-invisible nodes are skipped, and subtrees detached from flex layout are released so they can never be stranded invisible.
+
+- 15fb74a: fix(flexbox): detach removed nodes from the yoga parent so shrink-fit containers shrink
+
+  `removeNode` freed the child's yoga node and spliced the ManagerNode children array, but never called `parent.node.removeChild(child.node)` on the yoga nodes themselves (unlike `detachChildNode`). The freed child stayed in the parent's yoga child list, so on the next layout the parent kept laying it out and a shrink-to-content container never shrank back. Visible as buttons that grow to fit a label on focus but stay expanded after blur once the label is removed. Now the child is detached from its yoga parent before it's freed.
+
+- b2492c6: Handle same-parent insertChild as a move so reordered children re-layout in the new order
+- 660ae8d: feat(flexbox): measure text synchronously in Yoga for wrapping and intrinsic sizing
+
+  Text leaves are now measured during Yoga layout (via msdf font metrics passed through the new `fonts` option) instead of relying solely on the renderer's async texture measurement, so text wraps and sizes correctly within flex layouts. The text node's explicit width/height is cleared when it becomes a measured leaf so the measure function — not a stale renderer-set width — drives its size, and `react-lightning` emits a `textChanged` signal so recycled/updated text re-measures.
+
+- dded826: fix(flexbox): resolve font atlas URLs before they cross into the Yoga worker
+
+  The Yoga worker is bundled inline (`?worker&inline`), so in a production build its `self.location` is a `blob:` URL. A root-relative atlas URL like `/fonts/x.msdf.json` (what `import.meta.env.BASE_URL` produces) can't resolve against a blob base, so the worker's `fetch` threw "is not a valid URL" and font metrics never loaded — text fell back to single-line, unmeasured layout. It only reproduced in built apps; the dev server serves the worker as a real module, so root-relative URLs resolved fine. Atlas URLs are now resolved to absolute against the document URL on the main thread, before the options cross `postMessage`.
+
+- 8d993ca: Resolve percentage translateX/translateY against the node's own size (RN semantics). The css-transform converter used parseInt, which stripped the % and treated the number as pixels; the flexbox plugin now stashes the percentage and resolves it at layout readback, once the node's computed size is known, and keeps emitting the node on passes that don't dirty yoga.
+- f2f0c11: Reveal VirtualList cells off Yoga's `settled` signal instead of wall-clock timers. A cell now reads its final size once layout has converged to a fixpoint and reports it as authoritative, so the LayoutManager skips its stability window and the RevealGate skips its quiet window. Cuts content-paint latency on the main-thread (worker-off) path; worker mode never emits `settled`, so it falls back to the existing timers.
+- Updated dependencies [e2a5e11]
+- Updated dependencies [5237e31]
+- Updated dependencies [8d0b8e8]
+- Updated dependencies [3a9a0c7]
+- Updated dependencies [01a42e4]
+- Updated dependencies [7005125]
+- Updated dependencies [66c2c93]
+- Updated dependencies [9beb550]
+- Updated dependencies [6e50057]
+- Updated dependencies [b2492c6]
+- Updated dependencies [3f4ed43]
+- Updated dependencies [660ae8d]
+- Updated dependencies [f6bee05]
+- Updated dependencies [43594e7]
+  - @plextv/react-lightning@0.4.3-alpha.0
+
 ## 0.4.2
 
 ### Patch Changes

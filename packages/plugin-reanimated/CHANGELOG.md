@@ -1,5 +1,47 @@
 # @plextv/react-lightning-plugin-reanimated
 
+## 0.4.3-alpha.0
+
+### Patch Changes
+
+- 4a7e3a4: fix(reanimated): apply animated transforms and replay resting styles to late-attached nodes
+
+  Two gaps stopped a reanimated `transform` (e.g. a scroll-linked `translateY`) from reaching a laid-out node. The flexbox worker proxy filtered every non-flex style key before postMessage, so `transform` was dropped even though the worker-side Yoga already applies it as a top/left offset (and the serializer special-cases transform objects) — let it through. And `useAnimatedStyle` only pushed styles when a shared value changed, so a view that registers after the fact (recycled cell, re-created node) never got the current resting value; `AnimatedStyle` now exposes `applyToView`, which `createAnimatedComponent` calls on registration to replay the last-applied styles. Replay-only on purpose: computing a fresh value at attach time pushed states the normal flow never emitted and broke focus on some nodes.
+
+- e1a8ad2: Infer reanimated hook dependencies at runtime by tracking shared-value reads. No babel plugin runs on Lightning, so `useAnimatedStyle` / `useDerivedValue` / `useAnimatedReaction` without an explicit dependency array never subscribed to their shared values and only updated on re-renders. Shared values from `useSharedValue` / `makeMutable` now report reads to the active hook, which subscribes to exactly what its updater read (re-collected on every run, so branches are handled). Explicit dependency arrays keep their old behavior.
+- Updated dependencies [6ced46f]
+- Updated dependencies [e2a5e11]
+- Updated dependencies [5237e31]
+- Updated dependencies [8d0b8e8]
+- Updated dependencies [df7da6a]
+- Updated dependencies [69653c6]
+- Updated dependencies [5e69f9c]
+- Updated dependencies [c34f03c]
+- Updated dependencies [ec4f817]
+- Updated dependencies [3a9a0c7]
+- Updated dependencies [4a7e3a4]
+- Updated dependencies [f31d1d1]
+- Updated dependencies [01a42e4]
+- Updated dependencies [58a3c4d]
+- Updated dependencies [7005125]
+- Updated dependencies [15fb74a]
+- Updated dependencies [66c2c93]
+- Updated dependencies [9beb550]
+- Updated dependencies [6e50057]
+- Updated dependencies [48f2025]
+- Updated dependencies [b2492c6]
+- Updated dependencies [3f4ed43]
+- Updated dependencies [660ae8d]
+- Updated dependencies [dded826]
+- Updated dependencies [8d993ca]
+- Updated dependencies [f6bee05]
+- Updated dependencies [43594e7]
+- Updated dependencies [f2f0c11]
+  - @plextv/react-lightning-plugin-css-transform@0.4.3-alpha.0
+  - @plextv/react-lightning@0.4.3-alpha.0
+  - @plextv/react-lightning-plugin-flexbox@0.4.3-alpha.0
+  - @plextv/react-native-lightning@0.4.3-alpha.0
+
 ## 0.4.2
 
 ### Patch Changes

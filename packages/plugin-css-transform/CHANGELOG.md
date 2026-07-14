@@ -1,5 +1,39 @@
 # @plextv/react-lightning-plugin-css-transform
 
+## 0.4.3-alpha.0
+
+### Patch Changes
+
+- 6ced46f: Drop unresolvable CSS keyword colors (`inherit`, `currentColor`, `initial`, `unset`, `revert`) instead of throwing. They have no fixed value to resolve, so they reached the invalid-hex throw and took the whole screen down via the error boundary. Now the property is omitted. Also keep zero-valued transform values (`if (value != null)`), which the previous truthy check dropped.
+- 8d993ca: Resolve percentage translateX/translateY against the node's own size (RN semantics). The css-transform converter used parseInt, which stripped the % and treated the number as pixels; the flexbox plugin now stashes the percentage and resolves it at layout readback, once the node's computed size is known, and keeps emitting the node on passes that don't dirty yoga.
+- Updated dependencies [e2a5e11]
+- Updated dependencies [5237e31]
+- Updated dependencies [8d0b8e8]
+- Updated dependencies [df7da6a]
+- Updated dependencies [69653c6]
+- Updated dependencies [5e69f9c]
+- Updated dependencies [c34f03c]
+- Updated dependencies [ec4f817]
+- Updated dependencies [3a9a0c7]
+- Updated dependencies [4a7e3a4]
+- Updated dependencies [f31d1d1]
+- Updated dependencies [01a42e4]
+- Updated dependencies [7005125]
+- Updated dependencies [15fb74a]
+- Updated dependencies [66c2c93]
+- Updated dependencies [9beb550]
+- Updated dependencies [6e50057]
+- Updated dependencies [b2492c6]
+- Updated dependencies [3f4ed43]
+- Updated dependencies [660ae8d]
+- Updated dependencies [dded826]
+- Updated dependencies [8d993ca]
+- Updated dependencies [f6bee05]
+- Updated dependencies [43594e7]
+- Updated dependencies [f2f0c11]
+  - @plextv/react-lightning@0.4.3-alpha.0
+  - @plextv/react-lightning-plugin-flexbox@0.4.3-alpha.0
+
 ## 0.4.2
 
 ### Patch Changes
