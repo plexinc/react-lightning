@@ -14,6 +14,7 @@ export { FocusGroup, type FocusGroupProps } from './exports/FocusGroup';
 export { Image, type ImageProps } from './exports/Image';
 export { NativeCanvas } from './exports/NativeCanvas';
 export * as Platform from './exports/Platform';
+export * as PixelRatio from './exports/PixelRatio';
 export { Pressable, type PressableProps } from './exports/Pressable';
 export { ScrollView, type ScrollViewProps } from './exports/ScrollView';
 export * as StyleSheet from './exports/StyleSheet';
