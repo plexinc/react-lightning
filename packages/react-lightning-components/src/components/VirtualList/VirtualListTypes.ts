@@ -1,5 +1,5 @@
 import type { ComponentType, ReactElement } from 'react';
-import type { LightningViewElementStyle } from '@plextv/react-lightning';
+import type { LightningElement, LightningViewElementStyle } from '@plextv/react-lightning';
 
 export interface VirtualListRenderItemInfo<T> {
   item: T;
@@ -139,6 +139,13 @@ export interface VirtualListProps<T> {
 
   /** Called when the content dimensions change (e.g. items measured, data changed). */
   onLayout?: (rect: { w: number; h: number }) => void;
+
+  /**
+   * Focus/blur handlers on the list's outer element. Focus events bubble up
+   * from the focused cell like they do on a native FlashList's host view.
+   */
+  onFocus?: (element: LightningElement) => void;
+  onBlur?: (element: LightningElement) => void;
 
   /** Snap scroll alignment when focusing items. Default 'start'. */
   snapToAlignment?: 'center' | 'end' | 'start';

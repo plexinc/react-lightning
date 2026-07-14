@@ -98,6 +98,8 @@ function VirtualListInner<T>(
     viewabilityConfig,
     onLoad,
     onLayout,
+    onFocus,
+    onBlur,
     snapToAlignment = 'start',
     animationDuration = 300,
     autoFocus,
@@ -844,7 +846,9 @@ function VirtualListInner<T>(
         trapFocusLeft={trapFocusLeft}
         trapFocusRight={trapFocusRight}
         trapFocusUp={trapFocusUp}
+        onBlur={onBlur}
         onChildFocused={handleVLFocus}
+        onFocus={onFocus}
         onResize={handleViewportResize}
       >
         <lng-view ref={contentRef} style={contentStyle}>

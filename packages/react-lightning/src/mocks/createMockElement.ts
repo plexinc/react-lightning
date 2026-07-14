@@ -7,6 +7,8 @@ export class MockElement implements Focusable, EventNotifier {
 
   public isFocusGroup = false;
 
+  public bubbleFocusEvent?: (type: 'focus' | 'blur', target: MockElement) => void;
+
   public constructor(
     public id = 0,
     public name = '',
