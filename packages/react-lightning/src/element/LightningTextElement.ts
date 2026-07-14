@@ -48,6 +48,14 @@ export class LightningTextElement extends LightningViewElement<
     if (v !== this._lastEmittedText) {
       this._lastEmittedText = v;
       this.emit('textChanged', this);
+
+      // A fragment nested more than one level deep (Text > Text > string)
+      // must re-fold every aggregating ancestor, not just its direct parent.
+      const parent = this.parent;
+
+      if (parent?.isTextElement) {
+        (parent as LightningTextElement).recomputeChildText();
+      }
     }
   }
 
