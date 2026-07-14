@@ -1,5 +1,5 @@
 ---
-"@plextv/react-lightning": minor
+"@plextv/react-lightning": patch
 ---
 
 fix(input): normalize key events and stop swallowing held-key auto-repeat

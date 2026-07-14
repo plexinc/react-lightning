@@ -1,5 +1,5 @@
 ---
-"@plextv/react-lightning-plugin-flexbox": minor
+"@plextv/react-lightning-plugin-flexbox": patch
 "@plextv/react-lightning": patch
 ---
 
