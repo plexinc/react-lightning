@@ -1902,9 +1902,11 @@ export class LightningViewElement<
     if (
       initial === true &&
       this.isImageElement === false &&
+      this.isTextElement === false &&
       finalProps.color === undefined
     ) {
-      // set default color to 0 for all elements except image elements
+      // Default color 0 for views (renderer default is white). Text and image pick their
+      // own defaults; stamping 0 here would make a colorless Text mount transparent.
       finalProps.color = 0;
     }
 
