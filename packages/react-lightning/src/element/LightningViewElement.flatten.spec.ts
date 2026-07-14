@@ -360,4 +360,63 @@ describe('flattenLayoutViews', () => {
     // never runs, and the leaf leaks on the scene. It must be released.
     expect(destroyNode).toHaveBeenCalledWith(leafNode);
   });
+  describe('zIndex stacking scope', () => {
+    it('materializes a flattened parent when a zIndex child attaches', () => {
+      const root = createElement({ w: 1920, h: 1080, color: 0xff });
+      const wrapper = createElement({ w: 1920, h: 1080 });
+      const nav = createElement({ w: 1920, h: 160, zIndex: 2 });
+
+      root.insertChild(wrapper);
+      wrapper.insertChild(nav);
+
+      // zIndex sorts among real siblings, so the parent must own a real node or the child
+      // competes at the hoist target against unrelated subtrees (nav bar outranking a modal).
+      expect(wrapper.isFlattened).toBe(false);
+      expect(nav.node.parent).toBe(wrapper.node);
+    });
+
+    it('materializes the flattened parent when zIndex arrives after attach', () => {
+      const root = createElement({ w: 1920, h: 1080, color: 0xff });
+      const wrapper = createElement({ w: 1920, h: 1080 });
+      const nav = createElement({ w: 1920, h: 160, color: 0xff000000 });
+
+      root.insertChild(wrapper);
+      wrapper.insertChild(nav);
+
+      expect(wrapper.isFlattened).toBe(true);
+
+      nav.setNodeProp('zIndex', 2);
+
+      expect(wrapper.isFlattened).toBe(false);
+      expect(nav.node.parent).toBe(wrapper.node);
+    });
+
+    it('zIndex 0 does not materialize the parent', () => {
+      const root = createElement({ w: 1920, h: 1080, color: 0xff });
+      const wrapper = createElement({ w: 1920, h: 1080 });
+      const child = createElement({ w: 100, h: 100, color: 0xff000000 });
+
+      root.insertChild(wrapper);
+      wrapper.insertChild(child);
+      child.setNodeProp('zIndex', 0);
+
+      expect(wrapper.isFlattened).toBe(true);
+    });
+
+    it('materializes the flattened parent on a fast-path zIndex style write', async () => {
+      const root = createElement({ w: 1920, h: 1080, color: 0xff });
+      const wrapper = createElement({ w: 1920, h: 1080 });
+      const nav = createElement({ w: 1920, h: 160, color: 0xff000000 });
+
+      root.insertChild(wrapper);
+      wrapper.insertChild(nav);
+
+      nav.setProps({ style: { zIndex: 2 } } as never);
+      await flush();
+
+      expect(wrapper.isFlattened).toBe(false);
+      expect(nav.node.parent).toBe(wrapper.node);
+    });
+  });
 });
+
