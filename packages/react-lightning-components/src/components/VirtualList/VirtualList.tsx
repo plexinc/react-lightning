@@ -495,9 +495,11 @@ function VirtualListInner<T>(
     if (el) {
       const pos = child.getRelativePosition(el);
       const offset = horizontal ? pos.x : pos.y;
+      const crossPos = horizontal ? pos.y : pos.x;
       const offsetInItemSpace = Math.max(0, offset - itemAreaOffset);
+      const crossInItemSpace = Math.max(0, crossPos - paddingCross);
 
-      resolvedIdx = layoutManager.findIndexAtOffset(offsetInItemSpace);
+      resolvedIdx = layoutManager.findIndexAt(offsetInItemSpace, crossInItemSpace);
     }
 
     if (!skipChildFocusScroll) {

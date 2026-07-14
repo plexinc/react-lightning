@@ -647,4 +647,47 @@ describe('LayoutManager', () => {
       expect(lm.updateConfig({ numColumns: 1 })).toBe(false);
     });
   });
+  describe('findIndexAt', () => {
+    it('resolves the exact item in a multi-column row from the cross offset', () => {
+      const lm = new LayoutManager({
+        data: makeData(12),
+        numColumns: 3,
+        cellCrossSize: 200,
+      });
+
+      const rowOffset = lm.getLayout(3)?.offset ?? 0;
+
+      // findIndexAtOffset alone returns the row start (column 0); the cross
+      // offset must pick the actual column.
+      expect(lm.findIndexAt(rowOffset, 0)).toBe(3);
+      expect(lm.findIndexAt(rowOffset, 250)).toBe(4);
+      expect(lm.findIndexAt(rowOffset, 450)).toBe(5);
+    });
+
+    it('clamps a cross offset past the last column to the row end', () => {
+      const lm = new LayoutManager({
+        data: makeData(7),
+        numColumns: 3,
+        cellCrossSize: 200,
+      });
+
+      const lastRowOffset = lm.getLayout(6)?.offset ?? 0;
+
+      // Last row has a single item; any cross offset resolves to it.
+      expect(lm.findIndexAt(lastRowOffset, 550)).toBe(6);
+    });
+
+    it('matches findIndexAtOffset for single-column lists', () => {
+      const lm = new LayoutManager({
+        data: makeData(4),
+        numColumns: 1,
+        cellCrossSize: 200,
+      });
+
+      const offset = lm.getLayout(2)?.offset ?? 0;
+
+      expect(lm.findIndexAt(offset, 9999)).toBe(lm.findIndexAtOffset(offset));
+    });
+  });
 });
+
