@@ -444,6 +444,20 @@ export class LightningViewElement<
     this.recalculateVisibility();
   }
 
+  /**
+   * zIndex sorts among a node's real siblings, so materialize a flattened parent before a
+   * stacking index lands or the hoist lets it outrank unrelated subtrees (nav bar over a modal).
+   */
+  private _containStackingIndex(key: string, value: unknown): void {
+    if (
+      (key === 'zIndex' || key === 'zIndexLocked') &&
+      LightningViewElement._needsRealNode(key, value) &&
+      this._parent?.isFlattened
+    ) {
+      this._parent._materialize();
+    }
+  }
+
   public set focusable(value: boolean) {
     if (this._focusable === value) {
       return;
@@ -493,6 +507,13 @@ export class LightningViewElement<
     this._parent = parent;
 
     if (LightningViewElement.flattenLayoutViewsEnabled) {
+      if (!this._flattened) {
+        const node = this.node as unknown as Record<string, unknown>;
+
+        this._containStackingIndex('zIndex', node.zIndex);
+        this._containStackingIndex('zIndexLocked', node.zIndexLocked);
+      }
+
       const host = parent ? parent._hostNode() : null;
       const offsetX = parent?.isFlattened
         ? parent._flatOffsetX + parent._layoutX
@@ -1064,6 +1085,8 @@ export class LightningViewElement<
         this._materialize();
       }
 
+      this._containStackingIndex(key as string, value);
+
       if (
         (key === 'x' || key === 'y') &&
         typeof value === 'number' &&
@@ -1337,6 +1360,11 @@ export class LightningViewElement<
         this._materialize();
       }
 
+      const staged = lngProps as Record<string, unknown>;
+
+      this._containStackingIndex('zIndex', staged.zIndex);
+      this._containStackingIndex('zIndexLocked', staged.zIndexLocked);
+
       if (typeof lngProps.x === 'number') {
         flattenedMoved = this._flattened && this._layoutX !== lngProps.x;
         this._layoutX = lngProps.x;
@@ -1470,6 +1498,13 @@ export class LightningViewElement<
           break;
         }
       }
+    }
+
+    if (LightningViewElement.flattenLayoutViewsEnabled) {
+      const s = style as Record<string, unknown>;
+
+      this._containStackingIndex('zIndex', s.zIndex);
+      this._containStackingIndex('zIndexLocked', s.zIndexLocked);
     }
 
     const previousOpacity = this.node.alpha;
