@@ -1,5 +1,5 @@
 ---
-"@plextv/react-lightning": minor
+"@plextv/react-lightning": patch
 "@plextv/react-native-lightning": patch
 ---
 

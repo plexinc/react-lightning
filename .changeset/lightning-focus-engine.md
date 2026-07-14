@@ -1,5 +1,5 @@
 ---
-"@plextv/react-lightning": minor
+"@plextv/react-lightning": patch
 ---
 
 feat(focus): focus-when-ready, arrival-not-mount autoFocus, and destinations-on-arrival

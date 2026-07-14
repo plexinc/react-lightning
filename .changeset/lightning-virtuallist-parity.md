@@ -1,5 +1,5 @@
 ---
-"@plextv/react-lightning-components": minor
+"@plextv/react-lightning-components": patch
 ---
 
 feat(virtuallist): getLayout ref API and skipChildFocusScroll opt-out for FlashList parity
