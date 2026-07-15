@@ -179,7 +179,9 @@ function resetFlexPropToDefault(yoga: Yoga, node: Node, prop: FlexProps): void {
       node.setDisplay(mapDisplay(yoga));
       return;
     case 'flexDirection':
-      node.setFlexDirection(mapDirection(yoga));
+      // Fresh yoga nodes are RN-default column (useWebDefaults is off), so a
+      // dropped flexDirection lands back on column, not the CSS default row.
+      node.setFlexDirection(yoga.FLEX_DIRECTION_COLUMN);
       return;
     case 'alignItems':
       node.setAlignItems(mapAlignItems(yoga));
