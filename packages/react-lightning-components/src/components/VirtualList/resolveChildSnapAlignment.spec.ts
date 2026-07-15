@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { LightningElement } from '@plextv/react-lightning';
 
-import { resolveChildSnapAlignment } from './resolveChildSnapAlignment';
+import { resolveChildSnapTarget } from './resolveChildSnapAlignment';
 
 function createMockElement(
   props: Record<string, unknown>,
@@ -11,11 +11,23 @@ function createMockElement(
   return { props, children } as unknown as LightningElement;
 }
 
-describe('resolveChildSnapAlignment', () => {
+describe('resolveChildSnapTarget', () => {
   it('returns the alignment carried by the starting element', () => {
     const cell = createMockElement({ scrollSnapAlign: 'center' });
 
-    expect(resolveChildSnapAlignment(cell)).toBe('center');
+    expect(resolveChildSnapTarget(cell)).toEqual({ align: 'center' });
+  });
+
+  it('returns a pixel offset and prefers it over an alignment on the same element', () => {
+    const cell = createMockElement({ scrollSnapAlign: 'center', scrollSnapOffset: 96 });
+
+    expect(resolveChildSnapTarget(cell)).toEqual({ offset: 96 });
+  });
+
+  it('ignores non-numeric scrollSnapOffset values', () => {
+    const cell = createMockElement({ scrollSnapOffset: '96' });
+
+    expect(resolveChildSnapTarget(cell)).toBeUndefined();
   });
 
   it('descends first children to the row root', () => {
@@ -23,21 +35,21 @@ describe('resolveChildSnapAlignment', () => {
     const flexRoot = createMockElement({}, [row]);
     const cell = createMockElement({}, [flexRoot]);
 
-    expect(resolveChildSnapAlignment(cell)).toBe('center');
+    expect(resolveChildSnapTarget(cell)).toEqual({ align: 'center' });
   });
 
   it('ignores rows that carry no alignment', () => {
     const row = createMockElement({});
     const cell = createMockElement({}, [createMockElement({}, [row])]);
 
-    expect(resolveChildSnapAlignment(cell)).toBeUndefined();
+    expect(resolveChildSnapTarget(cell)).toBeUndefined();
   });
 
   it('ignores values that are not valid alignments', () => {
     const row = createMockElement({ scrollSnapAlign: 'sideways' });
     const cell = createMockElement({}, [row]);
 
-    expect(resolveChildSnapAlignment(cell)).toBeUndefined();
+    expect(resolveChildSnapTarget(cell)).toBeUndefined();
   });
 
   it('stops descending past the depth cap', () => {
@@ -47,6 +59,6 @@ describe('resolveChildSnapAlignment', () => {
       deep = createMockElement({}, [deep]);
     }
 
-    expect(resolveChildSnapAlignment(deep)).toBeUndefined();
+    expect(resolveChildSnapTarget(deep)).toBeUndefined();
   });
 });

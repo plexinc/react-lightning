@@ -5,6 +5,16 @@ export interface FocusScrollTargetParams {
   childSize: number;
   viewportSize: number;
   snapToAlignment: 'start' | 'center' | 'end';
+  /**
+   * Per-item pixel offset (`scrollSnapOffset`): land the child's leading edge
+   * at this viewport coordinate. Wins over `snapToAlignment`.
+   */
+  snapOffset?: number;
+  /**
+   * List-level `snapToItemPadding` (react-native-tvos parity: start subtracts it, center adds
+   * half, end adds it). Falls back to the main-axis padding margins when absent.
+   */
+  snapToItemPadding?: number;
   /** Main-axis start padding (scroll margin). */
   paddingStart: number;
   /** Main-axis end padding (scroll margin). */
@@ -28,6 +38,8 @@ export function resolveFocusScrollTarget({
   childSize,
   viewportSize,
   snapToAlignment,
+  snapOffset,
+  snapToItemPadding,
   paddingStart,
   paddingEnd,
   headerSize,
@@ -36,16 +48,20 @@ export function resolveFocusScrollTarget({
 }: FocusScrollTargetParams): number {
   let target: number;
 
-  switch (snapToAlignment) {
-    case 'center':
-      target = childOffset + childSize / 2 - viewportSize / 2;
-      break;
-    case 'end':
-      target = childOffset + childSize - viewportSize + paddingEnd;
-      break;
-    default:
-      target = childOffset - paddingStart;
-      break;
+  if (snapOffset !== undefined) {
+    target = childOffset - snapOffset;
+  } else {
+    switch (snapToAlignment) {
+      case 'center':
+        target = childOffset + childSize / 2 - viewportSize / 2 + (snapToItemPadding ?? 0) / 2;
+        break;
+      case 'end':
+        target = childOffset + childSize - viewportSize + (snapToItemPadding ?? paddingEnd);
+        break;
+      default:
+        target = childOffset - (snapToItemPadding ?? paddingStart);
+        break;
+    }
   }
 
   if (target > 0 && target <= headerSize) {
