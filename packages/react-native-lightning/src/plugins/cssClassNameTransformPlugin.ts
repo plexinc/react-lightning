@@ -13,6 +13,10 @@ export const cssClassNameTransformPlugin = (): Plugin => {
 
   const cache: Record<string, Record<string, string>> = {};
 
+  // Update payloads only carry changed props, so a style-only update arrives without the
+  // (unchanged) className. Remember the resolved styles per instance or they read as removed.
+  const resolvedClassStyles = new WeakMap<object, Record<string, string>>();
+
   function parseStyle(cssText: string) {
     if (!cache[cssText]) {
       const styleObject: Record<string, string> = {};
@@ -32,8 +36,17 @@ export const cssClassNameTransformPlugin = (): Plugin => {
   }
 
   return {
-    transformProps(_instance, props) {
+    transformProps(instance, props) {
       if (!('className' in props)) {
+        const remembered = resolvedClassStyles.get(instance);
+
+        if (remembered && props.style) {
+          return {
+            ...props,
+            style: { ...remembered, ...props.style },
+          };
+        }
+
         return props;
       }
 
@@ -59,6 +72,8 @@ export const cssClassNameTransformPlugin = (): Plugin => {
           }
         }
       }
+
+      resolvedClassStyles.set(instance, finalStyle as Record<string, string>);
 
       return {
         ...otherProps,

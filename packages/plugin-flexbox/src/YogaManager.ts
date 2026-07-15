@@ -294,7 +294,7 @@ export class YogaManager {
       return;
     }
 
-    index ??= childYogaNode.children.length;
+    index ??= parentYogaNode.children.length;
 
     parentYogaNode.node.insertChild(childYogaNode.node, index);
     parentYogaNode.children.splice(index, 0, childYogaNode);
