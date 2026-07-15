@@ -36,6 +36,7 @@ import { capSelfMeasuredViewport } from './capSelfMeasuredViewport';
 import { computeItemRect } from './computeItemRect';
 import { parseContentStyle } from './parseContentStyle';
 import { resolveCrossSize } from './resolveCrossSize';
+import { resolveOuterFlex } from './resolveOuterFlex';
 import { resolveRevealBoundary } from './resolveRevealBoundary';
 import { resolveSectionSize } from './resolveSectionSize';
 import { resolveVisibleMainSpan } from './resolveVisibleMainSpan';
@@ -738,8 +739,7 @@ function VirtualListInner<T>(
   }, [onLayout, horizontal, totalContentSize, viewportCrossSize]);
 
   const outerStyle: LightningViewElementStyle = {
-    flexGrow: horizontal ? undefined : 1,
-    flexShrink: horizontal ? undefined : 1,
+    ...resolveOuterFlex(horizontal),
     clipping: true,
     boundsMargin: horizontal
       ? [0, drawDistance * 2, 0, drawDistance * 2]
