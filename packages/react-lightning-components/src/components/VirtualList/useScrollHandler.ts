@@ -6,7 +6,7 @@ import type { LayoutManager } from './LayoutManager';
 import type { ScrollEvent } from './VirtualListTypes';
 
 import { createCriticalSpring } from './scrollSpring';
-import { resolveChildSnapAlignment } from './resolveChildSnapAlignment';
+import { resolveChildSnapTarget } from './resolveChildSnapAlignment';
 import { resolveFocusScrollTarget } from './resolveFocusScrollTarget';
 
 // Lightning Magic Remote / mouse support (in the host app) installs this hook
@@ -48,7 +48,9 @@ export interface UseScrollHandlerOptions {
   /** Cross-axis content size. */
   totalCrossSize: number;
   animationDuration: number;
-  snapToAlignment: 'start' | 'center' | 'end';
+  snapToAlignment: 'start' | 'center' | 'end' | 'item';
+  /** List-level snap padding for focus snaps (react-native-tvos parity). */
+  snapToItemPadding?: number;
   onScroll?: (event: ScrollEvent) => void;
   onEndReached?: ((info: { distanceFromEnd: number }) => void) | null;
   onEndReachedThreshold: number | null;
@@ -94,6 +96,7 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     totalCrossSize,
     animationDuration,
     snapToAlignment,
+    snapToItemPadding,
     onScroll,
     onEndReached,
     onEndReachedThreshold,
@@ -267,10 +270,8 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
   function scrollToOffset(offset: number, animated = true): void {
     const clamped = clamp(offset);
 
-    // A focus move fires two scroll requests on Lightning (VirtualList's own
-    // focus-follow and the app's ScrollIntoViewHelper). Ignore the duplicate
-    // so it doesn't restart the spring and re-inject velocity, which shows up
-    // as a small bounce at the end of the settle.
+    // A focus move can fire duplicate scroll requests for the same target; restarting the
+    // spring re-injects velocity and shows as a small bounce at the end of the settle.
     if (
       animated &&
       isAnimatingRef.current &&
@@ -345,13 +346,17 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     const footerSize =
       totalContentSize - itemAreaOffset - layoutManager.totalSize - paddingEnd;
 
+    // A row's own scrollSnapAlign/scrollSnapOffset wins over the list-level alignment,
+    // matching react-native-tvos ("item" defers to rows, markerless rows get 'start').
+    const childTarget = resolveChildSnapTarget(child);
     const target = resolveFocusScrollTarget({
       childOffset,
       childSize,
       viewportSize,
-      // A row's own scrollSnapAlign wins over the list-level alignment,
-      // matching react-native-tvos (snapToAlignment="item" defers to rows).
-      snapToAlignment: resolveChildSnapAlignment(child) ?? snapToAlignment,
+      snapToAlignment:
+        childTarget?.align ?? (snapToAlignment === 'item' ? 'start' : snapToAlignment),
+      snapOffset: childTarget?.offset,
+      snapToItemPadding,
       paddingStart,
       paddingEnd,
       headerSize,

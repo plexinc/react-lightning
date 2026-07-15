@@ -147,8 +147,16 @@ export interface VirtualListProps<T> {
   onFocus?: (element: LightningElement) => void;
   onBlur?: (element: LightningElement) => void;
 
-  /** Snap scroll alignment when focusing items. Default 'start'. */
-  snapToAlignment?: 'center' | 'end' | 'start';
+  /**
+   * Snap alignment for focus scrolls, default 'start'. 'item' defers to each row's own
+   * `scrollSnapAlign`/`scrollSnapOffset`; markerless rows use the list value ('start' under 'item').
+   */
+  snapToAlignment?: 'center' | 'end' | 'item' | 'start';
+  /**
+   * Padding for focus snaps (react-native-tvos `snapToItemPadding`): 'start' lands the row at
+   * this coordinate, 'center' shifts by half, 'end' insets. Defaults to the main-axis padding.
+   */
+  snapToItemPadding?: number;
   /** Duration of scroll animations in ms. Default 300. */
   animationDuration?: number;
 

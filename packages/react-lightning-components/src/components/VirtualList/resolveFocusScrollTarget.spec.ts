@@ -96,4 +96,43 @@ describe('resolveFocusScrollTarget', () => {
       }),
     ).toBe(1000 + 100 - 960);
   });
+
+  it('lands the child at the requested snapOffset, ignoring alignment', () => {
+    expect(
+      resolveFocusScrollTarget({
+        viewportSize: 1920,
+        snapToAlignment: 'center',
+        snapOffset: 96,
+        paddingStart: 48,
+        paddingEnd: 48,
+        headerSize: 0,
+        footerSize: 0,
+        maxScroll: 5000,
+        childOffset: 1000,
+        childSize: 200,
+      }),
+    ).toBe(1000 - 96);
+  });
+
+  it('uses snapToItemPadding over the padding margins (native formulas)', () => {
+    const base = {
+      viewportSize: 1920,
+      snapToItemPadding: 100,
+      paddingStart: 48,
+      paddingEnd: 48,
+      headerSize: 0,
+      footerSize: 0,
+      maxScroll: 5000,
+      childOffset: 1000,
+      childSize: 200,
+    };
+
+    expect(resolveFocusScrollTarget({ ...base, snapToAlignment: 'start' })).toBe(1000 - 100);
+    expect(resolveFocusScrollTarget({ ...base, snapToAlignment: 'center' })).toBe(
+      1000 + 100 - 960 + 50,
+    );
+    expect(
+      resolveFocusScrollTarget({ ...base, snapToAlignment: 'end', childOffset: 3000 }),
+    ).toBe(3000 + 200 - 1920 + 100);
+  });
 });
