@@ -244,8 +244,11 @@ function VirtualListInner<T>(
     : parentCellBounds?.width;
   const measuredOuterCross = horizontal ? measuredSize.h : measuredSize.w;
 
-  const { viewportCrossSize, isDefinite: crossSizeIsDefinite } =
-    resolveCrossSize({
+  const {
+    viewportCrossSize,
+    isDefinite: crossSizeIsDefinite,
+    isEstimate: crossSizeIsEstimate,
+  } = resolveCrossSize({
       horizontal,
       explicitCross,
       parentCross,
@@ -765,6 +768,13 @@ function VirtualListInner<T>(
       return;
     }
 
+    // Never report the default-size guess: callers key layout off this width
+    // (Grid derives numColumns and re-keys the list), so reporting 200 before
+    // anything measured remounts the list in a loop.
+    if (crossSizeIsEstimate) {
+      return;
+    }
+
     const contentW = horizontal ? totalContentSize : viewportCrossSize;
     const contentH = horizontal ? viewportCrossSize : totalContentSize;
     const prev = prevLayoutRef.current;
@@ -773,7 +783,7 @@ function VirtualListInner<T>(
       prevLayoutRef.current = { w: contentW, h: contentH };
       onLayout({ w: contentW, h: contentH });
     }
-  }, [onLayout, horizontal, totalContentSize, viewportCrossSize]);
+  }, [onLayout, horizontal, totalContentSize, viewportCrossSize, crossSizeIsEstimate]);
 
   const outerStyle: LightningViewElementStyle = {
     ...resolveOuterFlex(horizontal),
