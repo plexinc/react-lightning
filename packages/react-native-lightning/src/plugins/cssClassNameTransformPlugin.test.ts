@@ -1,6 +1,14 @@
+import type { LightningElement, Plugin } from '@plextv/react-lightning';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { cssClassNameTransformPlugin } from './cssClassNameTransformPlugin';
+
+type TestProps = { className?: string; style: Record<string, string> };
+
+// transformProps is typed against the element prop union; the plugin only
+// reads className/style, so the test payloads cast through.
+const transform = (plugin: Plugin<LightningElement>, instance: object, props: TestProps) =>
+  plugin.transformProps?.(instance as never, props as never) as TestProps | null | undefined;
 
 const fakeDocument = {
   styleSheets: [
@@ -31,9 +39,9 @@ afterAll(() => {
 describe('cssClassNameTransformPlugin', () => {
   it('resolves className rules into the style object', () => {
     const plugin = cssClassNameTransformPlugin();
-    const instance = {} as never;
+    const instance = {};
 
-    const out = plugin.transformProps?.(instance, {
+    const out = transform(plugin, instance, {
       className: 'r-col',
       style: { display: 'flex' },
     });
@@ -47,16 +55,16 @@ describe('cssClassNameTransformPlugin', () => {
 
   it('keeps class-derived styles on updates that omit className', () => {
     const plugin = cssClassNameTransformPlugin();
-    const instance = {} as never;
+    const instance = {};
 
-    plugin.transformProps?.(instance, {
+    transform(plugin, instance, {
       className: 'r-col',
       style: { display: 'flex' },
     });
 
     // className is unchanged so the update payload omits it; the resolved class
     // styles must still ride along or downstream consumers see them as removed.
-    const out = plugin.transformProps?.(instance, {
+    const out = transform(plugin, instance, {
       style: { display: 'none' },
     });
 
@@ -69,20 +77,20 @@ describe('cssClassNameTransformPlugin', () => {
 
   it('re-resolves when className changes', () => {
     const plugin = cssClassNameTransformPlugin();
-    const instance = {} as never;
+    const instance = {};
 
-    plugin.transformProps?.(instance, { className: 'r-col', style: {} });
-    const out = plugin.transformProps?.(instance, { className: 'r-row', style: {} });
+    transform(plugin, instance, { className: 'r-col', style: {} });
+    const out = transform(plugin, instance, { className: 'r-row', style: {} });
 
     expect(out?.style).toMatchObject({ flexDirection: 'row' });
   });
 
   it('passes through instances that never had a className', () => {
     const plugin = cssClassNameTransformPlugin();
-    const instance = {} as never;
+    const instance = {};
 
-    const props = { style: { display: 'none' } };
-    const out = plugin.transformProps?.(instance, props);
+    const props: TestProps = { style: { display: 'none' } };
+    const out = transform(plugin, instance, props);
 
     expect(out).toBe(props);
   });
