@@ -250,21 +250,19 @@ export function createHostConfig(options?: LightningHostConfigOptions): Lightnin
     },
 
     hideInstance(instance) {
-      instance.style.alpha = 0;
+      instance.setReactHidden(true);
     },
 
     hideTextInstance(textInstance) {
-      textInstance.style.alpha = 0;
+      textInstance.setReactHidden(true);
     },
 
-    unhideInstance(instance) {
-      // Probably need to make this a different property so that we don't
-      // override user-specified alpha values
-      instance.style.alpha = 1;
+    unhideInstance(instance, props) {
+      instance.setReactHidden(false, props);
     },
 
     unhideTextInstance(textInstance): void {
-      textInstance.style.alpha = 1;
+      textInstance.setReactHidden(false);
     },
   };
 }
