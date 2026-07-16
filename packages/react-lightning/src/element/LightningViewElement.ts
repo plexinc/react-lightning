@@ -144,6 +144,7 @@ export class LightningViewElement<
   /** Last requested animation target per style key, for the no-op-skip guard. */
   private _animTargets = new Map<PropertyKey, unknown>();
   private _paintWithheld = false;
+  private _reactHidden = false;
   private _withheldAlpha = 1;
   private _eventEmitter = new EventEmitter<LightningElementEvents>();
   private _deferTarget: LightningElement | null = null;
@@ -1035,6 +1036,29 @@ export class LightningViewElement<
    * Updates existing props with the payload, keeping other unspecified props
    * unchanged.
    */
+  /**
+   * React reconciler hide/unhide (Activity, Suspense). A hidden tree must
+   * release its layout space, not just stop painting.
+   */
+  public setReactHidden(hidden: boolean, props?: Partial<TProps>): void {
+    if (this._reactHidden === hidden) {
+      return;
+    }
+
+    this._reactHidden = hidden;
+
+    const propStyle = (props?.style ?? {}) as Record<string, unknown>;
+    const style: Record<PropertyKey, unknown> = hidden
+      ? { display: 'none', alpha: 0 }
+      : {
+          display: propStyle.display ?? 'flex',
+          alpha: propStyle.alpha ?? propStyle.opacity ?? 1,
+        };
+
+    style[PARTIAL_STYLE] = true;
+    this.setProps({ style } as unknown as Partial<TProps>);
+  }
+
   public setProps(payload: Partial<TProps>): void {
     const { style, transition, ...otherProps } = payload;
 
@@ -1290,6 +1314,16 @@ export class LightningViewElement<
 
     this._stagedUpdates = {};
     this._hasStagedUpdates = false;
+
+    // A React-hidden tree must stay out of layout: a full style push while
+    // hidden would reset display and pop the space back in while invisible.
+    if (this._reactHidden && payload.style) {
+      payload.style = {
+        ...payload.style,
+        display: 'none',
+        alpha: 0,
+      } as typeof payload.style;
+    }
 
     // Fast path: style-only updates where no plugin handles the changed properties
     if (this._canFastPathStyle(payload)) {
