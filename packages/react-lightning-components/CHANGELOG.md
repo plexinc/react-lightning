@@ -1,5 +1,24 @@
 # @plextv/react-lightning-components
 
+## 0.4.4-alpha.1
+
+### Patch Changes
+
+- badb2f6: Bubble focus/blur events up the element tree. tvOS and web deliver focus events to ancestor views (a wrapper View's onFocus fires when a focused descendant changes), but the focus path only reaches registered focus nodes, so handlers on plain wrappers never fired. FocusManager now walks the focused leaf's element ancestry on every leaf change and delivers the event to elements that didn't just fire their own focus()/blur(). VirtualList forwards onFocus/onBlur to its outer element so handlers spread onto a list participate like they do on a native FlashList host view.
+- 0980f51: Resolve the focused VirtualList index with the cross axis. handleVLFocus mapped the focused child back to an item via its main-axis offset alone, which in a multi-column grid identifies only the row: findIndexAtOffset returned the row's first index, the shouldFocus claim then pulled focus to column 0. New LayoutManager.findIndexAt(offset, crossOffset) walks the row's entries and picks the column containing the cross position, so D-pad Down/Up land on the item directly below/above.
+- 18eb21a: Give a vertical VirtualList's outer element a zero flex basis. With the default auto basis, the content plane's explicit height became the flex basis of every ancestor, and one grow-only ancestor (no flexShrink) locked the whole chain at content height (tens of thousands of px). A virtualized list never sizes from its content.
+- 74aefc6: VirtualList understands the native snap props: `snapToAlignment`/`scrollSnapAlign` resolve per child, `scrollSnapOffset` shifts the snap point, and `snapToItemPadding` pads the snapped item against the viewport edge.
+- 75738d7: Keep the React Compiler from caching VirtualList's mutable layout reads. Layout state lives in the LayoutManager and every change (data updates, measurements, reveal re-checks) signals through a bare version-bump state that the compiler's dependency sets never see, so the memoized visible range replayed stale and data arriving after mount never mounted any cells (the footer offset had the same staleness). The render-phase reads now live in two `'use no memo'` hooks (`useVisibleRange`, `useLayoutTotalSize`) whose fresh results downstream scopes key on; the rest of the component stays compiled.
+- 5af32c0: Back-stop the VirtualList reveal gate for cells that never measure. A cell that is visible with an estimated size but has not measured yet (async content still pending) returned `Infinity` from the gate, so no re-check timer was scheduled and every cell below it stayed hidden until an unrelated commit woke the list. Such a cell now counts down the same max window a churning cell already uses, so the rows below it can't be stranded invisibly.
+- Updated dependencies [edaeae2]
+- Updated dependencies [5f304aa]
+- Updated dependencies [895f6a9]
+- Updated dependencies [badb2f6]
+- Updated dependencies [692445d]
+- Updated dependencies [0f901bd]
+  - @plextv/react-lightning@0.4.3-alpha.1
+  - @plextv/react-lightning-plugin-flexbox@0.4.3-alpha.1
+
 ## 0.4.4-alpha.0
 
 ### Patch Changes

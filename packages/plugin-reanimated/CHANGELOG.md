@@ -1,5 +1,21 @@
 # @plextv/react-lightning-plugin-reanimated
 
+## 0.4.3-alpha.1
+
+### Patch Changes
+
+- eea5290: Make `useDerivedValue(() => withTiming(...))` expose the live number reanimated does. It stored the raw animation descriptor, so reading it back for arithmetic (or as a style value) got an object, not a number. Now the derived value ticks from its current value toward the target on the JS thread each frame (timing and spring share the path, since a spring bakes its physics into the easing), so reads stay numeric and styles still animate. Composed programs (`withSequence`/`withRepeat`/`withDelay`) snap to their resting target.
+- Updated dependencies [edaeae2]
+- Updated dependencies [5f304aa]
+- Updated dependencies [895f6a9]
+- Updated dependencies [badb2f6]
+- Updated dependencies [a9a5dc3]
+- Updated dependencies [692445d]
+- Updated dependencies [0f901bd]
+  - @plextv/react-lightning@0.4.3-alpha.1
+  - @plextv/react-native-lightning@0.4.3-alpha.1
+  - @plextv/react-lightning-plugin-flexbox@0.4.3-alpha.1
+
 ## 0.4.3-alpha.0
 
 ### Patch Changes

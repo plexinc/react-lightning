@@ -19,7 +19,10 @@
     "@plextv/vite-plugin-react-reanimated-lightning": "0.4.3"
   },
   "changesets": [
+    "activity-hide-releases-layout",
+    "classname-style-updates",
     "css-transform-keyword-colors",
+    "derived-value-withtiming-ticks",
     "flatten-exit-animation-materialize",
     "flatten-layout-views",
     "flatten-scroll-fold-through",
@@ -28,7 +31,10 @@
     "flexbox-missing-glyph-fallback",
     "flexbox-reset-dropped-style-props",
     "flexbox-sync-flush-settled",
+    "focus-destination-stale-ref-fallback",
+    "focus-events-bubble",
     "focus-skip-empty-groups",
+    "grid-focus-cross-axis",
     "lightning-animated-transform-and-resting-styles",
     "lightning-aspect-ratio",
     "lightning-border-shader-clear",
@@ -45,11 +51,18 @@
     "lightning-virtuallist-parity",
     "lightning-worker-font-url",
     "percent-translate-own-size",
+    "pixelratio-scene-truth",
     "reanimated-dep-inference",
     "rounded-clipping-option",
+    "text-color-and-refold",
     "two-geese-stand",
+    "virtual-list-viewport-flex",
+    "virtuallist-native-snap-props",
+    "virtuallist-no-react-compiler-memo",
     "virtuallist-pin-cross-axis",
     "virtuallist-pin-section-cross-axis",
-    "virtuallist-reveal-on-settled"
+    "virtuallist-reveal-backstop",
+    "virtuallist-reveal-on-settled",
+    "zindex-stacking-scope"
   ]
 }

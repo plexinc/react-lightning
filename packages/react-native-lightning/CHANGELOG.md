@@ -1,5 +1,26 @@
 # @plextv/react-native-lightning
 
+## 0.4.3-alpha.1
+
+### Patch Changes
+
+- 5f304aa: Keep className-derived styles on style-only updates. Update payloads omit an unchanged className, so its resolved styles vanished from the style object and the flexbox plugin reset those props (a column screen re-laid out as a row after toggling display). The className plugin now remembers what it resolved per instance. Also: a dropped flexDirection resets to column (the node creation default, not the CSS row default), and addChildNode without an index appends at the parent's child count instead of index 0.
+- a9a5dc3: Report PixelRatio 1 instead of window.devicePixelRatio. The Lightning canvas backing store equals the configured scene size, so one layout pixel is one canvas pixel; inheriting react-native-web's devicePixelRatio made image sizing fetch 2x assets on retina displays that the renderer downscales anyway: 4x the texture memory for no visible gain, enough to blow the texture manager's cleanup budget and evict visible tiles.
+- Updated dependencies [edaeae2]
+- Updated dependencies [5f304aa]
+- Updated dependencies [895f6a9]
+- Updated dependencies [badb2f6]
+- Updated dependencies [0980f51]
+- Updated dependencies [692445d]
+- Updated dependencies [18eb21a]
+- Updated dependencies [74aefc6]
+- Updated dependencies [75738d7]
+- Updated dependencies [5af32c0]
+- Updated dependencies [0f901bd]
+  - @plextv/react-lightning@0.4.3-alpha.1
+  - @plextv/react-lightning-plugin-flexbox@0.4.3-alpha.1
+  - @plextv/react-lightning-components@0.4.4-alpha.1
+
 ## 0.4.3-alpha.0
 
 ### Patch Changes
