@@ -208,7 +208,7 @@ describe('LayoutManager', () => {
       expect(lm.totalSize).toBe(DEFAULT_ITEM_SIZE * 3 + 20);
     });
 
-    it('does not add separator gap between rows in multi column', () => {
+    it('adds a separator gap between rows in multi column', () => {
       const lm = new LayoutManager({
         data: makeData(5),
         numColumns: 2,
@@ -216,12 +216,38 @@ describe('LayoutManager', () => {
         separatorSize: 20,
       });
 
+      // Items in the same row share an offset; each new row adds one gap,
+      // matching native FlashList (separator between grid rows, not columns).
       expect(lm.getLayout(0)?.offset).toBe(0);
       expect(lm.getLayout(1)?.offset).toBe(0);
-      expect(lm.getLayout(2)?.offset).toBe(DEFAULT_ITEM_SIZE);
-      expect(lm.getLayout(3)?.offset).toBe(DEFAULT_ITEM_SIZE);
-      expect(lm.getLayout(4)?.offset).toBe(DEFAULT_ITEM_SIZE * 2);
-      expect(lm.totalSize).toBe(DEFAULT_ITEM_SIZE * 3);
+      expect(lm.getLayout(2)?.offset).toBe(DEFAULT_ITEM_SIZE + 20);
+      expect(lm.getLayout(3)?.offset).toBe(DEFAULT_ITEM_SIZE + 20);
+      expect(lm.getLayout(4)?.offset).toBe(DEFAULT_ITEM_SIZE * 2 + 40);
+      expect(lm.totalSize).toBe(DEFAULT_ITEM_SIZE * 3 + 40);
+    });
+
+    it('adds no trailing gap after the last row and skips empty rows', () => {
+      // 2 columns, 3 rows (last row partial) → 2 gaps, none after the last row.
+      const lm = new LayoutManager({
+        data: makeData(5),
+        numColumns: 2,
+        cellCrossSize: 100,
+        separatorSize: 20,
+      });
+
+      expect(lm.getLayout(4)?.offset).toBe(DEFAULT_ITEM_SIZE * 2 + 40);
+      expect(lm.totalSize).toBe(DEFAULT_ITEM_SIZE * 3 + 40);
+
+      // A fully empty (zero-height) row adds no gap after it.
+      const withEmptyRow = new LayoutManager<{ id: number } | null>({
+        data: [{ id: 0 }, { id: 1 }, null, null, { id: 4 }],
+        numColumns: 2,
+        cellCrossSize: 100,
+        separatorSize: 20,
+      });
+
+      expect(withEmptyRow.getLayout(2)?.offset).toBe(DEFAULT_ITEM_SIZE + 20);
+      expect(withEmptyRow.getLayout(4)?.offset).toBe(DEFAULT_ITEM_SIZE + 20);
     });
 
     it('does not add separator gap after a zero-size empty row', () => {
@@ -690,4 +716,3 @@ describe('LayoutManager', () => {
     });
   });
 });
-

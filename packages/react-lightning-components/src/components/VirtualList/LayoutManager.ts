@@ -661,6 +661,12 @@ export class LayoutManager<T> {
       }
 
       offset += rowHeight;
+
+      // Separator sits between rows like native FlashList (between rows, not
+      // columns); skip the last row and any zero-height (empty) row.
+      if (rowHeight > 0 && i < count) {
+        offset += this._separatorSize;
+      }
     }
 
     this._layoutCount = count;
