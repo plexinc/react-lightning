@@ -636,42 +636,48 @@ export class FocusManager<
   }
 
   /**
-   * Forward focus to the first focusable destination of `node`, recursing
-   * through any further redirects. Returns true when focus was redirected (or
-   * the redirect was aborted on a missing node / cycle) and the caller should
-   * stop; false when there was no focusable destination and the caller should
-   * focus `node` normally.
+   * Forward focus to the first resolvable destination of `node`, recursing
+   * through any further redirects. Destinations that are unfocusable or no
+   * longer registered (stale refs) are skipped. Returns true when focus was
+   * redirected (or aborted on a cycle) and the caller should stop; false when
+   * nothing resolved and the caller should focus `node` normally.
    */
   private _redirectToDestination(node: FocusNode<T>, visitedRedirects?: Set<T>): boolean {
-    // TODO: Probably something smarter here to decide which destination to focus
-    const destination = node.destinations?.find((child) => child?.focusable);
-
-    if (!destination) {
+    if (!node.destinations) {
       return false;
     }
 
-    const focusNode = this.activeLayer.elements.get(destination);
+    for (const destination of node.destinations) {
+      // A destination can hold a stale ref (e.g. a recycled list cell that
+      // unmounted after setDestinations); skip it like native TVFocusGuideView
+      // drops invalid node handles, so focus falls back to the normal child.
+      if (!destination?.focusable) {
+        continue;
+      }
 
-    if (!focusNode) {
-      console.warn('FocusManager: No focus node found for destination', destination);
+      const focusNode = this.activeLayer.elements.get(destination);
+
+      if (!focusNode) {
+        continue;
+      }
+
+      // Detect redirect cycles
+      const visited = visitedRedirects ?? new Set<T>();
+
+      if (visited.has(destination)) {
+        console.warn('FocusManager: Focus redirect cycle detected, aborting');
+
+        return true;
+      }
+
+      visited.add(destination);
+
+      this._focusNode(focusNode, visited);
 
       return true;
     }
 
-    // Detect redirect cycles
-    const visited = visitedRedirects ?? new Set<T>();
-
-    if (visited.has(destination)) {
-      console.warn('FocusManager: Focus redirect cycle detected, aborting');
-
-      return true;
-    }
-
-    visited.add(destination);
-
-    this._focusNode(focusNode, visited);
-
-    return true;
+    return false;
   }
 
   private _focusNode(childNode: FocusNode<T>, visitedRedirects?: Set<T>) {
