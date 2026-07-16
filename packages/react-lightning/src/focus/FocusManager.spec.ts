@@ -500,6 +500,63 @@ describe('FocusManager', () => {
       focusManager.focus(guide);
       expect(focusManager.focusPath).toEqual([root, real]);
     });
+
+    it('falls back to normal child focus when the destination is unregistered', () => {
+      const root = createMockElement(1, 'root');
+      const sibling = createMockElement(2, 'sibling');
+      const group = createMockElement(3, 'group');
+      const child1 = createMockElement(4, 'child1');
+      const child2 = createMockElement(5, 'child2');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(sibling, root);
+      focusManager.addElement(group, root, { destinations: [child2] });
+      focusManager.addElement(child1, group);
+      focusManager.addElement(child2, group);
+
+      focusManager.focus(sibling);
+
+      // A recycled list cell: unmounted (removed from the focus tree) but the
+      // stale ref is still focusable and still listed as a destination.
+      focusManager.removeElement(child2);
+
+      focusManager.focus(group);
+      expect(focusManager.focusPath).toEqual([root, group, child1]);
+      expect(child1.focused).toBe(true);
+    });
+
+    it('skips an unregistered destination and forwards to the next one', () => {
+      const root = createMockElement(1, 'root');
+      const group = createMockElement(2, 'group');
+      const child1 = createMockElement(3, 'child1');
+      const child2 = createMockElement(4, 'child2');
+      const stale = createMockElement(5, 'stale');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(group, root, { destinations: [stale, child2] });
+      focusManager.addElement(child1, group);
+      focusManager.addElement(child2, group);
+
+      focusManager.focus(group);
+      expect(focusManager.focusPath).toEqual([root, group, child2]);
+    });
+
+    it('falls back on a focusRedirect guide whose destination is unregistered', () => {
+      const root = createMockElement(1, 'root');
+      const guide = createMockElement(2, 'guide');
+      const child1 = createMockElement(3, 'child1');
+      const stale = createMockElement(4, 'stale');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(guide, root, {
+        focusRedirect: true,
+        destinations: [stale],
+      });
+      focusManager.addElement(child1, guide);
+
+      focusManager.focus(guide);
+      expect(focusManager.focusPath).toEqual([root, guide, child1]);
+    });
   });
 
   describe('Layer Management (Modal Support)', () => {
