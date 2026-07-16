@@ -52,6 +52,45 @@ const REVEAL_MAX_MS = 1000;
 // Wake a touch after the computed deadline so the quiet window is safely past.
 const REVEAL_CHECK_SLOP_MS = 8;
 
+// The LayoutManager mutates between renders and signals through bare
+// setLayoutVersion bumps, which invalidate none of the compiler's dep sets.
+// Reads of it during render live in these opted-out hooks so they re-run
+// every render; their results are reactive values downstream scopes key on.
+function useLayoutTotalSize<T>(layoutManager: LayoutManager<T>): number {
+  'use no memo';
+
+  return layoutManager.totalSize;
+}
+
+function useVisibleRange<T>(
+  layoutManager: LayoutManager<T>,
+  scrollInItemSpace: number,
+  viewportSize: number,
+  drawDistance: number,
+  dataLength: number,
+): {
+  visibleRange: { startIndex: number; endIndex: number };
+  visibleIndices: number[];
+  totalSize: number;
+} {
+  'use no memo';
+
+  const visibleRange = layoutManager.getVisibleRange(
+    scrollInItemSpace,
+    viewportSize,
+    drawDistance,
+  );
+  const visibleIndices: number[] = [];
+
+  if (dataLength > 0 && visibleRange.endIndex >= visibleRange.startIndex) {
+    for (let i = visibleRange.startIndex; i <= visibleRange.endIndex; i++) {
+      visibleIndices.push(i);
+    }
+  }
+
+  return { visibleRange, visibleIndices, totalSize: layoutManager.totalSize };
+}
+
 function renderListComponent(
   component: VirtualListProps<unknown>['ListHeaderComponent'],
 ): ReactElement | null {
@@ -285,12 +324,9 @@ function VirtualListInner<T>(
   const getData = (i: number) => data[i];
   const getLayout = (i: number) => layoutManager.getLayout(i);
 
+  const measuredTotalSize = useLayoutTotalSize(layoutManager);
   const totalContentSize =
-    paddingStart +
-    headerSize +
-    layoutManager.totalSize +
-    footerSize +
-    paddingEnd;
+    paddingStart + headerSize + measuredTotalSize + footerSize + paddingEnd;
   const finalCross =
     viewportCrossSize > 0
       ? viewportCrossSize
@@ -523,18 +559,13 @@ function VirtualListInner<T>(
   };
 
   const scrollInItemSpace = Math.max(0, committedScrollOffset - itemAreaOffset);
-  const visibleRange = layoutManager.getVisibleRange(
+  const { visibleRange, visibleIndices, totalSize } = useVisibleRange(
+    layoutManager,
     scrollInItemSpace,
     viewportSize,
     drawDistance,
+    data.length,
   );
-  const visibleIndices: number[] = [];
-
-  if (data.length > 0 && visibleRange.endIndex >= visibleRange.startIndex) {
-    for (let i = visibleRange.startIndex; i <= visibleRange.endIndex; i++) {
-      visibleIndices.push(i);
-    }
-  }
 
   useViewability({
     viewabilityConfig,
@@ -885,11 +916,11 @@ function VirtualListInner<T>(
                 style={{
                   position: 'absolute',
                   x: horizontal
-                    ? paddingStart + headerSize + layoutManager.totalSize
+                    ? paddingStart + headerSize + totalSize
                     : paddingCross,
                   y: horizontal
                     ? paddingCross
-                    : paddingStart + headerSize + layoutManager.totalSize,
+                    : paddingStart + headerSize + totalSize,
                 }}
               >
                 {isInFlex ? (
