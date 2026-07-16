@@ -23,6 +23,12 @@ export interface ResolvedCrossSize {
    * content gets a chance to report its real size.
    */
   isDefinite: boolean;
+  /**
+   * True only for the DEFAULT_ITEM_SIZE fallback, when nothing (style,
+   * parent, measure, or content) has informed the size yet. Callers must not
+   * report or persist this value; it is a placeholder until a real measure.
+   */
+  isEstimate: boolean;
 }
 
 /**
@@ -46,33 +52,34 @@ export function resolveCrossSize({
   crossPadding,
 }: ResolveCrossSizeInput): ResolvedCrossSize {
   if (explicitCross != null && explicitCross > 0) {
-    return { viewportCrossSize: explicitCross, isDefinite: true };
+    return { viewportCrossSize: explicitCross, isDefinite: true, isEstimate: false };
   }
 
   if (!horizontal && parentCross != null && parentCross > 0) {
-    return { viewportCrossSize: parentCross, isDefinite: true };
+    return { viewportCrossSize: parentCross, isDefinite: true, isEstimate: false };
   }
 
   if (!horizontal && measuredOuterCross > 0) {
-    return { viewportCrossSize: measuredOuterCross, isDefinite: true };
+    return { viewportCrossSize: measuredOuterCross, isDefinite: true, isEstimate: false };
   }
 
   if (maxContentCross > 0) {
     return {
       viewportCrossSize: maxContentCross + crossPadding,
       isDefinite: false,
+      isEstimate: false,
     };
   }
 
   // Horizontal cross must not come from parent/self measurement: both equal the
   // outer VL cell height (header + this list), so it ratchets unbounded.
   if (!horizontal && parentCross != null && parentCross > 0) {
-    return { viewportCrossSize: parentCross, isDefinite: false };
+    return { viewportCrossSize: parentCross, isDefinite: false, isEstimate: false };
   }
 
   if (!horizontal && measuredOuterCross > 0) {
-    return { viewportCrossSize: measuredOuterCross, isDefinite: false };
+    return { viewportCrossSize: measuredOuterCross, isDefinite: false, isEstimate: false };
   }
 
-  return { viewportCrossSize: DEFAULT_ITEM_SIZE, isDefinite: false };
+  return { viewportCrossSize: DEFAULT_ITEM_SIZE, isDefinite: false, isEstimate: true };
 }

@@ -20,7 +20,7 @@ describe('resolveCrossSize', () => {
       parentCross: 300,
     });
 
-    expect(result).toEqual({ viewportCrossSize: 400, isDefinite: true });
+    expect(result).toEqual({ viewportCrossSize: 400, isDefinite: true, isEstimate: false });
   });
 
   it('uses parent cell bounds for a vertical list and marks it definite', () => {
@@ -30,7 +30,7 @@ describe('resolveCrossSize', () => {
       measuredOuterCross: 280,
     });
 
-    expect(result).toEqual({ viewportCrossSize: 320, isDefinite: true });
+    expect(result).toEqual({ viewportCrossSize: 320, isDefinite: true, isEstimate: false });
   });
 
   it('uses the measured outer size for a vertical list and marks it definite', () => {
@@ -40,7 +40,7 @@ describe('resolveCrossSize', () => {
       maxContentCross: 120,
     });
 
-    expect(result).toEqual({ viewportCrossSize: 280, isDefinite: true });
+    expect(result).toEqual({ viewportCrossSize: 280, isDefinite: true, isEstimate: false });
   });
 
   it('ignores parent/measured cross for a horizontal list in favor of content', () => {
@@ -53,7 +53,7 @@ describe('resolveCrossSize', () => {
       crossPadding: 10,
     });
 
-    expect(result).toEqual({ viewportCrossSize: 190, isDefinite: false });
+    expect(result).toEqual({ viewportCrossSize: 190, isDefinite: false, isEstimate: false });
   });
 
   it('ignores parent cross for a horizontal list and falls back to the default', () => {
@@ -69,6 +69,7 @@ describe('resolveCrossSize', () => {
     expect(result).toEqual({
       viewportCrossSize: DEFAULT_ITEM_SIZE,
       isDefinite: false,
+      isEstimate: true,
     });
   });
 
@@ -82,6 +83,7 @@ describe('resolveCrossSize', () => {
     expect(result).toEqual({
       viewportCrossSize: DEFAULT_ITEM_SIZE,
       isDefinite: false,
+      isEstimate: true,
     });
   });
 
@@ -91,6 +93,7 @@ describe('resolveCrossSize', () => {
     expect(result).toEqual({
       viewportCrossSize: DEFAULT_ITEM_SIZE,
       isDefinite: false,
+      isEstimate: true,
     });
   });
 
@@ -101,6 +104,22 @@ describe('resolveCrossSize', () => {
       parentCross: 320,
     });
 
-    expect(result).toEqual({ viewportCrossSize: 320, isDefinite: true });
+    expect(result).toEqual({ viewportCrossSize: 320, isDefinite: true, isEstimate: false });
+  });
+});
+
+describe('isEstimate', () => {
+  it('flags the default-size fallback as an estimate', () => {
+    const result = resolveCrossSize({ ...base });
+
+    expect(result.viewportCrossSize).toBe(DEFAULT_ITEM_SIZE);
+    expect(result.isEstimate).toBe(true);
+  });
+
+  it('does not flag explicit, parent, measured, or content-derived sizes', () => {
+    expect(resolveCrossSize({ ...base, explicitCross: 400 }).isEstimate).toBe(false);
+    expect(resolveCrossSize({ ...base, parentCross: 320 }).isEstimate).toBe(false);
+    expect(resolveCrossSize({ ...base, measuredOuterCross: 280 }).isEstimate).toBe(false);
+    expect(resolveCrossSize({ ...base, maxContentCross: 120 }).isEstimate).toBe(false);
   });
 });
