@@ -1,5 +1,17 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.4.3-alpha.1
+
+### Patch Changes
+
+- 5f304aa: Keep className-derived styles on style-only updates. Update payloads omit an unchanged className, so its resolved styles vanished from the style object and the flexbox plugin reset those props (a column screen re-laid out as a row after toggling display). The className plugin now remembers what it resolved per instance. Also: a dropped flexDirection resets to column (the node creation default, not the CSS row default), and addChildNode without an index appends at the parent's child count instead of index 0.
+- Updated dependencies [edaeae2]
+- Updated dependencies [895f6a9]
+- Updated dependencies [badb2f6]
+- Updated dependencies [692445d]
+- Updated dependencies [0f901bd]
+  - @plextv/react-lightning@0.4.3-alpha.1
+
 ## 0.4.3-alpha.0
 
 ### Patch Changes

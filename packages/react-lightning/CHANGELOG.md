@@ -1,5 +1,15 @@
 # @plextv/react-lightning
 
+## 0.4.3-alpha.1
+
+### Patch Changes
+
+- edaeae2: React-hidden trees (Activity mode="hidden", suspended Suspense content) now set display: none instead of only alpha: 0, so they release their layout space like react-dom. The hide is sticky across later style pushes (a full style update used to reset display and pop the space back in while invisible), and unhide restores display and opacity from the current props.
+- 895f6a9: Skip focus destinations that are unfocusable or no longer registered instead of aborting the whole focus move. A destination can hold a stale ref (a recycled list cell that unmounted after setDestinations); the redirect now falls through to the next destination or to normal child focus, matching native TVFocusGuideView, which drops invalid node handles.
+- badb2f6: Bubble focus/blur events up the element tree. tvOS and web deliver focus events to ancestor views (a wrapper View's onFocus fires when a focused descendant changes), but the focus path only reaches registered focus nodes, so handlers on plain wrappers never fired. FocusManager now walks the focused leaf's element ancestry on every leaf change and delivers the event to elements that didn't just fire their own focus()/blur(). VirtualList forwards onFocus/onBlur to its outer element so handlers spread onto a list participate like they do on a native FlashList host view.
+- 692445d: Two text-element fixes. A colorless Text mounted transparent: the mount-time color 0 stamp (meant for views, where the renderer default is white) ran before the text element's white default, so any Text without an explicit style color was invisible. Text elements are now excluded from the stamp. And a text fragment nested more than one level deep (Text > Text > string) only re-folded its direct parent on update; the text setter now propagates the re-fold through every aggregating ancestor.
+- 0f901bd: Contain zIndex to its RN parent under view flattening. A flattened wrapper hoisted zIndex-carrying children to the nearest real ancestor, letting the index compete against unrelated subtrees (a nav bar's zIndex: 2 outranked modal screens mounted after it). A non-zero zIndex/zIndexLocked now materializes the flattened parent so the index only sorts among its real RN siblings, on attach and on every zIndex write path (setNodeProp, batched props, fast-path styles).
+
 ## 0.4.3-alpha.0
 
 ### Patch Changes
