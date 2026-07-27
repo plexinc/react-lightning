@@ -1,4 +1,13 @@
-import { createRef, PureComponent } from 'react';
+import {
+  createRef,
+  type ForwardRefExoticComponent,
+  forwardRef,
+  PureComponent,
+  type RefAttributes,
+  useContext,
+  useEffect,
+  useRef,
+} from 'react';
 import type {
   NativeScrollEvent,
   ScrollView as RNScrollView,
@@ -7,16 +16,30 @@ import type {
 import type { JSX } from 'react/jsx-runtime';
 
 import {
+  FocusManagerContext,
   type LightningElement,
   LightningViewElement,
   type LightningViewElementProps,
+  useCombinedRef,
 } from '@plextv/react-lightning';
 
 import type { LightningViewElementStyle } from '../../../react-lightning/src/types';
 import { createHandler } from '../hooks/useFocusHandler';
 import type { NativeLightningViewElement } from '../types/NativeLightningViewElement';
 import { createNativeSyntheticEvent } from '../utils/createNativeSyntheticEvent';
+import { getEnsureVisibleOffset, usesExplicitAlignment } from './scrollFocus';
 import { defaultViewStyle, View, type ViewProps } from './View';
+
+function isDescendantOf(ancestor: LightningElement, node: LightningElement): boolean {
+  let current: LightningElement | null = node.parent;
+  while (current) {
+    if (current === ancestor) {
+      return true;
+    }
+    current = current.parent;
+  }
+  return false;
+}
 
 export type ScrollViewProps = Omit<RNScrollViewProps, 'style'> &
   Pick<ViewProps, 'style'> & {
@@ -91,7 +114,7 @@ function getScrollInfo(
   };
 }
 
-export class ScrollView extends PureComponent<ScrollViewProps, ScrollViewState> {
+class ScrollViewBase extends PureComponent<ScrollViewProps, ScrollViewState> {
   private _containerRef = createRef<LightningViewElement>();
   private _viewportRef = createRef<NativeLightningViewElement>();
 
@@ -135,6 +158,63 @@ export class ScrollView extends PureComponent<ScrollViewProps, ScrollViewState> 
     if (offset) {
       this._doScroll(offset);
     }
+  };
+
+  // Reveal a focused descendant the way native TV scroll views do: scroll the
+  // minimum needed to bring it fully into view, leaving already-visible items
+  // where they are.
+  public scrollFocusIntoView = (el: LightningElement): void => {
+    const container = this._containerRef.current;
+    const viewport = this._viewportRef.current;
+
+    if (
+      !(el instanceof LightningViewElement) ||
+      !container ||
+      !viewport ||
+      !isDescendantOf(container, el)
+    ) {
+      return;
+    }
+
+    if (usesExplicitAlignment(this.props.snapToAlignment)) {
+      this.scrollToElement(el);
+      return;
+    }
+
+    const child = el.getBoundingClientRect(container);
+    const containerBounds = container.getBoundingClientRect(viewport);
+    const viewportBounds = viewport.getBoundingClientRect();
+    const { horizontal } = this.props;
+    const { x, y } = this.state.offset;
+
+    const nextX = horizontal
+      ? getEnsureVisibleOffset(
+          viewportBounds.w,
+          containerBounds.w,
+          x,
+          child.x,
+          child.w,
+          child.w / 2,
+        )
+      : x;
+    const nextY = horizontal
+      ? y
+      : getEnsureVisibleOffset(
+          viewportBounds.h,
+          containerBounds.h,
+          y,
+          child.y,
+          child.h,
+          child.h / 2,
+        );
+
+    this._doScroll({
+      contentInset: { top: 0, left: 0, bottom: 0, right: 0 },
+      contentOffset: { x: nextX, y: nextY },
+      contentSize: { width: containerBounds.w, height: containerBounds.h },
+      layoutMeasurement: { width: viewportBounds.w, height: viewportBounds.h },
+      zoomScale: 1,
+    });
   };
 
   public scrollToEnd: RNScrollView['scrollToEnd'] = () => {
@@ -260,3 +340,33 @@ export class ScrollView extends PureComponent<ScrollViewProps, ScrollViewState> 
     }
   }
 }
+
+// Wrap the class so it follows focus like a native TV scroll view: when spatial
+// nav moves focus to a descendant, scroll it into view. The class stays the ref
+// target so imperative callers (scrollTo, scrollToEnd, …) are unaffected.
+export const ScrollView: ForwardRefExoticComponent<
+  ScrollViewProps & RefAttributes<ScrollViewBase>
+> = forwardRef<ScrollViewBase, ScrollViewProps>((props, ref) => {
+  const focusManager = useContext(FocusManagerContext)?.focusManager;
+  const instanceRef = useRef<ScrollViewBase>(null);
+  const combinedRef = useCombinedRef(ref, instanceRef);
+
+  useEffect(() => {
+    if (!focusManager) {
+      return;
+    }
+
+    return focusManager.on('focusPathChanged', (focusPath: LightningElement[]) => {
+      const leaf = focusPath[focusPath.length - 1];
+      if (leaf) {
+        instanceRef.current?.scrollFocusIntoView(leaf);
+      }
+    });
+  }, [focusManager]);
+
+  return <ScrollViewBase ref={combinedRef} {...props} />;
+});
+
+ScrollView.displayName = 'ScrollView';
+
+export type ScrollView = ScrollViewBase;
