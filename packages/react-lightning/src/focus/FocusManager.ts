@@ -31,6 +31,14 @@ export type FocusNode<T> = Omit<RootNode<T>, 'element'> & {
   hasFocusableChildren: boolean;
   /** When true, focus navigation can target non-visible children (e.g. clipped items in a virtualized list). */
   allowOffscreen: boolean;
+  /**
+   * When true, this node is reachable only by a deliberate directional move,
+   * never by restoration: it's excluded from fallback selection when a focused
+   * sibling unmounts and from the mount-time default. Mirrors the intent of
+   * tvOS `isTVFocusRestorationExcluded` (e.g. an edge-guard focus catcher that
+   * must not steal focus on launch).
+   */
+  focusRestorationExcluded: boolean;
 };
 
 type FocusLayer<T> = {
@@ -146,12 +154,14 @@ export class FocusManager<
       destinations?: (T | null)[] | null;
       traps?: Traps;
       allowOffscreen?: boolean;
+      focusRestorationExcluded?: boolean;
     },
   ): void {
     const autoFocus = options?.autoFocus ?? false;
     const focusRedirect = options?.focusRedirect ?? false;
     const destinations = options?.destinations ?? null;
     const allowOffscreen = options?.allowOffscreen ?? false;
+    const focusRestorationExcluded = options?.focusRestorationExcluded ?? false;
     const traps = options?.traps ?? {
       up: false,
       right: false,
@@ -200,6 +210,7 @@ export class FocusManager<
       childNode.destinations = destinations;
       childNode.traps = traps;
       childNode.allowOffscreen = allowOffscreen;
+      childNode.focusRestorationExcluded = focusRestorationExcluded;
 
       // If the child node already exists, we need to remove it from its current parent
       if (childNode.parent !== parentNode) {
@@ -232,6 +243,7 @@ export class FocusManager<
         destinations,
         traps,
         allowOffscreen,
+        focusRestorationExcluded,
       );
     }
 
@@ -241,7 +253,11 @@ export class FocusManager<
 
     this._checkFocusableChildren(parentNode);
 
-    if (this._isEffectivelyFocusable(childNode) && !hasExternalRedirect(childNode)) {
+    if (
+      this._isEffectivelyFocusable(childNode) &&
+      !hasExternalRedirect(childNode) &&
+      !childNode.focusRestorationExcluded
+    ) {
       if (!parentNode.focusedElement) {
         // No preferred child yet — take the slot regardless of autoFocus.
         parentNode.focusedElement = childNode;
@@ -552,6 +568,7 @@ export class FocusManager<
     destinations: (T | null)[] | null = null,
     traps: Traps = { up: false, right: false, down: false, left: false },
     allowOffscreen = false,
+    focusRestorationExcluded = false,
   ) {
     const node: FocusNode<T> = {
       element,
@@ -564,6 +581,7 @@ export class FocusManager<
       traps,
       hasFocusableChildren: false,
       allowOffscreen,
+      focusRestorationExcluded,
       focusCommitted: false,
     };
 
@@ -697,7 +715,7 @@ export class FocusManager<
     let currChild: FocusNode<T> | RootNode<T> = childNode;
 
     if (currChild.children.length && !currChild.focusedElement) {
-      currChild.focusedElement = this._findNextBestFocus(currChild);
+      currChild.focusedElement = this._findNextBestFocus(currChild, undefined, true);
     }
 
     // Focus has now explicitly arrived at this node, so mark its subtree as
@@ -835,7 +853,7 @@ export class FocusManager<
     const parent = node.parent;
 
     if (this._isEffectivelyFocusable(node)) {
-      if (!parent.focusedElement && !hasExternalRedirect(node)) {
+      if (!parent.focusedElement && !hasExternalRedirect(node) && !node.focusRestorationExcluded) {
         parent.focusedElement = node;
       }
     } else if (parent.focusedElement === node) {
@@ -862,6 +880,9 @@ export class FocusManager<
   private _findNextBestFocus(
     parent: FocusNode<T> | RootNode<T>,
     relativeNode?: FocusNode<T>,
+    // Restoration-excluded nodes are skipped for fallback/restoration picks,
+    // but included when focus arrives at a group deliberately (directional).
+    includeRestorationExcluded = false,
   ): FocusNode<T> | null {
     if (parent.children.length === 0) {
       return null;
@@ -884,6 +905,7 @@ export class FocusManager<
         newChild &&
         this._isEffectivelyFocusable(newChild) &&
         !hasExternalRedirect(newChild) &&
+        (includeRestorationExcluded || !newChild.focusRestorationExcluded) &&
         newChild !== relativeNode
       ) {
         if (i >= relativeIndex) {

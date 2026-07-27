@@ -36,6 +36,7 @@ import {
 } from '../types';
 import { AllStyleProps } from './AllStyleProps';
 import { createFlattenedNode } from './FlattenedRendererNode';
+import { isTranslateSettled } from './isTranslateSettled';
 
 const __bannedProps: Record<string, boolean> = {};
 let __bannedPropsInitialized = false;
@@ -1648,11 +1649,20 @@ export class LightningViewElement<
   };
 
   private _onLayout = (dimensions: Rect) => {
+    const hadLayout = this._hasLayout;
     this._hasLayout = true;
 
-    // First layout resolved — reveal a withheld node at its now-correct
-    // geometry. See {@link withholdPaintUntilLayout}.
-    if (this._paintWithheld) {
+    // Reveal a withheld node at its now-correct geometry. A pixel translate
+    // transform is resolved off the base position and lands a layout pass later,
+    // so hold the reveal past the first (pre-transform) layout — otherwise the
+    // node paints at its untransformed origin for a frame. Bounded to that one
+    // extra layout so a mis-detected translate can never strand it invisible.
+    // See {@link withholdPaintUntilLayout}.
+    if (
+      this._paintWithheld &&
+      (hadLayout ||
+        isTranslateSettled(this.props.style, this.node.x, this.node.y))
+    ) {
       this._paintWithheld = false;
 
       if (this.node.alpha !== this._withheldAlpha) {
