@@ -17,4 +17,6 @@ export type ManagerNode = {
   translatePercent?: { x?: number; y?: number };
   /** Last emitted resolved position for a percent node, to dedupe readback writes. */
   resolvedTranslate?: { left: number; top: number };
+  /** Axes with a pixel translate inset currently written to yoga, so an omit can clear it. */
+  pixelTranslate?: { x?: boolean; y?: boolean };
 };

@@ -550,6 +550,41 @@ describe('YogaManager', () => {
       ); // y + translateY
     });
 
+    it('resets a translate inset when a present transform omits the axis', async () => {
+      const { applyFlexPropToYoga } = await import('./util/applyReactPropsToYoga');
+      const elementId = 321;
+
+      yogaManager.addNode(elementId);
+
+      // Closed: translateX shifts the node off-screen to the left.
+      yogaManager.applyStyle(elementId, { x: 0, transform: { translateX: -452 } });
+      expect(applyFlexPropToYoga).toHaveBeenCalledWith(mockYoga, mockYogaOptions, mockNode, 'left', -452);
+
+      vi.mocked(applyFlexPropToYoga).mockClear();
+
+      // Open: a transform is a complete snapshot, so an empty one (EaseView emits
+      // `[]` once translateX hits 0) means translate returned to identity. This
+      // holds even for a partial (resetMissing=false) push — the transform key is
+      // authoritative for its own axes — so the -452 inset must clear, not stick.
+      yogaManager.applyStyle(elementId, { x: 0, transform: {} }, false, false);
+      expect(applyFlexPropToYoga).toHaveBeenCalledWith(mockYoga, mockYogaOptions, mockNode, 'left', 0);
+    });
+
+    it('keeps a translate inset when the push omits transform entirely', async () => {
+      const { applyFlexPropToYoga } = await import('./util/applyReactPropsToYoga');
+      const elementId = 654;
+
+      yogaManager.addNode(elementId);
+      yogaManager.applyStyle(elementId, { x: 0, transform: { translateX: -452 } });
+
+      vi.mocked(applyFlexPropToYoga).mockClear();
+
+      // No transform key in this push: the translate is not part of the update
+      // and must be left alone, not reset to 0.
+      yogaManager.applyStyle(elementId, { w: 100 }, false, false);
+      expect(applyFlexPropToYoga).not.toHaveBeenCalledWith(mockYoga, mockYogaOptions, mockNode, 'left', 0);
+    });
+
     it('should apply multiple styles', async () => {
       const styles = {
         123: { w: 100, h: 50 },

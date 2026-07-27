@@ -460,7 +460,7 @@ describe('FocusManager', () => {
   });
 
   describe('destinations on arrival', () => {
-    it('forwards to a destination on first arrival, then remembers the child', () => {
+    it('forwards to a destination on every arrival, not just the first', () => {
       const root = createMockElement(1, 'root');
       const group = createMockElement(2, 'group');
       const child1 = createMockElement(3, 'child1');
@@ -476,13 +476,15 @@ describe('FocusManager', () => {
       focusManager.focus(group);
       expect(focusManager.focusPath).toEqual([root, group, child2]);
 
-      // Move focus to child1, then re-enter the group: it now remembers the
-      // last-focused child instead of redirecting again.
+      // Move focus to child1, then re-enter the group. `destinations` takes
+      // precedence over the remembered child on every arrival (matching native
+      // TVFocusGuideView `destinations`), so focus returns to child2 — this is
+      // what routes a reopened nav drawer back to its selected item.
       focusManager.focus(child1);
       expect(focusManager.focusPath).toEqual([root, group, child1]);
 
       focusManager.focus(group);
-      expect(focusManager.focusPath).toEqual([root, group, child1]);
+      expect(focusManager.focusPath).toEqual([root, group, child2]);
     });
 
     it('always redirects with focusRedirect, every visit', () => {

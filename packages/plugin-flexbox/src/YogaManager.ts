@@ -495,6 +495,12 @@ export class YogaManager {
         yogaNode.translatePercent = undefined;
         yogaNode.resolvedTranslate = undefined;
 
+        // A `transform` is a complete snapshot of the node's transform, so an
+        // axis it omits has returned to identity. If a previous push wrote a
+        // pixel inset for that axis, clear it (translate 0) rather than leave the
+        // stale offset, which a partial push would otherwise never repaint.
+        const pixelTranslate = (yogaNode.pixelTranslate ??= {});
+
         if (typeof translateX === 'string') {
           const pct = Number.parseFloat(translateX);
 
@@ -503,16 +509,18 @@ export class YogaManager {
           if (!Number.isNaN(pct)) {
             (yogaNode.translatePercent ??= {}).x = pct;
           }
-        } else if (translateX != null) {
+          pixelTranslate.x = false;
+        } else if (translateX != null || pixelTranslate.x) {
           const right = node.getPosition(yoga.EDGE_RIGHT);
           const { edge, value } = resolveHorizontalTranslate(
             right.unit === yoga.UNIT_POINT,
             x ?? 0,
             right.value,
-            translateX,
+            translateX ?? 0,
           );
 
           applyFlexPropToYoga(yoga, this._yogaOptions, node, edge, value);
+          pixelTranslate.x = translateX != null;
         }
 
         if (typeof translateY === 'string') {
@@ -521,16 +529,18 @@ export class YogaManager {
           if (!Number.isNaN(pct)) {
             (yogaNode.translatePercent ??= {}).y = pct;
           }
-        } else if (translateY != null) {
+          pixelTranslate.y = false;
+        } else if (translateY != null || pixelTranslate.y) {
           const bottom = node.getPosition(yoga.EDGE_BOTTOM);
           const { edge, value } = resolveVerticalTranslate(
             bottom.unit === yoga.UNIT_POINT,
             y ?? 0,
             bottom.value,
-            translateY,
+            translateY ?? 0,
           );
 
           applyFlexPropToYoga(yoga, this._yogaOptions, node, edge, value);
+          pixelTranslate.y = translateY != null;
         }
       }
     }
