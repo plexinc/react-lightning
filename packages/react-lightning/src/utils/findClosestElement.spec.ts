@@ -313,6 +313,22 @@ suite('findClosestElement', () => {
 });
 
 suite('getOverlap', () => {
+  describe('should enter a sibling container that encloses the source', () => {
+    /**
+     * A small item (1, e.g. a pivot) sits at the top of a large sibling
+     * container (2, e.g. a screen scene behind a floating header) that fully
+     * encloses it and extends below. Down must enter the container — its
+     * focusable content is beyond the source, not above it.
+     */
+    const elements = createLayout(500, 500, [
+      { x: 0, y: 0, w: 200, h: 40 },
+      { x: 0, y: 0, w: 500, h: 500 },
+    ]);
+    const tests: TestCases = [[1, Direction.Down, 2]];
+
+    runTestsOnElements(elements, tests);
+  });
+
   it('should return the correct overlap for two elements', () => {
     const a = { x: 0, y: 0, w: 100, h: 100, centerX: 50, centerY: 50 };
     const b = {
