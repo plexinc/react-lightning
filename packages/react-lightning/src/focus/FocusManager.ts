@@ -681,14 +681,13 @@ export class FocusManager<
   }
 
   private _focusNode(childNode: FocusNode<T>, visitedRedirects?: Set<T>) {
-    // On arrival, forward to a declared destination. With focusRedirect this
-    // happens on every visit (a permanent redirect); without it, only on the
-    // first visit (no remembered child yet) — matching native
-    // TVFocusGuideView, which forwards focus on arrival then remembers the
-    // last-focused child for subsequent visits.
+    // On arrival, forward to a declared destination — on every visit, not just
+    // the first. `destinations` takes precedence over the remembered child,
+    // matching native TVFocusGuideView `destinations` (a reopened nav drawer
+    // returns to its selected item). `autoFocus` is the separate first-then-
+    // remember mechanism, resolved via the group's `focusedElement` below.
     if (
       childNode.destinations &&
-      (childNode.focusRedirect || !childNode.focusCommitted) &&
       this._redirectToDestination(childNode, visitedRedirects)
     ) {
       return;
