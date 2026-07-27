@@ -975,4 +975,81 @@ describe('FocusManager', () => {
       expect(wrapperBubble).not.toHaveBeenCalled();
     });
   });
+
+  describe('restoration-excluded focus targets', () => {
+    it('does not become the parent preferred child on mount', () => {
+      const parent = createMockElement(1, 'parent');
+      const catcher = createMockElement(2, 'catcher');
+
+      focusManager.addElement(parent, null);
+      focusManager.addElement(catcher, parent, {
+        focusRestorationExcluded: true,
+      });
+
+      // The catcher is focusable but must never be auto-selected as the
+      // mount-time default (the drawer-opens-on-launch race).
+      expect(catcher.focused).toBe(false);
+      expect(focusManager.focusPath).toEqual([parent]);
+    });
+
+    it('is skipped as the fallback when the focused sibling is removed', () => {
+      const parent = createMockElement(1, 'parent');
+      const content = createMockElement(2, 'content');
+      const catcher = createMockElement(3, 'catcher');
+
+      focusManager.addElement(parent, null);
+      focusManager.addElement(content, parent, { autoFocus: true });
+      focusManager.addElement(catcher, parent, {
+        focusRestorationExcluded: true,
+      });
+
+      expect(focusManager.focusPath).toEqual([parent, content]);
+
+      // Content unmounts during launch; the catcher must not inherit focus.
+      focusManager.removeElement(content);
+      expect(catcher.focused).toBe(false);
+      expect(focusManager.focusPath).toEqual([parent]);
+    });
+
+    it('prefers a real sibling over the excluded node as fallback', () => {
+      const parent = createMockElement(1, 'parent');
+      const content = createMockElement(2, 'content');
+      const catcher = createMockElement(3, 'catcher');
+      const other = createMockElement(4, 'other');
+
+      focusManager.addElement(parent, null);
+      focusManager.addElement(content, parent, { autoFocus: true });
+      focusManager.addElement(catcher, parent, {
+        focusRestorationExcluded: true,
+      });
+      focusManager.addElement(other, parent);
+
+      expect(focusManager.focusPath).toEqual([parent, content]);
+
+      focusManager.removeElement(content);
+      // Even though the catcher sits before `other` in the child list, the
+      // fallback skips it and lands on the real sibling.
+      expect(focusManager.focusPath).toEqual([parent, other]);
+      expect(catcher.focused).toBe(false);
+    });
+
+    it('still accepts an explicit (directional) focus request', () => {
+      const parent = createMockElement(1, 'parent');
+      const content = createMockElement(2, 'content');
+      const catcher = createMockElement(3, 'catcher');
+
+      focusManager.addElement(parent, null);
+      focusManager.addElement(content, parent, { autoFocus: true });
+      focusManager.addElement(catcher, parent, {
+        focusRestorationExcluded: true,
+      });
+
+      // A deliberate directional move (findClosestElement -> focus) must still
+      // land on the catcher so pressing Left into the nav keeps working.
+      focusManager.focus(catcher);
+      expect(catcher.focused).toBe(true);
+      expect(focusManager.focusPath).toEqual([parent, catcher]);
+    });
+  });
+
 });

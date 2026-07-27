@@ -12,6 +12,12 @@ export type FocusOptions = {
   onChildFocused?: (child: LightningElement) => void;
   /** When true, focus navigation can target non-visible children (e.g. clipped items in a virtualized list). */
   allowOffscreen?: boolean;
+  /**
+   * When true, this element is reachable only by a deliberate directional move,
+   * never by focus restoration (fallback after a sibling unmounts) or the
+   * mount-time default. Mirrors tvOS `isTVFocusRestorationExcluded`.
+   */
+  focusRestorationExcluded?: boolean;
 };
 
 export function useFocus<T extends LightningElement>(
@@ -22,6 +28,7 @@ export function useFocus<T extends LightningElement>(
     destinations,
     onChildFocused,
     allowOffscreen,
+    focusRestorationExcluded,
   }: FocusOptions = {
     active: true,
     autoFocus: false,
@@ -62,6 +69,7 @@ export function useFocus<T extends LightningElement>(
         focusRedirect,
         destinations,
         allowOffscreen,
+        focusRestorationExcluded,
       });
     }
 
