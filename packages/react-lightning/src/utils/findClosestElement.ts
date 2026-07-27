@@ -62,7 +62,14 @@ function getDistance(direction: Direction, source: Dimensions, target: Dimension
       break;
     case Direction.Down:
       targetX = clampToSpan(source.centerX, target.x, target.w);
-      targetY = target.y;
+      // A sibling that fully encloses the source vertically (a screen scene
+      // behind a floating header) keeps its focusable content below the source,
+      // not above it — enter it from the source's bottom edge rather than
+      // rejecting it on its top edge.
+      targetY =
+        target.y <= source.y && target.y + target.h >= source.y + source.h
+          ? source.y + source.h
+          : target.y;
 
       if (targetY < source.centerY) {
         return null;
