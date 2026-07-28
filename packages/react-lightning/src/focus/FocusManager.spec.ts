@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createMockElement, type MockElement } from '../mocks/createMockElement';
+import {
+  createMockElement,
+  type MockElement,
+} from '../mocks/createMockElement';
 import { FocusManager } from './FocusManager';
 
 describe('FocusManager', () => {
@@ -285,7 +288,12 @@ describe('FocusManager', () => {
     focusManager.addElement(modalGrandChild, modalChild);
     focusManager.addElement(modalChild, modal);
 
-    expect(focusManager.focusPath).toEqual([parent, modal, modalChild, modalGrandChild]);
+    expect(focusManager.focusPath).toEqual([
+      parent,
+      modal,
+      modalChild,
+      modalGrandChild,
+    ]);
   });
 
   describe('setFocusedChild', () => {
@@ -1084,4 +1092,37 @@ describe('FocusManager', () => {
     });
   });
 
+  describe('onChildFocused across intervening groups', () => {
+    it('notifies an ancestor group when its directly-focused child changes through a nested group', () => {
+      // Mirrors a VirtualList (vl) whose cells nest their own focus group: a
+      // focusable tile is two levels below the list. On tvOS the list still
+      // hears focus cross its cells, so its scroll-to-focus can run.
+      const vl = createMockElement(1, 'vl');
+      const cellA = createMockElement(2, 'cellA');
+      const cellB = createMockElement(3, 'cellB');
+      const tileA = createMockElement(4, 'tileA');
+      const tileB = createMockElement(5, 'tileB');
+      vl.isFocusGroup = true;
+      cellA.isFocusGroup = true;
+      cellB.isFocusGroup = true;
+
+      focusManager.addElement(vl, null, { autoFocus: false });
+      focusManager.addElement(cellA, vl, { autoFocus: false });
+      focusManager.addElement(cellB, vl, { autoFocus: false });
+      focusManager.addElement(tileA, cellA, { autoFocus: false });
+      focusManager.addElement(tileB, cellB, { autoFocus: false });
+
+      const onChildFocused = vi.fn();
+      focusManager.setOnChildFocused(vl, onChildFocused);
+
+      focusManager.focus(tileA);
+      onChildFocused.mockClear();
+      focusManager.focus(tileB);
+
+      // vl's own focused child moved cellA -> cellB; it must be told, with the
+      // child on its path (the cell), not left starved because the leaf's
+      // immediate parent is the cell rather than the list.
+      expect(onChildFocused).toHaveBeenCalledWith(cellB);
+    });
+  });
 });
