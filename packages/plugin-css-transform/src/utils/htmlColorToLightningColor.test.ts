@@ -1,5 +1,5 @@
 import type { ColorValue } from 'react-native';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { htmlColorToLightningColor } from './htmlColorToLightningColor';
 
@@ -52,6 +52,29 @@ describe('htmlColorToLightningColor', () => {
     expect(actual).toBe(expected);
   });
 
+  it('should convert space-form rgb string to a number', () => {
+    expect(htmlColorToLightningColor('rgb(244 164 96)')).toBe(0xf4a460ff);
+    expect(htmlColorToLightningColor('rgb(244 164 96 / 0.4)')).toBe(0xf4a46066);
+  });
+
+  it('should convert an 8-digit alpha hex to a number', () => {
+    expect(htmlColorToLightningColor('#ff00ff80')).toBe(0xff00ff80);
+  });
+
+  it('should convert a 4-digit alpha hex to a number', () => {
+    expect(htmlColorToLightningColor('#abcd')).toBe(0xaabbccdd);
+  });
+
+  it('should convert hsl/hsla strings to a number', () => {
+    expect(htmlColorToLightningColor('hsl(300, 100%, 50%)')).toBe(0xff00ffff);
+    expect(htmlColorToLightningColor('hsla(300, 100%, 50%, 0.4)')).toBe(
+      0xff00ff66,
+    );
+    expect(htmlColorToLightningColor('hsl(300 100% 50% / 0.4)')).toBe(
+      0xff00ff66,
+    );
+  });
+
   it('should convert html color code to a number', () => {
     const value = 'sandybrown';
     const expected = 0xf4a460ff;
@@ -77,16 +100,6 @@ describe('htmlColorToLightningColor', () => {
     }
   });
 
-  it('should throw an error if an invalid hex was given', () => {
-    const value = '#abcd';
-
-    const run = (): void => {
-      htmlColorToLightningColor(value);
-    };
-
-    expect(run).toThrow('Invalid hex value');
-  });
-
   it('should throw an error if html color code is not a web X11 color', () => {
     const value = 'sandybrownzzzz';
     const run = (): void => {
@@ -97,8 +110,26 @@ describe('htmlColorToLightningColor', () => {
   });
 
   it('should return undefined for unresolvable css keyword colors', () => {
-    for (const value of ['inherit', 'initial', 'unset', 'revert', 'currentColor', 'CurrentColor']) {
+    for (const value of [
+      'inherit',
+      'initial',
+      'unset',
+      'revert',
+      'currentColor',
+      'CurrentColor',
+    ]) {
       expect(htmlColorToLightningColor(value)).toBeUndefined();
     }
+  });
+
+  it('should warn and drop opaque/object color values instead of throwing', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    // Stands in for a PlatformColor / OpaqueColorValue.
+    const opaque = { semantic: ['label'] } as unknown as ColorValue;
+
+    expect(htmlColorToLightningColor(opaque)).toBeUndefined();
+    expect(warn).toHaveBeenCalled();
+
+    warn.mockRestore();
   });
 });
