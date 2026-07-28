@@ -95,7 +95,8 @@ export interface FlexContainer {
 }
 
 export interface FlexItem {
-  alignSelf?: AlignItems;
+  // `auto` inherits the parent's alignItems, matching RN's alignSelf type.
+  alignSelf?: AlignItems | 'auto';
   flex?: string | number;
   flexBasis?: AutoDimensionValue;
   flexGrow?: number;
