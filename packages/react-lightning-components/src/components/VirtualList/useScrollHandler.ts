@@ -6,6 +6,7 @@ import type { LayoutManager } from './LayoutManager';
 import type { ScrollEvent } from './VirtualListTypes';
 
 import { createCriticalSpring } from './scrollSpring';
+import { reconcileScrollBounds } from './reconcileScrollBounds';
 import { resolveChildSnapTarget } from './resolveChildSnapAlignment';
 import { resolveFocusScrollTarget } from './resolveFocusScrollTarget';
 
@@ -288,17 +289,20 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     // render and the parent's cache write. Same-value setState is free.
     setCommittedScrollOffset(clamped);
 
-    if (onEndReached) {
-      const distanceFromEnd = totalContentSize - clamped - viewportSize;
+    const bounds = reconcileScrollBounds({
+      scrollOffset: clamped,
+      maxScroll,
+      totalContentSize,
+      viewportSize,
+      onEndReachedThreshold,
+      endReached: endReachedRef.current,
+      hasEndReachedListener: !!onEndReached,
+    });
 
-      if (distanceFromEnd <= viewportSize * (onEndReachedThreshold ?? 0.5)) {
-        if (!endReachedRef.current) {
-          endReachedRef.current = true;
-          onEndReached({ distanceFromEnd });
-        }
-      } else {
-        endReachedRef.current = false;
-      }
+    endReachedRef.current = bounds.endReached;
+
+    if (bounds.fireEndReached) {
+      onEndReached?.({ distanceFromEnd: bounds.distanceFromEnd });
     }
 
     // Animated scrolls stream onScroll from the emit loop instead; emitting
@@ -401,6 +405,38 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
       }
     }
   }
+
+  // Native ScrollView/FlashList reconcile the offset against the content size on
+  // every layout pass; react-lightning only did it inside the scroll handler. When
+  // content shrinks below the current offset the list was left scrolled past the
+  // new end (blank canvas until the next scroll); a short list already within the
+  // threshold never primed onEndReached on mount. Re-run the decision whenever the
+  // size axes change.
+  // oxlint-disable-next-line react-hooks/exhaustive-deps -- keyed on the size axes; maxScroll derives from them
+  useEffect(() => {
+    const bounds = reconcileScrollBounds({
+      scrollOffset: scrollOffsetRef.current,
+      maxScroll,
+      totalContentSize,
+      viewportSize,
+      onEndReachedThreshold,
+      endReached: endReachedRef.current,
+      hasEndReachedListener: !!onEndReached,
+    });
+
+    if (bounds.didClamp) {
+      scrollOffsetRef.current = bounds.clampedOffset;
+      setCommittedScrollOffset(bounds.clampedOffset);
+      applyPosition(bounds.clampedOffset, false);
+      onScroll?.(makeScrollEvent(bounds.clampedOffset));
+    }
+
+    endReachedRef.current = bounds.endReached;
+
+    if (bounds.fireEndReached) {
+      onEndReached?.({ distanceFromEnd: bounds.distanceFromEnd });
+    }
+  }, [totalContentSize, viewportSize]);
 
   return {
     contentRef,
