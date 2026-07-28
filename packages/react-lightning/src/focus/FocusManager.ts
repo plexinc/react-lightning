@@ -723,6 +723,13 @@ export class FocusManager<
     // registration (see addElement / focusCommitted).
     childNode.focusCommitted = true;
 
+    // A group hears onChildFocused whenever its own directly-focused child
+    // changes — not only the group directly above the leaf. Otherwise a
+    // VirtualList never learns focus crossed a cell when the cell nests its own
+    // focus group, and its scroll-to-focus stops following. Matches tvOS, where
+    // every ancestor is notified as focus crosses its children.
+    const childFocusChanged: FocusNode<T>[] = [];
+
     while (currChild && !isRootNode(currChild) && currParent) {
       // Only hand focus off to an external redirect while walking up. An
       // internal redirect (destinations within this node's own subtree, e.g.
@@ -736,6 +743,10 @@ export class FocusManager<
         return;
       }
 
+      if (currParent.focusedElement !== currChild) {
+        childFocusChanged.push(currChild as FocusNode<T>);
+      }
+
       currParent.focusedElement = currChild as FocusNode<T>;
       currParent.focusCommitted = true;
       currChild = currParent;
@@ -743,7 +754,10 @@ export class FocusManager<
     }
 
     this._recalculateFocusPath();
-    this._tryEmitChildFocusedEvent(childNode);
+
+    for (const node of childFocusChanged) {
+      this._tryEmitChildFocusedEvent(node);
+    }
   }
 
   private _tryEmitChildFocusedEvent(node: FocusNode<T>) {
