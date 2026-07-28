@@ -16,8 +16,9 @@ describe('resolveTimingEasing', () => {
     expect(resolveTimingEasing(factoryObj)).toBe(produced);
   });
 
-  it('falls back to linear when easing is missing', () => {
-    expect(resolveTimingEasing(undefined)).toBe('linear');
+  it('defaults an unset easing to ease-in-out-quad', () => {
+    expect(resolveTimingEasing(undefined)).toBe('cubic-bezier(0.455, 0.03, 0.515, 0.955)');
+    expect(resolveTimingEasing(null)).toBe('cubic-bezier(0.455, 0.03, 0.515, 0.955)');
   });
 
   it('falls back to linear for an unrecognized easing value', () => {
