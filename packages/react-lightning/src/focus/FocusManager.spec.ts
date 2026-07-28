@@ -503,6 +503,38 @@ describe('FocusManager', () => {
       expect(focusManager.focusPath).toEqual([root, real]);
     });
 
+    it('lands on an internal-redirect destination without self-cycling', () => {
+      const root = createMockElement(1, 'root');
+      const sibling = createMockElement(2, 'sibling');
+      const guide = createMockElement(3, 'guide');
+      const cellA = createMockElement(4, 'cellA');
+      const cellB = createMockElement(5, 'cellB');
+      // The guide's destinations point at its own descendants (an EPG airings
+      // guide anchoring on one of its cells), so the element parent chain runs
+      // through the guide.
+      cellA.parent = guide;
+      cellB.parent = guide;
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(sibling, root);
+      focusManager.addElement(guide, root, {
+        focusRedirect: true,
+        destinations: [cellB],
+      });
+      focusManager.addElement(cellA, guide);
+      focusManager.addElement(cellB, guide);
+
+      focusManager.focus(sibling);
+
+      // Entering the guide forwards to its internal destination and stays
+      // there. The upward-walk redirect must not re-fire on the way back up
+      // (it targets a descendant we just came from), or it self-cycles and
+      // aborts the move, stranding focus on the guide's first child.
+      focusManager.focus(guide);
+      expect(focusManager.focusPath).toEqual([root, guide, cellB]);
+      expect(cellB.focused).toBe(true);
+    });
+
     it('falls back to normal child focus when the destination is unregistered', () => {
       const root = createMockElement(1, 'root');
       const sibling = createMockElement(2, 'sibling');

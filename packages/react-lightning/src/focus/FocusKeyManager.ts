@@ -1,6 +1,6 @@
 import { Keys } from '../input/Keys';
 import type { KeyEvent, LightningElement } from '../types';
-import { findClosestElement } from '../utils/findClosestElement';
+import { findClosestElement, resolveDirectionalTarget } from '../utils/findClosestElement';
 import { Direction } from './Direction';
 import type { FocusManager, FocusNode } from './FocusManager';
 
@@ -79,6 +79,8 @@ export class FocusKeyManager<T extends LightningElement> {
       return true;
     }
 
+    // Pick the next sibling from the immediate focused child, so the current
+    // subtree (and its ancestors) are excluded as candidates.
     const closestElement = findClosestElement(
       focusNode.focusedElement.element,
       childElements(focusNode.children),
@@ -88,7 +90,29 @@ export class FocusKeyManager<T extends LightningElement> {
     );
 
     if (closestElement) {
-      this._focusManager.focus(closestElement as T);
+      // Descend into the chosen sibling from the deepest focused leaf, not the
+      // group's immediate child, so a nested layout keeps the real cross-axis
+      // position of what the user is on (an EPG airing, not its full-width row)
+      // and lands on the overlapping child instead of the group's first child.
+      // A redirect node (e.g. a row's airings guide) is returned for the focus
+      // manager to forward to its anchored destination.
+      let leafNode: FocusNode<LightningElement> = focusNode.focusedElement;
+
+      while (leafNode.focusedElement) {
+        leafNode = leafNode.focusedElement;
+      }
+
+      const target = resolveDirectionalTarget(
+        leafNode.element,
+        closestElement,
+        focusNode.parent.element,
+        direction,
+        (child) => this._focusableChildElements(child),
+        (child) => this._isRedirect(child),
+        (child) => this._getAllowOffscreen(child),
+      );
+
+      this._focusManager.focus(target);
 
       return false;
     }
@@ -107,5 +131,23 @@ export class FocusKeyManager<T extends LightningElement> {
     }
 
     return true;
+  };
+
+  private _focusableChildElements = (element: LightningElement): Iterable<LightningElement> => {
+    const node = this._focusManager.getFocusNode(element);
+
+    return node ? childElements(node.children) : [];
+  };
+
+  private _getAllowOffscreen = (element: LightningElement): boolean => {
+    const node = this._focusManager.getFocusNode(element);
+
+    return !!node?.allowOffscreen;
+  };
+
+  private _isRedirect = (element: LightningElement): boolean => {
+    const node = this._focusManager.getFocusNode(element);
+
+    return !!node?.focusRedirect;
   };
 }
