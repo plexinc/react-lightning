@@ -724,9 +724,13 @@ export class FocusManager<
     childNode.focusCommitted = true;
 
     while (currChild && !isRootNode(currChild) && currParent) {
+      // Only hand focus off to an external redirect while walking up. An
+      // internal redirect (destinations within this node's own subtree, e.g.
+      // an EPG airings guide pointing at its own cells) is already satisfied by
+      // the downward-arrival redirect above; re-firing it here would target a
+      // descendant we just came from and self-cycle, aborting the focus move.
       if (
-        currChild.focusRedirect &&
-        currChild.destinations &&
+        hasExternalRedirect(currChild) &&
         this._redirectToDestination(currChild, visitedRedirects)
       ) {
         return;

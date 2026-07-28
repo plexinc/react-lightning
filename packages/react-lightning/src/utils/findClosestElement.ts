@@ -326,3 +326,53 @@ function findClosestNodeInTree(
 
   return closest;
 }
+
+/**
+ * Resolve the final directional target after a move lands on `target`.
+ *
+ * Native focus engines beam from the currently focused view's geometry, so a
+ * nested layout (a narrow header beside a wide scrollable group) lands under
+ * the source's cross-axis position, not on the group's first child. From
+ * `target`, keep picking the child closest to `source` along `direction`.
+ * `source` must be the deep focused leaf (not an intermediate group) so its
+ * real cross position drives the descent.
+ *
+ * Stop at a redirect node (`isRedirect`) and return it: the focus manager
+ * forwards it to its destination (e.g. an EPG airings guide anchoring on the
+ * overlapping airing). Otherwise descend to a plain focusable leaf. Returns
+ * `target` unchanged when it has no focusable children.
+ */
+export function resolveDirectionalTarget(
+  source: LightningElement,
+  target: LightningElement,
+  parentElement: LightningElement | null,
+  direction: Direction,
+  getFocusableChildren: (element: LightningElement) => Iterable<LightningElement>,
+  isRedirect: (element: LightningElement) => boolean,
+  getAllowOffscreen: (element: LightningElement) => boolean,
+): LightningElement {
+  let current = target;
+
+  // Bounded by tree depth; guards against a malformed accessor cycle.
+  for (let depth = 0; depth < 64; depth++) {
+    if (isRedirect(current)) {
+      return current;
+    }
+
+    const next = findClosestElement(
+      source,
+      getFocusableChildren(current),
+      parentElement,
+      direction,
+      getAllowOffscreen(current),
+    );
+
+    if (!next || next === current) {
+      return current;
+    }
+
+    current = next;
+  }
+
+  return current;
+}
