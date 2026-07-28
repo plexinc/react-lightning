@@ -56,12 +56,23 @@ function mapAlignItems(yoga: Yoga, value?: number | string): Align {
   }
 }
 
+// alignSelf `auto`/unset inherits the parent's alignItems; only concrete
+// values map to a fixed alignment.
+function mapAlignSelf(yoga: Yoga, value?: number | string): Align {
+  if (value == null || value === 'auto') {
+    return yoga.ALIGN_AUTO;
+  }
+
+  return mapAlignItems(yoga, value);
+}
+
 function mapAlignContent(yoga: Yoga, value?: number | string): Align {
   switch (value) {
     case 'space-around':
       return yoga.ALIGN_SPACE_AROUND;
-    case 'space-between':
     case 'space-evenly':
+      return yoga.ALIGN_SPACE_EVENLY;
+    case 'space-between':
       return yoga.ALIGN_SPACE_BETWEEN;
     case 'center':
       return yoga.ALIGN_CENTER;
@@ -142,7 +153,11 @@ function applyFlexBasis(node: Node, value?: AutoDimensionValue | string) {
   }
 }
 
-function applyFlex(node: Node, value?: string | number, expandToAutoFlexBasis = false) {
+function applyFlex(
+  node: Node,
+  value?: string | number,
+  expandToAutoFlexBasis = false,
+) {
   if (value == null) {
     return;
   }
@@ -187,7 +202,7 @@ function resetFlexPropToDefault(yoga: Yoga, node: Node, prop: FlexProps): void {
       node.setAlignItems(mapAlignItems(yoga));
       return;
     case 'alignSelf':
-      node.setAlignSelf(mapAlignItems(yoga));
+      node.setAlignSelf(mapAlignSelf(yoga));
       return;
     case 'alignContent':
       node.setAlignContent(mapAlignContent(yoga));
@@ -391,7 +406,9 @@ export function applyFlexPropToYoga<K extends FlexProps>(
 
     switch (key) {
       case 'display':
-        node.setDisplay(mapDisplay(yoga, value as LightningViewElementStyle['display']));
+        node.setDisplay(
+          mapDisplay(yoga, value as LightningViewElementStyle['display']),
+        );
         return true;
       case 'w':
         node.setWidth(value as LightningViewElementStyle['w']);
@@ -423,62 +440,116 @@ export function applyFlexPropToYoga<K extends FlexProps>(
         return true;
       }
       case 'margin':
-        node.setMargin(yoga.EDGE_ALL, value as LightningViewElementStyle['margin']);
+        node.setMargin(
+          yoga.EDGE_ALL,
+          value as LightningViewElementStyle['margin'],
+        );
         return true;
       case 'marginBottom':
-        node.setMargin(yoga.EDGE_BOTTOM, value as LightningViewElementStyle['marginBottom']);
+        node.setMargin(
+          yoga.EDGE_BOTTOM,
+          value as LightningViewElementStyle['marginBottom'],
+        );
         return true;
       case 'marginEnd':
-        node.setMargin(yoga.EDGE_END, value as LightningViewElementStyle['marginEnd']);
+        node.setMargin(
+          yoga.EDGE_END,
+          value as LightningViewElementStyle['marginEnd'],
+        );
         return true;
       case 'marginLeft':
-        node.setMargin(yoga.EDGE_LEFT, value as LightningViewElementStyle['marginLeft']);
+        node.setMargin(
+          yoga.EDGE_LEFT,
+          value as LightningViewElementStyle['marginLeft'],
+        );
         return true;
       case 'marginRight':
-        node.setMargin(yoga.EDGE_RIGHT, value as LightningViewElementStyle['marginRight']);
+        node.setMargin(
+          yoga.EDGE_RIGHT,
+          value as LightningViewElementStyle['marginRight'],
+        );
         return true;
       case 'marginStart':
-        node.setMargin(yoga.EDGE_START, value as LightningViewElementStyle['marginStart']);
+        node.setMargin(
+          yoga.EDGE_START,
+          value as LightningViewElementStyle['marginStart'],
+        );
         return true;
       case 'marginTop':
-        node.setMargin(yoga.EDGE_TOP, value as LightningViewElementStyle['marginTop']);
+        node.setMargin(
+          yoga.EDGE_TOP,
+          value as LightningViewElementStyle['marginTop'],
+        );
         return true;
       case 'marginHorizontal':
       case 'marginInline':
-        node.setMargin(yoga.EDGE_HORIZONTAL, value as LightningViewElementStyle['marginInline']);
+        node.setMargin(
+          yoga.EDGE_HORIZONTAL,
+          value as LightningViewElementStyle['marginInline'],
+        );
         return true;
       case 'marginVertical':
       case 'marginBlock':
-        node.setMargin(yoga.EDGE_VERTICAL, value as LightningViewElementStyle['marginBlock']);
+        node.setMargin(
+          yoga.EDGE_VERTICAL,
+          value as LightningViewElementStyle['marginBlock'],
+        );
         return true;
       case 'padding':
-        node.setPadding(yoga.EDGE_ALL, value as LightningViewElementStyle['padding']);
+        node.setPadding(
+          yoga.EDGE_ALL,
+          value as LightningViewElementStyle['padding'],
+        );
         return true;
       case 'paddingBottom':
-        node.setPadding(yoga.EDGE_BOTTOM, value as LightningViewElementStyle['paddingBottom']);
+        node.setPadding(
+          yoga.EDGE_BOTTOM,
+          value as LightningViewElementStyle['paddingBottom'],
+        );
         return true;
       case 'paddingEnd':
-        node.setPadding(yoga.EDGE_END, value as LightningViewElementStyle['paddingEnd']);
+        node.setPadding(
+          yoga.EDGE_END,
+          value as LightningViewElementStyle['paddingEnd'],
+        );
         return true;
       case 'paddingLeft':
-        node.setPadding(yoga.EDGE_LEFT, value as LightningViewElementStyle['paddingLeft']);
+        node.setPadding(
+          yoga.EDGE_LEFT,
+          value as LightningViewElementStyle['paddingLeft'],
+        );
         return true;
       case 'paddingRight':
-        node.setPadding(yoga.EDGE_RIGHT, value as LightningViewElementStyle['paddingRight']);
+        node.setPadding(
+          yoga.EDGE_RIGHT,
+          value as LightningViewElementStyle['paddingRight'],
+        );
         return true;
       case 'paddingStart':
-        node.setPadding(yoga.EDGE_START, value as LightningViewElementStyle['paddingStart']);
+        node.setPadding(
+          yoga.EDGE_START,
+          value as LightningViewElementStyle['paddingStart'],
+        );
         return true;
       case 'paddingTop':
-        node.setPadding(yoga.EDGE_TOP, value as LightningViewElementStyle['paddingTop']);
+        node.setPadding(
+          yoga.EDGE_TOP,
+          value as LightningViewElementStyle['paddingTop'],
+        );
         return true;
       case 'paddingHorizontal':
       case 'paddingInline':
-        node.setPadding(yoga.EDGE_HORIZONTAL, value as LightningViewElementStyle['paddingInline']);
+        node.setPadding(
+          yoga.EDGE_HORIZONTAL,
+          value as LightningViewElementStyle['paddingInline'],
+        );
         return true;
       case 'paddingVertical':
       case 'paddingBlock':
-        node.setPadding(yoga.EDGE_VERTICAL, value as LightningViewElementStyle['paddingBlock']);
+        node.setPadding(
+          yoga.EDGE_VERTICAL,
+          value as LightningViewElementStyle['paddingBlock'],
+        );
         return true;
       case 'border':
         node.setBorder(
@@ -511,7 +582,7 @@ export function applyFlexPropToYoga<K extends FlexProps>(
         node.setAlignItems(mapAlignItems(yoga, value));
         return true;
       case 'alignSelf':
-        node.setAlignSelf(mapAlignItems(yoga, value));
+        node.setAlignSelf(mapAlignSelf(yoga, value));
         return true;
       case 'justifyContent':
         node.setJustifyContent(mapJustify(yoga, value));
@@ -526,37 +597,66 @@ export function applyFlexPropToYoga<K extends FlexProps>(
         node.setFlexGrow((value as LightningViewElementStyle['flexGrow']) ?? 1);
         return true;
       case 'flexShrink':
-        node.setFlexShrink((value as LightningViewElementStyle['flexShrink']) ?? 0);
+        node.setFlexShrink(
+          (value as LightningViewElementStyle['flexShrink']) ?? 0,
+        );
         return true;
       case 'gap':
-        node.setGap(yoga.GUTTER_ALL, (value as LightningViewElementStyle['gap']) ?? 0);
+        node.setGap(
+          yoga.GUTTER_ALL,
+          (value as LightningViewElementStyle['gap']) ?? 0,
+        );
         return true;
       case 'columnGap':
-        node.setGap(yoga.GUTTER_COLUMN, (value as LightningViewElementStyle['columnGap']) ?? 0);
+        node.setGap(
+          yoga.GUTTER_COLUMN,
+          (value as LightningViewElementStyle['columnGap']) ?? 0,
+        );
         return true;
       case 'rowGap':
-        node.setGap(yoga.GUTTER_ROW, (value as LightningViewElementStyle['rowGap']) ?? 0);
+        node.setGap(
+          yoga.GUTTER_ROW,
+          (value as LightningViewElementStyle['rowGap']) ?? 0,
+        );
         return true;
       case 'position':
         node.setPositionType(mapPosition(yoga, value));
         return true;
       case 'right':
-        node.setPosition(yoga.EDGE_RIGHT, (value as LightningViewElementStyle['right']) ?? 0);
+        node.setPosition(
+          yoga.EDGE_RIGHT,
+          (value as LightningViewElementStyle['right']) ?? 0,
+        );
         return true;
       case 'bottom':
-        node.setPosition(yoga.EDGE_BOTTOM, (value as LightningViewElementStyle['bottom']) ?? 0);
+        node.setPosition(
+          yoga.EDGE_BOTTOM,
+          (value as LightningViewElementStyle['bottom']) ?? 0,
+        );
         return true;
       case 'left':
-        node.setPosition(yoga.EDGE_LEFT, (value as LightningViewElementStyle['left']) ?? 0);
+        node.setPosition(
+          yoga.EDGE_LEFT,
+          (value as LightningViewElementStyle['left']) ?? 0,
+        );
         return true;
       case 'top':
-        node.setPosition(yoga.EDGE_TOP, (value as LightningViewElementStyle['top']) ?? 0);
+        node.setPosition(
+          yoga.EDGE_TOP,
+          (value as LightningViewElementStyle['top']) ?? 0,
+        );
         return true;
       case 'start':
-        node.setPosition(yoga.EDGE_START, (value as LightningViewElementStyle['left']) ?? 0);
+        node.setPosition(
+          yoga.EDGE_START,
+          (value as LightningViewElementStyle['left']) ?? 0,
+        );
         return true;
       case 'end':
-        node.setPosition(yoga.EDGE_END, (value as LightningViewElementStyle['right']) ?? 0);
+        node.setPosition(
+          yoga.EDGE_END,
+          (value as LightningViewElementStyle['right']) ?? 0,
+        );
         return true;
     }
   } catch (err) {
