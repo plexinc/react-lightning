@@ -125,6 +125,10 @@ export interface VirtualListProps<T> {
   onEndReachedThreshold?: number | null;
   /** Called on every scroll position change. */
   onScroll?: (event: ScrollEvent) => void;
+  /** Called once when a focus-driven animated scroll begins (tvOS/AndroidTV momentum parity). */
+  onMomentumScrollBegin?: (event: ScrollEvent) => void;
+  /** Called once when the animated scroll settles or is cancelled. */
+  onMomentumScrollEnd?: (event: ScrollEvent) => void;
   /** Called when viewable items change. */
   onViewableItemsChanged?:
     | ((info: {

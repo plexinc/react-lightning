@@ -2,21 +2,20 @@ import { type RefObject, useEffect, useRef, useState } from 'react';
 
 import type { LightningElement } from '@plextv/react-lightning';
 
+import { type MomentumCallbacks, createMomentumTracker } from './createMomentumTracker';
 import type { LayoutManager } from './LayoutManager';
-import type { ScrollEvent } from './VirtualListTypes';
-
-import { createCriticalSpring } from './scrollSpring';
 import { reconcileScrollBounds } from './reconcileScrollBounds';
 import { resolveChildSnapTarget } from './resolveChildSnapAlignment';
 import { resolveFocusScrollTarget } from './resolveFocusScrollTarget';
+import { createCriticalSpring } from './scrollSpring';
+import type { ScrollEvent } from './VirtualListTypes';
 
 // Lightning Magic Remote / mouse support (in the host app) installs this hook
 // while a pointer is driving focus. Read it off globalThis so this subtree stays
 // free of app imports; undefined (a no-op) on every platform that never loads it.
 const isPointerFocusScrollSuppressed = (): boolean => {
-  const fn = (
-    globalThis as { __plexShouldSuppressPointerFocusScroll?: () => boolean }
-  ).__plexShouldSuppressPointerFocusScroll;
+  const fn = (globalThis as { __plexShouldSuppressPointerFocusScroll?: () => boolean })
+    .__plexShouldSuppressPointerFocusScroll;
 
   return typeof fn === 'function' && fn();
 };
@@ -64,6 +63,10 @@ export interface UseScrollHandlerOptions {
   onAnimationStart?: () => void;
   /** Fires once when the in-flight animation ends or `resetScroll` cancels it; VL drains the batch. */
   onAnimationEnd?: () => void;
+  /** Momentum-scroll parity: begin once when a focus-driven scroll animates. */
+  onMomentumScrollBegin?: (event: ScrollEvent) => void;
+  /** Momentum-scroll parity: end once when the animated scroll settles or is cancelled. */
+  onMomentumScrollEnd?: (event: ScrollEvent) => void;
 }
 
 export interface UseScrollHandlerResult {
@@ -106,7 +109,21 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     initialScrollOffset = 0,
     onAnimationStart,
     onAnimationEnd,
+    onMomentumScrollBegin,
+    onMomentumScrollEnd,
   } = options;
+
+  // Keep the tracker stable across renders (owns the begin/end balance) while
+  // reading the latest consumer callbacks off a ref updated post-commit — the
+  // momentum props fire async from the animation loop, never during render.
+  const momentumCallbacksRef = useRef<MomentumCallbacks>({});
+
+  useEffect(() => {
+    momentumCallbacksRef.current.onMomentumScrollBegin = onMomentumScrollBegin;
+    momentumCallbacksRef.current.onMomentumScrollEnd = onMomentumScrollEnd;
+  }, [onMomentumScrollBegin, onMomentumScrollEnd]);
+
+  const [momentum] = useState(() => createMomentumTracker(momentumCallbacksRef));
 
   const contentRef = useRef<LightningElement>(null);
   const scrollOffsetRef = useRef(initialScrollOffset);
@@ -182,7 +199,9 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     if (animated && animationDuration > 0) {
       const thisAnimId = ++animationIdRef.current;
 
-      if (!isAnimatingRef.current) {
+      const justStarted = !isAnimatingRef.current;
+
+      if (justStarted) {
         isAnimatingRef.current = true;
         onAnimationStart?.();
       }
@@ -198,12 +217,15 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
 
       animTargetRef.current = offset;
 
+      if (justStarted) {
+        momentum.start(makeScrollEvent(clamp(from)));
+      }
+
       // Every animated scroll runs the tvOS spring. A press pumps in the
       // normalized initial velocity on top of whatever the in-flight
       // animation carries (UIKit's additive begin-from-current-state), so
       // chained moves keep their momentum and glide out on the spring tail.
-      const v0 =
-        scrollVelocityRef.current + (SPRING_INITIAL_VELOCITY * distance) / 1000;
+      const v0 = scrollVelocityRef.current + (SPRING_INITIAL_VELOCITY * distance) / 1000;
       const spring = createCriticalSpring(-distance, v0, SPRING_OMEGA);
 
       lastTickRef.current = { pos: from, time: startTime };
@@ -218,8 +240,7 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
         const t = now - startTime;
         const pos = spring.position(t);
         const done =
-          (Math.abs(pos) < SPRING_SETTLE_PX &&
-            Math.abs(spring.velocity(t)) < 0.01) ||
+          (Math.abs(pos) < SPRING_SETTLE_PX && Math.abs(spring.velocity(t)) < 0.01) ||
           t >= SPRING_MAX_DURATION_MS;
         const current = done ? offset : offset + pos;
 
@@ -247,6 +268,7 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
           animTargetRef.current = null;
           isAnimatingRef.current = false;
           onAnimationEnd?.();
+          momentum.settle(makeScrollEvent(clamp(offset)));
         }
       };
 
@@ -347,8 +369,7 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     const childSize = horizontal ? child.node.w : child.node.h;
 
     const headerSize = itemAreaOffset - paddingStart;
-    const footerSize =
-      totalContentSize - itemAreaOffset - layoutManager.totalSize - paddingEnd;
+    const footerSize = totalContentSize - itemAreaOffset - layoutManager.totalSize - paddingEnd;
 
     // A row's own scrollSnapAlign/scrollSnapOffset wins over the list-level alignment,
     // matching react-native-tvos ("item" defers to rows, markerless rows get 'start').
@@ -389,6 +410,7 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     if (isAnimatingRef.current) {
       isAnimatingRef.current = false;
       onAnimationEnd?.();
+      momentum.cancel(makeScrollEvent(offset));
     }
 
     // Apply directly to lightning so the next paint reflects the new
