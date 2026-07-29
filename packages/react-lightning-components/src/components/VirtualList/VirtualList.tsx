@@ -134,6 +134,8 @@ function VirtualListInner<T>(
     onEndReached,
     onEndReachedThreshold = 0.5,
     onScroll,
+    onMomentumScrollBegin,
+    onMomentumScrollEnd,
     onViewableItemsChanged,
     viewabilityConfig,
     onLoad,
@@ -436,6 +438,8 @@ function VirtualListInner<T>(
     initialScrollOffset,
     onAnimationStart: handleAnimationStart,
     onAnimationEnd: handleAnimationEnd,
+    onMomentumScrollBegin,
+    onMomentumScrollEnd,
   });
 
   // Backstop for non-focus scrolls (touch/wheel/imperative scrollToOffset).
