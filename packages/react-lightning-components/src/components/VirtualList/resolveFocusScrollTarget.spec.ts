@@ -81,6 +81,51 @@ describe('resolveFocusScrollTarget', () => {
     ).toBe(5000);
   });
 
+  it('centers a near-header row instead of snapping it to the header edge', () => {
+    // Discover/Trending: a tall hero header with center-aligned sections below
+    // it. tvOS/AndroidTV center the focused section even when that scrolls the
+    // header partly off-screen. The header edge-snap (which keeps a small real
+    // header fully visible for start/end alignment) must not override a center
+    // target, or early sections settle at the top and never re-center.
+    const viewportSize = 1080;
+    const childOffset = 720;
+    const childSize = 500;
+
+    expect(
+      resolveFocusScrollTarget({
+        viewportSize,
+        snapToAlignment: 'center',
+        paddingStart: 48,
+        paddingEnd: 48,
+        headerSize: 700,
+        footerSize: 0,
+        maxScroll: 5000,
+        childOffset,
+        childSize,
+      }),
+    ).toBe(childOffset + childSize / 2 - viewportSize / 2);
+  });
+
+  it('centers a near-footer row instead of snapping it to the footer edge', () => {
+    const viewportSize = 1080;
+    const childOffset = 4700;
+    const childSize = 500;
+
+    expect(
+      resolveFocusScrollTarget({
+        viewportSize,
+        snapToAlignment: 'center',
+        paddingStart: 48,
+        paddingEnd: 48,
+        headerSize: 0,
+        footerSize: 700,
+        maxScroll: 5000,
+        childOffset,
+        childSize,
+      }),
+    ).toBe(childOffset + childSize / 2 - viewportSize / 2);
+  });
+
   it('centers when asked', () => {
     expect(
       resolveFocusScrollTarget({
