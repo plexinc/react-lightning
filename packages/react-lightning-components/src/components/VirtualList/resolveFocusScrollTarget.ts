@@ -4,7 +4,7 @@ export interface FocusScrollTargetParams {
   /** Focused child's main-axis size. */
   childSize: number;
   viewportSize: number;
-  snapToAlignment: 'start' | 'center' | 'end';
+  snapToAlignment: 'center' | 'end' | 'start';
   /**
    * Per-item pixel offset (`scrollSnapOffset`): land the child's leading edge
    * at this viewport coordinate. Wins over `snapToAlignment`.
@@ -53,15 +53,31 @@ export function resolveFocusScrollTarget({
   } else {
     switch (snapToAlignment) {
       case 'center':
-        target = childOffset + childSize / 2 - viewportSize / 2 + (snapToItemPadding ?? 0) / 2;
+        target =
+          childOffset +
+          childSize / 2 -
+          viewportSize / 2 +
+          (snapToItemPadding ?? 0) / 2;
         break;
       case 'end':
-        target = childOffset + childSize - viewportSize + (snapToItemPadding ?? paddingEnd);
+        target =
+          childOffset +
+          childSize -
+          viewportSize +
+          (snapToItemPadding ?? paddingEnd);
         break;
       default:
         target = childOffset - (snapToItemPadding ?? paddingStart);
         break;
     }
+  }
+
+  // Center wins over the edge protection: a centered row is meant to sit
+  // mid-viewport even when that scrolls a real header/footer partly off (tvOS
+  // parity). Snapping it to the edge instead leaves near-header/footer rows
+  // stuck at the top/bottom; downstream clamp still bounds the target.
+  if (snapOffset === undefined && snapToAlignment === 'center') {
+    return target;
   }
 
   if (target > 0 && target <= headerSize) {
