@@ -1,16 +1,18 @@
 import type { DependencyList } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import type { useAnimatedStyle as useAnimatedStyleRN } from 'react-native-reanimated-original';
 import type { Mutable } from 'react-native-reanimated/lib/typescript/commonTypes';
 import type { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/commonTypes';
-
+import type { useAnimatedStyle as useAnimatedStyleRN } from 'react-native-reanimated-original';
 import { PARTIAL_STYLE } from '@plextv/react-lightning';
-import type { LightningElement, LightningElementStyle } from '@plextv/react-lightning';
-
+import type {
+  LightningElement,
+  LightningElementStyle,
+} from '@plextv/react-lightning';
 import {
-  type CancelAnimation,
-  runAnimationProgram,
-} from '../animation/runAnimationProgram';
+  type RunningProgram,
+  reconcileRunners,
+} from '../animation/reconcileRunners';
+import { runAnimationProgram } from '../animation/runAnimationProgram';
 import type { AnimatedObject } from '../types/AnimatedObject';
 import type { AnimatedStyle } from '../types/AnimatedStyle';
 import {
@@ -19,9 +21,14 @@ import {
 } from '../utils/toLightningAnimationAndStyles';
 import { useTrackedReaction } from './useTrackedReaction';
 
-type UseAnimatedStyleFn = (...args: Parameters<typeof useAnimatedStyleRN>) => AnimatedStyle;
+type UseAnimatedStyleFn = (
+  ...args: Parameters<typeof useAnimatedStyleRN>
+) => AnimatedStyle;
 
-type Runners = WeakMap<LightningElement, CancelAnimation[]>;
+type Runners = WeakMap<
+  LightningElement,
+  Map<keyof LightningElementStyle, RunningProgram>
+>;
 
 function setStyles(
   view: LightningElement,
@@ -30,11 +37,6 @@ function setStyles(
   schedules: ScheduledAnimation[],
   runners: Runners,
 ): void {
-  // Cancel any program still playing on this view before re-applying, so a
-  // reset (e.g. a shared value set back to a static value) stops the old one.
-  runners.get(view)?.forEach((cancel) => cancel());
-  runners.delete(view);
-
   // Animated styles only carry the keys the updater computed; mark them so
   // the flexbox plugin doesn't reset the element's other flex props.
   (style as Record<PropertyKey, unknown>)[PARTIAL_STYLE] = true;
@@ -47,13 +49,18 @@ function setStyles(
     style: style as LightningElementStyle,
   });
 
-  if (schedules.length) {
-    runners.set(
-      view,
-      schedules.map((schedule) =>
-        runAnimationProgram(view, schedule.prop, schedule.program),
-      ),
-    );
+  // Only (re)start programs whose key changed; unchanged loops keep running and
+  // a removed key (e.g. a reset to a static value) is cancelled.
+  const next = reconcileRunners(
+    runners.get(view) ?? new Map(),
+    schedules,
+    (schedule) => runAnimationProgram(view, schedule.prop, schedule.program),
+  );
+
+  if (next.size) {
+    runners.set(view, next);
+  } else {
+    runners.delete(view);
   }
 }
 
@@ -69,7 +76,8 @@ function applyComputedStyle(
   lastApplied: { current: AppliedStyles },
   runners: Runners,
 ): void {
-  const { transition, style, schedules } = toLightningAnimationAndStyles(computedStyle);
+  const { transition, style, schedules } =
+    toLightningAnimationAndStyles(computedStyle);
 
   lastApplied.current = { transition, style, schedules };
 
@@ -132,6 +140,7 @@ export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
           (dep as Mutable).removeListener(id);
         }
       }
+
       applyStyles();
     };
   }, [autoTrack, inputs, applyStyles]);
