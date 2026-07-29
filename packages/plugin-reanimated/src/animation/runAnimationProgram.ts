@@ -1,14 +1,15 @@
 import type { IAnimationController } from '@lightningjs/renderer';
-
-import type { LightningElement, LightningElementStyle } from '@plextv/react-lightning';
-
+import type {
+  LightningElement,
+  LightningElementStyle,
+} from '@plextv/react-lightning';
 import type { AnimationProgram, ProgramLeaf } from './animationProgram';
 
 export type CancelAnimation = () => void;
 
 // Play a composed program against one node prop: register each step's transition,
 // animate to its target, wait for the node to report it stopped, then advance.
-// Sequences chain, repeats loop (count < 0 = forever). Reverse isn't needed by
+// Sequences chain, repeats loop (count <= 0 = forever). Reverse isn't needed by
 // any current consumer, so it plays forward.
 export function runAnimationProgram(
   view: LightningElement,
@@ -62,9 +63,10 @@ export function runAnimationProgram(
 
           await play(child);
         }
+
         break;
       case 'repeat': {
-        const infinite = node.count < 0;
+        const infinite = node.count <= 0;
 
         for (let i = 0; (infinite || i < node.count) && !cancelled; i++) {
           await play(node.child);

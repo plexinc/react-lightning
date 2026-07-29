@@ -1,7 +1,7 @@
 import type { AnimationSettings } from '@lightningjs/renderer';
 import { describe, expect, it } from 'vitest';
 import type { LightningElement } from '@plextv/react-lightning';
-import { leafProgram, sequenceProgram } from './animationProgram';
+import { leafProgram, repeatProgram, sequenceProgram } from './animationProgram';
 import { runAnimationProgram } from './runAnimationProgram';
 
 const settings = (
@@ -94,5 +94,47 @@ describe('runAnimationProgram', () => {
 
     // Cancelled before the first leaf resolved, so no further steps run.
     expect(view.applied.length).toBeLessThanOrEqual(1);
+  });
+
+  it('repeats a finite positive count that many times', async () => {
+    const view = makeView();
+
+    runAnimationProgram(
+      view as unknown as LightningElement,
+      'x',
+      repeatProgram(leafProgram({ toValue: 1, lngAnimation: settings() }), 3, false),
+    );
+    await flush();
+
+    expect(view.applied.length).toBe(3);
+  });
+
+  it('treats repeat count 0 as infinite, not zero plays (native semantics)', async () => {
+    const view = makeView();
+
+    const cancel = runAnimationProgram(
+      view as unknown as LightningElement,
+      'x',
+      repeatProgram(leafProgram({ toValue: 1, lngAnimation: settings() }), 0, false),
+    );
+    await flush();
+    cancel();
+
+    // count 0 must loop, not play zero times.
+    expect(view.applied.length).toBeGreaterThan(1);
+  });
+
+  it('treats a negative count as infinite', async () => {
+    const view = makeView();
+
+    const cancel = runAnimationProgram(
+      view as unknown as LightningElement,
+      'x',
+      repeatProgram(leafProgram({ toValue: 1, lngAnimation: settings() }), -1, false),
+    );
+    await flush();
+    cancel();
+
+    expect(view.applied.length).toBeGreaterThan(1);
   });
 });
