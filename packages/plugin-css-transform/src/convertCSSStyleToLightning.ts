@@ -84,6 +84,10 @@ export function convertCSSStyleToLightning(
     borderWidth,
     borderColor,
     shadowColor,
+    textShadowColor,
+    textShadowOffset,
+    textShadowRadius,
+    textAlign,
     opacity,
     overflow,
     overflowX,
@@ -137,9 +141,19 @@ export function convertCSSStyleToLightning(
     }
   }
 
-  if (shadowColor != null) {
-    (finalStyle as LightningTextElementStyle).shadowColor =
-      htmlColorToLightningColor(shadowColor);
+  // Text shadows are inert: the shipping SDF text renderer has no shadow, and
+  // RN's textShadow* props were never wired to the Canvas renderer's keys. Drop
+  // them instead of converting values the renderer ignores.
+  if (
+    shadowColor != null ||
+    textShadowColor != null ||
+    textShadowOffset != null ||
+    textShadowRadius != null
+  ) {
+    console.warn(
+      '[convertCSSStyleToLightning] Text shadows are not supported by the Lightning renderer; dropping shadow styles',
+      { shadowColor, textShadowColor, textShadowOffset, textShadowRadius },
+    );
   }
 
   if (border != null || borderWidth != null || borderColor != null) {
@@ -197,11 +211,33 @@ export function convertCSSStyleToLightning(
         : Number.parseInt(otherStyles.top, 10);
   }
 
+  // The renderer resolves the full 100-900 scale (and the keyword weights) to
+  // the nearest font face, but only for numbers — a numeric string like '600'
+  // falls through to 400. Parse those; pass numbers and keywords through as-is.
   if (fontWeight != null) {
     (finalStyle as LightningTextElementStyle).fontWeight =
-      fontWeight === 'bold' || Number.parseInt(fontWeight.toString(), 10) >= 500
-        ? 'bold'
-        : 'normal';
+      typeof fontWeight === 'number'
+        ? fontWeight
+        : /^\d+$/.test(fontWeight)
+          ? Number.parseInt(fontWeight, 10)
+          : (fontWeight as LightningTextElementStyle['fontWeight']);
+  }
+
+  if (textAlign != null) {
+    // The merged style type narrows textAlign to left/center/right, but RN still
+    // passes auto/justify at runtime, so widen before mapping.
+    const align = textAlign as string;
+
+    if (align === 'justify') {
+      console.warn(
+        '[convertCSSStyleToLightning] textAlign "justify" is not supported; using "left"',
+        align,
+      );
+    }
+
+    // Renderer only knows left/center/right; auto and justify both resolve left.
+    (finalStyle as LightningTextElementStyle).textAlign =
+      align === 'center' || align === 'right' ? align : 'left';
   }
 
   if (transform != null) {
