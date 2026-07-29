@@ -6,6 +6,7 @@ import {
   delayProgram,
   firstLeaf,
   leafProgram,
+  programsEqual,
   repeatProgram,
   mapProgram,
   restingValue,
@@ -95,5 +96,57 @@ describe('animationProgram', () => {
     expect(firstLeaf(mapped)?.toValue).toBe(10);
     expect(restingValue(mapped)).toBe(30);
     expect(mapped.kind).toBe('sequence');
+  });
+});
+
+describe('programsEqual', () => {
+  it('true for structurally identical trees sharing leaf settings', () => {
+    const s = settings();
+    const build = () =>
+      repeatProgram(
+        sequenceProgram([
+          leafProgram({ toValue: 1, lngAnimation: s }),
+          leafProgram({ toValue: 0, lngAnimation: s }),
+        ]),
+        -1,
+        true,
+      );
+
+    expect(programsEqual(build(), build())).toBe(true);
+  });
+
+  it('false when a leaf target differs', () => {
+    const s = settings();
+
+    expect(
+      programsEqual(
+        leafProgram({ toValue: 1, lngAnimation: s }),
+        leafProgram({ toValue: 2, lngAnimation: s }),
+      ),
+    ).toBe(false);
+  });
+
+  it('false when repeat count or reverse differ', () => {
+    const child = leaf(1);
+
+    expect(programsEqual(repeatProgram(child, -1, false), repeatProgram(child, 2, false))).toBe(
+      false,
+    );
+    expect(programsEqual(repeatProgram(child, -1, false), repeatProgram(child, -1, true))).toBe(
+      false,
+    );
+  });
+
+  it('false for different kinds', () => {
+    expect(programsEqual(leaf(1), sequenceProgram([leaf(1)]))).toBe(false);
+  });
+
+  it('compares leaf settings by identity (a fresh settings object is a change)', () => {
+    expect(
+      programsEqual(
+        leafProgram({ toValue: 1, lngAnimation: settings() }),
+        leafProgram({ toValue: 1, lngAnimation: settings() }),
+      ),
+    ).toBe(false);
   });
 });
