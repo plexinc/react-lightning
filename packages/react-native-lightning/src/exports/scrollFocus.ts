@@ -4,7 +4,9 @@
  * 'item' (paging) aren't real focus targets — and 'item' isn't even implemented
  * by the alignment math — so they should fall through to ensure-visible.
  */
-export function usesExplicitAlignment(snapToAlignment: string | null | undefined): boolean {
+export function usesExplicitAlignment(
+  snapToAlignment: string | null | undefined,
+): snapToAlignment is 'center' | 'end' {
   return snapToAlignment === 'center' || snapToAlignment === 'end';
 }
 

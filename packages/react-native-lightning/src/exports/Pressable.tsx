@@ -50,8 +50,8 @@ export const Pressable: ForwardRefExoticComponent<PressableProps> = focusable<
   ) {
     const [state, setState] = useState({ focused: false, pressed: false });
 
-    const forwardFocus = useFocusHandler(onFocus);
-    const forwardBlur = useBlurHandler(onBlur);
+    const forwardFocus = useFocusHandler(onFocus ?? undefined);
+    const forwardBlur = useBlurHandler(onBlur ?? undefined);
     const handleLayout = useLayoutHandler(onLayout);
 
     // RN's Pressable exposes `focused` to its function children; mirror that by
