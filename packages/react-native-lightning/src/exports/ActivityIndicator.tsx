@@ -45,7 +45,9 @@ export const ActivityIndicator: ForwardRefExoticComponent<ActivityIndicatorProps
       }}
     >
       <lng-image
-        src={activityImage}
+        // Vite resolves the asset to a URL string; the app's metro-facing
+        // declaration types png imports as a numeric asset id.
+        src={activityImage as unknown as string}
         style={{
           color: actualColor,
           w: actualSize,

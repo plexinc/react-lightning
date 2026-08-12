@@ -19,9 +19,9 @@ import {
   type LightningElement,
   LightningViewElement,
   type LightningViewElementProps,
+  type LightningViewElementStyle,
   useCombinedRef,
 } from '@plextv/react-lightning';
-import type { LightningViewElementStyle } from "@plextv/react-lightning/src/types/types";
 import { createHandler } from '../hooks/useFocusHandler';
 import type { NativeLightningViewElement } from '../types/NativeLightningViewElement';
 import { createNativeSyntheticEvent } from '../utils/createNativeSyntheticEvent';
@@ -339,7 +339,10 @@ class ScrollViewBase extends PureComponent<ScrollViewProps, ScrollViewState> {
       // If we're getting offset via a positional value, we make sure we don't
       // use the snapToAlignment to calculate the offset since the offset should
       // already be taken into account.
-      isElement ? this.props.snapToAlignment : 'start',
+      // 'item' (paging) has no alignment math, so it falls back to 'start'.
+      isElement && usesExplicitAlignment(this.props.snapToAlignment)
+        ? this.props.snapToAlignment
+        : 'start',
       this.props.horizontal,
     );
   };
