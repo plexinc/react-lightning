@@ -1,5 +1,25 @@
 # @plextv/react-lightning-components
 
+## 0.4.4-alpha.2
+
+### Patch Changes
+
+- 9606bd7: A center-aligned focus target stays mid-viewport instead of snapping to the header/footer edge. The edge protection left rows near a header or footer stuck at the top or bottom; center placement now wins (tvOS parity), and the downstream clamp still bounds the resulting target.
+- 0d769ad: Surface momentum scroll callbacks. VirtualList now fires `onMomentumScrollBegin`/`onMomentumScrollEnd` once around a focus-driven animated scroll — begin when it starts, end when it settles or is cancelled — mirroring tvOS/AndroidTV. The reanimated `useAnimatedScrollHandler` shim now routes the `onMomentumBegin`/`onMomentumEnd` handler keys by event name instead of only ever calling `onScroll`. Consumers that key off momentum (fast-scroll detection, jump-bar auto-hide) can react to the real end of a scroll instead of an idle timeout.
+- 2a8ec62: VirtualList reserves the separator size between grid rows. The `ItemSeparatorComponent` size was left out of the multi-column row offsets, so rows sat a separator's height too high and the total content size came up short. Separators sit between rows rather than between columns (matching FlashList), and zero-height empty rows are skipped.
+- 55f5849: VirtualList no longer reports the DEFAULT_ITEM_SIZE guess through onLayout. Callers that derive layout from that width (Grid computes numColumns and re-keys the list) would remount the list on every guess-measure-guess cycle, an infinite loop when the list mounts without a laid-out size (e.g. inside a hidden Activity). resolveCrossSize now flags the fallback as an estimate and the onLayout effect skips it.
+- eb05bf1: VirtualList reconciles its scroll offset against the latest content size. A shrink reclamps the offset instead of leaving it past the new end, and a list short enough to fit its viewport primes `onEndReached` on mount. The clamp and threshold decision is now shared by the scroll handler and the content-size effect, so both paths agree.
+- Updated dependencies [c1b31f7]
+- Updated dependencies [d065c91]
+- Updated dependencies [0621d7d]
+- Updated dependencies [3d54c22]
+- Updated dependencies [ec39013]
+- Updated dependencies [4b28d02]
+- Updated dependencies [e62db77]
+- Updated dependencies [431eeca]
+  - @plextv/react-lightning-plugin-flexbox@0.4.3-alpha.2
+  - @plextv/react-lightning@0.4.3-alpha.2
+
 ## 0.4.4-alpha.1
 
 ### Patch Changes
