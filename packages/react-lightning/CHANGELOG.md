@@ -1,5 +1,22 @@
 # @plextv/react-lightning
 
+## 0.4.3-alpha.2
+
+### Patch Changes
+
+- d065c91: Every ancestor focus group is notified when its own directly-focused child changes, not only the group directly above the leaf. A VirtualList whose cells nest their own focus group never learned that focus had crossed a cell, so its scroll-to-focus stopped following. Matches tvOS, where every ancestor hears about focus crossing its children.
+- 0621d7d: Anchor directional focus into a nested group and fix internal-redirect self-cycling. Directional nav now beams from the deepest focused leaf and descends by geometry into the chosen sibling, so a narrow-header-beside-wide-group row lands under the source's cross-axis position instead of on the group's first child; a redirect node is returned for the focus manager to forward to its destination. Separately, `_focusNode`'s upward walk now only hands focus off to external redirects: an internal redirect (destinations within the node's own subtree, e.g. an EPG airings guide pointing at its own cells) is already satisfied by the downward-arrival redirect, and re-firing it while walking back up targeted a descendant just visited and self-cycled, aborting the move and stranding focus on the guide's first child.
+- 3d54c22: Directional focus can enter a sibling that fully encloses the source on the movement axis. A screen scene behind a floating header keeps its focusable content below the source, but the distance was measured to the sibling's top edge — above the source — so the move was rejected and focus stayed stuck in the header. Such a container is now entered from the source's trailing edge instead.
+- ec39013: `focusRestorationExcluded` nodes are skipped by focus restoration. They never become the parent's mount-time default and never inherit focus when the focused sibling unmounts, so a drawer edge guard can't take focus during launch.
+
+  Separately, a node withheld until layout now waits one extra layout pass while a pixel translate hasn't been folded into its position yet — otherwise it painted at its untransformed origin for a frame. Bounded to that single extra pass, so a mis-detected translate can't strand the node invisible.
+
+- 4b28d02: The ResizeObserver shim reports each entry against its own target's rect. A single shared layout handler meant every observed element was handed the last-laid-out element's geometry, and the handler couldn't be removed per target on `unobserve`/`disconnect`.
+- e62db77: `ScrollView` reveals a focused descendant the way native TV scroll views do: scroll the minimum needed to bring it fully into view, and leave already-visible items where they are. `snapToAlignment` only counts as deliberate placement for `center` and `end` — `start` and `item` (paging) aren't real focus targets, and `item` has no alignment math behind it at all, so both fall through to ensure-visible rather than snapping a focused row out of view. Exports `FocusManagerContext` from react-lightning so the compat layer can observe focus changes.
+- 431eeca: A `transform` is a complete snapshot of the node's transform, so an axis it omits has returned to identity. Yoga now writes translate 0 for that axis instead of leaving the previous pixel inset in place, which a partial style push would otherwise never repaint (a cleared focus offset stayed where it was).
+
+  A focus group with `destinations` also forwards focus on every arrival, not just the first. `destinations` takes precedence over the remembered child, matching native `TVFocusGuideView`, so a reopened nav drawer returns to its selected item. `autoFocus` remains the separate first-then-remember mechanism.
+
 ## 0.4.3-alpha.1
 
 ### Patch Changes

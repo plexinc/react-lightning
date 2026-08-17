@@ -1,5 +1,28 @@
 # @plextv/react-lightning-plugin-css-transform
 
+## 0.4.3-alpha.1
+
+### Patch Changes
+
+- a91bb8b: Color parsing handles 8- and 4-digit alpha hex, `hsl()`/`hsla()`, and the modern space-separated `rgb()` form with a `/` alpha delimiter. These previously fell through unparsed.
+
+  `PlatformColor`/`OpaqueColorValue` objects have no resolvable string form, so they're dropped with a warning (like unresolvable keyword colors) instead of throwing and taking the screen down.
+
+- 69fead4: `fontWeight` keeps the full 100-900 scale. Weights were collapsed to bold/normal, and a numeric string like `'600'` then fell through to 400 in the renderer; numeric strings are parsed and numbers and keywords pass through untouched. Unsupported `textAlign` values are mapped rather than forwarded as-is.
+
+  Text shadow styles (`shadowColor`, `textShadow*`) are dropped with a warning instead of converted: the shipping SDF text renderer has no shadow, and RN's `textShadow*` props were never wired to the renderer's keys.
+
+- Updated dependencies [c1b31f7]
+- Updated dependencies [d065c91]
+- Updated dependencies [0621d7d]
+- Updated dependencies [3d54c22]
+- Updated dependencies [ec39013]
+- Updated dependencies [4b28d02]
+- Updated dependencies [e62db77]
+- Updated dependencies [431eeca]
+  - @plextv/react-lightning-plugin-flexbox@0.4.3-alpha.2
+  - @plextv/react-lightning@0.4.3-alpha.2
+
 ## 0.4.3-alpha.0
 
 ### Patch Changes

@@ -1,5 +1,33 @@
 # @plextv/react-lightning-plugin-reanimated
 
+## 0.4.3-alpha.2
+
+### Patch Changes
+
+- 0d769ad: Surface momentum scroll callbacks. VirtualList now fires `onMomentumScrollBegin`/`onMomentumScrollEnd` once around a focus-driven animated scroll — begin when it starts, end when it settles or is cancelled — mirroring tvOS/AndroidTV. The reanimated `useAnimatedScrollHandler` shim now routes the `onMomentumBegin`/`onMomentumEnd` handler keys by event name instead of only ever calling `onScroll`. Consumers that key off momentum (fast-scroll detection, jump-bar auto-hide) can react to the real end of a scroll instead of an idle timeout.
+- 4e90dfe: `useAnimatedStyle` restarts only the keys whose animation actually changed. Every update previously tore down and restarted all runners, so an unrelated key's animation was restarted mid-flight and visibly jumped.
+- b65dcbb: `withRepeat` treats any count <= 0 as infinite on both the renderer-looped and composed paths, matching native reanimated. Only `-1` was infinite before, so a `0` count stopped immediately instead of looping forever.
+- b5722da: `withTiming` with no easing defaults to reanimated's `Easing.inOut(Easing.quad)`, expressed as the equivalent cubic-bezier the renderer parses. It previously fell back to linear, so every un-eased timing animation ran flat.
+- Updated dependencies [c1b31f7]
+- Updated dependencies [d065c91]
+- Updated dependencies [a91bb8b]
+- Updated dependencies [ab7de08]
+- Updated dependencies [0621d7d]
+- Updated dependencies [3d54c22]
+- Updated dependencies [ec39013]
+- Updated dependencies [e40e00d]
+- Updated dependencies [69fead4]
+- Updated dependencies [77dbe29]
+- Updated dependencies [4b28d02]
+- Updated dependencies [e62db77]
+- Updated dependencies [566570d]
+- Updated dependencies [431eeca]
+- Updated dependencies [5f820c4]
+  - @plextv/react-lightning-plugin-flexbox@0.4.3-alpha.2
+  - @plextv/react-lightning@0.4.3-alpha.2
+  - @plextv/react-lightning-plugin-css-transform@0.4.3-alpha.1
+  - @plextv/react-native-lightning@0.4.3-alpha.2
+
 ## 0.4.3-alpha.1
 
 ### Patch Changes

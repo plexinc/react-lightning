@@ -1,5 +1,52 @@
 # @plextv/react-native-lightning
 
+## 0.4.3-alpha.2
+
+### Patch Changes
+
+- ab7de08: Typing fixes across the react-native compat layer exports: `View`'s `onFocusCapture` accepts either the RN or the Lightning handler (intersecting them produced a signature nothing could satisfy), `Pressable` tolerates null `onFocus`/`onBlur`, and `ActivityIndicator` handles the asset-id vs URL mismatch on its image source. `LightningViewElementStyle` comes from the package entry instead of a `src/` deep path.
+
+  `usesExplicitAlignment` also narrows its argument, so `snapToAlignment: 'item'` falls back to `'start'` in the scroll-into-view math rather than being passed through to alignment code that doesn't implement it.
+
+- e40e00d: A `View` with `focusable` set is registered as a Lightning spatial-focus target. Native treats any focusable View as a nav target, but react-lightning only knew about `useFocus`/`FocusGroup` elements, so a plain focusable View was unreachable by directional nav and never fired `onFocus`. Only opt-in focusable Views pay for the registration; every other View still renders as a bare node.
+
+  Adds `focusRestorationExcluded` for a directional-only catcher: reachable by a deliberate move, but never by restoration or the mount-time default.
+
+- 77dbe29: fix(react-native-lightning): implement `ScrollView.getNativeScrollRef()`
+
+  Shared RN code that scrolls a selected child into view calls
+  `scrollRef.current.getNativeScrollRef()` and measures the child against the
+  returned node (`child.measureLayout(scrollHostNode, ...)`), expecting a
+  content-relative offset independent of the current scroll position. The Lightning
+  `ScrollView` never implemented `getNativeScrollRef`, so the call threw
+  `getNativeScrollRef is not a function`. It now returns the inner scrolled content
+  container (the node that carries the scroll offset as its own x/y), so
+  `measureLayout` against it yields the same content-relative coordinates as native
+  React Native.
+
+- e62db77: `ScrollView` reveals a focused descendant the way native TV scroll views do: scroll the minimum needed to bring it fully into view, and leave already-visible items where they are. `snapToAlignment` only counts as deliberate placement for `center` and `end` — `start` and `item` (paging) aren't real focus targets, and `item` has no alignment math behind it at all, so both fall through to ensure-visible rather than snapping a focused row out of view. Exports `FocusManagerContext` from react-lightning so the compat layer can observe focus changes.
+- 566570d: `Text` applies `textTransform` from its style, and `ellipsizeMode` `head`/`middle` map to a text overflow instead of being dropped — only `clip` and `tail` were handled before.
+- 5f820c4: `View`'s `onFocusCapture` type no longer assumes `react-native`'s `ViewProps` declares the prop. react-native-tvos has it, plain react-native doesn't, so the indexed access was a hard `check:types` error for anyone on upstream react-native. Reads the prop only when it's actually present, so both forks typecheck.
+- Updated dependencies [c1b31f7]
+- Updated dependencies [d065c91]
+- Updated dependencies [9606bd7]
+- Updated dependencies [a91bb8b]
+- Updated dependencies [0621d7d]
+- Updated dependencies [3d54c22]
+- Updated dependencies [ec39013]
+- Updated dependencies [69fead4]
+- Updated dependencies [0d769ad]
+- Updated dependencies [4b28d02]
+- Updated dependencies [e62db77]
+- Updated dependencies [431eeca]
+- Updated dependencies [2a8ec62]
+- Updated dependencies [55f5849]
+- Updated dependencies [eb05bf1]
+  - @plextv/react-lightning-plugin-flexbox@0.4.3-alpha.2
+  - @plextv/react-lightning@0.4.3-alpha.2
+  - @plextv/react-lightning-components@0.4.4-alpha.2
+  - @plextv/react-lightning-plugin-css-transform@0.4.3-alpha.1
+
 ## 0.4.3-alpha.1
 
 ### Patch Changes

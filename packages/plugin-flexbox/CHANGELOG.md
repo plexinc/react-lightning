@@ -1,5 +1,23 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 0.4.3-alpha.2
+
+### Patch Changes
+
+- c1b31f7: `alignSelf: 'auto'` resolves to the parent's `alignItems` (yoga `ALIGN_AUTO`) instead of being mapped to a fixed alignment, matching RN's type and behavior. `space-evenly` maps to yoga's `ALIGN_SPACE_EVENLY` rather than sharing the `space-between` case.
+- 431eeca: A `transform` is a complete snapshot of the node's transform, so an axis it omits has returned to identity. Yoga now writes translate 0 for that axis instead of leaving the previous pixel inset in place, which a partial style push would otherwise never repaint (a cleared focus offset stayed where it was).
+
+  A focus group with `destinations` also forwards focus on every arrival, not just the first. `destinations` takes precedence over the remembered child, matching native `TVFocusGuideView`, so a reopened nav drawer returns to its selected item. `autoFocus` remains the separate first-then-remember mechanism.
+
+- Updated dependencies [d065c91]
+- Updated dependencies [0621d7d]
+- Updated dependencies [3d54c22]
+- Updated dependencies [ec39013]
+- Updated dependencies [4b28d02]
+- Updated dependencies [e62db77]
+- Updated dependencies [431eeca]
+  - @plextv/react-lightning@0.4.3-alpha.2
+
 ## 0.4.3-alpha.1
 
 ### Patch Changes
