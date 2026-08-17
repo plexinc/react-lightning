@@ -16,6 +16,12 @@ import { useLayoutHandler } from '../hooks/useLayoutHandler';
 import type { NativeLightningViewElement } from '../types/NativeLightningViewElement';
 import { isFocusActive, shouldRegisterFocus } from './focusableView';
 
+// react-native-tvos declares onFocusCapture on ViewProps, plain react-native
+// doesn't. Generic so the indexed access stays deferred and compiles on both.
+type FocusCaptureOf<P> = 'onFocusCapture' extends keyof P
+  ? P['onFocusCapture']
+  : never;
+
 type CombinedProps = Omit<
   RNViewProps &
     LightningViewElementProps &
@@ -28,7 +34,7 @@ type CombinedProps = Omit<
   // intersecting them yields a signature no handler can satisfy. Accept either.
   onFocusCapture?:
     | FocusableProps['onFocusCapture']
-    | RNViewProps['onFocusCapture'];
+    | FocusCaptureOf<RNViewProps>;
   // Directional-only focus catcher: reachable by a deliberate move but never
   // by restoration or the mount-time default (drawer edge guard).
   focusRestorationExcluded?: boolean;
