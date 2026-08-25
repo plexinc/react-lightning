@@ -1,5 +1,13 @@
 # @plextv/react-lightning-components
 
+## 0.4.4-alpha.3
+
+### Patch Changes
+
+- 21d041e: `VirtualList` forwards `testID` to its outer container. Its props were a closed interface with no `testID`, so the prop was dropped and never reached an element, which left any screen whose root is a `VirtualList` invisible to test tooling that matches on it. `testID` is also declared on `LightningViewElementProps` now, since the react-native compat layer already passed it through untyped and the element treats it as inert.
+- Updated dependencies [21d041e]
+  - @plextv/react-lightning@0.4.3-alpha.3
+
 ## 0.4.4-alpha.2
 
 ### Patch Changes
