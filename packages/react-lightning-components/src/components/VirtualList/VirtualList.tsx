@@ -121,6 +121,7 @@ function VirtualListInner<T>(
     extraData,
     contentContainerStyle,
     style,
+    testID,
     ListHeaderComponent,
     listHeaderSize = 0,
     ListFooterComponent,
@@ -891,6 +892,7 @@ function VirtualListInner<T>(
         allowOffscreen={true}
         autoFocus={autoFocus}
         style={outerStyle}
+        testID={testID}
         trapFocusDown={trapFocusDown}
         trapFocusLeft={trapFocusLeft}
         trapFocusRight={trapFocusRight}
