@@ -92,6 +92,8 @@ export interface VirtualListProps<T> {
   contentContainerStyle?: ContentStyle;
   /** Style for the outer list container. Must include w and h. */
   style?: LightningViewElementStyle;
+  /** Forwarded to the outer container so test tooling can find the list. */
+  testID?: string;
 
   /** Component rendered before the first item. */
   ListHeaderComponent?: ComponentType | ReactElement | null;

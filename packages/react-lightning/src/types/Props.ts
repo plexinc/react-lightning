@@ -55,6 +55,8 @@ export interface LightningViewElementProps<
   rtt?: boolean;
   children?: ReactNode | null;
   style?: TStyleProps | null;
+  /** Inert at render time, but the inspector mirrors it for test tooling. */
+  testID?: string;
 }
 
 export type LightningImageElementProps<
