@@ -1,3 +1,11 @@
+/**
+ * How many unsettled layout passes a withheld node waits through before being
+ * revealed anyway. {@link isTranslateSettled} only detects the base + delta
+ * case, so a translate resolved some other way never settles — the bound stops
+ * that from stranding the node invisible.
+ */
+export const MAX_UNSETTLED_LAYOUTS = 3;
+
 type TranslatableStyle = {
   x?: number;
   y?: number;
