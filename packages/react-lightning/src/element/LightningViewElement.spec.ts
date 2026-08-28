@@ -3,6 +3,7 @@ import type { Fiber } from 'react-reconciler';
 import { describe, expect, it } from 'vitest';
 
 import type { LightningViewElementProps, LightningViewElementStyle } from '../types';
+import { MAX_UNSETTLED_LAYOUTS } from './isTranslateSettled';
 import { LightningViewElement } from './LightningViewElement';
 
 type ThreeChildren = [
@@ -47,6 +48,18 @@ function createElement(style: Partial<LightningViewElementStyle>) {
   } as LightningViewElementProps<LightningViewElementStyle>;
 
   return new LightningViewElement(props, renderer, [], {} as Fiber);
+}
+
+// `transform` reaches the element from the css-transform plugin rather than the
+// public style type, so the style has to be cast in.
+function createTranslatedElement(translateX: number) {
+  return createElement({
+    w: 100,
+    h: 50,
+    alpha: 1,
+    x: 0,
+    transform: { translateX },
+  } as Partial<LightningViewElementStyle>);
 }
 
 // setProps stages the update and flushes on a microtask.
@@ -138,6 +151,44 @@ describe('LightningViewElement paint withholding', () => {
     expect(el.node.alpha).toBe(1);
     // Released without a layout — still not laid out.
     expect(el.hasLayout).toBe(false);
+  });
+
+  it('stays withheld while a pixel translate takes more than one layout to settle', () => {
+    const el = createTranslatedElement(-100);
+
+    el.withholdPaintUntilLayout();
+
+    // Base position only — the translate hasn't been folded in yet.
+    el.emitLayoutEvent();
+    expect(el.paintWithheld).toBe(true);
+
+    // Still unsettled. Revealing here paints the node at x=0, not x=-100.
+    el.emitLayoutEvent();
+    expect(el.paintWithheld).toBe(true);
+    expect(el.node.alpha).toBe(0);
+
+    el.node.x = -100;
+    el.emitLayoutEvent();
+
+    expect(el.paintWithheld).toBe(false);
+    expect(el.node.alpha).toBe(1);
+  });
+
+  it('reveals a never-settling translate rather than stranding it invisible', () => {
+    // Left unsettled: node.x is never moved to base + delta.
+    const el = createTranslatedElement(-100);
+
+    el.withholdPaintUntilLayout();
+
+    for (let i = 0; i < MAX_UNSETTLED_LAYOUTS; i++) {
+      el.emitLayoutEvent();
+      expect(el.paintWithheld).toBe(true);
+    }
+
+    el.emitLayoutEvent();
+
+    expect(el.paintWithheld).toBe(false);
+    expect(el.node.alpha).toBe(1);
   });
 });
 
