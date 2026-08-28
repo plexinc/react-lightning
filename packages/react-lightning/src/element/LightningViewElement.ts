@@ -36,7 +36,10 @@ import {
 } from '../types';
 import { AllStyleProps } from './AllStyleProps';
 import { createFlattenedNode } from './FlattenedRendererNode';
-import { isTranslateSettled } from './isTranslateSettled';
+import {
+  isTranslateSettled,
+  MAX_UNSETTLED_LAYOUTS,
+} from './isTranslateSettled';
 
 const __bannedProps: Record<string, boolean> = {};
 let __bannedPropsInitialized = false;
@@ -145,6 +148,7 @@ export class LightningViewElement<
   /** Last requested animation target per style key, for the no-op-skip guard. */
   private _animTargets = new Map<PropertyKey, unknown>();
   private _paintWithheld = false;
+  private _unsettledLayouts = 0;
   private _reactHidden = false;
   private _withheldAlpha = 1;
   private _eventEmitter = new EventEmitter<LightningElementEvents>();
@@ -645,6 +649,7 @@ export class LightningViewElement<
     }
 
     this._paintWithheld = true;
+    this._unsettledLayouts = 0;
     this._withheldAlpha = node.alpha;
     node.alpha = 0;
     this.recalculateVisibility();
@@ -1649,25 +1654,28 @@ export class LightningViewElement<
   };
 
   private _onLayout = (dimensions: Rect) => {
-    const hadLayout = this._hasLayout;
     this._hasLayout = true;
 
     // Reveal a withheld node at its now-correct geometry. A pixel translate
-    // transform is resolved off the base position and lands a layout pass later,
-    // so hold the reveal past the first (pre-transform) layout — otherwise the
-    // node paints at its untransformed origin for a frame. Bounded to that one
-    // extra layout so a mis-detected translate can never strand it invisible.
-    // See {@link withholdPaintUntilLayout}.
-    if (
-      this._paintWithheld &&
-      (hadLayout ||
-        isTranslateSettled(this.props.style, this.node.x, this.node.y))
-    ) {
-      this._paintWithheld = false;
+    // transform is resolved off the base position and lands a later layout
+    // pass, so hold the reveal until it has — otherwise the node paints at its
+    // untransformed origin for a frame. How many passes that takes depends on
+    // how deep the node sits in the async flex tree, hence a bound rather than
+    // a single extra pass. See {@link withholdPaintUntilLayout}.
+    if (this._paintWithheld) {
+      const settled =
+        this._unsettledLayouts >= MAX_UNSETTLED_LAYOUTS ||
+        isTranslateSettled(this.props.style, this.node.x, this.node.y);
 
-      if (this.node.alpha !== this._withheldAlpha) {
-        this.node.alpha = this._withheldAlpha;
-        this.recalculateVisibility();
+      if (settled) {
+        this._paintWithheld = false;
+
+        if (this.node.alpha !== this._withheldAlpha) {
+          this.node.alpha = this._withheldAlpha;
+          this.recalculateVisibility();
+        }
+      } else {
+        this._unsettledLayouts++;
       }
     }
 
