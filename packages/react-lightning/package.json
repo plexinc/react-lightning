@@ -1,6 +1,6 @@
 {
   "name": "@plextv/react-lightning",
-  "version": "0.4.3-alpha.3",
+  "version": "0.5.0-alpha.4",
   "description": "React renderer for rendering React apps with Lightning.js",
   "bugs": {
     "url": "https://github.com/plexinc/react-lightning/issues/new"

@@ -1,5 +1,11 @@
 # @plextv/vite-plugin-react-native-lightning
 
+## 1.0.0-alpha.1
+
+### Patch Changes
+
+- @plextv/react-native-lightning@1.0.0-alpha.3
+
 ## 0.4.4-alpha.0
 
 ### Patch Changes
