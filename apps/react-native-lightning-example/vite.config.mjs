@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+
 import babel from '@rolldown/plugin-babel';
 import legacy from '@vitejs/plugin-legacy';
 import { reactCompilerPreset } from '@vitejs/plugin-react';
@@ -31,6 +33,13 @@ const config = defineConfig((env) => ({
   ],
   build: {
     minify: false,
+  },
+  resolve: {
+    alias: {
+      'react-native-is-edge-to-edge': fileURLToPath(
+        new URL('./src/polyfills/isEdgeToEdge.ts', import.meta.url),
+      ),
+    },
   },
   server: {
     host: true,
