@@ -14,6 +14,16 @@ const TRANSFORM_KEYS = {
   rotation: 'rotation',
 } as const satisfies Record<string, keyof LightningElementStyle>;
 
+// A border or outline is painted by the node's shader, so its transition is a
+// shaderProps one rather than a node prop.
+const SHADER_PROPS: ReadonlySet<string> = new Set([
+  'borderColor',
+  'borderWidth',
+  'outlineColor',
+  'outlineWidth',
+  'outlineOffset',
+]);
+
 /** Every style object the CSS style drives, resting values and pseudo overrides. */
 function eachStyle(parts: CSSStyleParts): Record<string, unknown>[] {
   const styles: Record<string, unknown>[] = [
@@ -93,6 +103,12 @@ export function toLightningTransition(
   }
 
   for (const [prop, settings] of settingsByProp) {
+    if (SHADER_PROPS.has(prop)) {
+      result.shaderProps = settings;
+
+      continue;
+    }
+
     if (prop === 'transform') {
       for (const key of transformKeys(parts)) {
         result[key] = settings;

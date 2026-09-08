@@ -14,12 +14,8 @@ import type {
 } from '@lightningjs/renderer';
 import type { Fiber } from 'react-reconciler';
 import { EventEmitter, type IEventEmitter } from 'tseep';
-import { PARTIAL_STYLE } from './partialStyle';
 
-import {
-  getNodeResizeObserver,
-  type NodeResizeObserver,
-} from '../observer/NodeResizeObserver';
+import { getNodeResizeObserver, type NodeResizeObserver } from '../observer/NodeResizeObserver';
 import type { Plugin } from '../render/Plugin';
 import {
   type Focusable,
@@ -37,6 +33,7 @@ import {
 import { AllStyleProps } from './AllStyleProps';
 import { createFlattenedNode } from './FlattenedRendererNode';
 import { isTranslateSettled } from './isTranslateSettled';
+import { PARTIAL_STYLE } from './partialStyle';
 
 const __bannedProps: Record<string, boolean> = {};
 let __bannedPropsInitialized = false;
@@ -68,10 +65,7 @@ function __checkProps(props: string[]) {
   }
 }
 
-function createTexture(
-  renderer: RendererMain,
-  textureDef: TextureDef,
-): Texture {
+function createTexture(renderer: RendererMain, textureDef: TextureDef): Texture {
   return renderer.createTexture(textureDef.type, textureDef.props);
 }
 
@@ -112,10 +106,8 @@ const noopAnimationController = {
 
 export class LightningViewElement<
   TStyleProps extends LightningViewElementStyle = LightningViewElementStyle,
-  TProps extends
-    LightningViewElementProps<TStyleProps> = LightningViewElementProps<TStyleProps>,
-> implements Focusable
-{
+  TProps extends LightningViewElementProps<TStyleProps> = LightningViewElementProps<TStyleProps>,
+> implements Focusable {
   public static allElements: Record<number, LightningElement> = {};
 
   public readonly id: number;
@@ -149,8 +141,7 @@ export class LightningViewElement<
   private _withheldAlpha = 1;
   private _eventEmitter = new EventEmitter<LightningElementEvents>();
   private _deferTarget: LightningElement | null = null;
-  private _deferNodeRemovalHandler: ((destroy: () => void) => void) | null =
-    null;
+  private _deferNodeRemovalHandler: ((destroy: () => void) => void) | null = null;
   private _resizeObserver: NodeResizeObserver | null = null;
   /** Rounded clipping (borderRadius + clipping -> clipRadius) opt-in; set by createRoot. */
   public static roundedClippingEnabled = false;
@@ -308,8 +299,7 @@ export class LightningViewElement<
     host: RendererNode<LightningElement> | null,
     force: boolean,
   ): void {
-    const offsetsChanged =
-      this._flatOffsetX !== offsetX || this._flatOffsetY !== offsetY;
+    const offsetsChanged = this._flatOffsetX !== offsetX || this._flatOffsetY !== offsetY;
 
     if (!force && !offsetsChanged) {
       return;
@@ -367,8 +357,7 @@ export class LightningViewElement<
       return true;
     }
 
-    const applied =
-      value + (key === 'x' ? this._flatOffsetX : this._flatOffsetY);
+    const applied = value + (key === 'x' ? this._flatOffsetX : this._flatOffsetY);
 
     if (this.node[key] === applied) {
       return false;
@@ -498,11 +487,7 @@ export class LightningViewElement<
   }
 
   public set parent(parent) {
-    if (
-      parent &&
-      this._parent === parent &&
-      this._parent.node === parent.node
-    ) {
+    if (parent && this._parent === parent && this._parent.node === parent.node) {
       return;
     }
 
@@ -517,12 +502,8 @@ export class LightningViewElement<
       }
 
       const host = parent ? parent._hostNode() : null;
-      const offsetX = parent?.isFlattened
-        ? parent._flatOffsetX + parent._layoutX
-        : 0;
-      const offsetY = parent?.isFlattened
-        ? parent._flatOffsetY + parent._layoutY
-        : 0;
+      const offsetX = parent?.isFlattened ? parent._flatOffsetX + parent._layoutX : 0;
+      const offsetY = parent?.isFlattened ? parent._flatOffsetY + parent._layoutY : 0;
 
       this._applyFlattenedLink(offsetX, offsetY, host, true);
     } else {
@@ -703,10 +684,7 @@ export class LightningViewElement<
 
     const lngProps = this._toLightningNodeProps(this.props, true);
 
-    this._styleProxy = new Proxy(
-      this.props.style ?? {},
-      this._styleProxyHandler,
-    );
+    this._styleProxy = new Proxy(this.props.style ?? {}, this._styleProxyHandler);
 
     if (import.meta.env.DEV) {
       __checkProps(Object.keys(lngProps));
@@ -717,14 +695,10 @@ export class LightningViewElement<
       !this.isTextElement &&
       !this.isImageElement &&
       this.props.transition === undefined &&
-      LightningViewElement._isLayoutOnlyNodeProps(
-        lngProps as Record<string, unknown>,
-      )
+      LightningViewElement._isLayoutOnlyNodeProps(lngProps as Record<string, unknown>)
     ) {
       this._flattened = true;
-      this.node = createFlattenedNode<this>(
-        lngProps as Record<string, unknown>,
-      );
+      this.node = createFlattenedNode<this>(lngProps as Record<string, unknown>);
       (this.node as unknown as { owner: LightningViewElement }).owner = this;
     } else {
       this.node = this._createNode(lngProps);
@@ -783,9 +757,7 @@ export class LightningViewElement<
     this._eventEmitter.emit('destroy');
   }
 
-  public on = (
-    ...args: Parameters<IEventEmitter<LightningElementEvents>['on']>
-  ): (() => void) => {
+  public on = (...args: Parameters<IEventEmitter<LightningElementEvents>['on']>): (() => void) => {
     this._eventEmitter.on(...args);
 
     if (args[0] === 'resized') {
@@ -850,10 +822,7 @@ export class LightningViewElement<
     this.recalculateVisibility();
   }
 
-  public insertChild(
-    child: LightningElement,
-    beforeChild?: LightningElement | null,
-  ): void {
+  public insertChild(child: LightningElement, beforeChild?: LightningElement | null): void {
     if (child.parent === this && child.parent.node === this.node) {
       // Already ours: a same-parent reorder, not a real (re)parent. Reshuffle
       // children[] only, keep the node/Yoga subtree alive.
@@ -862,9 +831,7 @@ export class LightningViewElement<
       return;
     }
 
-    const index = beforeChild
-      ? this.children.indexOf(beforeChild)
-      : this.children.length;
+    const index = beforeChild ? this.children.indexOf(beforeChild) : this.children.length;
 
     if (beforeChild) {
       this.children.splice(index, 0, child);
@@ -881,10 +848,7 @@ export class LightningViewElement<
     this._eventEmitter.emit('childAdded', child, index);
   }
 
-  private _moveChild(
-    child: LightningElement,
-    beforeChild?: LightningElement | null,
-  ): void {
+  private _moveChild(child: LightningElement, beforeChild?: LightningElement | null): void {
     if (child === beforeChild) {
       return;
     }
@@ -899,9 +863,7 @@ export class LightningViewElement<
 
     // Look up beforeChild after removing child, so its index already is the
     // destination position in the shortened array.
-    const toIndex = beforeChild
-      ? this.children.indexOf(beforeChild)
-      : this.children.length;
+    const toIndex = beforeChild ? this.children.indexOf(beforeChild) : this.children.length;
 
     this.children.splice(toIndex, 0, child);
 
@@ -1103,10 +1065,7 @@ export class LightningViewElement<
     }
 
     if (LightningViewElement.flattenLayoutViewsEnabled) {
-      if (
-        this._flattened &&
-        LightningViewElement._needsRealNode(key as string, value)
-      ) {
+      if (this._flattened && LightningViewElement._needsRealNode(key as string, value)) {
         this._materialize();
       }
 
@@ -1174,8 +1133,7 @@ export class LightningViewElement<
     const prevFocusable = this.focusable;
     const prevVisible = this._visible;
 
-    this._visible =
-      this.node.alpha > 0 && (!this.parent || this.parent.visible);
+    this._visible = this.node.alpha > 0 && (!this.parent || this.parent.visible);
 
     if (this._visible !== prevVisible) {
       this._eventEmitter.emit('visibilityChanged', this._visible);
@@ -1237,9 +1195,7 @@ export class LightningViewElement<
     ).start();
   }
 
-  public animateShader(
-    props: Partial<CoreShaderNode['props']>,
-  ): IAnimationController {
+  public animateShader(props: Partial<CoreShaderNode['props']>): IAnimationController {
     return this._createAnimation(
       {
         shaderProps: props,
@@ -1262,8 +1218,7 @@ export class LightningViewElement<
   };
 
   private _reconcileResizeObserving(): void {
-    const shouldObserve =
-      this.props.onResize != null || this._eventEmitter.hasListeners('resized');
+    const shouldObserve = this.props.onResize != null || this._eventEmitter.hasListeners('resized');
 
     if (shouldObserve === this._isObservingResize) {
       return;
@@ -1283,10 +1238,7 @@ export class LightningViewElement<
   }
 
   // Don't pass down the `data` prop to the lightning node.
-  private _createNode({
-    data: _data,
-    ...props
-  }: Partial<INodeProps>): RendererNode<this> {
+  private _createNode({ data: _data, ...props }: Partial<INodeProps>): RendererNode<this> {
     const node = this.isTextElement
       ? this._renderer.createTextNode(props)
       : this._renderer.createNode(props);
@@ -1388,9 +1340,7 @@ export class LightningViewElement<
       if (
         this._flattened &&
         (this.props.transition !== undefined ||
-          !LightningViewElement._isLayoutOnlyNodeProps(
-            lngProps as Record<string, unknown>,
-          ))
+          !LightningViewElement._isLayoutOnlyNodeProps(lngProps as Record<string, unknown>))
       ) {
         this._materialize();
       }
@@ -1410,8 +1360,7 @@ export class LightningViewElement<
       }
 
       if (typeof lngProps.y === 'number') {
-        flattenedMoved =
-          flattenedMoved || (this._flattened && this._layoutY !== lngProps.y);
+        flattenedMoved = flattenedMoved || (this._flattened && this._layoutY !== lngProps.y);
         this._layoutY = lngProps.y;
 
         if (!this._flattened) {
@@ -1444,10 +1393,7 @@ export class LightningViewElement<
     }
 
     if (hasStyleChanges) {
-      this._eventEmitter.emit(
-        'stylesChanged',
-        this.props.style as Partial<LightningElementStyle>,
-      );
+      this._eventEmitter.emit('stylesChanged', this.props.style as Partial<LightningElementStyle>);
     }
 
     this._isUpdateQueued = false;
@@ -1464,6 +1410,9 @@ export class LightningViewElement<
     'borderLeft',
     'borderRight',
     'borderBottom',
+    'outlineWidth',
+    'outlineColor',
+    'outlineOffset',
     'linearGradient',
   ]);
 
@@ -1523,12 +1472,7 @@ export class LightningViewElement<
 
     if (LightningViewElement.flattenLayoutViewsEnabled && this._flattened) {
       for (const key in style) {
-        if (
-          LightningViewElement._needsRealNode(
-            key,
-            style[key as keyof TStyleProps],
-          )
-        ) {
+        if (LightningViewElement._needsRealNode(key, style[key as keyof TStyleProps])) {
           this._materialize();
           break;
         }
@@ -1599,13 +1543,10 @@ export class LightningViewElement<
     if (LightningViewElement.roundedClippingEnabled && 'clipping' in style) {
       const shaderType = this._shaderDef?.type;
       const radius =
-        style.clipping === true &&
-        (shaderType === 'Rounded' || shaderType === 'RoundedWithBorder')
+        style.clipping === true && (shaderType === 'Rounded' || shaderType === 'RoundedWithBorder')
           ? this._shaderDef?.props?.radius
           : 0;
-      const clipRadius =
-        (Array.isArray(radius) ? Math.max(...radius) : (radius as number)) ||
-        0;
+      const clipRadius = (Array.isArray(radius) ? Math.max(...radius) : (radius as number)) || 0;
 
       if ((this.node.clipRadius ?? 0) !== clipRadius) {
         this.node.clipRadius = clipRadius;
@@ -1616,10 +1557,7 @@ export class LightningViewElement<
       this.recalculateVisibility();
     }
 
-    this._eventEmitter.emit(
-      'stylesChanged',
-      this.props.style as Partial<LightningElementStyle>,
-    );
+    this._eventEmitter.emit('stylesChanged', this.props.style as Partial<LightningElementStyle>);
 
     this._isUpdateQueued = false;
 
@@ -1660,8 +1598,7 @@ export class LightningViewElement<
     // See {@link withholdPaintUntilLayout}.
     if (
       this._paintWithheld &&
-      (hadLayout ||
-        isTranslateSettled(this.props.style, this.node.x, this.node.y))
+      (hadLayout || isTranslateSettled(this.props.style, this.node.x, this.node.y))
     ) {
       this._paintWithheld = false;
 
@@ -1687,9 +1624,7 @@ export class LightningViewElement<
     return animation;
   }
 
-  private _getShaderFromStyle(
-    style: TStyleProps | undefined | null,
-  ): ShaderDef | undefined {
+  private _getShaderFromStyle(style: TStyleProps | undefined | null): ShaderDef | undefined {
     if (!style) {
       return;
     }
@@ -1706,8 +1641,20 @@ export class LightningViewElement<
       borderRight,
       borderBottom,
       borderRadius,
+      outlineWidth,
+      outlineColor,
+      outlineOffset,
       linearGradient,
     } = style;
+
+    const hasBorder = !!(
+      border ||
+      borderColor ||
+      borderTop ||
+      borderLeft ||
+      borderRight ||
+      borderBottom
+    );
 
     if (borderRadius) {
       type = 'Rounded';
@@ -1715,14 +1662,7 @@ export class LightningViewElement<
       hasRounded = true;
     }
 
-    if (
-      border ||
-      borderColor ||
-      borderTop ||
-      borderLeft ||
-      borderRight ||
-      borderBottom
-    ) {
+    if (hasBorder || outlineWidth) {
       if (type && type === 'Rounded') {
         type = 'RoundedWithBorder';
       } else {
@@ -1757,6 +1697,25 @@ export class LightningViewElement<
 
     if (borderColor) {
       props[hasRounded ? 'border-color' : 'color'] = borderColor;
+    }
+
+    // An outline is the same border shader, drawn outside the node instead of
+    // inside it: `align` puts it there and `gap` is the outline offset.
+    if (outlineWidth) {
+      if (hasBorder) {
+        if (import.meta.env.DEV) {
+          console.warn(
+            `Warning: element ${this.id} sets both a border and an outline. They share one shader, so the border wins and the outline is dropped.`,
+          );
+        }
+      } else {
+        const prefix = hasRounded ? 'border-' : '';
+
+        props[`${prefix}w`] = outlineWidth;
+        props[`${prefix}color`] = outlineColor ?? 0;
+        props[`${prefix}align`] = 'outside';
+        props[`${prefix}gap`] = outlineOffset ?? 0;
+      }
     }
 
     if (type) {
@@ -1851,7 +1810,22 @@ export class LightningViewElement<
       }
     }
 
-    const styleShader = this._getShaderFromStyle(style);
+    // Reanimated and imperative style.set pushes are marked partial: they carry
+    // only the changed keys.
+    const isPartialStyle =
+      style != null && (style as Record<PropertyKey, unknown>)[PARTIAL_STYLE] === true;
+
+    // A partial push has to resolve its shader against the merged style, or a
+    // lone borderColor / outlineColor would rebuild the shader without a width.
+    const shaderStyle = isPartialStyle
+      ? ({
+          // oxlint-disable-next-line typescript/no-explicit-any -- Required for accessing AllStyleProps symbol
+          ...((this.style as any)[AllStyleProps] as TStyleProps),
+          ...style,
+        } as TStyleProps)
+      : style;
+
+    const styleShader = this._getShaderFromStyle(shaderStyle);
 
     // If the style also requires a shader, then warn. We can only apply one shader per node.
     if (shader && styleShader && import.meta.env.DEV) {
@@ -1860,13 +1834,9 @@ export class LightningViewElement<
       );
     }
 
-    // Reanimated and imperative style.set pushes are marked partial: they carry
-    // only the changed keys, so keep the current shader unless the update itself
-    // names one. A full restyle (reconciler snapshot) isn't marked, so a dropped
-    // border falls through and clears the stale shader.
-    const isPartialStyle =
-      style != null &&
-      (style as Record<PropertyKey, unknown>)[PARTIAL_STYLE] === true;
+    // Keep the current shader unless the update itself names one. A full restyle
+    // (reconciler snapshot) isn't marked partial, so a dropped border falls
+    // through and clears the stale shader.
     const oldShader = this._shaderDef;
     this._shaderDef =
       shader === undefined && isPartialStyle && !styleShader && oldShader
@@ -1883,10 +1853,7 @@ export class LightningViewElement<
         this._shaderDef.props
       ) {
         this.animateShader(this._shaderDef.props);
-      } else if (
-        this._shaderDef.type === oldShader?.type &&
-        this.shader.props
-      ) {
+      } else if (this._shaderDef.type === oldShader?.type && this.shader.props) {
         for (const [key, value] of Object.entries(this._shaderDef.props)) {
           // Gate on key existence, not truthiness: a prop whose current value
           // is falsy (e.g. a transparent `border-color` of 0) must still be
@@ -1930,13 +1897,9 @@ export class LightningViewElement<
           ? this._shaderDef?.props?.radius
           : 0;
       // The stencil takes one radius; a per-corner array clips to the largest.
-      const clipRadius =
-        (Array.isArray(radius) ? Math.max(...radius) : (radius as number)) ||
-        0;
+      const clipRadius = (Array.isArray(radius) ? Math.max(...radius) : (radius as number)) || 0;
 
-      if (
-        initial ? clipRadius > 0 : (this.node.clipRadius ?? 0) !== clipRadius
-      ) {
+      if (initial ? clipRadius > 0 : (this.node.clipRadius ?? 0) !== clipRadius) {
         finalStyle.clipRadius = clipRadius;
       }
     }

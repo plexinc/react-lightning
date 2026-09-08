@@ -25,6 +25,15 @@ export interface LightningViewElementStyle extends Omit<
   borderBottom?: number;
   borderLeft?: number;
   /**
+   * Ring drawn outside the border box, offset by `outlineOffset`. It uses the
+   * node's border shader, so an element can't carry a border and an outline at
+   * the same time (the border wins).
+   */
+  outlineWidth?: number;
+  outlineColor?: number;
+  outlineOffset?: number;
+
+  /**
    * Follows css border-radius syntax
    * https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius#syntax
    */

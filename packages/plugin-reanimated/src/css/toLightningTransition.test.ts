@@ -73,6 +73,12 @@ describe('toLightningTransition', () => {
     expect(toLightningTransition(transitions, styleParts)?.alpha?.duration).toBe(50);
   });
 
+  it('sends an outline color transition to the shader', () => {
+    const transitions: PropertyTransitions = new Map([['outlineColor', settings]]);
+
+    expect(toLightningTransition(transitions, parts({}))).toEqual({ shaderProps: settings });
+  });
+
   it('returns null when nothing maps', () => {
     expect(toLightningTransition(new Map(), parts({}))).toBeNull();
   });
