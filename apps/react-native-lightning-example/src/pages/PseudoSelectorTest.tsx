@@ -28,8 +28,14 @@ const cardStyle = {
     default: [{ translateY: 0 }, { scale: 1 }],
     ':focus': [{ translateY: -LABEL_SHIFT }, { scale: 1.08 }],
   },
-  backgroundColor: { default: '#26282c', ':focus': '#e5a00d' },
-  transitionProperty: ['transform', 'backgroundColor'],
+  backgroundColor: '#26282c',
+  // The focus ring is an outline on the card itself, so it needs no extra view.
+  // Fading from a transparent white keeps it from going through black.
+  outlineStyle: 'solid' as const,
+  outlineWidth: 4,
+  outlineOffset: 2,
+  outlineColor: { default: 'rgba(255, 255, 255, 0)', ':focus': '#e5a00d' },
+  transitionProperty: ['transform', 'outlineColor'],
   transitionDuration: [200, 120],
   transitionTimingFunction: ['cubic-bezier(0.22, 1, 0.36, 1)', 'ease-out'],
 };
