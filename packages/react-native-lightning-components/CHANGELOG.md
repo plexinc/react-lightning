@@ -1,5 +1,15 @@
 # @plextv/react-native-lightning-components
 
+## 1.0.0-alpha.1
+
+### Patch Changes
+
+- Updated dependencies [253e3c1]
+  - @plextv/react-lightning@0.5.0-alpha.4
+  - @plextv/react-lightning-plugin-flexbox@1.0.0-alpha.3
+  - @plextv/react-lightning-components@1.0.0-alpha.4
+  - @plextv/react-native-lightning@1.0.0-alpha.3
+
 ## 0.4.3-alpha.0
 
 ### Patch Changes
