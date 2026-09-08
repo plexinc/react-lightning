@@ -22,6 +22,7 @@ import { AnimationTest } from './pages/AnimationTest';
 import { ComponentTest } from './pages/ComponentTest';
 import { LayoutTest } from './pages/LayoutTest';
 import { LibraryTest } from './pages/LibraryTest';
+import { PseudoSelectorTest } from './pages/PseudoSelectorTest';
 import { SimpleTest } from './pages/SimpleTest';
 import { VirtualizedListTest } from './pages/VirtualizedListTest';
 
@@ -56,6 +57,7 @@ const screens = {
   Library: 'library',
   Simple: 'simple',
   Components: 'components',
+  PseudoSelectors: 'pseudoSelectors',
   NestedLayouts: 'nestedLayouts',
   VirtualizedList: 'virtualizedList',
 };
@@ -119,6 +121,11 @@ const MainApp = () => {
           color={'rgba(55, 55, 22, 1)'}
           onPress={() => nav.navigate('VirtualizedList')}
         />
+        <Button
+          title="Pseudo Selectors"
+          color={'rgba(55, 55, 22, 1)'}
+          onPress={() => nav.navigate('PseudoSelectors')}
+        />
       </Column>
 
       <Column focusable style={{ w: 1670, h: 1080, color: 0x000000ff, clipping: true }}>
@@ -135,6 +142,7 @@ const MainApp = () => {
           <CustomStack.Screen name="Simple" component={SimpleTest} />
           <CustomStack.Screen name="Components" component={ComponentTest} />
           <CustomStack.Screen name="VirtualizedList" component={VirtualizedListTest} />
+          <CustomStack.Screen name="PseudoSelectors" component={PseudoSelectorTest} />
         </CustomStack.Navigator>
       </Column>
     </Row>
