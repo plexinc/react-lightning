@@ -1,6 +1,7 @@
 import {
   Component,
   type ComponentType,
+  type ContextType,
   type ForwardedRef,
   type ForwardRefExoticComponent,
   forwardRef,
@@ -13,7 +14,7 @@ import type {
   LayoutAnimationFunction,
 } from 'react-native-reanimated-original';
 
-import { PARTIAL_STYLE } from '@plextv/react-lightning';
+import { FocusManagerContext, PARTIAL_STYLE } from '@plextv/react-lightning';
 import type {
   LightningElement,
   LightningElementProps,
@@ -22,12 +23,24 @@ import type {
   RendererNode,
 } from '@plextv/react-lightning';
 
+import {
+  CSSStyleBinding,
+  type CSSStyleParts,
+  createCSSStyleParts,
+  filterCSSStyle,
+  finalizeCSSStyleParts,
+  hasPseudoStyles,
+  normalizeCSSTransition,
+  toLightningTransition,
+} from '../css';
 import { isAnimatedStyle } from '../isAnimatedStyle';
 import type { AnimatedStyle } from '../types/AnimatedStyle';
 import type { ReanimatedAnimation } from '../types/ReanimatedAnimation';
 import { toLightningAnimationAndStyles } from '../utils/toLightningAnimationAndStyles';
 
 type NativeLightningElement = NativeMethods & LightningElement;
+
+type FocusContext = ContextType<typeof FocusManagerContext>;
 
 type AnimatedProps<T extends {}> = T &
   Pick<LightningElementProps, 'transition'> & {
@@ -38,19 +51,13 @@ type AnimatedProps<T extends {}> = T &
     exiting?: ReanimatedAnimation;
   };
 
-function flattenStyles<T>(
+function collectStyles<T>(
   style: StyleProp<T>,
   animatedStyles: Set<AnimatedStyle>,
-  flattenedStyles: Partial<T>,
-): void;
-function flattenStyles<T>(style: StyleProp<T>): [Set<AnimatedStyle>, Partial<T>];
-function flattenStyles<T>(
-  style: StyleProp<T>,
-  animatedStyles: Set<AnimatedStyle> = new Set(),
-  flattenedStyles: Partial<T> = {},
-) {
+  parts: CSSStyleParts,
+): void {
   if (!style) {
-    return [animatedStyles, flattenedStyles];
+    return;
   }
 
   if (Array.isArray(style)) {
@@ -58,16 +65,23 @@ function flattenStyles<T>(
       const s = style[i];
 
       if (s != null && s !== false) {
-        flattenStyles(s as StyleProp<T>, animatedStyles, flattenedStyles);
+        collectStyles(s as StyleProp<T>, animatedStyles, parts);
       }
     }
   } else if (isAnimatedStyle(style)) {
     animatedStyles.add(style);
-  } else if (style != null && style !== false) {
-    Object.assign(flattenedStyles, style);
+  } else if (style !== false) {
+    filterCSSStyle(style as Record<string, unknown>, parts);
   }
+}
 
-  return [animatedStyles, flattenedStyles];
+function flattenStyles<T>(style: StyleProp<T>): [Set<AnimatedStyle>, CSSStyleParts] {
+  const animatedStyles = new Set<AnimatedStyle>();
+  const parts = createCSSStyleParts();
+
+  collectStyles(style, animatedStyles, parts);
+
+  return [animatedStyles, finalizeCSSStyleParts(parts)];
 }
 
 function isAnimationBuilder(
@@ -149,15 +163,22 @@ export function createAnimatedComponent<TProps extends {}>(
 ): AnimatedComponent<TProps> {
   class AnimatedComponentInternal extends Component<AnimatedProps<TProps>> {
     static displayName = `LightningAnimated(${ComponentToAnimate.displayName || ComponentToAnimate.name || 'Component'})`;
+    // Pseudo selectors need the focus path, which only the manager knows.
+    static contextType = FocusManagerContext;
 
     private _ref: NativeLightningElement | null = null;
+    private _css: CSSStyleBinding | null = null;
+    private _focusContext: FocusContext = null;
     private _animatedStyles: Set<AnimatedStyle> = new Set();
     private _styles: Partial<ViewStyle> | null = null;
     private _cachedBuilders = new WeakMap<ReanimatedAnimation, LayoutAnimationFunction | null>();
 
-    constructor(props: AnimatedProps<TProps>) {
-      super(props);
+    // React only assigns `this.context` after construction, so take it from the
+    // constructor argument for the first _transformStyles pass.
+    constructor(props: AnimatedProps<TProps>, context?: unknown) {
+      super(props, context);
 
+      this._focusContext = context as FocusContext;
       this._transformStyles();
     }
 
@@ -191,6 +212,9 @@ export function createAnimatedComponent<TProps extends {}>(
     }
 
     componentWillUnmount(): void {
+      this._css?.destroy();
+      this._css = null;
+
       if (!this.props.exiting || !this._ref) {
         return;
       }
@@ -247,10 +271,11 @@ export function createAnimatedComponent<TProps extends {}>(
       }
 
       this._ref = newRef;
+      this._css?.setElement(newRef);
     };
 
     _transformStyles() {
-      const [newAnimatedStyles, flattenedStyles] = flattenStyles(this.props.style);
+      const [newAnimatedStyles, parts] = flattenStyles(this.props.style);
 
       if (this._ref) {
         // Remove refs for any animated styles that were removed
@@ -265,7 +290,34 @@ export function createAnimatedComponent<TProps extends {}>(
       }
 
       this._animatedStyles = newAnimatedStyles;
-      this._styles = flattenedStyles;
+      this._styles = parts.style as Partial<ViewStyle>;
+
+      this._updateCSSStyle(parts);
+    }
+
+    /**
+     * CSS transitions and pseudo selectors are driven off the node instead of a
+     * render: the transition settings live on the element and the binding swaps
+     * the pseudo props as focus moves.
+     */
+    private _updateCSSStyle(parts: CSSStyleParts) {
+      const transitions = parts.transitionProps
+        ? normalizeCSSTransition(parts.transitionProps)
+        : null;
+      const transition = transitions ? toLightningTransition(transitions, parts) : null;
+
+      if (!transition && !hasPseudoStyles(parts)) {
+        this._css?.destroy();
+        this._css = null;
+
+        return;
+      }
+
+      const focusContext = this._focusContext ?? (this.context as FocusContext);
+
+      this._css ??= new CSSStyleBinding(focusContext?.focusManager ?? null);
+      this._css.setElement(this._ref);
+      this._css.update(parts, transition);
     }
 
     private _runAnimation(builder: LayoutAnimationFunction | null, callback?: () => void) {
