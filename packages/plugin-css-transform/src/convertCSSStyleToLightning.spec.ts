@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { AllStyleProps } from './types/ReactStyle';
 import { convertCSSStyleToLightning } from './convertCSSStyleToLightning';
+import type { AllStyleProps } from './types/ReactStyle';
 
 // The return type is the view/image/text union; the text-only keys these specs
 // assert on aren't on the base, so read results through a loose record.
@@ -10,15 +10,13 @@ const convert = (style: AllStyleProps): Record<string, unknown> =>
 
 describe('convertCSSStyleToLightning border radius', () => {
   it('passes a uniform borderRadius through unchanged', () => {
-    expect(convertCSSStyleToLightning({ borderRadius: 8 })?.borderRadius).toBe(
-      8,
-    );
+    expect(convertCSSStyleToLightning({ borderRadius: 8 })?.borderRadius).toBe(8);
   });
 
   it('expands a single corner longhand into a [tl, tr, br, bl] array', () => {
-    expect(
-      convertCSSStyleToLightning({ borderTopRightRadius: 8 })?.borderRadius,
-    ).toEqual([0, 8, 0, 0]);
+    expect(convertCSSStyleToLightning({ borderTopRightRadius: 8 })?.borderRadius).toEqual([
+      0, 8, 0, 0,
+    ]);
   });
 
   it('maps logical start/end corners onto physical corners (LTR)', () => {
@@ -32,8 +30,7 @@ describe('convertCSSStyleToLightning border radius', () => {
 
   it('uses the uniform borderRadius as the base for unspecified corners', () => {
     expect(
-      convertCSSStyleToLightning({ borderRadius: 4, borderTopEndRadius: 8 })
-        ?.borderRadius,
+      convertCSSStyleToLightning({ borderRadius: 4, borderTopEndRadius: 8 })?.borderRadius,
     ).toEqual([4, 8, 4, 4]);
   });
 
@@ -106,5 +103,41 @@ describe('convertCSSStyleToLightning text shadows', () => {
 
     expect(result.shadowColor).toBeUndefined();
     expect(warn).toHaveBeenCalled();
+  });
+});
+
+describe('convertCSSStyleToLightning outline', () => {
+  it('converts the outline width, color and offset', () => {
+    expect(
+      convertCSSStyleToLightning({
+        outlineWidth: 4,
+        outlineColor: 'rgba(255, 0, 0, 1)',
+        outlineOffset: 2,
+      }),
+    ).toMatchObject({
+      outlineWidth: 4,
+      outlineColor: 0xff0000ff,
+      outlineOffset: 2,
+    });
+  });
+
+  it('leaves the width alone on a color-only update, so a focus ring can fade', () => {
+    const result = convertCSSStyleToLightning({ outlineColor: 'rgba(255, 0, 0, 0)' }) as Record<
+      string,
+      unknown
+    >;
+
+    expect(result.outlineColor).toBe(0xff000000);
+    expect('outlineWidth' in result).toBe(false);
+  });
+
+  it('drops outlineStyle, since only a solid ring can be drawn', () => {
+    const result = convertCSSStyleToLightning({
+      outlineStyle: 'dotted',
+      outlineWidth: 2,
+    }) as Record<string, unknown>;
+
+    expect(result.outlineStyle).toBeUndefined();
+    expect(result.outlineWidth).toBe(2);
   });
 });

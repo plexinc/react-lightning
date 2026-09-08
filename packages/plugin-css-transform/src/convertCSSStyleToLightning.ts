@@ -1,7 +1,5 @@
-import type {
-  LightningElementStyle,
-  LightningTextElementStyle,
-} from '@plextv/react-lightning';
+import type { LightningElementStyle, LightningTextElementStyle } from '@plextv/react-lightning';
+
 import type { AllStyleProps } from './types/ReactStyle';
 import { flattenStyles } from './utils/flattenStyles';
 import { htmlColorToLightningColor } from './utils/htmlColorToLightningColor';
@@ -44,19 +42,12 @@ function resolveBorderRadius(
 
   const topLeft = num(borderTopLeftRadius) ?? num(borderTopStartRadius);
   const topRight = num(borderTopRightRadius) ?? num(borderTopEndRadius);
-  const bottomRight =
-    num(borderBottomRightRadius) ?? num(borderBottomEndRadius);
-  const bottomLeft =
-    num(borderBottomLeftRadius) ?? num(borderBottomStartRadius);
+  const bottomRight = num(borderBottomRightRadius) ?? num(borderBottomEndRadius);
+  const bottomLeft = num(borderBottomLeftRadius) ?? num(borderBottomStartRadius);
 
   const base = num(borderRadius);
 
-  if (
-    topLeft == null &&
-    topRight == null &&
-    bottomRight == null &&
-    bottomLeft == null
-  ) {
+  if (topLeft == null && topRight == null && bottomRight == null && bottomLeft == null) {
     return base;
   }
 
@@ -83,6 +74,11 @@ export function convertCSSStyleToLightning(
     border,
     borderWidth,
     borderColor,
+    outlineWidth,
+    outlineColor,
+    outlineOffset,
+    // Dropped: the shader only draws a solid ring, dashed/dotted have no equivalent.
+    outlineStyle: _outlineStyle,
     shadowColor,
     textShadowColor,
     textShadowOffset,
@@ -187,6 +183,21 @@ export function convertCSSStyleToLightning(
     }
   }
 
+  // The element draws the outline with the border shader, outside the node.
+  // Each prop is copied only when it's there: a color-only update (a focus ring
+  // fading in) must not reset the width the element already has.
+  if (typeof outlineWidth === 'number') {
+    finalStyle.outlineWidth = outlineWidth;
+  }
+
+  if (outlineColor != null) {
+    finalStyle.outlineColor = htmlColorToLightningColor(outlineColor) ?? 0;
+  }
+
+  if (typeof outlineOffset === 'number') {
+    finalStyle.outlineOffset = outlineOffset;
+  }
+
   if (otherStyles.display === 'none') {
     finalStyle.alpha = 0;
   } else if (opacity != null && typeof opacity === 'number') {
@@ -206,9 +217,7 @@ export function convertCSSStyleToLightning(
 
   if (otherStyles.top != null) {
     finalStyle.y =
-      typeof otherStyles.top === 'number'
-        ? otherStyles.top
-        : Number.parseInt(otherStyles.top, 10);
+      typeof otherStyles.top === 'number' ? otherStyles.top : Number.parseInt(otherStyles.top, 10);
   }
 
   // The renderer resolves the full 100-900 scale (and the keyword weights) to
@@ -241,8 +250,7 @@ export function convertCSSStyleToLightning(
   }
 
   if (transform != null) {
-    const { scaleX, scaleY, rotation, ...translateTransforms } =
-      parseTransform(transform);
+    const { scaleX, scaleY, rotation, ...translateTransforms } = parseTransform(transform);
 
     if (scaleX != null) {
       finalStyle.scaleX = scaleX;
@@ -260,11 +268,7 @@ export function convertCSSStyleToLightning(
   }
 
   // Disabled for now as some components set overflow to hidden while not having their size correctly calculated
-  if (
-    overflow === 'hidden' ||
-    overflowX === 'hidden' ||
-    overflowY === 'hidden'
-  ) {
+  if (overflow === 'hidden' || overflowX === 'hidden' || overflowY === 'hidden') {
     finalStyle.clipping = true;
   }
 
