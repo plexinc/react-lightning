@@ -97,6 +97,16 @@ export class FocusManager<
    */
   private _pendingFocus: T | null = null;
 
+  /**
+   * Preferred-child requests whose target was not yet registered (or not yet
+   * focusable) when `setFocusedChild()` was called — a React child effect runs
+   * before its element is attached to the focus tree. Fulfilled per element the
+   * moment it becomes usable, so a group's remembered child can be set up front
+   * rather than after mount. Unlike focus, a preference is not exclusive: one
+   * per element, each resolving against its own parent.
+   */
+  private _pendingPreferredChildren: Set<T> = new Set();
+
   public get activeLayer(): FocusLayer<T> {
     if (this._focusStack.length === 0) {
       throw new Error('No more focus stacks! This should not occur');
@@ -272,8 +282,10 @@ export class FocusManager<
 
     this._recalculateFocusPath();
 
-    // If a focus request was waiting on this element to register, fulfill it
-    // now that it's in the tree (and possibly focusable).
+    // If a focus request or preferred-child preference was waiting on this
+    // element to register, fulfill it now that it's in the tree (and possibly
+    // focusable).
+    this._tryFulfillPendingPreferredChild(child);
     this._tryFulfillPendingFocus(child);
   }
 
@@ -293,6 +305,8 @@ export class FocusManager<
     if (this._pendingFocus === element) {
       this._pendingFocus = null;
     }
+
+    this._pendingPreferredChildren.delete(element);
 
     this._forAllNodes(element, (node) => {
       this._removeNode(node, true);
@@ -356,11 +370,17 @@ export class FocusManager<
   public setFocusedChild(element: T): void {
     const node = this.activeLayer.elements.get(element);
 
-    if (!node) {
+    // Not registered yet, or registered but not focusable yet. Queue the
+    // preference instead of dropping it; it resolves once the element is ready.
+    if (!node || !element.focusable) {
+      this._pendingPreferredChildren.add(element);
+
       return;
     }
 
-    if (!element.focusable || hasExternalRedirect(node)) {
+    this._pendingPreferredChildren.delete(element);
+
+    if (hasExternalRedirect(node)) {
       return;
     }
 
@@ -373,9 +393,11 @@ export class FocusManager<
   }
 
   public pushLayer(): void {
-    // A pending focus targets the layer it was requested in; drop it on a
-    // layer change so it can't fulfill against the wrong layer.
+    // A pending focus or preferred-child preference targets the layer it was
+    // requested in; drop it on a layer change so it can't fulfill against the
+    // wrong layer.
     this._pendingFocus = null;
+    this._pendingPreferredChildren.clear();
 
     // Store the current layer before creating new one
     const previousLayer = this.activeLayer;
@@ -417,9 +439,11 @@ export class FocusManager<
       return;
     }
 
-    // A pending focus targets the layer it was requested in; drop it on a
-    // layer change so it can't fulfill against the wrong layer.
+    // A pending focus or preferred-child preference targets the layer it was
+    // requested in; drop it on a layer change so it can't fulfill against the
+    // wrong layer.
     this._pendingFocus = null;
+    this._pendingPreferredChildren.clear();
 
     // Get current layer info before popping
     const currentLayer = this.activeLayer;
@@ -482,6 +506,31 @@ export class FocusManager<
    * Fulfill a queued {@link focus} request for `element` if it is now
    * registered and focusable. No-op otherwise (it stays queued).
    */
+  /**
+   * Apply a queued {@link setFocusedChild} preference for `element` if it is
+   * now registered and focusable. No-op otherwise (it stays queued).
+   */
+  private _tryFulfillPendingPreferredChild(element: T): void {
+    if (!this._pendingPreferredChildren.has(element)) {
+      return;
+    }
+
+    const node = this.activeLayer.elements.get(element);
+
+    if (!node || !element.focusable) {
+      return;
+    }
+
+    this._pendingPreferredChildren.delete(element);
+
+    if (hasExternalRedirect(node) || node.parent.focusedElement === node) {
+      return;
+    }
+
+    node.parent.focusedElement = node;
+    this._recalculateFocusPath();
+  }
+
   private _tryFulfillPendingFocus(element: T): void {
     if (this._pendingFocus !== element) {
       return;
@@ -619,9 +668,10 @@ export class FocusManager<
         this._checkFocusableChildren(currentNode.parent);
         this._recalculateFocusPath();
 
-        // A queued focus request may have been waiting on this element to
-        // become focusable.
+        // A queued focus request or preferred-child preference may have been
+        // waiting on this element to become focusable.
         if (isFocusable) {
+          this._tryFulfillPendingPreferredChild(element);
           this._tryFulfillPendingFocus(element);
         }
       }),

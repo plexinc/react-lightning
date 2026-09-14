@@ -361,6 +361,54 @@ describe('FocusManager', () => {
       expect(focusedSpy).not.toHaveBeenCalled();
     });
 
+    it('fulfills the request once the target element registers', () => {
+      const root = createMockElement(1, 'root');
+      const groupA = createMockElement(2, 'groupA');
+      const groupB = createMockElement(3, 'groupB');
+      const a1 = createMockElement(4, 'a1');
+      const b1 = createMockElement(5, 'b1');
+      const b2 = createMockElement(6, 'b2');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(groupA, root);
+      focusManager.addElement(groupB, root);
+      focusManager.addElement(a1, groupA, { autoFocus: true });
+      focusManager.addElement(b1, groupB, { autoFocus: true });
+
+      focusManager.focus(a1);
+      expect(focusManager.focusPath).toEqual([root, groupA, a1]);
+
+      // b2 hasn't registered yet: a React child effect runs before the element
+      // is attached to the focus tree. The preference must not be dropped.
+      focusManager.setFocusedChild(b2);
+      expect(focusManager.focusPath).toEqual([root, groupA, a1]);
+
+      focusManager.addElement(b2, groupB);
+
+      // Entering groupB now lands on b2 rather than b1's autoFocus pick.
+      focusManager.focus(groupB);
+      expect(focusManager.focusPath).toEqual([root, groupB, b2]);
+    });
+
+    it('cancels a pending preference when the target is removed', () => {
+      const root = createMockElement(1, 'root');
+      const groupB = createMockElement(2, 'groupB');
+      const b1 = createMockElement(3, 'b1');
+      const b2 = createMockElement(4, 'b2');
+
+      focusManager.addElement(root, null);
+      focusManager.addElement(groupB, root);
+      focusManager.addElement(b1, groupB, { autoFocus: true });
+
+      focusManager.setFocusedChild(b2);
+      focusManager.removeElement(b2);
+
+      // Re-registering must not retroactively apply the cancelled preference.
+      focusManager.addElement(b2, groupB);
+      focusManager.focus(groupB);
+      expect(focusManager.focusPath).toEqual([root, groupB, b1]);
+    });
+
     it('is a no-op for an unknown element', () => {
       const root = createMockElement(1, 'root');
       const child = createMockElement(2, 'child');
