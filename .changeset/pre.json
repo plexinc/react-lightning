@@ -63,6 +63,7 @@
     "lightning-worker-font-url",
     "momentum-scroll-callbacks",
     "outline-styles",
+    "pending-preferred-focus-child",
     "percent-translate-own-size",
     "pixelratio-scene-truth",
     "reanimated-css-pseudo-selectors",
