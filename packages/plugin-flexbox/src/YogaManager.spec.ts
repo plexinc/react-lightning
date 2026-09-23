@@ -22,6 +22,7 @@ const mockNode = {
   getMaxWidth: vi.fn(),
   // Unanchored edge (unit UNDEFINED), matching a node with no right/bottom set.
   getPosition: vi.fn(() => ({ unit: 0, value: undefined })),
+  getDisplay: vi.fn(() => 0),
   getParent: vi.fn(),
   markLayoutSeen: vi.fn(),
 };
@@ -58,6 +59,8 @@ const mockYoga = {
   ERRATA_STRETCH_FLEX_BASIS: 3,
   ERRATA_ABSOLUTE_PERCENT_AGAINST_INNER_SIZE: 4,
   ERRATA_ABSOLUTE_POSITION_WITHOUT_INSETS_EXCLUDES_PADDING: 5,
+  DISPLAY_FLEX: 0,
+  DISPLAY_NONE: 1,
 };
 
 vi.mock('yoga-layout/load', () => ({
@@ -557,8 +560,17 @@ describe('YogaManager', () => {
       yogaManager.addNode(elementId);
 
       // Closed: translateX shifts the node off-screen to the left.
-      yogaManager.applyStyle(elementId, { x: 0, transform: { translateX: -452 } });
-      expect(applyFlexPropToYoga).toHaveBeenCalledWith(mockYoga, mockYogaOptions, mockNode, 'left', -452);
+      yogaManager.applyStyle(elementId, {
+        x: 0,
+        transform: { translateX: -452 },
+      });
+      expect(applyFlexPropToYoga).toHaveBeenCalledWith(
+        mockYoga,
+        mockYogaOptions,
+        mockNode,
+        'left',
+        -452,
+      );
 
       vi.mocked(applyFlexPropToYoga).mockClear();
 
@@ -567,7 +579,13 @@ describe('YogaManager', () => {
       // holds even for a partial (resetMissing=false) push — the transform key is
       // authoritative for its own axes — so the -452 inset must clear, not stick.
       yogaManager.applyStyle(elementId, { x: 0, transform: {} }, false, false);
-      expect(applyFlexPropToYoga).toHaveBeenCalledWith(mockYoga, mockYogaOptions, mockNode, 'left', 0);
+      expect(applyFlexPropToYoga).toHaveBeenCalledWith(
+        mockYoga,
+        mockYogaOptions,
+        mockNode,
+        'left',
+        0,
+      );
     });
 
     it('keeps a translate inset when the push omits transform entirely', async () => {
@@ -575,14 +593,23 @@ describe('YogaManager', () => {
       const elementId = 654;
 
       yogaManager.addNode(elementId);
-      yogaManager.applyStyle(elementId, { x: 0, transform: { translateX: -452 } });
+      yogaManager.applyStyle(elementId, {
+        x: 0,
+        transform: { translateX: -452 },
+      });
 
       vi.mocked(applyFlexPropToYoga).mockClear();
 
       // No transform key in this push: the translate is not part of the update
       // and must be left alone, not reset to 0.
       yogaManager.applyStyle(elementId, { w: 100 }, false, false);
-      expect(applyFlexPropToYoga).not.toHaveBeenCalledWith(mockYoga, mockYogaOptions, mockNode, 'left', 0);
+      expect(applyFlexPropToYoga).not.toHaveBeenCalledWith(
+        mockYoga,
+        mockYogaOptions,
+        mockNode,
+        'left',
+        0,
+      );
     });
 
     it('should apply multiple styles', async () => {
