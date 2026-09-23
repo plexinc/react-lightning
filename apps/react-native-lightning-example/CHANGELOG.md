@@ -1,5 +1,14 @@
 # @plextv/react-native-lightning-example
 
+## 0.4.4-alpha.5
+
+### Patch Changes
+
+- Updated dependencies [dd64419]
+- Updated dependencies [80b0b2f]
+  - @plextv/react-lightning-plugin-flexbox@1.0.0-alpha.4
+  - @plextv/react-lightning@0.5.0-alpha.5
+
 ## 0.4.4-alpha.4
 
 ### Patch Changes
