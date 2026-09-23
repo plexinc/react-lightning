@@ -8,10 +8,7 @@ import { layoutText, type TextMeasureProps } from './text/layoutText';
 import type { ManagerNode } from './types/ManagerNode';
 import type { YogaOptions } from './types/YogaOptions';
 import applyReactPropsToYoga, { applyFlexPropToYoga } from './util/applyReactPropsToYoga';
-import {
-  resolveHorizontalTranslate,
-  resolveVerticalTranslate,
-} from './util/resolveTranslateInset';
+import { resolveHorizontalTranslate, resolveVerticalTranslate } from './util/resolveTranslateInset';
 import { SimpleDataView } from './util/SimpleDataView';
 
 export type BatchedUpdate = Record<number, Partial<Rect>>;
@@ -248,6 +245,7 @@ export class YogaManager {
 
   public removeNode(elementId: number): void {
     this._textNodes.delete(elementId);
+    this._hiddenElements.delete(elementId);
 
     const yogaNode = this._elementMap.get(elementId);
 
@@ -451,7 +449,12 @@ export class YogaManager {
       const style = styles[elementId as unknown as number];
 
       if (style !== undefined) {
-        this.applyStyle(+elementId, style, skipRender, resets?.[elementId as unknown as number] === 1);
+        this.applyStyle(
+          +elementId,
+          style,
+          skipRender,
+          resets?.[elementId as unknown as number] === 1,
+        );
       }
     }
   }
@@ -479,6 +482,15 @@ export class YogaManager {
     }
 
     applyReactPropsToYoga(this._yoga, this._yogaOptions, yogaNode, style, resetMissing);
+
+    // Yoga zeroes the computed box of a display:none node, so emitting its
+    // layout would drag the node back to the origin — a node parked off screen
+    // by a translate lands in view of anything reading the scene graph.
+    if (yogaNode.node.getDisplay() === this._yoga.DISPLAY_NONE) {
+      this._hiddenElements.add(elementId);
+    } else {
+      this._hiddenElements.delete(elementId);
+    }
 
     if (style.transform) {
       const { x, y, transform } = style;
