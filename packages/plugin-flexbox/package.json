@@ -1,6 +1,6 @@
 {
   "name": "@plextv/react-lightning-plugin-flexbox",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "description": "Adds FlexBox layout support to @plextv/react-lightning using yoga",
   "bugs": {
     "url": "https://github.com/plexinc/react-lightning/issues/new"

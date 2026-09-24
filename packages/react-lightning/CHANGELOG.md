@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.5.0-alpha.5
+
+### Patch Changes
+
+- 80b0b2f: `setFocusedChild` queues a preferred-child request whose target is not registered or focusable yet, instead of dropping it. A React child effect runs before its element is attached to the focus tree, so a group's remembered child could not be set up front. Mirrors `focus()`, which already queues for the same reason.
+
 ## 0.5.0-alpha.4
 
 ### Minor Changes
