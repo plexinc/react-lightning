@@ -66,6 +66,7 @@ const FocusableView = forwardRef<LightningViewElement, CombinedProps>(
     const { ref: focusRef } = useFocus<LightningViewElement>({
       active: isFocusActive(props),
       focusRestorationExcluded,
+      focusKey: props.nativeID,
     });
     const combinedRef = useCombinedRef(ref, focusRef);
 

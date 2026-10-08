@@ -44,6 +44,7 @@ export const Pressable: ForwardRefExoticComponent<PressableProps> = focusable<
       onLongPress,
       onLayout,
       focused: _focused,
+      focusable: _focusable,
       ...props
     },
     ref,
@@ -109,8 +110,9 @@ export const Pressable: ForwardRefExoticComponent<PressableProps> = focusable<
     );
   },
   'Pressable(lng)',
-  ({ active, autoFocus }) => ({
-    active,
+  ({ active, autoFocus, focusable: rnFocusable, nativeID }) => ({
+    active: active ?? rnFocusable !== false,
     autoFocus,
+    focusKey: nativeID,
   }),
 );
