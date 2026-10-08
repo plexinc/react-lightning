@@ -1,6 +1,6 @@
 {
   "name": "@plextv/react-lightning-plugin-css-transform",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "Transforms CSS properties to lightning properties. Requires @plextv/react-lightning-plugin-flexbox",
   "bugs": {
     "url": "https://github.com/plexinc/react-lightning/issues/new"

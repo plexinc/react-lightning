@@ -1,5 +1,18 @@
 # @plextv/react-lightning
 
+## 0.5.0-alpha.6
+
+### Minor Changes
+
+- e307f24: `FocusManager` takes `batchInitialFocus` (on in `CanvasRoot`): the first focus pick and initial focus claims wait for the registrations of the current tick, a claim whose winner has no content yet holds the default pick for up to a second, and a focused item that goes away while its list re-renders is repicked once the new items are in. Entering a group at `first` picks the top-left item instead of the first registered, `last-focused` in `destinationKeys` skips a group that never had focus, an outer `last-focused` group returns to the exact remembered item through nested `first` groups, removal repick falls to the next sibling on ties, and a group that unmounts while focused sends no `onFocusLeave`. A reparented element that stays on the focus path is no longer blurred and refocused.
+- e307f24: The focus engine implements the native focus semantics itself: `focusEntry` (`first`, `last-focused`, `spatial`), `rememberAs`, scopes with `initialFocus` claims (`refocusInitial()`), nearest-by-geometry repick when the focused element is removed, and `onFocusEnter` / `onFocusLeave` per group. Groups that use none of them behave as before.
+- e307f24: Focus groups can be registered under a string `focusKey`, so other groups can name them without holding a ref. `destinationKeys` forwards arriving focus to the first mounted key (`first` and `last-focused` stand for the group's own first and remembered child), `exits` sends a move that finds nothing inside the group to a key per direction, and `FocusManager.focusByKey` focuses a keyed element.
+
+### Patch Changes
+
+- e307f24: A group's `rememberAs` now swaps the whole remembered chain, not only its direct child: a value that was never visited enters at its first item, and a value that comes back returns to the item it remembered by focus key, which still names the right item after a recycling list reused its cells. `refocusInitial` also holds back the repick of the focused item while its target is still mounting, so focus doesn't land on a surviving neighbour on the way (bounded to one second).
+- e307f24: `useFocus` registers once with a single options object and applies later changes in one effect that compares them, instead of an effect per option. `FocusGroup` passes `focusEntry`, `rememberAs`, `scope`, `active`, `initialFocus`, `onFocusEnter` and `onFocusLeave` straight to it, and its traps no longer re-apply on every render. The focus key manager no longer allocates per directional key.
+
 ## 0.5.0-alpha.5
 
 ### Patch Changes

@@ -1,5 +1,17 @@
 # @plextv/react-lightning-plugin-css-transform
 
+## 1.0.0-alpha.3
+
+### Patch Changes
+
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+  - @plextv/react-lightning@0.5.0-alpha.6
+  - @plextv/react-lightning-plugin-flexbox@1.0.0-alpha.5
+
 ## 1.0.0-alpha.2
 
 ### Minor Changes

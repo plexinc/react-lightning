@@ -1,5 +1,25 @@
 # @plextv/react-lightning-storybook
 
+## 0.4.4-alpha.6
+
+### Patch Changes
+
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+  - @plextv/react-lightning@0.5.0-alpha.6
+  - @plextv/react-native-lightning@1.0.0-alpha.4
+  - @plextv/react-lightning-plugin-css-transform@1.0.0-alpha.3
+  - @plextv/react-lightning-plugin-flexbox@1.0.0-alpha.5
+  - @plextv/react-lightning-plugin-flexbox-lite@1.0.0-alpha.2
+  - @plextv/react-lightning-plugin-reanimated@1.0.0-alpha.4
+  - @plextv/react-lightning-components@1.0.0-alpha.5
+  - @plextv/react-native-lightning-components@1.0.0-alpha.2
+
 ## 0.4.4-alpha.5
 
 ### Patch Changes

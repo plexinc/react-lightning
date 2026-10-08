@@ -1,6 +1,6 @@
 {
   "name": "@plextv/react-lightning-components",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0-alpha.5",
   "description": "React components for react-lightning",
   "bugs": {
     "url": "https://github.com/plexinc/react-lightning/issues/new"
