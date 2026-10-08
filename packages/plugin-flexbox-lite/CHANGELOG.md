@@ -1,5 +1,16 @@
 # @plextv/react-lightning-plugin-flexbox-lite
 
+## 1.0.0-alpha.2
+
+### Patch Changes
+
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+  - @plextv/react-lightning@0.5.0-alpha.6
+
 ## 1.0.0-alpha.1
 
 ### Patch Changes

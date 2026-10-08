@@ -1,5 +1,24 @@
 # @plextv/react-native-lightning
 
+## 1.0.0-alpha.4
+
+### Minor Changes
+
+- e307f24: A focusable View, Pressable or FocusGroup registers its `nativeID` as its focus key, so `destinationKeys`, `exits` and `focusByKey` on react-lightning's focus groups can name it.
+
+### Patch Changes
+
+- e307f24: `Pressable` honours `focusable={false}`: it registers as an inactive focus target instead of a focusable one.
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+- Updated dependencies [e307f24]
+  - @plextv/react-lightning@0.5.0-alpha.6
+  - @plextv/react-lightning-plugin-css-transform@1.0.0-alpha.3
+  - @plextv/react-lightning-plugin-flexbox@1.0.0-alpha.5
+  - @plextv/react-lightning-components@1.0.0-alpha.5
+
 ## 1.0.0-alpha.3
 
 ### Patch Changes
