@@ -2,7 +2,7 @@ import { Keys } from '../input/Keys';
 import type { KeyEvent, LightningElement } from '../types';
 import { findClosestElement, resolveDirectionalTarget } from '../utils/findClosestElement';
 import { Direction } from './Direction';
-import type { FocusManager, FocusNode } from './FocusManager';
+import type { FocusExits, FocusManager, FocusNode } from './FocusManager';
 
 /** Lazily maps FocusNode children to their elements without allocating an array */
 function* childElements(children: FocusNode<LightningElement>[]): Iterable<LightningElement> {
@@ -12,12 +12,37 @@ function* childElements(children: FocusNode<LightningElement>[]): Iterable<Light
 
     // A focus group with no focusable descendant only wraps non-interactive
     // content (a list header); skip it so nav lands on a real target.
-    if (child.element.isFocusGroup && !child.hasFocusableChildren) {
+    // A redirect with destinations is a target even when empty, it forwards on arrival.
+    const redirectsSomewhere =
+      child.focusRedirect && !!(child.destinationKeys || child.destinations);
+
+    if (child.element.isFocusGroup && !child.hasFocusableChildren && !redirectsSomewhere) {
       continue;
     }
 
     yield child.element;
   }
+}
+
+const EXIT_NAMES: Record<number, keyof FocusExits> = {
+  [Direction.Up]: 'up',
+  [Direction.Right]: 'right',
+  [Direction.Down]: 'down',
+  [Direction.Left]: 'left',
+};
+
+function isInside(element: LightningElement, group: LightningElement): boolean {
+  for (
+    let current: LightningElement | null | undefined = element;
+    current;
+    current = current.parent
+  ) {
+    if (current === group) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export class FocusKeyManager<T extends LightningElement> {
@@ -33,13 +58,21 @@ export class FocusKeyManager<T extends LightningElement> {
     }
 
     const key = event.remoteKey;
-    const direction = Array.isArray(key)
-      ? key.map((k) => this._getKeyDirection(k)).find((dir) => dir != null)
-      : this._getKeyDirection(key);
+    let direction: Direction | null = null;
+
+    if (Array.isArray(key)) {
+      for (let i = 0; i < key.length && direction == null; i++) {
+        direction = this._getKeyDirection(key[i] as Keys);
+      }
+    } else {
+      direction = this._getKeyDirection(key);
+    }
 
     if (direction == null) {
       return true;
     }
+
+    this._focusManager.endInitialClaims();
 
     return this._tryFocusNext(element, event, direction);
   };
@@ -107,12 +140,21 @@ export class FocusKeyManager<T extends LightningElement> {
         closestElement,
         focusNode.parent.element,
         direction,
-        (child) => this._focusableChildElements(child),
-        (child) => this._isRedirect(child),
-        (child) => this._getAllowOffscreen(child),
+        this._focusableChildElements,
+        this._isRedirect,
+        this._getAllowOffscreen,
       );
 
       this._focusManager.focus(target);
+
+      return false;
+    }
+
+    const exitKey = focusNode.exits?.[EXIT_NAMES[direction] as keyof FocusExits];
+    const exitTarget = exitKey ? this._focusManager.getElementByKey(exitKey) : null;
+
+    if (exitTarget?.focusable && !isInside(exitTarget, element)) {
+      this._focusManager.focus(exitTarget);
 
       return false;
     }
@@ -148,6 +190,10 @@ export class FocusKeyManager<T extends LightningElement> {
   private _isRedirect = (element: LightningElement): boolean => {
     const node = this._focusManager.getFocusNode(element);
 
-    return !!node?.focusRedirect;
+    if (!node || node.focusEntry === 'spatial') {
+      return false;
+    }
+
+    return node.focusRedirect || node.focusEntry === 'first' || node.focusEntry === 'last-focused';
   };
 }

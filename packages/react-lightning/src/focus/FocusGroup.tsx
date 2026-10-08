@@ -3,15 +3,25 @@ import { type ForwardRefExoticComponent, forwardRef, useEffect, useRef, useState
 import { useCombinedRef } from '../hooks/useCombinedRef';
 import type { KeyEvent, LightningElement, LightningViewElementProps } from '../types';
 import { FocusGroupContext } from './FocusGroupContext';
+import type { FocusEntry, FocusExits } from './FocusManager';
 import { useFocus } from './useFocus';
 import { useFocusKeyManager } from './useFocusKeyManager';
-import { useFocusManager } from './useFocusManager';
 
 export interface FocusGroupProps extends Omit<LightningViewElementProps, 'style'> {
   autoFocus?: boolean;
   disable?: boolean;
   focusRedirect?: boolean;
   destinations?: (LightningElement | null)[];
+  focusKey?: string;
+  destinationKeys?: readonly string[];
+  exits?: FocusExits;
+  focusEntry?: FocusEntry;
+  rememberAs?: string;
+  scope?: boolean;
+  active?: boolean;
+  initialFocus?: number;
+  onFocusEnter?: () => void;
+  onFocusLeave?: () => void;
   trapFocusUp?: boolean;
   trapFocusRight?: boolean;
   trapFocusDown?: boolean;
@@ -24,6 +34,12 @@ export interface FocusGroupProps extends Omit<LightningViewElementProps, 'style'
   onChildFocused?: (child: LightningElement) => void;
 }
 
+const markFocusGroup = (element: LightningElement | null) => {
+  if (element) {
+    element.isFocusGroup = true;
+  }
+};
+
 export const FocusGroup: ForwardRefExoticComponent<FocusGroupProps> = forwardRef<
   LightningElement,
   FocusGroupProps
@@ -34,6 +50,16 @@ export const FocusGroup: ForwardRefExoticComponent<FocusGroupProps> = forwardRef
       disable,
       focusRedirect,
       destinations,
+      focusKey,
+      destinationKeys,
+      exits,
+      focusEntry,
+      rememberAs,
+      scope,
+      active,
+      initialFocus,
+      onFocusEnter,
+      onFocusLeave,
       trapFocusUp,
       trapFocusRight,
       trapFocusDown,
@@ -46,8 +72,14 @@ export const FocusGroup: ForwardRefExoticComponent<FocusGroupProps> = forwardRef
     },
     ref,
   ) => {
-    const focusManager = useFocusManager();
     const focusKeyManager = useFocusKeyManager();
+    const traps = {
+      up: trapFocusUp ?? false,
+      right: trapFocusRight ?? false,
+      down: trapFocusDown ?? false,
+      left: trapFocusLeft ?? false,
+    };
+
     const { ref: focusRef, focused } = useFocus({
       autoFocus,
       active: !disable,
@@ -55,17 +87,21 @@ export const FocusGroup: ForwardRefExoticComponent<FocusGroupProps> = forwardRef
       destinations,
       onChildFocused,
       allowOffscreen,
+      focusKey,
+      destinationKeys,
+      exits,
+      traps,
+      focusEntry,
+      rememberAs,
+      scope,
+      scopeActive: active,
+      initialFocus,
+      onFocusEnter,
+      onFocusLeave,
     });
     const [viewElement, setViewElement] = useState<LightningElement | null>(null);
     const viewRef = useRef<LightningElement>(null);
-    const combinedRef = useCombinedRef(ref, focusRef, viewRef);
-
-    const traps = {
-      up: trapFocusUp ?? false,
-      right: trapFocusRight ?? false,
-      down: trapFocusDown ?? false,
-      left: trapFocusLeft ?? false,
-    };
+    const combinedRef = useCombinedRef(ref, focusRef, viewRef, markFocusGroup);
 
     const handleFocusKeyDown = (event: KeyEvent) => {
       if (!viewRef.current) {
@@ -78,12 +114,6 @@ export const FocusGroup: ForwardRefExoticComponent<FocusGroupProps> = forwardRef
     };
 
     const finalStyle = typeof style === 'function' ? style(focused) : style;
-
-    useEffect(() => {
-      if (viewElement) {
-        focusManager.setTraps(viewElement, traps);
-      }
-    }, [focusManager, viewElement, traps]);
 
     useEffect(() => {
       if (viewRef.current) {

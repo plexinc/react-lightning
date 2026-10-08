@@ -27,6 +27,8 @@ export type FocusNode<T> = Omit<RootNode<T>, 'element'> & {
   autoFocus: boolean;
   focusRedirect: boolean;
   destinations: (T | null)[] | null;
+  destinationKeys?: readonly string[] | null;
+  exits?: FocusExits | null;
   traps: Traps;
   hasFocusableChildren: boolean;
   /** When true, focus navigation can target non-visible children (e.g. clipped items in a virtualized list). */
@@ -39,6 +41,50 @@ export type FocusNode<T> = Omit<RootNode<T>, 'element'> & {
    * must not steal focus on launch).
    */
   focusRestorationExcluded: boolean;
+  focusEntry?: FocusEntry | null;
+  rememberAs?: string | null;
+  remembered?: Map<string, FocusNode<T>> | null;
+  /** Keyed by focus key because a recycling list reuses its cells, so a remembered node can show another item later. */
+  rememberedLeafKeys?: Map<string, string> | null;
+  scope?: boolean;
+  scopeActive?: boolean;
+  scopeClaimed?: boolean;
+  scopeClaimTarget?: FocusNode<T> | null;
+  scopeRefocusUntil?: number;
+  initialFocus?: number | null;
+};
+
+export type FocusEntry = 'first' | 'last-focused' | 'spatial';
+
+export type FocusRect = { x: number; y: number; w: number; h: number };
+
+export type FocusMeasure<T> = (element: T, out: FocusRect) => boolean;
+
+export type FocusElementOptions<T> = {
+  autoFocus?: boolean;
+  focusRedirect?: boolean;
+  destinations?: (T | null)[] | null;
+  traps?: Traps;
+  allowOffscreen?: boolean;
+  focusRestorationExcluded?: boolean;
+  destinationKeys?: readonly string[] | null;
+  exits?: FocusExits | null;
+  focusKey?: string | null;
+  focusEntry?: FocusEntry | null;
+  rememberAs?: string | null;
+  scope?: boolean;
+  scopeActive?: boolean;
+  initialFocus?: number | null;
+  onChildFocused?: ((child: T) => void) | null;
+  onFocusEnter?: (() => void) | null;
+  onFocusLeave?: (() => void) | null;
+};
+
+export type FocusExits = {
+  up?: string;
+  right?: string;
+  down?: string;
+  left?: string;
 };
 
 type FocusLayer<T> = {
@@ -78,6 +124,33 @@ function hasExternalRedirect<T extends { parent?: T | null }>(node: FocusNode<T>
   });
 }
 
+function defaultMeasure(element: unknown, out: FocusRect): boolean {
+  const el = element as {
+    node?: { w: number; h: number };
+    getRelativePosition?: (relativeTo: null) => { x: number; y: number };
+  };
+
+  if (!el.node || !el.getRelativePosition) {
+    return false;
+  }
+
+  const { x, y } = el.getRelativePosition(null);
+  out.x = x;
+  out.y = y;
+  out.w = el.node.w;
+  out.h = el.node.h;
+
+  return true;
+}
+
+const CLAIM_HOLD_MS = 1000;
+
+interface DeferredRepick<T extends Focusable> {
+  parent: FocusNode<T>;
+  rect: FocusRect;
+  fallback: FocusNode<T> | null;
+}
+
 export class FocusManager<
   T extends Focusable & {
     id: number;
@@ -106,6 +179,23 @@ export class FocusManager<
    * per element, each resolving against its own parent.
    */
   private _pendingPreferredChildren: Set<T> = new Set();
+  private _keyedElements: Map<string, T> = new Map();
+  private _elementKeys: Map<T, string> = new Map();
+  private _boundaryHandlers: Map<T, { enter?: () => void; leave?: () => void }> = new Map();
+  private _initialGroups: FocusNode<T>[] = [];
+  private _claiming: Set<FocusNode<T>> = new Set();
+  private _currentScope: FocusNode<T> | null = null;
+  private _measure: FocusMeasure<T>;
+  private _batchInitialFocus: boolean;
+  private _initialFocusPending = false;
+  private _deferredRepicks: DeferredRepick<T>[] = [];
+  private _rememberingNodes = 0;
+  private _claimHoldUntil = 0;
+  private _claimHoldTimer: ReturnType<typeof setTimeout> | null = null;
+  private _refocusTimer: ReturnType<typeof setTimeout> | null = null;
+  private _scratchRect: FocusRect = { x: 0, y: 0, w: 0, h: 0 };
+  private _lastRect: FocusRect = { x: 0, y: 0, w: 0, h: 0 };
+  private _lastRectNode: FocusNode<T> | null = null;
 
   public get activeLayer(): FocusLayer<T> {
     if (this._focusStack.length === 0) {
@@ -119,7 +209,10 @@ export class FocusManager<
     return this.activeLayer.focusPath;
   }
 
-  public constructor() {
+  /** Off by default because focus then resolves in a microtask instead of inside `addElement`. */
+  public constructor(options?: { measure?: FocusMeasure<T>; batchInitialFocus?: boolean }) {
+    this._measure = options?.measure ?? defaultMeasure;
+    this._batchInitialFocus = options?.batchInitialFocus ?? false;
     this._focusStack = [
       {
         root: {
@@ -155,29 +248,8 @@ export class FocusManager<
     return null;
   }
 
-  public addElement(
-    child: T,
-    parent?: T | null,
-    options?: {
-      autoFocus?: boolean;
-      focusRedirect?: boolean;
-      destinations?: (T | null)[] | null;
-      traps?: Traps;
-      allowOffscreen?: boolean;
-      focusRestorationExcluded?: boolean;
-    },
-  ): void {
+  public addElement(child: T, parent?: T | null, options?: FocusElementOptions<T>): void {
     const autoFocus = options?.autoFocus ?? false;
-    const focusRedirect = options?.focusRedirect ?? false;
-    const destinations = options?.destinations ?? null;
-    const allowOffscreen = options?.allowOffscreen ?? false;
-    const focusRestorationExcluded = options?.focusRestorationExcluded ?? false;
-    const traps = options?.traps ?? {
-      up: false,
-      right: false,
-      down: false,
-      left: false,
-    };
     const { elements, root } = this.activeLayer;
     let parentNode: FocusNode<T> | RootNode<T> | null = null;
 
@@ -215,13 +287,6 @@ export class FocusManager<
     let childNode = elements.get(child);
 
     if (childNode) {
-      childNode.autoFocus = autoFocus;
-      childNode.focusRedirect = focusRedirect;
-      childNode.destinations = destinations;
-      childNode.traps = traps;
-      childNode.allowOffscreen = allowOffscreen;
-      childNode.focusRestorationExcluded = focusRestorationExcluded;
-
       // If the child node already exists, we need to remove it from its current parent
       if (childNode.parent !== parentNode) {
         const index = childNode.parent.children.indexOf(childNode);
@@ -244,18 +309,10 @@ export class FocusManager<
         }
       }
     } else {
-      // If the child node doesn't exist, we need to create it
-      childNode = this._createFocusNode(
-        child,
-        parentNode,
-        autoFocus,
-        focusRedirect,
-        destinations,
-        traps,
-        allowOffscreen,
-        focusRestorationExcluded,
-      );
+      childNode = this._createFocusNode(child, parentNode);
     }
+
+    this._applyOptions(childNode, options, false);
 
     if (parentNode.children.indexOf(childNode) === -1) {
       parentNode.children.push(childNode);
@@ -280,13 +337,339 @@ export class FocusManager<
       }
     }
 
-    this._recalculateFocusPath();
+    this._recalculateAfterAdd();
 
     // If a focus request or preferred-child preference was waiting on this
     // element to register, fulfill it now that it's in the tree (and possibly
     // focusable).
     this._tryFulfillPendingPreferredChild(child);
     this._tryFulfillPendingFocus(child);
+    this._runClaimsAfterAdd();
+  }
+
+  /** Unlike the `set*` methods this replaces every option, so a field left out is cleared. */
+  public updateElement(element: T, options: FocusElementOptions<T>): void {
+    const node = this.activeLayer.elements.get(element);
+
+    this._forAllNodes(element, (found) => {
+      if (found !== node) {
+        this._applyFields(found, options);
+      }
+    });
+
+    if (node) {
+      this._applyOptions(node, options, true);
+      this._recalculateFocusPath();
+      this._runClaims();
+    }
+  }
+
+  public setHandlers(
+    element: T,
+    handlers: Pick<FocusElementOptions<T>, 'onChildFocused' | 'onFocusEnter' | 'onFocusLeave'>,
+  ): void {
+    this.setOnChildFocused(element, handlers.onChildFocused ?? undefined);
+    this._setBoundaryHandlers(element, handlers.onFocusEnter, handlers.onFocusLeave);
+  }
+
+  private _applyFields(node: FocusNode<T>, o: FocusElementOptions<T> | undefined): void {
+    node.autoFocus = o?.autoFocus ?? false;
+    node.focusRedirect = o?.focusRedirect ?? false;
+    node.destinations = o?.destinations ?? null;
+    node.traps = o?.traps ?? node.traps;
+    node.allowOffscreen = o?.allowOffscreen ?? false;
+    node.focusRestorationExcluded = o?.focusRestorationExcluded ?? false;
+    node.destinationKeys = o?.destinationKeys?.length ? o.destinationKeys : null;
+    node.exits = o?.exits && Object.keys(o.exits).length ? o.exits : null;
+    node.focusEntry = o?.focusEntry ?? null;
+  }
+
+  private _applyOptions(
+    node: FocusNode<T>,
+    o: FocusElementOptions<T> | undefined,
+    isUpdate: boolean,
+  ): void {
+    const { element } = node;
+
+    this._applyFields(node, o);
+
+    // `set*` callers (and updates from the polyfill plugin) rely on a plain
+    // addElement not wiping what they set, so only an update clears these.
+    if (isUpdate || o?.focusKey !== undefined) {
+      this.setFocusKey(element, o?.focusKey);
+    }
+
+    if (isUpdate || o?.onChildFocused !== undefined) {
+      this.setOnChildFocused(element, o?.onChildFocused ?? undefined);
+    }
+
+    if (isUpdate || o?.onFocusEnter !== undefined || o?.onFocusLeave !== undefined) {
+      this._setBoundaryHandlers(element, o?.onFocusEnter, o?.onFocusLeave);
+    }
+
+    this._applyRememberAs(node, o?.rememberAs ?? null);
+    this._applyInitialFocus(node, o?.initialFocus ?? null);
+    this._applyScope(node, !!o?.scope, o?.scopeActive ?? true);
+  }
+
+  private _setBoundaryHandlers(
+    element: T,
+    enter?: (() => void) | null,
+    leave?: (() => void) | null,
+  ): void {
+    if (enter || leave) {
+      this._boundaryHandlers.set(element, { enter: enter ?? undefined, leave: leave ?? undefined });
+    } else {
+      this._boundaryHandlers.delete(element);
+    }
+  }
+
+  private _applyRememberAs(node: FocusNode<T>, next: string | null): void {
+    const previous = node.rememberAs ?? null;
+
+    if (previous === next) {
+      return;
+    }
+
+    node.rememberAs = next;
+    this._rememberingNodes += (next === null ? 0 : 1) - (previous === null ? 0 : 1);
+
+    if (!node.remembered && !node.focusedElement) {
+      return;
+    }
+
+    const remembered = (node.remembered ??= new Map());
+
+    if (node.focusedElement) {
+      remembered.set(previous ?? '', node.focusedElement);
+    }
+
+    const restored = remembered.get(next ?? '');
+    const usable =
+      restored &&
+      restored.parent === node &&
+      this.activeLayer.elements.get(restored.element) === restored &&
+      this._isEffectivelyFocusable(restored)
+        ? restored
+        : null;
+
+    if (!usable) {
+      node.focusedElement = this._findNextBestFocus(node, undefined, true);
+      this._resetFocusedChain(node.focusedElement);
+
+      return;
+    }
+
+    node.focusedElement = usable;
+    this._restoreLeafByKey(node, node.rememberedLeafKeys?.get(next ?? ''));
+  }
+
+  private _resetFocusedChain(from: FocusNode<T> | null): void {
+    for (let nested = from; nested?.children.length; ) {
+      nested = nested.focusedElement = this._findNextBestFocus(nested, undefined, true);
+    }
+  }
+
+  private _restoreLeafByKey(node: FocusNode<T>, key: string | undefined): void {
+    const element = key === undefined ? undefined : this._keyedElements.get(key);
+    const leaf = element && this.activeLayer.elements.get(element);
+
+    if (!leaf || !this._isEffectivelyFocusable(leaf)) {
+      return;
+    }
+
+    for (let curr: FocusNode<T> | RootNode<T> = leaf; !isRootNode(curr); curr = curr.parent) {
+      if (curr.parent === node) {
+        for (let link: FocusNode<T> = leaf; link !== curr; link = link.parent as FocusNode<T>) {
+          (link.parent as FocusNode<T>).focusedElement = link;
+        }
+
+        node.focusedElement = curr;
+
+        return;
+      }
+    }
+  }
+
+  private _applyInitialFocus(node: FocusNode<T>, priority: number | null): void {
+    node.initialFocus = priority;
+
+    const index = this._initialGroups.indexOf(node);
+
+    if (priority === null) {
+      if (index !== -1) {
+        this._initialGroups.splice(index, 1);
+      }
+    } else if (index === -1) {
+      this._initialGroups.push(node);
+    }
+  }
+
+  private _applyScope(node: FocusNode<T>, scope: boolean, active: boolean): void {
+    const wasActive = !!node.scope && !!node.scopeActive;
+
+    node.scope = scope;
+    node.scopeActive = scope && active;
+
+    if (!scope) {
+      this._claiming.delete(node);
+
+      return;
+    }
+
+    if (!active) {
+      this._claiming.delete(node);
+    }
+
+    if (wasActive || !active) {
+      return;
+    }
+
+    this._currentScope = node;
+
+    if (!node.scopeClaimed) {
+      node.scopeClaimed = true;
+      this._claiming.add(node);
+    } else if (!node.element.focused && node.hasFocusableChildren) {
+      this._focusNode(node);
+    }
+  }
+
+  private _nearestScope(node: FocusNode<T>): FocusNode<T> | null {
+    let curr = node.parent;
+
+    while (!isRootNode(curr)) {
+      if (curr.scope) {
+        return curr;
+      }
+
+      curr = curr.parent;
+    }
+
+    return null;
+  }
+
+  private _runClaims(): void {
+    if (this._claiming.size === 0) {
+      return;
+    }
+
+    for (const scope of this._claiming) {
+      this._runClaim(scope);
+    }
+  }
+
+  private _awaitsDestination(node: FocusNode<T>): boolean {
+    for (const key of node.destinationKeys ?? []) {
+      if (key === 'first' || key === 'last-focused') {
+        continue;
+      }
+
+      const element = this._keyedElements.get(key);
+
+      if (element && this.activeLayer.elements.has(element)) {
+        return !element.focusable;
+      }
+    }
+
+    return false;
+  }
+
+  private _bestClaim(scope: FocusNode<T>): FocusNode<T> | null {
+    const { elements } = this.activeLayer;
+    let best: FocusNode<T> | null = null;
+
+    for (const group of this._initialGroups) {
+      if (
+        elements.get(group.element) !== group ||
+        this._nearestScope(group) !== scope ||
+        (best && (group.initialFocus ?? 0) <= (best.initialFocus ?? 0))
+      ) {
+        continue;
+      }
+
+      best = group;
+    }
+
+    return best;
+  }
+
+  /** Holds the default pick back while a claim's winner has no content, so the first item doesn't flash focus. Bounded so focus can't be stranded. */
+  private _holdsForClaim(): boolean {
+    if (this._claiming.size === 0 || this.activeLayer.focusPath.length > 0) {
+      return false;
+    }
+
+    let pending = false;
+
+    for (const scope of this._claiming) {
+      const best = scope.scopeActive ? this._bestClaim(scope) : null;
+
+      if (best && scope.scopeClaimTarget !== best) {
+        pending = true;
+        break;
+      }
+    }
+
+    if (!pending) {
+      return false;
+    }
+
+    const now = Date.now();
+
+    if (this._claimHoldUntil === 0) {
+      this._claimHoldUntil = now + CLAIM_HOLD_MS;
+      this._claimHoldTimer = setTimeout(() => {
+        this._claimHoldTimer = null;
+        this._recalculateFocusPath();
+      }, CLAIM_HOLD_MS);
+    }
+
+    return now < this._claimHoldUntil;
+  }
+
+  private _runClaim(scope: FocusNode<T>): void {
+    if (!scope.scopeActive || this.activeLayer.elements.get(scope.element) !== scope) {
+      return;
+    }
+
+    const best = this._bestClaim(scope);
+
+    if (!best || scope.scopeClaimTarget === best) {
+      return;
+    }
+
+    if (!this._isEffectivelyFocusable(best) || this._awaitsDestination(best)) {
+      return;
+    }
+
+    scope.scopeClaimTarget = best;
+    this._focusNode(best);
+  }
+
+  public get hasInitialClaim(): boolean {
+    return this._claiming.size > 0;
+  }
+
+  public endInitialClaims(): void {
+    if (this._claiming.size === 0) {
+      return;
+    }
+
+    this._claiming.clear();
+  }
+
+  public refocusInitial(): void {
+    const scope = this._currentScope;
+
+    if (!scope || this.activeLayer.elements.get(scope.element) !== scope) {
+      return;
+    }
+
+    scope.scopeClaimTarget = null;
+    scope.scopeRefocusUntil = Date.now() + CLAIM_HOLD_MS;
+    this._claiming.add(scope);
+    this._runClaim(scope);
   }
 
   private _forAllNodes(element: T, callback: (node: FocusNode<T>) => void): void {
@@ -301,7 +684,59 @@ export class FocusManager<
     }
   }
 
+  /** One element per key, the last to register wins. */
+  public setFocusKey(element: T, key?: string | null): void {
+    const previous = this._elementKeys.get(element);
+
+    if (previous === key) {
+      return;
+    }
+
+    if (previous !== undefined) {
+      this._elementKeys.delete(element);
+
+      if (this._keyedElements.get(previous) === element) {
+        this._keyedElements.delete(previous);
+      }
+    }
+
+    if (key) {
+      this._elementKeys.set(element, key);
+      this._keyedElements.set(key, element);
+    }
+  }
+
+  public getElementByKey(key: string): T | null {
+    return this._keyedElements.get(key) ?? null;
+  }
+
+  public focusByKey(key: string): boolean {
+    const element = this._keyedElements.get(key);
+
+    if (!element || !this.activeLayer.elements.has(element)) {
+      return false;
+    }
+
+    this.focus(element);
+
+    return element.focused;
+  }
+
+  public setDestinationKeys(element: T, keys?: readonly string[] | null): void {
+    this._forAllNodes(element, (node) => {
+      node.destinationKeys = keys?.length ? keys : null;
+    });
+  }
+
+  public setExits(element: T, exits?: FocusExits | null): void {
+    this._forAllNodes(element, (node) => {
+      node.exits = exits && Object.keys(exits).length ? exits : null;
+    });
+  }
+
   public removeElement(element: T): void {
+    this.setFocusKey(element, null);
+
     if (this._pendingFocus === element) {
       this._pendingFocus = null;
     }
@@ -609,28 +1044,19 @@ export class FocusManager<
     return prevNode;
   }
 
-  private _createFocusNode(
-    element: T,
-    parent: FocusNode<T> | RootNode<T>,
-    autoFocus = false,
-    focusRedirect = false,
-    destinations: (T | null)[] | null = null,
-    traps: Traps = { up: false, right: false, down: false, left: false },
-    allowOffscreen = false,
-    focusRestorationExcluded = false,
-  ) {
+  private _createFocusNode(element: T, parent: FocusNode<T> | RootNode<T>) {
     const node: FocusNode<T> = {
       element,
       children: [],
       parent,
       focusedElement: null,
-      autoFocus,
-      focusRedirect,
-      destinations,
-      traps,
+      autoFocus: false,
+      focusRedirect: false,
+      destinations: null,
+      traps: { up: false, right: false, down: false, left: false },
       hasFocusableChildren: false,
-      allowOffscreen,
-      focusRestorationExcluded,
+      allowOffscreen: false,
+      focusRestorationExcluded: false,
       focusCommitted: false,
     };
 
@@ -659,14 +1085,25 @@ export class FocusManager<
         if (!currentNode.parent.focusedElement) {
           currentNode.parent.focusedElement = this._findNextBestFocus(currentNode.parent);
         } else if (!isFocusable && currentNode.parent.focusedElement === currentNode) {
-          currentNode.parent.focusedElement = this._findNextBestFocus(
-            currentNode.parent,
-            currentNode,
-          );
+          if (this._canDeferRepick(currentNode)) {
+            this._deferRepick(currentNode);
+          } else {
+            currentNode.parent.focusedElement = this._findNearestFocus(
+              currentNode.parent,
+              currentNode,
+            );
+          }
         }
 
-        this._checkFocusableChildren(currentNode.parent);
-        this._recalculateFocusPath();
+        if (!this._isRepickDeferred(currentNode.parent)) {
+          this._checkFocusableChildren(currentNode.parent);
+
+          if (this._batchInitialFocus && isFocusable) {
+            this._runClaims();
+          }
+
+          this._recalculateFocusPath();
+        }
 
         // A queued focus request or preferred-child preference may have been
         // waiting on this element to become focusable.
@@ -674,6 +1111,8 @@ export class FocusManager<
           this._tryFulfillPendingPreferredChild(element);
           this._tryFulfillPendingFocus(element);
         }
+
+        this._runClaims();
       }),
       element.on('focusChanged', (_, isFocused) => {
         if (isFocused && !element.focused) {
@@ -710,12 +1149,27 @@ export class FocusManager<
    * redirected (or aborted on a cycle) and the caller should stop; false when
    * nothing resolved and the caller should focus `node` normally.
    */
+  private *_destinationCandidates(node: FocusNode<T>): Iterable<T | null> {
+    for (const key of node.destinationKeys ?? []) {
+      if (key === 'first') {
+        yield this._findNextBestFocus(node, undefined, true)?.element ?? null;
+      } else if (key === 'last-focused') {
+        // focusedElement also holds the default pick of a group that never had focus.
+        yield node.focusCommitted ? (node.focusedElement?.element ?? null) : null;
+      } else {
+        yield this._keyedElements.get(key) ?? null;
+      }
+    }
+
+    yield* node.destinations ?? [];
+  }
+
   private _redirectToDestination(node: FocusNode<T>, visitedRedirects?: Set<T>): boolean {
-    if (!node.destinations) {
+    if (!node.destinations && !node.destinationKeys) {
       return false;
     }
 
-    for (const destination of node.destinations) {
+    for (const destination of this._destinationCandidates(node)) {
       // A destination can hold a stale ref (e.g. a recycled list cell that
       // unmounted after setDestinations); skip it like native TVFocusGuideView
       // drops invalid node handles, so focus falls back to the normal child.
@@ -755,7 +1209,7 @@ export class FocusManager<
     // returns to its selected item). `autoFocus` is the separate first-then-
     // remember mechanism, resolved via the group's `focusedElement` below.
     if (
-      childNode.destinations &&
+      (childNode.destinations || childNode.destinationKeys) &&
       this._redirectToDestination(childNode, visitedRedirects)
     ) {
       return;
@@ -764,8 +1218,21 @@ export class FocusManager<
     let currParent = childNode.parent;
     let currChild: FocusNode<T> | RootNode<T> = childNode;
 
-    if (currChild.children.length && !currChild.focusedElement) {
+    if (
+      currChild.children.length &&
+      (!currChild.focusedElement || currChild.focusEntry === 'first')
+    ) {
       currChild.focusedElement = this._findNextBestFocus(currChild, undefined, true);
+    }
+
+    // A nested group that always enters at its first child starts over too,
+    // unless the group being entered returns to the exact item it remembered.
+    if (currChild.focusEntry !== 'last-focused') {
+      for (let nested = currChild.focusedElement; nested; nested = nested.focusedElement) {
+        if (nested.focusEntry === 'first' && nested.children.length) {
+          nested.focusedElement = this._findNextBestFocus(nested, undefined, true);
+        }
+      }
     }
 
     // Focus has now explicitly arrived at this node, so mark its subtree as
@@ -823,9 +1290,21 @@ export class FocusManager<
   }
 
   private _removeNode(node: FocusNode<T>, isTopMostParentNode: boolean) {
+    // A region that unmounts while focused hears no leave.
+    this._boundaryHandlers.delete(node.element);
+
     // Remove all the children too
     for (const child of node.children) {
       this._removeNode(child, false);
+    }
+
+    // Picked while the node is still in its parent's children, so the next one is relative to where it was.
+    if (isTopMostParentNode && node.parent.focusedElement === node) {
+      if (this._canDeferRepick(node)) {
+        this._deferRepick(node);
+      } else {
+        node.parent.focusedElement = this._findNearestFocus(node.parent, node);
+      }
     }
 
     const removeIndex = node.parent.children.indexOf(node);
@@ -834,13 +1313,9 @@ export class FocusManager<
       node.parent.children.splice(removeIndex, 1);
     }
 
-    if (isTopMostParentNode && node.parent.focusedElement === node) {
-      node.parent.focusedElement = this._findNextBestFocus(node.parent, node);
-    }
-
     this.activeLayer.elements.delete(node.element);
 
-    if (isTopMostParentNode) {
+    if (isTopMostParentNode && !this._isRepickDeferred(node.parent)) {
       // Removing a child can empty a focus-group parent; recompute so its
       // effective focusability and the ancestor chain update.
       if (!isRootNode(node.parent) && node.parent.element.isFocusGroup) {
@@ -854,6 +1329,26 @@ export class FocusManager<
       this._childFocusEventHandlers.delete(node.element);
     }
 
+    if (node.initialFocus != null) {
+      this._applyInitialFocus(node, null);
+    }
+
+    if (node.rememberAs != null) {
+      this._rememberingNodes--;
+    }
+
+    if (node.scope) {
+      this._claiming.delete(node);
+
+      if (this._currentScope === node) {
+        this._currentScope = null;
+      }
+    }
+
+    if (this._lastRectNode === node) {
+      this._lastRectNode = null;
+    }
+
     this._removeEventListeners(node);
   }
 
@@ -864,10 +1359,20 @@ export class FocusManager<
       return false;
     }
 
-    return !node.element.isFocusGroup || node.hasFocusableChildren;
+    // An empty redirect with destinations is a target too, it forwards on arrival.
+    return (
+      !node.element.isFocusGroup ||
+      node.hasFocusableChildren ||
+      (node.focusRedirect && !!(node.destinationKeys || node.destinations))
+    );
   }
 
   private _checkFocusableChildren(parentNode: FocusNode<T> | RootNode<T>) {
+    // The new items of a re-rendered list aren't focusable yet, so the settle checks later.
+    if (this._isRepickDeferred(parentNode)) {
+      return;
+    }
+
     const previous = parentNode.hasFocusableChildren;
     const children = parentNode.children;
     const childrenLength = children.length;
@@ -956,12 +1461,12 @@ export class FocusManager<
       return null;
     }
 
-    let bestMatch: FocusNode<T> | null = null;
-    let relativeIndex = -1;
-
-    if (relativeNode) {
-      relativeIndex = parent.children.indexOf(relativeNode);
+    if (!relativeNode) {
+      return this._findFirstFocus(parent, includeRestorationExcluded);
     }
+
+    let bestMatch: FocusNode<T> | null = null;
+    let relativeIndex = parent.children.indexOf(relativeNode);
 
     // Loop through from the beginning of the children, even if we want to
     // select an element relative to the relative node. This is to prevent
@@ -987,9 +1492,258 @@ export class FocusManager<
     return bestMatch;
   }
 
+  /** Children register in mount order, which isn't visual order once a list recycles its cells. */
+  private _findFirstFocus(
+    parent: FocusNode<T> | RootNode<T>,
+    includeRestorationExcluded: boolean,
+  ): FocusNode<T> | null {
+    const scratch = this._scratchRect;
+    let firstEligible: FocusNode<T> | null = null;
+    let best: FocusNode<T> | null = null;
+    let bestX = 0;
+    let bestY = 0;
+
+    for (let i = 0; i < parent.children.length; i++) {
+      const child = parent.children[i] as FocusNode<T>;
+
+      if (
+        !this._isEffectivelyFocusable(child) ||
+        hasExternalRedirect(child) ||
+        (!includeRestorationExcluded && child.focusRestorationExcluded)
+      ) {
+        continue;
+      }
+
+      firstEligible ??= child;
+
+      if (!this._measure(child.element, scratch)) {
+        continue;
+      }
+
+      if (!best || scratch.y < bestY || (scratch.y === bestY && scratch.x < bestX)) {
+        best = child;
+        bestX = scratch.x;
+        bestY = scratch.y;
+      }
+    }
+
+    return best ?? firstEligible;
+  }
+
+  private _ownsLastRect(node: FocusNode<T>): boolean {
+    for (let curr: FocusNode<T> | null = this._lastRectNode; curr; ) {
+      if (curr === node) {
+        return true;
+      }
+
+      curr = isRootNode(curr.parent) ? null : curr.parent;
+    }
+
+    return false;
+  }
+
+  private _findNearestFocus(
+    parent: FocusNode<T> | RootNode<T>,
+    relativeNode: FocusNode<T>,
+  ): FocusNode<T> | null {
+    if (!this._ownsLastRect(relativeNode)) {
+      return this._findNextBestFocus(parent, relativeNode);
+    }
+
+    return (
+      this._nearestTo(parent, relativeNode, this._lastRect) ??
+      this._findNextBestFocus(parent, relativeNode)
+    );
+  }
+
+  /** The focusable child whose centre is closest to `last`; on a tie the one further along wins. */
+  private _nearestTo(
+    parent: FocusNode<T> | RootNode<T>,
+    exclude: FocusNode<T> | null,
+    last: FocusRect,
+  ): FocusNode<T> | null {
+    const scratch = this._scratchRect;
+    const cx = last.x + last.w / 2;
+    const cy = last.y + last.h / 2;
+    let best: FocusNode<T> | null = null;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    let bestAfter = false;
+
+    for (let i = 0; i < parent.children.length; i++) {
+      const child = parent.children[i] as FocusNode<T>;
+
+      if (
+        child === exclude ||
+        child.focusRestorationExcluded ||
+        !this._isEffectivelyFocusable(child) ||
+        hasExternalRedirect(child) ||
+        !this._measure(child.element, scratch)
+      ) {
+        continue;
+      }
+
+      const dx = scratch.x + scratch.w / 2 - cx;
+      const dy = scratch.y + scratch.h / 2 - cy;
+      const distance = dx * dx + dy * dy;
+      const after = dx > 0 || dy > 0;
+
+      if (distance < bestDistance || (distance === bestDistance && after && !bestAfter)) {
+        best = child;
+        bestDistance = distance;
+        bestAfter = after;
+      }
+    }
+
+    return best;
+  }
+
+  private _recalculateAfterAdd(): void {
+    if (!this._batchInitialFocus) {
+      this._recalculateFocusPath();
+
+      return;
+    }
+
+    if (this.activeLayer.focusPath.length > 0) {
+      this._recalculateFocusPath();
+    } else {
+      this._scheduleSettle();
+    }
+  }
+
+  private _runClaimsAfterAdd(): void {
+    if (this._batchInitialFocus) {
+      this._scheduleSettle();
+    } else {
+      this._runClaims();
+    }
+  }
+
+  /** Bounded, so a target that never mounts can't strand focus. */
+  private _refocusPending(node: FocusNode<T> | RootNode<T>): boolean {
+    for (let curr = node; !isRootNode(curr); curr = curr.parent) {
+      if (curr.scope) {
+        return (
+          this._claiming.has(curr) &&
+          !curr.scopeClaimTarget &&
+          (curr.scopeRefocusUntil ?? 0) > Date.now()
+        );
+      }
+    }
+
+    return false;
+  }
+
+  private _canDeferRepick(node: FocusNode<T>): boolean {
+    return (
+      this._batchInitialFocus &&
+      !isRootNode(node.parent) &&
+      this.activeLayer.focusPath.includes(node.element) &&
+      (this._ownsLastRect(node) || this._refocusPending(node))
+    );
+  }
+
+  private _deferRepick(node: FocusNode<T>): void {
+    this._deferredRepicks.push({
+      parent: node.parent as FocusNode<T>,
+      rect: { ...this._lastRect },
+      fallback: this._findNearestFocus(node.parent, node),
+    });
+    this._scheduleSettle();
+  }
+
+  private _isRepickDeferred(parent: FocusNode<T> | RootNode<T>): boolean {
+    for (let i = 0; i < this._deferredRepicks.length; i++) {
+      if (this._deferredRepicks[i]?.parent === parent) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private _settleRepicks(): void {
+    const repicks = this._deferredRepicks;
+
+    if (repicks.length === 0) {
+      return;
+    }
+
+    this._deferredRepicks = [];
+
+    for (const repick of repicks) {
+      const { parent, rect, fallback } = repick;
+
+      if (this.activeLayer.elements.get(parent.element) !== parent) {
+        continue;
+      }
+
+      const current = parent.focusedElement;
+
+      if (current && this.activeLayer.elements.get(current.element) === current) {
+        continue;
+      }
+
+      if (this._refocusPending(parent)) {
+        this._deferredRepicks.push(repick);
+        this._armRefocusTimer(parent);
+
+        continue;
+      }
+
+      const registered = fallback && this.activeLayer.elements.get(fallback.element) === fallback;
+
+      parent.focusedElement =
+        this._nearestTo(parent, null, rect) ??
+        (registered ? fallback : this._findFirstFocus(parent, false));
+      this._checkFocusableChildren(parent);
+    }
+  }
+
+  private _armRefocusTimer(scope: FocusNode<T> | RootNode<T>): void {
+    if (this._refocusTimer !== null) {
+      return;
+    }
+
+    let until = 0;
+
+    for (let curr = scope; !isRootNode(curr); curr = curr.parent) {
+      if (curr.scope) {
+        until = curr.scopeRefocusUntil ?? 0;
+        break;
+      }
+    }
+
+    this._refocusTimer = setTimeout(
+      () => {
+        this._refocusTimer = null;
+        this._scheduleSettle();
+      },
+      Math.max(0, until - Date.now()) + 1,
+    );
+  }
+
+  private _scheduleSettle(): void {
+    if (this._initialFocusPending) {
+      return;
+    }
+
+    this._initialFocusPending = true;
+    queueMicrotask(() => {
+      this._initialFocusPending = false;
+      this._settleRepicks();
+      this._recalculateFocusPath();
+      this._runClaims();
+    });
+  }
+
   private _recalculateFocusPath(): void {
     const layer = this.activeLayer;
     const oldPath = layer.focusPath;
+
+    if (this._batchInitialFocus && this._holdsForClaim()) {
+      return;
+    }
 
     // Quick check: walk the focused chain and compare against old path.
     // If every element matches and lengths are equal, nothing changed.
@@ -1034,7 +1788,9 @@ export class FocusManager<
     for (let i = oldPath.length - 1; i >= divergenceIndex; i--) {
       const removedFocus = oldPath[i];
 
-      if (removedFocus?.focused) {
+      // A reparented element can sit at a different index in the new path
+      // without having lost focus.
+      if (removedFocus?.focused && !newPath.includes(removedFocus)) {
         removedFocus.blur();
         this._eventEmitter.emit('blurred', removedFocus);
       }
@@ -1058,15 +1814,80 @@ export class FocusManager<
       this._bubbleFocusEvent('focus', newLeaf, newPath, divergenceIndex);
     }
 
+    if (leafChanged && newLeaf) {
+      this._rememberLeafRect(layer, newLeaf);
+
+      if (this._rememberingNodes > 0) {
+        this._rememberLeafKey(layer, newPath, newLeaf);
+      }
+    }
+
+    if (this._boundaryHandlers.size > 0) {
+      for (let i = oldPath.length - 1; i >= divergenceIndex; i--) {
+        if (!newPath.includes(oldPath[i] as T)) {
+          this._boundaryHandlers.get(oldPath[i] as T)?.leave?.();
+        }
+      }
+
+      for (let i = divergenceIndex; i < newPath.length; i++) {
+        if (!oldPath.includes(newPath[i] as T)) {
+          this._boundaryHandlers.get(newPath[i] as T)?.enter?.();
+        }
+      }
+    }
+
     layer.focusPath = newPath;
+
+    if (this._claimHoldUntil !== 0 && newPath.length > 0) {
+      this._claimHoldUntil = 0;
+
+      if (this._claimHoldTimer !== null) {
+        clearTimeout(this._claimHoldTimer);
+        this._claimHoldTimer = null;
+      }
+    }
+
     this._eventEmitter.emit('focusPathChanged', newPath);
+  }
+
+  private _rememberLeafKey(layer: FocusLayer<T>, path: T[], leaf: T): void {
+    const key = this._elementKeys.get(leaf);
+
+    for (const element of path) {
+      const node = layer.elements.get(element);
+
+      if (node?.rememberAs == null) {
+        continue;
+      }
+
+      const keys = (node.rememberedLeafKeys ??= new Map());
+
+      if (key === undefined) {
+        keys.delete(node.rememberAs);
+      } else {
+        keys.set(node.rememberAs, key);
+      }
+    }
+  }
+
+  private _rememberLeafRect(layer: FocusLayer<T>, leaf: T): void {
+    const node = layer.elements.get(leaf);
+
+    if (node && this._measure(leaf, this._lastRect)) {
+      this._lastRectNode = node;
+    }
   }
 
   /**
    * tvOS/web bubble focus through plain wrapper views; the focus path only reaches focus nodes,
    * so deliver to the remaining ancestors (skip at/past `divergenceIndex`, they fired their own).
    */
-  private _bubbleFocusEvent(type: 'focus' | 'blur', target: T, path: T[], divergenceIndex: number): void {
+  private _bubbleFocusEvent(
+    type: 'focus' | 'blur',
+    target: T,
+    path: T[],
+    divergenceIndex: number,
+  ): void {
     let curr: T | null | undefined = target.parent;
 
     while (curr) {

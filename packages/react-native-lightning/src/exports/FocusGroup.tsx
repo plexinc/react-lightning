@@ -34,6 +34,7 @@ const FocusGroup: ForwardRefExoticComponent<FocusGroupProps> = forwardRef<
     <RLFocusGroup
       {...(props as RLFocusGroupProps)}
       ref={ref}
+      focusKey={props.focusKey ?? props.nativeID}
       onFocus={handleFocus}
       onBlur={handleBlur}
       onLayout={handleFocusGroupLayout}

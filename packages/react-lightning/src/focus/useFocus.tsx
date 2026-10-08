@@ -2,6 +2,8 @@ import { type RefObject, useContext, useEffect, useRef, useSyncExternalStore } f
 
 import type { LightningElement } from '../types';
 import { FocusGroupContext } from './FocusGroupContext';
+import type { FocusEntry, FocusExits } from './FocusManager';
+import type { Traps } from './Traps';
 import { useFocusManager } from './useFocusManager';
 
 export type FocusOptions = {
@@ -18,22 +20,86 @@ export type FocusOptions = {
    * mount-time default. Mirrors tvOS `isTVFocusRestorationExcluded`.
    */
   focusRestorationExcluded?: boolean;
+  focusKey?: string;
+  destinationKeys?: readonly string[];
+  exits?: FocusExits;
+  traps?: Traps;
+  focusEntry?: FocusEntry;
+  rememberAs?: string;
+  scope?: boolean;
+  scopeActive?: boolean;
+  initialFocus?: number;
+  onFocusEnter?: () => void;
+  onFocusLeave?: () => void;
 };
 
+const DEFAULT_OPTIONS: FocusOptions = { active: true, autoFocus: false, focusRedirect: false };
+
+function sameArray(a?: readonly unknown[] | null, b?: readonly unknown[] | null): boolean {
+  if (a === b) {
+    return true;
+  }
+
+  if (!a || !b || a.length !== b.length) {
+    return false;
+  }
+
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function sameExits(a?: FocusExits, b?: FocusExits): boolean {
+  return (
+    a === b ||
+    (a?.up === b?.up && a?.right === b?.right && a?.down === b?.down && a?.left === b?.left)
+  );
+}
+
+function sameTraps(a?: Traps, b?: Traps): boolean {
+  return (
+    a === b ||
+    (!!a === !!b &&
+      a?.up === b?.up &&
+      a?.right === b?.right &&
+      a?.down === b?.down &&
+      a?.left === b?.left)
+  );
+}
+
+function sameHandlers(a: FocusOptions, b: FocusOptions): boolean {
+  return (
+    a.onChildFocused === b.onChildFocused &&
+    a.onFocusEnter === b.onFocusEnter &&
+    a.onFocusLeave === b.onFocusLeave
+  );
+}
+
+function sameStructure(a: FocusOptions, b: FocusOptions): boolean {
+  return (
+    a.autoFocus === b.autoFocus &&
+    a.focusRedirect === b.focusRedirect &&
+    a.allowOffscreen === b.allowOffscreen &&
+    a.focusRestorationExcluded === b.focusRestorationExcluded &&
+    a.focusKey === b.focusKey &&
+    a.focusEntry === b.focusEntry &&
+    a.rememberAs === b.rememberAs &&
+    a.scope === b.scope &&
+    a.scopeActive === b.scopeActive &&
+    a.initialFocus === b.initialFocus &&
+    sameArray(a.destinations, b.destinations) &&
+    sameArray(a.destinationKeys, b.destinationKeys) &&
+    sameExits(a.exits, b.exits) &&
+    sameTraps(a.traps, b.traps)
+  );
+}
+
 export function useFocus<T extends LightningElement>(
-  {
-    active,
-    autoFocus,
-    focusRedirect,
-    destinations,
-    onChildFocused,
-    allowOffscreen,
-    focusRestorationExcluded,
-  }: FocusOptions = {
-    active: true,
-    autoFocus: false,
-    focusRedirect: false,
-  },
+  options: FocusOptions = DEFAULT_OPTIONS,
 ): {
   ref: RefObject<T | null>;
   focused: boolean;
@@ -56,21 +122,23 @@ export function useFocus<T extends LightningElement>(
   // We need to keep a copy of the ref around for when this hook is unmounted,
   // so we can properly remove the child element.
   const elementRef = useRef<T>(null);
+  const appliedRef = useRef<FocusOptions | null>(null);
+  const activeRef = useRef<boolean | undefined | 'unset'>('unset');
 
-  /* oxlint-disable-next-line react-hooks/exhaustive-deps -- We purposely leave
-    out the autoFocus/focusRedirect/destinations dependencies here. This will
-    prevent unnecessary removal and re-addition of the elements to the focus
-    manager. Those dependencies get updated below in other effects. */
+  /* oxlint-disable-next-line react-hooks/exhaustive-deps -- Registration only
+    re-runs when the manager or parent changes; later option changes are applied
+    by the update effect below, so the element isn't removed and re-added. */
   useEffect(() => {
     if (ref.current && parentFocusable) {
       elementRef.current = ref.current;
-      focusManager.addElement(elementRef.current, parentFocusable, {
-        autoFocus,
-        focusRedirect,
-        destinations,
-        allowOffscreen,
-        focusRestorationExcluded,
-      });
+      appliedRef.current = options;
+      focusManager.addElement(elementRef.current, parentFocusable, options);
+
+      // Re-parenting marks an unfocusable element focusable again; an element
+      // that is inactive on purpose has to stay out of the search.
+      if (options.active === false) {
+        elementRef.current.focusable = false;
+      }
     }
 
     return () => {
@@ -80,41 +148,34 @@ export function useFocus<T extends LightningElement>(
     };
   }, [focusManager, parentFocusable]);
 
+  // Runs after every render on purpose: it only compares fields and calls the
+  // manager when something changed, which is cheaper than an effect per option.
   useEffect(() => {
-    if (ref.current) {
-      focusManager.setAutoFocus(ref.current, autoFocus);
-    }
-  }, [focusManager, autoFocus]);
+    const element = ref.current;
 
-  useEffect(() => {
-    if (ref.current) {
-      focusManager.setFocusRedirect(ref.current, focusRedirect);
+    if (!element) {
+      return;
     }
-  }, [focusManager, focusRedirect]);
 
-  useEffect(() => {
-    if (ref.current) {
-      focusManager.setDestinations(ref.current, destinations);
+    if (activeRef.current !== options.active) {
+      activeRef.current = options.active;
+      element.focusable = options.active !== undefined ? options.active : true;
     }
-  }, [focusManager, destinations]);
 
-  useEffect(() => {
-    if (ref.current) {
-      focusManager.setOnChildFocused(ref.current, onChildFocused);
-    }
-  }, [focusManager, onChildFocused]);
+    const applied = appliedRef.current;
 
-  useEffect(() => {
-    if (ref.current) {
-      focusManager.setAllowOffscreen(ref.current, allowOffscreen);
+    if (!applied || applied === options) {
+      return;
     }
-  }, [focusManager, allowOffscreen]);
 
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.focusable = active !== undefined ? active : true;
+    appliedRef.current = options;
+
+    if (!sameStructure(applied, options)) {
+      focusManager.updateElement(element, options);
+    } else if (!sameHandlers(applied, options)) {
+      focusManager.setHandlers(element, options);
     }
-  }, [active]);
+  });
 
   return { ref, focused };
 }

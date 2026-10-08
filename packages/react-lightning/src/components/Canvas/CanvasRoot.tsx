@@ -14,7 +14,9 @@ type Props = Omit<CanvasProps, 'options'> & { width?: number; height?: number };
 
 export const CanvasRoot: FC<Props> = ({ width, height, children, keyMap }) => {
   const ref = useRef<LightningElement>(null);
-  const [focusManager] = useState(() => new FocusManager<LightningElement>());
+  const [focusManager] = useState(
+    () => new FocusManager<LightningElement>({ batchInitialFocus: true }),
+  );
   const [focusKeyManager] = useState(() => new FocusKeyManager(focusManager));
   const rootContext = useContext(LightningRootContext);
 
