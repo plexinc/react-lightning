@@ -196,3 +196,55 @@ describe('Yoga text measurement (real yoga)', () => {
     }
   });
 });
+
+describe('Yoga text measurement float32 widths', () => {
+  // Fractional advances at a non-integer font scale (20 / 21), so the text's
+  // own width isn't representable as a float32 and rounds down.
+  const tvAtlas: AtlasData = {
+    info: { size: 21, face: 'TV' },
+    common: { lineHeight: 12, base: 8 },
+    lightningMetrics: {
+      ascender: 800,
+      descender: -200,
+      lineGap: 0,
+      unitsPerEm: 1000,
+    },
+    chars: [
+      { id: 84, xadvance: 11.7, xoffset: 0, yoffset: 0, width: 8, height: 8 }, // T
+      { id: 86, xadvance: 12.9, xoffset: 0, yoffset: 0, width: 8, height: 8 }, // V
+      { id: 45, xadvance: 7.3, xoffset: 0, yoffset: 0, width: 6, height: 2 }, // -
+      { id: 49, xadvance: 11.1, xoffset: 0, yoffset: 0, width: 8, height: 8 }, // 1
+      { id: 52, xadvance: 11, xoffset: 0, yoffset: 0, width: 8, height: 8 }, // 4
+      { id: 32, xadvance: 5, xoffset: 0, yoffset: 0, width: 0, height: 0 }, // (space)
+    ],
+    kernings: [],
+  };
+
+  it('keeps a word on one line when yoga hands back its own width as a float32', async () => {
+    const manager = new YogaManager();
+    await manager.init();
+
+    const internals = manager as unknown as {
+      _fontStore: { register: (f: string, d: AtlasData) => void };
+      _measureText: (
+        id: number,
+        width: number,
+        widthMode: number,
+      ) => { width: number; height: number };
+    };
+
+    internals._fontStore.register('TV', tvAtlas);
+    manager.addNode(1);
+    manager.setTextMeasure(1, 'TV', { ...textProps, text: 'TV-14' });
+
+    const own = internals._measureText(1, Infinity, 0);
+    const float32Width = Math.fround(own.width);
+
+    expect(float32Width).toBeLessThan(own.width);
+
+    const measured = internals._measureText(1, float32Width, 2);
+
+    expect(measured.height).toBe(20);
+    expect(measured.width).toBe(own.width);
+  });
+});
