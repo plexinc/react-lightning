@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Keys } from '../input/Keys';
 import { createMockElement, type MockElement } from '../mocks/createMockElement';
@@ -351,6 +351,154 @@ describe('focus regions', () => {
       expect(outerRegion.child.focused || innerRegion.child.focused).toBe(true);
       expect(fm.focusPath).toContain(innerRegion.child);
     });
+
+    describe('claim patience', () => {
+      beforeEach(() => {
+        vi.useFakeTimers();
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      const claim = (scope: MockElement, priority: number, keys: string[]) => {
+        const r = grp(`claim${priority}`);
+        fm.addElement(r, scope, {
+          initialFocus: priority,
+          destinationKeys: keys,
+          focusRedirect: true,
+        });
+
+        return r;
+      };
+
+      const keyed = (parent: MockElement, key: string, focusable = true) => {
+        const element = leaf(key);
+        element.focusable = focusable;
+        fm.addElement(element, parent, { focusKey: key });
+
+        return element;
+      };
+
+      it('moves to a destination key that registers within the patience', () => {
+        const scope = grp('scope');
+        fm.addElement(scope, null, { scope: true });
+        const r = claim(scope, 2, ['late', 'first']);
+        const filler = leaf('filler');
+        fm.addElement(filler, r);
+
+        expect(filler.focused).toBe(true);
+
+        vi.advanceTimersByTime(500);
+        const late = keyed(r, 'late');
+
+        expect(late.focused).toBe(true);
+      });
+
+      it('moves out of an empty claim to a key registered elsewhere', () => {
+        const scope = grp('scope');
+        fm.addElement(scope, null, { scope: true });
+        claim(scope, 2, ['late']);
+        const row = grp('row');
+        fm.addElement(row, scope);
+
+        vi.advanceTimersByTime(500);
+        const late = keyed(row, 'late');
+
+        expect(late.focused).toBe(true);
+      });
+
+      it('leaves focus alone once the patience is up', () => {
+        const scope = grp('scope');
+        fm.addElement(scope, null, { scope: true });
+        const r = claim(scope, 2, ['late', 'first']);
+        const filler = leaf('filler');
+        fm.addElement(filler, r);
+
+        vi.advanceTimersByTime(1100);
+        const late = keyed(r, 'late');
+
+        expect(filler.focused).toBe(true);
+        expect(late.focused).toBe(false);
+      });
+
+      it('stops after a directional key', () => {
+        const scope = grp('scope');
+        fm.addElement(scope, null, { scope: true });
+        const r = claim(scope, 2, ['late', 'first']);
+        const filler = leaf('filler');
+        fm.addElement(filler, r);
+        pressDown(r);
+        const late = keyed(r, 'late');
+
+        expect(filler.focused).toBe(true);
+        expect(late.focused).toBe(false);
+      });
+
+      it('stops after a focusByKey lands', () => {
+        const scope = grp('scope');
+        fm.addElement(scope, null, { scope: true });
+        const r = claim(scope, 2, ['late', 'first']);
+        const filler = leaf('filler');
+        fm.addElement(filler, r);
+        const other = keyed(r, 'other');
+        fm.focusByKey('other');
+        const late = keyed(r, 'late');
+
+        expect(other.focused).toBe(true);
+        expect(late.focused).toBe(false);
+      });
+
+      it('falls back to the next candidate when the key never registers', () => {
+        const scope = grp('scope');
+        fm.addElement(scope, null, { scope: true });
+        const r = claim(scope, 2, ['never']);
+        const row = grp('row');
+        fm.addElement(row, scope, { initialFocus: 1, focusEntry: 'first' });
+        const first = leaf('first');
+        fm.addElement(first, row);
+
+        expect(fm.focusPath).toContain(r);
+        expect(first.focused).toBe(false);
+
+        vi.advanceTimersByTime(1100);
+
+        expect(first.focused).toBe(true);
+      });
+
+      it('falls back to the next candidate when the key cannot take focus', () => {
+        const scope = grp('scope');
+        fm.addElement(scope, null, { scope: true });
+        keyed(scope, 'loading', false);
+        claim(scope, 2, ['loading']);
+        const row = grp('row');
+        fm.addElement(row, scope, { initialFocus: 1, focusEntry: 'first' });
+        const first = leaf('first');
+        fm.addElement(first, row);
+
+        vi.advanceTimersByTime(1100);
+
+        expect(first.focused).toBe(true);
+      });
+
+      it('does not take focus back after it moved elsewhere', () => {
+        const scope = grp('scope');
+        fm.addElement(scope, null, { scope: true });
+        claim(scope, 2, ['never']);
+        const row = grp('row');
+        fm.addElement(row, scope, { initialFocus: 1 });
+        const first = leaf('first');
+        const outside = leaf('outside');
+        fm.addElement(first, row);
+        fm.addElement(outside);
+        fm.focus(outside);
+
+        vi.advanceTimersByTime(1100);
+
+        expect(outside.focused).toBe(true);
+        expect(first.focused).toBe(false);
+      });
+    });
   });
 
   describe('removal repick', () => {
@@ -572,6 +720,29 @@ describe('focus regions', () => {
       await flush();
 
       expect(later.focused).toBe(true);
+    });
+
+    it('moves a landed claim to a destination key that registers late', async () => {
+      const scope = grp('scope');
+      const region = grp('region');
+      const filler = leaf('filler');
+      const late = leaf('late');
+
+      batch.addElement(region, scope, {
+        initialFocus: 1,
+        destinationKeys: ['late', 'first'],
+        focusRedirect: true,
+      });
+      batch.addElement(filler, region);
+      batch.addElement(scope, null, { scope: true });
+      await flush();
+
+      expect(filler.focused).toBe(true);
+
+      batch.addElement(late, region, { focusKey: 'late' });
+      await flush();
+
+      expect(late.focused).toBe(true);
     });
 
     it('waits for the new items of a re-rendered list before repicking', async () => {

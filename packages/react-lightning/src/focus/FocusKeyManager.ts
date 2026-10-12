@@ -120,6 +120,7 @@ export class FocusKeyManager<T extends LightningElement> {
       focusNode.parent.element,
       direction,
       focusNode.allowOffscreen,
+      this._hasFocusableChildren,
     );
 
     if (closestElement) {
@@ -173,6 +174,12 @@ export class FocusKeyManager<T extends LightningElement> {
     }
 
     return true;
+  };
+
+  private _hasFocusableChildren = (element: LightningElement): boolean => {
+    const node = this._focusManager.getFocusNode(element);
+
+    return !!node && node.children.length > 0;
   };
 
   private _focusableChildElements = (element: LightningElement): Iterable<LightningElement> => {

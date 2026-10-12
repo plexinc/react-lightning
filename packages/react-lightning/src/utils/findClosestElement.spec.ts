@@ -329,6 +329,55 @@ suite('getOverlap', () => {
     runTestsOnElements(elements, tests);
   });
 
+  describe('should not treat an enclosing leaf as below the source', () => {
+    // A full-height edge catcher (2) beside a screen's content (1, starting
+    // under a header). It encloses the content vertically but has nothing
+    // below it, so Down from the content's last row must not land on it.
+    const elements = createLayout(1920, 1080, [
+      { x: 0, y: 128, w: 1920, h: 952 },
+      { x: 0, y: 20, w: 20, h: 1060 },
+    ]);
+    const isGroup = (element: LightningElement) => element.id !== 2;
+    const closestTo = (
+      direction: Direction,
+      hasFocusableChildren: (element: LightningElement) => boolean,
+    ) =>
+      findClosestElement(
+        elements[1] as LightningElement,
+        elements.root.children,
+        elements.root,
+        direction,
+        false,
+        hasFocusableChildren,
+      );
+
+    it('skips the enclosing leaf on Down', () => {
+      expect(closestTo(Direction.Down, isGroup)).toBeNull();
+    });
+
+    it('still enters an enclosing group on Down', () => {
+      expect(closestTo(Direction.Down, () => true)?.id).toBe(2);
+    });
+
+    it('still reaches the leaf on Left', () => {
+      expect(closestTo(Direction.Left, isGroup)?.id).toBe(2);
+    });
+  });
+
+  describe('should move away from a zero-size source', () => {
+    const elements = createLayout(500, 500, [
+      { x: 100, y: 100, w: 0, h: 0 },
+      { x: 50, y: 200, w: 100, h: 50 },
+      { x: 200, y: 50, w: 100, h: 100 },
+    ]);
+    const tests: TestCases = [
+      [1, Direction.Down, 2],
+      [1, Direction.Right, 3],
+    ];
+
+    runTestsOnElements(elements, tests);
+  });
+
   it('should return the correct overlap for two elements', () => {
     const a = { x: 0, y: 0, w: 100, h: 100, centerX: 50, centerY: 50 };
     const b = {

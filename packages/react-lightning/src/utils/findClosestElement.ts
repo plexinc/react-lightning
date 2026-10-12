@@ -124,10 +124,11 @@ function calculateShortestDistance(
 }
 
 function getAlignment(direction: Direction, source: Dimensions, overlap: number): number {
-  const isHorizontal = direction & Direction.Horizontal;
-  const bias = overlap / (isHorizontal ? source.w : source.h);
+  const size = direction & Direction.Horizontal ? source.w : source.h;
 
-  return bias * 5;
+  // A zero-size source (a 0x0 focused element) would make this NaN, and a NaN
+  // distance never wins, so focus couldn't move away from it.
+  return size > 0 ? (overlap / size) * 5 : 0;
 }
 
 function getDisplacement(direction: Direction, source: Dimensions, target: Dimensions) {
@@ -209,6 +210,7 @@ export function findClosestElement(
   parentElement: LightningElement | null,
   direction: Direction,
   allowOffscreen = false,
+  hasFocusableChildren?: (element: LightningElement) => boolean,
 ): LightningElement | null {
   let closest: LightningElement[] | null = null;
   let closestDistance = Number.MAX_VALUE;
@@ -238,6 +240,20 @@ export function findClosestElement(
     }
 
     const otherDimensions = fillDimensions(_scratchTarget, otherElement, parentElement);
+
+    // getDistance enters a target that encloses the source vertically, because
+    // a container's content lies below the source. An enclosing leaf (a
+    // full-height edge catcher) has nothing below it, so it isn't a Down
+    // candidate, as on tvOS and Android.
+    if (
+      direction === Direction.Down &&
+      hasFocusableChildren &&
+      otherDimensions.y <= sourceDimensions.y &&
+      otherDimensions.y + otherDimensions.h >= sourceDimensions.y + sourceDimensions.h &&
+      !hasFocusableChildren(otherElement)
+    ) {
+      continue;
+    }
 
     // Inline overlap check for the relevant axis to avoid object allocation
     const isOverlapped = isHorizontal
@@ -352,6 +368,13 @@ export function resolveDirectionalTarget(
   getAllowOffscreen: (element: LightningElement) => boolean,
 ): LightningElement {
   let current = target;
+  const hasFocusableChildren = (element: LightningElement) => {
+    for (const _child of getFocusableChildren(element)) {
+      return true;
+    }
+
+    return false;
+  };
 
   // Bounded by tree depth; guards against a malformed accessor cycle.
   for (let depth = 0; depth < 64; depth++) {
@@ -365,6 +388,7 @@ export function resolveDirectionalTarget(
       parentElement,
       direction,
       getAllowOffscreen(current),
+      hasFocusableChildren,
     );
 
     if (!next || next === current) {
