@@ -5,10 +5,17 @@ import { Direction } from './Direction';
 import type { FocusExits, FocusManager, FocusNode } from './FocusManager';
 
 /** Lazily maps FocusNode children to their elements without allocating an array */
-function* childElements(children: FocusNode<LightningElement>[]): Iterable<LightningElement> {
+function* childElements(
+  children: FocusNode<LightningElement>[],
+  exclude?: FocusNode<LightningElement>,
+): Iterable<LightningElement> {
   for (let i = 0; i < children.length; i++) {
     // oxlint-disable-next-line typescript/no-non-null-assertion -- bounds-checked loop
     const child = children[i]!;
+
+    if (child === exclude) {
+      continue;
+    }
 
     // A focus group with no focusable descendant only wraps non-interactive
     // content (a list header); skip it so nav lands on a real target.
@@ -112,30 +119,25 @@ export class FocusKeyManager<T extends LightningElement> {
       return true;
     }
 
-    // Pick the next sibling from the immediate focused child, so the current
-    // subtree (and its ancestors) are excluded as candidates.
-    const closestElement = findClosestElement(
-      focusNode.focusedElement.element,
-      childElements(focusNode.children),
-      focusNode.parent.element,
-      direction,
-      focusNode.allowOffscreen,
-      this._hasFocusableChildren,
-    );
+    const focusedChild = focusNode.focusedElement;
+    let leafNode: FocusNode<LightningElement> = focusedChild;
+
+    while (leafNode.focusedElement) {
+      leafNode = leafNode.focusedElement;
+    }
+
+    // Beam from the deepest focused leaf, as UIKit and Android do, so a
+    // full-width row moves from where the user is in it. The row itself is the
+    // fallback when nothing lines up with the leaf.
+    const closestElement =
+      this._closestSibling(leafNode.element, focusNode, direction) ??
+      (leafNode === focusedChild
+        ? null
+        : this._closestSibling(focusedChild.element, focusNode, direction));
 
     if (closestElement) {
-      // Descend into the chosen sibling from the deepest focused leaf, not the
-      // group's immediate child, so a nested layout keeps the real cross-axis
-      // position of what the user is on (an EPG airing, not its full-width row)
-      // and lands on the overlapping child instead of the group's first child.
       // A redirect node (e.g. a row's airings guide) is returned for the focus
       // manager to forward to its anchored destination.
-      let leafNode: FocusNode<LightningElement> = focusNode.focusedElement;
-
-      while (leafNode.focusedElement) {
-        leafNode = leafNode.focusedElement;
-      }
-
       const target = resolveDirectionalTarget(
         leafNode.element,
         closestElement,
@@ -175,6 +177,21 @@ export class FocusKeyManager<T extends LightningElement> {
 
     return true;
   };
+
+  private _closestSibling(
+    source: LightningElement,
+    focusNode: FocusNode<LightningElement>,
+    direction: Direction,
+  ): LightningElement | null {
+    return findClosestElement(
+      source,
+      childElements(focusNode.children, focusNode.focusedElement ?? undefined),
+      focusNode.parent.element,
+      direction,
+      focusNode.allowOffscreen,
+      this._hasFocusableChildren,
+    );
+  }
 
   private _hasFocusableChildren = (element: LightningElement): boolean => {
     const node = this._focusManager.getFocusNode(element);
