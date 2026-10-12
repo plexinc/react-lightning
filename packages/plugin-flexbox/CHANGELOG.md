@@ -1,5 +1,15 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 1.0.0-alpha.6
+
+### Patch Changes
+
+- b6762ab: Allow 0.01px of slack on the width limit when measuring text. Yoga hands the width back as a float32, which can land a hair under the text's own width and split a short word across lines ("TV-14" as "TV-1" / "4").
+- Updated dependencies [bec12c9]
+- Updated dependencies [bec12c9]
+- Updated dependencies [df34f5a]
+  - @plextv/react-lightning@0.5.0-alpha.7
+
 ## 1.0.0-alpha.5
 
 ### Patch Changes
