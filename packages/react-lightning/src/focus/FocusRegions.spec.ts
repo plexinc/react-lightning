@@ -498,6 +498,24 @@ describe('focus regions', () => {
         expect(outside.focused).toBe(true);
         expect(first.focused).toBe(false);
       });
+
+      it('lets a later claim take over after the previous one was removed', () => {
+        const scope = grp('scope');
+        fm.addElement(scope, null, { scope: true });
+        const row = grp('row');
+        fm.addElement(row, scope);
+        const target = keyed(row, 'target');
+        fm.addElement(leaf('other'), row);
+        const low = claim(scope, 5, ['target']);
+
+        expect(target.focused).toBe(true);
+
+        fm.removeElement(target);
+        fm.removeElement(low);
+        const high = region(scope, 10);
+
+        expect(high.child.focused).toBe(true);
+      });
     });
   });
 

@@ -728,8 +728,13 @@ export class FocusManager<
 
     const previous = scope.scopeClaimTarget;
 
-    // A claim that gave up only hands over focus it still holds.
-    if (previous && !this._claimHasEntry(previous) && !this._holdsClaimFocus(previous)) {
+    // A claim that gave up only hands over focus it still holds. A removed one holds nothing.
+    if (
+      previous &&
+      this.activeLayer.elements.get(previous.element) === previous &&
+      !this._claimHasEntry(previous) &&
+      !this._holdsClaimFocus(previous)
+    ) {
       return;
     }
 
