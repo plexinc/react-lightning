@@ -37,6 +37,7 @@ const MAX_SIZEOF_UPDATE = 1024 * 10;
 // Grow-only text remeasure converges monotonically (1-3 passes in practice).
 // This is a runaway backstop, not an expected limit.
 const MAX_LAYOUT_PASSES = 10;
+const TEXT_MEASURE_SLACK = 0.01;
 
 export class YogaManager {
   private _elementMap: Map<number, ManagerNode> = new Map();
@@ -206,8 +207,12 @@ export class YogaManager {
       return { width: 0, height: 0 };
     }
 
+    // Yoga hands the width back as a float32, which can land a hair under the
+    // text's own width and wrap a single word ("TV-14" -> "TV-1" / "4").
     const maxWidth =
-      widthMode === 0 || !Number.isFinite(availableWidth) ? Infinity : availableWidth;
+      widthMode === 0 || !Number.isFinite(availableWidth)
+        ? Infinity
+        : availableWidth + TEXT_MEASURE_SLACK;
 
     return layoutText(font, text.props, maxWidth);
   }
