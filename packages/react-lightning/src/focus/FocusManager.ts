@@ -51,6 +51,7 @@ export type FocusNode<T> = Omit<RootNode<T>, 'element'> & {
   scopeClaimed?: boolean;
   scopeClaimTarget?: FocusNode<T> | null;
   scopeRefocusUntil?: number;
+  scopeClaimStartedAt?: number;
   initialFocus?: number | null;
 };
 
@@ -144,6 +145,7 @@ function defaultMeasure(element: unknown, out: FocusRect): boolean {
 }
 
 const CLAIM_HOLD_MS = 1000;
+const CLAIM_PATIENCE_MS = 1000;
 
 interface DeferredRepick<T extends Focusable> {
   parent: FocusNode<T>;
@@ -192,6 +194,7 @@ export class FocusManager<
   private _rememberingNodes = 0;
   private _claimHoldUntil = 0;
   private _claimHoldTimer: ReturnType<typeof setTimeout> | null = null;
+  private _claimPatienceTimer: ReturnType<typeof setTimeout> | null = null;
   private _refocusTimer: ReturnType<typeof setTimeout> | null = null;
   private _scratchRect: FocusRect = { x: 0, y: 0, w: 0, h: 0 };
   private _lastRect: FocusRect = { x: 0, y: 0, w: 0, h: 0 };
@@ -529,6 +532,7 @@ export class FocusManager<
 
     if (!node.scopeClaimed) {
       node.scopeClaimed = true;
+      node.scopeClaimStartedAt = Date.now();
       this._claiming.add(node);
     } else if (!node.element.focused && node.hasFocusableChildren) {
       this._focusNode(node);
@@ -575,23 +579,88 @@ export class FocusManager<
     return false;
   }
 
+  /**
+   * A claim with nothing to land on (none of its destinations can take focus,
+   * and no content of its own) has a second to resolve, then only wins when no
+   * other candidate can, as on tvOS and Android.
+   */
   private _bestClaim(scope: FocusNode<T>): FocusNode<T> | null {
     const { elements } = this.activeLayer;
+    const patient = this._claimPatienceLeft(scope) > 0;
     let best: FocusNode<T> | null = null;
+    let bestStalled: FocusNode<T> | null = null;
 
     for (const group of this._initialGroups) {
-      if (
-        elements.get(group.element) !== group ||
-        this._nearestScope(group) !== scope ||
-        (best && (group.initialFocus ?? 0) <= (best.initialFocus ?? 0))
-      ) {
+      if (elements.get(group.element) !== group || this._nearestScope(group) !== scope) {
         continue;
       }
 
-      best = group;
+      const stalled = !patient && !this._claimHasEntry(group);
+      const current = stalled ? bestStalled : best;
+
+      if (current && (group.initialFocus ?? 0) <= (current.initialFocus ?? 0)) {
+        continue;
+      }
+
+      if (stalled) {
+        bestStalled = group;
+      } else {
+        best = group;
+      }
     }
 
-    return best;
+    return best ?? bestStalled;
+  }
+
+  private _claimPatienceLeft(scope: FocusNode<T>): number {
+    return (scope.scopeClaimStartedAt ?? 0) + CLAIM_PATIENCE_MS - Date.now();
+  }
+
+  private _claimHasEntry(node: FocusNode<T>): boolean {
+    return (
+      (!node.destinationKeys && !node.destinations) ||
+      node.hasFocusableChildren ||
+      this._claimDestination(node) !== null
+    );
+  }
+
+  private _claimDestination(node: FocusNode<T>): T | null {
+    for (const destination of this._destinationCandidates(node)) {
+      const target = destination ? this.activeLayer.elements.get(destination) : undefined;
+
+      if (target && this._isEffectivelyFocusable(target)) {
+        return destination;
+      }
+    }
+
+    return null;
+  }
+
+  private _holdsClaimFocus(node: FocusNode<T>): boolean {
+    const { focusPath } = this.activeLayer;
+
+    return focusPath.length === 0 || focusPath.includes(node.element);
+  }
+
+  /** A destination key that registers within the patience moves focus there, while focus still sits in the claim. */
+  private _reapplyClaim(best: FocusNode<T>): void {
+    const destination = this._claimDestination(best);
+    const { focusPath } = this.activeLayer;
+
+    if (destination && focusPath.includes(best.element) && !focusPath.includes(destination)) {
+      this._focusNode(best);
+    }
+  }
+
+  private _armClaimPatience(delay: number): void {
+    if (this._claimPatienceTimer !== null) {
+      return;
+    }
+
+    this._claimPatienceTimer = setTimeout(() => {
+      this._claimPatienceTimer = null;
+      this._runClaims();
+    }, delay + 1);
   }
 
   /** Holds the default pick back while a claim's winner has no content, so the first item doesn't flash focus. Bounded so focus can't be stranded. */
@@ -635,11 +704,32 @@ export class FocusManager<
 
     const best = this._bestClaim(scope);
 
-    if (!best || scope.scopeClaimTarget === best) {
+    if (!best) {
+      return;
+    }
+
+    const patienceLeft = this._claimPatienceLeft(scope);
+
+    if (patienceLeft > 0 && !this._claimHasEntry(best)) {
+      this._armClaimPatience(patienceLeft);
+    }
+
+    if (scope.scopeClaimTarget === best) {
+      if (patienceLeft > 0) {
+        this._reapplyClaim(best);
+      }
+
       return;
     }
 
     if (!this._isEffectivelyFocusable(best) || this._awaitsDestination(best)) {
+      return;
+    }
+
+    const previous = scope.scopeClaimTarget;
+
+    // A claim that gave up only hands over focus it still holds.
+    if (previous && !this._claimHasEntry(previous) && !this._holdsClaimFocus(previous)) {
       return;
     }
 
@@ -657,6 +747,11 @@ export class FocusManager<
     }
 
     this._claiming.clear();
+
+    if (this._claimPatienceTimer !== null) {
+      clearTimeout(this._claimPatienceTimer);
+      this._claimPatienceTimer = null;
+    }
   }
 
   public refocusInitial(): void {
@@ -668,6 +763,7 @@ export class FocusManager<
 
     scope.scopeClaimTarget = null;
     scope.scopeRefocusUntil = Date.now() + CLAIM_HOLD_MS;
+    scope.scopeClaimStartedAt = Date.now();
     this._claiming.add(scope);
     this._runClaim(scope);
   }
@@ -718,6 +814,13 @@ export class FocusManager<
     }
 
     this.focus(element);
+
+    if (element.focused) {
+      // Landing somewhere on purpose ends the claims' patience, like a key press.
+      for (const scope of this._claiming) {
+        scope.scopeClaimStartedAt = 0;
+      }
+    }
 
     return element.focused;
   }
