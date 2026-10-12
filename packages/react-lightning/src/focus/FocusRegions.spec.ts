@@ -516,6 +516,21 @@ describe('focus regions', () => {
 
         expect(high.child.focused).toBe(true);
       });
+
+      it('does not treat its own fallback landing as last-focused', () => {
+        const scope = grp('scope');
+        fm.addElement(scope, null, { scope: true });
+        const r = claim(scope, 2, ['last-focused', 'episode']);
+        const first = leaf('first');
+        fm.addElement(first, r);
+
+        expect(first.focused).toBe(true);
+
+        vi.advanceTimersByTime(11);
+        const episode = keyed(r, 'episode');
+
+        expect(episode.focused).toBe(true);
+      });
     });
   });
 
