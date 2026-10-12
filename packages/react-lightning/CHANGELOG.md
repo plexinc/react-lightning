@@ -1,5 +1,13 @@
 # @plextv/react-lightning
 
+## 0.5.0-alpha.7
+
+### Patch Changes
+
+- bec12c9: Initial focus claims get a second of patience, as on tvOS and Android. A claim whose destination key registers late (or becomes focusable late) moves focus there when the key arrives, as long as focus still sits in the claim and the user hasn't moved (a directional key or a landed `focusByKey`). A claim with nothing to land on (no destination that can take focus and no content of its own) loses to the next candidate once its second is up, instead of holding focus on an empty group.
+- bec12c9: Down no longer lands on a focusable leaf that fully encloses the focused element vertically (a full-height edge catcher beside the content), since it has nothing below the source. A group that encloses the source is still entered, as before. Also guards a NaN in the alignment score so focus can move away from a zero-size element. Matches Android's FocusFinder and tvOS.
+- df34f5a: Fire onLongPress once a key has been held for 500ms, while it is still down, instead of on keyup. The keyup after a long press no longer sends onKeyPress or onLongPress. Auto-repeat keydowns don't restart the timing.
+
 ## 0.5.0-alpha.6
 
 ### Minor Changes
