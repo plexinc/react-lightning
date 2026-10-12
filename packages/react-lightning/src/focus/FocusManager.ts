@@ -648,8 +648,16 @@ export class FocusManager<
     const { focusPath } = this.activeLayer;
 
     if (destination && focusPath.includes(best.element) && !focusPath.includes(destination)) {
-      this._focusNode(best);
+      this._focusClaim(best);
     }
+  }
+
+  /** A claim's own landing is a mount-time default, so it isn't what 'last-focused' remembers. */
+  private _focusClaim(best: FocusNode<T>): void {
+    const committed = best.focusCommitted;
+
+    this._focusNode(best);
+    best.focusCommitted = committed;
   }
 
   private _armClaimPatience(delay: number): void {
@@ -739,7 +747,7 @@ export class FocusManager<
     }
 
     scope.scopeClaimTarget = best;
-    this._focusNode(best);
+    this._focusClaim(best);
   }
 
   public get hasInitialClaim(): boolean {
