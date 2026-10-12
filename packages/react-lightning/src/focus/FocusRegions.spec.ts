@@ -570,6 +570,44 @@ describe('focus regions', () => {
 
       expect(c.focused).toBe(true);
     });
+
+    it('skips an empty redirect-only group', () => {
+      const row = grp('row');
+      const claimRegion = grp('claim');
+      const play = leaf('play');
+      rects.set(claimRegion, { x: 0, y: 0, w: 0, h: 0 });
+      rects.set(play, { x: 0, y: 0, w: 100, h: 40 });
+      geo.addElement(row);
+      geo.addElement(claimRegion, row, { destinationKeys: ['play'], focusRedirect: true });
+      geo.addElement(play, row, { focusKey: 'play' });
+      geo.focus(play);
+      geo.removeElement(play);
+
+      expect(geo.focusPath).not.toContain(claimRegion);
+
+      const remounted = leaf('play');
+      rects.set(remounted, { x: 0, y: 0, w: 100, h: 40 });
+      geo.addElement(remounted, row, { focusKey: 'play' });
+
+      expect(remounted.focused).toBe(true);
+    });
+
+    it('enters a group past an empty redirect-only child', () => {
+      const outside = leaf('outside');
+      const row = grp('row');
+      const claimRegion = grp('claim');
+      const play = leaf('play');
+      rects.set(claimRegion, { x: 0, y: 0, w: 0, h: 0 });
+      rects.set(play, { x: 10, y: 0, w: 100, h: 40 });
+      geo.addElement(outside);
+      geo.addElement(row, null, { focusEntry: 'first' });
+      geo.addElement(claimRegion, row, { destinationKeys: ['missing'], focusRedirect: true });
+      geo.addElement(play, row);
+      geo.focus(outside);
+      geo.focus(row);
+
+      expect(play.focused).toBe(true);
+    });
   });
 
   describe('enter and leave', () => {

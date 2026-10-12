@@ -1470,6 +1470,15 @@ export class FocusManager<
     );
   }
 
+  /** An empty group that only forwards (a claim region) shows nothing, so a repick or an entry never lands on it. */
+  private _isRedirectOnly(node: FocusNode<T>): boolean {
+    return (
+      !!node.element.isFocusGroup &&
+      !node.hasFocusableChildren &&
+      !!(node.destinationKeys || node.destinations)
+    );
+  }
+
   private _checkFocusableChildren(parentNode: FocusNode<T> | RootNode<T>) {
     // The new items of a re-rendered list aren't focusable yet, so the settle checks later.
     if (this._isRepickDeferred(parentNode)) {
@@ -1581,6 +1590,7 @@ export class FocusManager<
         newChild &&
         this._isEffectivelyFocusable(newChild) &&
         !hasExternalRedirect(newChild) &&
+        !this._isRedirectOnly(newChild) &&
         (includeRestorationExcluded || !newChild.focusRestorationExcluded) &&
         newChild !== relativeNode
       ) {
@@ -1612,6 +1622,7 @@ export class FocusManager<
       if (
         !this._isEffectivelyFocusable(child) ||
         hasExternalRedirect(child) ||
+        this._isRedirectOnly(child) ||
         (!includeRestorationExcluded && child.focusRestorationExcluded)
       ) {
         continue;
@@ -1680,6 +1691,7 @@ export class FocusManager<
         child.focusRestorationExcluded ||
         !this._isEffectivelyFocusable(child) ||
         hasExternalRedirect(child) ||
+        this._isRedirectOnly(child) ||
         !this._measure(child.element, scratch)
       ) {
         continue;
