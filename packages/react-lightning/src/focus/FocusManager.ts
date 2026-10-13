@@ -17,7 +17,7 @@ type RootNode<T> = {
    * arrival, not on mount.
    */
   focusCommitted: boolean;
-  restoreTo?: FocusNode<T> | null;
+  restoreStack?: FocusNode<T>[];
   restorePending?: boolean;
 };
 
@@ -1546,28 +1546,29 @@ export class FocusManager<
 
   private _trackDisplaced(parent: FocusNode<T> | RootNode<T>, next: FocusNode<T>): void {
     const previous = parent.focusedElement;
+    const stack = parent.restoreStack;
+    const index = stack ? stack.indexOf(next) : -1;
 
-    if (next === parent.restoreTo) {
-      parent.restoreTo = null;
-      parent.restorePending = false;
+    if (stack && index !== -1) {
+      stack.length = index;
     } else if (previous && !this._isEffectivelyFocusable(previous)) {
-      parent.restoreTo = previous;
-      parent.restorePending = false;
-    } else {
-      parent.restorePending = false;
+      parent.restoreStack = [...(stack ?? []).filter((n) => n !== previous), previous];
     }
+
+    parent.restorePending = false;
   }
 
   private _restoreAfterLoss(lost: FocusNode<T>): FocusNode<T> | null {
     const parent = lost.parent;
-    const target = parent.restoreTo;
+    const stack = parent.restoreStack;
+    const target = stack?.[stack.length - 1];
 
-    if (!target || target === lost) {
+    if (!stack || !target || target === lost) {
       return null;
     }
 
     if (this._isEffectivelyFocusable(target)) {
-      parent.restoreTo = null;
+      stack.pop();
       parent.restorePending = false;
 
       return target;
@@ -1580,16 +1581,18 @@ export class FocusManager<
 
   private _takesFocusBack(node: FocusNode<T>): boolean {
     const parent = node.parent;
+    const stack = parent.restoreStack;
 
     if (
       !parent.restorePending ||
-      parent.restoreTo !== node ||
+      !stack ||
+      stack[stack.length - 1] !== node ||
       !this._isEffectivelyFocusable(node)
     ) {
       return false;
     }
 
-    parent.restoreTo = null;
+    stack.pop();
     parent.restorePending = false;
 
     return true;
@@ -1617,9 +1620,14 @@ export class FocusManager<
     }
 
     // Picked while the node is still in its parent's children, so the next one is relative to where it was.
-    if (node.parent.restoreTo === node) {
-      node.parent.restoreTo = null;
-      node.parent.restorePending = false;
+    const restoreStack = node.parent.restoreStack;
+
+    if (restoreStack?.includes(node)) {
+      if (restoreStack[restoreStack.length - 1] === node) {
+        node.parent.restorePending = false;
+      }
+
+      node.parent.restoreStack = restoreStack.filter((n) => n !== node);
     }
 
     if (isTopMostParentNode && node.parent.focusedElement === node) {
@@ -2021,8 +2029,10 @@ export class FocusManager<
       }
 
       const current = parent.focusedElement;
+      const currentRegistered =
+        current !== null && this.activeLayer.elements.get(current.element) === current;
 
-      if (current && this.activeLayer.elements.get(current.element) === current) {
+      if (currentRegistered && this._isEffectivelyFocusable(current)) {
         continue;
       }
 
@@ -2034,10 +2044,19 @@ export class FocusManager<
       }
 
       const registered = fallback && this.activeLayer.elements.get(fallback.element) === fallback;
-
-      parent.focusedElement =
+      const next =
         this._nearestTo(parent, null, rect) ??
         (registered ? fallback : this._findFirstFocus(parent, false));
+
+      if (currentRegistered) {
+        if (!next || !this._isEffectivelyFocusable(next)) {
+          continue;
+        }
+
+        this._trackDisplaced(parent, next);
+      }
+
+      parent.focusedElement = next;
       this._checkFocusableChildren(parent);
     }
   }

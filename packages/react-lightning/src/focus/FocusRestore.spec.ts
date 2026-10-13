@@ -143,4 +143,81 @@ describe('focus restore for covered screens', () => {
 
     expect(fm.focusPath).toEqual([tree.app, tree.tabs, tree.tab]);
   });
+
+  it('returns through two covers: home under a screen under a modal', async () => {
+    const tree = build();
+
+    fm.focus(tree.tile);
+    await flush();
+
+    const { screen, button } = await cover(tree);
+    const second = make('second', { x: 0, y: 0, w: 1920, h: 1080 }, true);
+    const option = make('option', { x: 600, y: 400, w: 240, h: 64 });
+
+    hide(button as EmittingElement, screen as EmittingElement);
+    await flush();
+    fm.addElement(second, tree.app);
+    fm.addElement(option, second);
+    fm.focus(option);
+    await flush();
+
+    hide(option as EmittingElement, second as EmittingElement);
+    fm.removeElement(option);
+    fm.removeElement(second);
+    show(button as EmittingElement, screen as EmittingElement);
+    await flush();
+
+    expect(fm.focusPath).toEqual([tree.app, screen, button]);
+
+    hide(button as EmittingElement, screen as EmittingElement);
+    fm.removeElement(button);
+    fm.removeElement(screen);
+    show(tree.tab, tree.tabs);
+    await flush();
+    show(tree.tile, tree.home);
+    await flush();
+
+    expect(fm.focusPath).toEqual([tree.app, tree.home, tree.tile]);
+  });
+
+  it('repicks when the focused screen hides but stays registered', async () => {
+    const tree = build();
+    const other = make('other', { x: 0, y: 128, w: 1920, h: 952 }, true);
+    const otherTile = make('otherTile', { x: 128, y: 560, w: 240, h: 360 });
+
+    fm.addElement(other, tree.app);
+    fm.addElement(otherTile, other);
+    hide(otherTile, other);
+    fm.focus(tree.tile);
+    await flush();
+
+    show(otherTile, other);
+    hide(tree.tile, tree.home);
+    await flush();
+
+    expect(fm.focusPath).not.toContain(tree.tile);
+    expect(fm.focusPath).toEqual([tree.app, other, otherTile]);
+  });
+
+  it('keeps a nested group on its hidden item when the fallback hides in the same tick', async () => {
+    const tree = build();
+    const row = make('row', { x: 128, y: 560, w: 800, h: 64 }, true);
+    const rate = make('rate', { x: 128, y: 560, w: 120, h: 64 });
+    const review = make('review', { x: 260, y: 560, w: 120, h: 64 });
+
+    fm.addElement(row, tree.home);
+    fm.addElement(rate, row);
+    fm.addElement(review, row);
+    fm.focus(rate);
+    await flush();
+
+    hide(rate);
+    hide(review, row, tree.tile, tree.home, tree.tab, tree.tabs);
+    await flush();
+    show(tree.tabs, tree.tab, row, tree.home);
+    show(rate, review, tree.tile);
+    await flush();
+
+    expect(fm.focusPath).toEqual([tree.app, tree.home, row, rate]);
+  });
 });
