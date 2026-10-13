@@ -92,4 +92,57 @@ describe('directional moves', () => {
     expect(press(page, Keys.Up)).toBe(false);
     expect(banner.focused).toBe(true);
   });
+
+  describe('entering a group that declares an entry', () => {
+    const build = (focusEntry?: 'first' | 'last-focused' | 'spatial') => {
+      const page = place('page', { x: 0, y: 0, w: 1000, h: 600 }, true);
+      const summary = place('summary', { x: 400, y: 0, w: 200, h: 100 });
+      const bar = place('bar', { x: 0, y: 200, w: 1000, h: 60 }, true);
+      const first = place('first', { x: 0, y: 200, w: 100, h: 60 });
+      const middle = place('middle', { x: 450, y: 200, w: 100, h: 60 });
+      const last = place('last', { x: 900, y: 200, w: 100, h: 60 });
+      fm.addElement(page);
+      fm.addElement(summary, page);
+      fm.addElement(bar, page, { focusEntry });
+      fm.addElement(first, bar);
+      fm.addElement(middle, bar);
+      fm.addElement(last, bar);
+      fm.focus(summary);
+
+      return { page, summary, bar, first, middle, last };
+    };
+
+    it('lands on the first child, not the nearest one, with last-focused', () => {
+      const { page, first, middle } = build('last-focused');
+
+      expect(press(page, Keys.Down)).toBe(false);
+      expect(first.focused).toBe(true);
+      expect(middle.focused).toBe(false);
+    });
+
+    it('lands on the first child with first', () => {
+      const { page, first } = build('first');
+
+      press(page, Keys.Down);
+      expect(first.focused).toBe(true);
+    });
+
+    it('returns to the last focused child on re-entry', () => {
+      const { page, summary, last } = build('last-focused');
+
+      press(page, Keys.Down);
+      fm.focus(last);
+      fm.focus(summary);
+      press(page, Keys.Down);
+
+      expect(last.focused).toBe(true);
+    });
+
+    it('picks the nearest child with spatial', () => {
+      const { page, middle } = build('spatial');
+
+      press(page, Keys.Down);
+      expect(middle.focused).toBe(true);
+    });
+  });
 });

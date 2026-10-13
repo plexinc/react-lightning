@@ -17,6 +17,8 @@ type RootNode<T> = {
    * arrival, not on mount.
    */
   focusCommitted: boolean;
+  restoreTo?: FocusNode<T> | null;
+  restorePending?: boolean;
 };
 
 export type FocusNode<T> = Omit<RootNode<T>, 'element'> & {
@@ -52,6 +54,7 @@ export type FocusNode<T> = Omit<RootNode<T>, 'element'> & {
   scopeClaimTarget?: FocusNode<T> | null;
   scopeRefocusUntil?: number;
   scopeClaimStartedAt?: number;
+  scopeClaimTargetAt?: number;
   initialFocus?: number | null;
 };
 
@@ -302,6 +305,13 @@ export class FocusManager<
     let childNode = elements.get(child);
 
     if (childNode) {
+      if (
+        childNode.parent !== parentNode &&
+        this._isNearerParent(child, childNode.parent, parentNode)
+      ) {
+        parentNode = childNode.parent;
+      }
+
       // If the child node already exists, we need to remove it from its current parent
       if (childNode.parent !== parentNode) {
         const index = childNode.parent.children.indexOf(childNode);
@@ -361,6 +371,28 @@ export class FocusManager<
     this._tryFulfillPendingFocus(child);
     this._tryFulfillPendingKeyFocus();
     this._runClaimsAfterAdd();
+  }
+
+  private _isNearerParent(
+    child: T,
+    current: FocusNode<T> | RootNode<T>,
+    next: FocusNode<T> | RootNode<T>,
+  ): boolean {
+    if (isRootNode(current)) {
+      return false;
+    }
+
+    for (let curr = child.parent ?? null; curr; curr = curr.parent ?? null) {
+      if (curr === current.element) {
+        return true;
+      }
+
+      if (!isRootNode(next) && curr === next.element) {
+        return false;
+      }
+    }
+
+    return false;
   }
 
   /** Unlike the `set*` methods this replaces every option, so a field left out is cleared. */
@@ -568,12 +600,24 @@ export class FocusManager<
   }
 
   private _runClaims(): void {
+    this._leaveEmptyRedirect();
+
     if (this._claiming.size === 0) {
       return;
     }
 
     for (const scope of this._claiming) {
       this._runClaim(scope);
+    }
+  }
+
+  private _leaveEmptyRedirect(): void {
+    const { elements, focusPath } = this.activeLayer;
+    const leaf = focusPath[focusPath.length - 1];
+    const node = leaf ? elements.get(leaf) : undefined;
+
+    if (node && this._isRedirectOnly(node) && this._claimDestination(node)) {
+      this._focusClaim(node);
     }
   }
 
@@ -628,6 +672,10 @@ export class FocusManager<
 
   private _claimPatienceLeft(scope: FocusNode<T>): number {
     return (scope.scopeClaimStartedAt ?? 0) + CLAIM_PATIENCE_MS - Date.now();
+  }
+
+  private _claimTargetPatienceLeft(scope: FocusNode<T>): number {
+    return (scope.scopeClaimTargetAt ?? 0) + CLAIM_PATIENCE_MS - Date.now();
   }
 
   private _claimHasEntry(node: FocusNode<T>): boolean {
@@ -737,7 +785,7 @@ export class FocusManager<
     }
 
     if (scope.scopeClaimTarget === best) {
-      if (patienceLeft > 0) {
+      if (patienceLeft > 0 || this._claimTargetPatienceLeft(scope) > 0) {
         this._reapplyClaim(best);
       }
 
@@ -761,6 +809,7 @@ export class FocusManager<
     }
 
     scope.scopeClaimTarget = best;
+    scope.scopeClaimTargetAt = scope.scopeClaimStartedAt ? Date.now() : 0;
     this._focusClaim(best);
   }
 
@@ -850,6 +899,7 @@ export class FocusManager<
       // Landing somewhere on purpose ends the claims' patience, like a key press.
       for (const scope of this._claiming) {
         scope.scopeClaimStartedAt = 0;
+        scope.scopeClaimTargetAt = 0;
       }
     }
 
@@ -1291,10 +1341,16 @@ export class FocusManager<
           return;
         }
 
-        if (!currentNode.parent.focusedElement) {
+        if (this._takesFocusBack(currentNode)) {
+          currentNode.parent.focusedElement = currentNode;
+        } else if (!currentNode.parent.focusedElement) {
           currentNode.parent.focusedElement = this._findNextBestFocus(currentNode.parent);
         } else if (!isFocusable && currentNode.parent.focusedElement === currentNode) {
-          if (this._canDeferRepick(currentNode)) {
+          const restored = this._restoreAfterLoss(currentNode);
+
+          if (restored) {
+            currentNode.parent.focusedElement = restored;
+          } else if (this._canDeferRepick(currentNode)) {
             this._deferRepick(currentNode);
           } else {
             currentNode.parent.focusedElement = this._findNearestFocus(
@@ -1472,6 +1528,7 @@ export class FocusManager<
 
       if (currParent.focusedElement !== currChild) {
         childFocusChanged.push(currChild as FocusNode<T>);
+        this._trackDisplaced(currParent, currChild as FocusNode<T>);
       }
 
       currParent.focusedElement = currChild as FocusNode<T>;
@@ -1485,6 +1542,57 @@ export class FocusManager<
     for (const node of childFocusChanged) {
       this._tryEmitChildFocusedEvent(node);
     }
+  }
+
+  private _trackDisplaced(parent: FocusNode<T> | RootNode<T>, next: FocusNode<T>): void {
+    const previous = parent.focusedElement;
+
+    if (next === parent.restoreTo) {
+      parent.restoreTo = null;
+      parent.restorePending = false;
+    } else if (previous && !this._isEffectivelyFocusable(previous)) {
+      parent.restoreTo = previous;
+      parent.restorePending = false;
+    } else {
+      parent.restorePending = false;
+    }
+  }
+
+  private _restoreAfterLoss(lost: FocusNode<T>): FocusNode<T> | null {
+    const parent = lost.parent;
+    const target = parent.restoreTo;
+
+    if (!target || target === lost) {
+      return null;
+    }
+
+    if (this._isEffectivelyFocusable(target)) {
+      parent.restoreTo = null;
+      parent.restorePending = false;
+
+      return target;
+    }
+
+    parent.restorePending = true;
+
+    return null;
+  }
+
+  private _takesFocusBack(node: FocusNode<T>): boolean {
+    const parent = node.parent;
+
+    if (
+      !parent.restorePending ||
+      parent.restoreTo !== node ||
+      !this._isEffectivelyFocusable(node)
+    ) {
+      return false;
+    }
+
+    parent.restoreTo = null;
+    parent.restorePending = false;
+
+    return true;
   }
 
   private _tryEmitChildFocusedEvent(node: FocusNode<T>) {
@@ -1509,8 +1617,17 @@ export class FocusManager<
     }
 
     // Picked while the node is still in its parent's children, so the next one is relative to where it was.
+    if (node.parent.restoreTo === node) {
+      node.parent.restoreTo = null;
+      node.parent.restorePending = false;
+    }
+
     if (isTopMostParentNode && node.parent.focusedElement === node) {
-      if (this._canDeferRepick(node)) {
+      const restored = this._restoreAfterLoss(node);
+
+      if (restored) {
+        node.parent.focusedElement = restored;
+      } else if (this._canDeferRepick(node)) {
         this._deferRepick(node);
       } else {
         node.parent.focusedElement = this._findNearestFocus(node.parent, node);
@@ -1645,11 +1762,14 @@ export class FocusManager<
     const parent = node.parent;
 
     if (this._isEffectivelyFocusable(node)) {
-      if (!parent.focusedElement && !hasExternalRedirect(node) && !node.focusRestorationExcluded) {
+      if (
+        this._takesFocusBack(node) ||
+        (!parent.focusedElement && !hasExternalRedirect(node) && !node.focusRestorationExcluded)
+      ) {
         parent.focusedElement = node;
       }
     } else if (parent.focusedElement === node) {
-      parent.focusedElement = this._findNextBestFocus(parent, node);
+      parent.focusedElement = this._restoreAfterLoss(node) ?? this._findNextBestFocus(parent, node);
     }
 
     this._checkFocusableChildren(parent);

@@ -898,6 +898,46 @@ describe('FocusManager', () => {
     });
   });
 
+  describe('registering one element twice', () => {
+    const tree = () => {
+      const screen = createMockElement(1, 'screen');
+      const guide = createMockElement(2, 'guide');
+      const button = createMockElement(3, 'button');
+      screen.isFocusGroup = true;
+      guide.isFocusGroup = true;
+      guide.parent = screen;
+      button.parent = guide;
+
+      return { screen, guide, button };
+    };
+
+    it('keeps the group nearest the element when a hook further up registers it again', () => {
+      const { screen, guide, button } = tree();
+      focusManager.addElement(screen);
+      focusManager.addElement(button, guide, { autoFocus: true });
+      focusManager.addElement(guide, screen);
+      focusManager.addElement(button, screen);
+
+      expect(focusManager.getFocusNode(button)?.parent).toBe(focusManager.getFocusNode(guide));
+      expect(button.focusable).toBe(true);
+
+      focusManager.focus(button);
+
+      expect(button.focused).toBe(true);
+    });
+
+    it('still moves an element to a new parent it was moved under', () => {
+      const { screen, guide, button } = tree();
+      focusManager.addElement(screen);
+      focusManager.addElement(guide, screen);
+      focusManager.addElement(button, guide);
+      button.parent = screen;
+      focusManager.addElement(button, screen);
+
+      expect(focusManager.getFocusNode(button)?.parent).toBe(focusManager.getFocusNode(screen));
+    });
+  });
+
   describe('non-interactive focus groups', () => {
     it('does not focus an empty focus group', () => {
       const group = createMockElement(1, 'emptyGroup');
