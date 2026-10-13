@@ -23,6 +23,11 @@
   "types": "./dist/index.d.mts",
   "exports": {
     ".": "./dist/index.mjs",
+    "./stubs/gestureHandler": "./dist/stubs/gestureHandler.mjs",
+    "./stubs/reactDom": "./dist/stubs/reactDom.mjs",
+    "./stubs/reactDomClient": "./dist/stubs/reactDomClient.mjs",
+    "./stubs/reactNativeSvg": "./dist/stubs/reactNativeSvg.mjs",
+    "./stubs/reanimatedSwipeable": "./dist/stubs/reanimatedSwipeable.mjs",
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -48,5 +53,10 @@
   },
   "volta": {
     "extends": "../../package.json"
+  },
+  "depcheck": {
+    "ignoreMatches": [
+      "react-native"
+    ]
   }
 }

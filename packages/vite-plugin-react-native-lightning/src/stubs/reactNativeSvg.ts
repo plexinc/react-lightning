@@ -1,0 +1,58 @@
+type Noop = () => null;
+
+const Noop: Noop = () => null;
+
+export const Svg: Noop = Noop;
+export const Circle: Noop = Noop;
+export const Ellipse: Noop = Noop;
+export const G: Noop = Noop;
+export const Text: Noop = Noop;
+export const TSpan: Noop = Noop;
+export const TextPath: Noop = Noop;
+export const Path: Noop = Noop;
+export const Polygon: Noop = Noop;
+export const Polyline: Noop = Noop;
+export const Line: Noop = Noop;
+export const Rect: Noop = Noop;
+export const Use: Noop = Noop;
+export const Image: Noop = Noop;
+export const Defs: Noop = Noop;
+export const LinearGradient: Noop = Noop;
+export const RadialGradient: Noop = Noop;
+export const Stop: Noop = Noop;
+export const ClipPath: Noop = Noop;
+export const Pattern: Noop = Noop;
+export const Mask: Noop = Noop;
+export const Marker: Noop = Noop;
+export const ForeignObject: Noop = Noop;
+export const Filter: Noop = Noop;
+export const FeBlend: Noop = Noop;
+export const FeColorMatrix: Noop = Noop;
+export const FeComponentTransfer: Noop = Noop;
+export const FeComposite: Noop = Noop;
+export const FeConvolveMatrix: Noop = Noop;
+export const FeDiffuseLighting: Noop = Noop;
+export const FeDisplacementMap: Noop = Noop;
+export const FeDropShadow: Noop = Noop;
+export const FeFlood: Noop = Noop;
+export const FeGaussianBlur: Noop = Noop;
+export const FeImage: Noop = Noop;
+export const FeMerge: Noop = Noop;
+export const FeMorphology: Noop = Noop;
+export const FeOffset: Noop = Noop;
+export const FeSpecularLighting: Noop = Noop;
+export const FeTile: Noop = Noop;
+export const FeTurbulence: Noop = Noop;
+export const SvgUri: Noop = Noop;
+export const SvgXml: Noop = Noop;
+export const SvgFromUri: Noop = Noop;
+export const SvgFromXml: Noop = Noop;
+
+export { Noop as Symbol };
+export const SvgCss: Noop = Noop;
+export const SvgCssUri: Noop = Noop;
+export const SvgWithCss: Noop = Noop;
+export const SvgWithCssUri: Noop = Noop;
+export const parse: Noop = () => null;
+
+export default Svg;
