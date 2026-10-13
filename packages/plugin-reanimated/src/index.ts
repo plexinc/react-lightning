@@ -48,6 +48,10 @@ export {
   SlideOutUp,
 } from './builders/Slide';
 
+export {
+  createAnimatedComponent,
+  createAnimatedComponent as createCSSAnimatedComponent,
+} from './exports/createAnimatedComponent';
 export { useAnimatedReaction } from './exports/useAnimatedReaction';
 export { useAnimatedScrollHandler } from './exports/useAnimatedScrollHandler';
 export { useAnimatedStyle } from './exports/useAnimatedStyle';
