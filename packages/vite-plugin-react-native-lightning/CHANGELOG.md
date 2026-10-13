@@ -1,5 +1,16 @@
 # @plextv/vite-plugin-react-native-lightning
 
+## 1.0.0-alpha.3
+
+### Patch Changes
+
+- 1bda910: alias react-native-gesture-handler (incl. /ReanimatedSwipeable) and react-native-svg to no-op stubs by default, with an opt-in react-dom stub, configurable through the new stubs option.
+- Updated dependencies [dfeb224]
+- Updated dependencies [dfeb224]
+- Updated dependencies [9b977c0]
+- Updated dependencies [1de7a5c]
+  - @plextv/react-native-lightning@1.0.0-alpha.5
+
 ## 1.0.0-alpha.2
 
 ### Patch Changes

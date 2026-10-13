@@ -1,5 +1,27 @@
 # @plextv/react-lightning-components
 
+## 1.0.0-alpha.6
+
+### Patch Changes
+
+- d28ca50: re-align an index scroll and the focused item when the viewport or content size settles after they were clamped, so an episode near the end of a row no longer stays half off screen.
+- ea0a6cf: virtuallist holds scrollToIndex until the viewport is measured, keeps the focused item snapped when items above it resize, adds scrollAnimationEnabled, shouldSuppressFocusScroll and onContentSizeChange, and fires onEndReached once per item count.
+- Updated dependencies [c3c7bf5]
+- Updated dependencies [816b99a]
+- Updated dependencies [fa56a4b]
+- Updated dependencies [9b977c0]
+- Updated dependencies [9bc21a1]
+- Updated dependencies [9bc21a1]
+- Updated dependencies [fa56a4b]
+- Updated dependencies [9d493f6]
+- Updated dependencies [fa56a4b]
+- Updated dependencies [fd21f94]
+- Updated dependencies [dbd9e34]
+- Updated dependencies [d45447a]
+- Updated dependencies [9d21511]
+- Updated dependencies [1de7a5c]
+  - @plextv/react-lightning@0.5.0-alpha.8
+
 ## 1.0.0-alpha.5
 
 ### Patch Changes
