@@ -8,12 +8,13 @@ import {
   useEffect,
   useRef,
 } from 'react';
-import type { JSX } from 'react/jsx-runtime';
 import type {
   NativeScrollEvent,
   ScrollView as RNScrollView,
   ScrollViewProps as RNScrollViewProps,
 } from 'react-native';
+import type { JSX } from 'react/jsx-runtime';
+
 import {
   FocusManagerContext,
   type LightningElement,
@@ -22,16 +23,15 @@ import {
   type LightningViewElementStyle,
   useCombinedRef,
 } from '@plextv/react-lightning';
+
 import { createHandler } from '../hooks/useFocusHandler';
 import type { NativeLightningViewElement } from '../types/NativeLightningViewElement';
 import { createNativeSyntheticEvent } from '../utils/createNativeSyntheticEvent';
-import { View, type ViewProps, defaultViewStyle } from './View';
 import { getEnsureVisibleOffset, usesExplicitAlignment } from './scrollFocus';
+import { clampScrollOffset, getAxisOffset, isAxisMeasured } from './scrollOffset';
+import { View, type ViewProps, defaultViewStyle } from './View';
 
-function isDescendantOf(
-  ancestor: LightningElement,
-  node: LightningElement,
-): boolean {
+function isDescendantOf(ancestor: LightningElement, node: LightningElement): boolean {
   let current: LightningElement | null = node.parent;
   while (current) {
     if (current === ancestor) {
@@ -61,42 +61,6 @@ interface Rect {
   h: number;
 }
 
-function getAxisOffset(
-  viewportSize: number,
-  containerSize: number,
-  childOffset: number,
-  childSize: number,
-  snapToAlignment: 'center' | 'end' | 'start',
-): number {
-  const scrollableSize = containerSize - viewportSize;
-  let offset = 0;
-
-  switch (snapToAlignment) {
-    case 'start':
-      offset = Math.min(childOffset, scrollableSize);
-      break;
-    case 'center': {
-      const itemMidPoint = childOffset + childSize / 2;
-      const halfViewportSize = viewportSize / 2;
-
-      offset = Math.min(
-        Math.max(itemMidPoint - halfViewportSize, 0),
-        scrollableSize,
-      );
-      break;
-    }
-
-    case 'end':
-      offset = Math.max(
-        Math.min(childOffset + childSize - viewportSize, scrollableSize),
-        0,
-      );
-      break;
-  }
-
-  return Math.max(0, Math.min(offset, containerSize)) * -1;
-}
-
 function getScrollInfo(
   viewport?: Rect,
   container?: Rect,
@@ -109,22 +73,10 @@ function getScrollInfo(
   }
 
   const x = horizontal
-    ? getAxisOffset(
-        viewport.w,
-        container.w,
-        child.x,
-        child.w,
-        snapToAlignment ?? 'start',
-      )
+    ? getAxisOffset(viewport.w, container.w, child.x, child.w, snapToAlignment ?? 'start')
     : container.x;
   const y = !horizontal
-    ? getAxisOffset(
-        viewport.h,
-        container.h,
-        child.y,
-        child.h,
-        snapToAlignment ?? 'start',
-      )
+    ? getAxisOffset(viewport.h, container.h, child.y, child.h, snapToAlignment ?? 'start')
     : container.y;
 
   return {
@@ -177,7 +129,7 @@ class ScrollViewBase extends PureComponent<ScrollViewProps, ScrollViewState> {
   public scrollToElement = (el: LightningElement): void => {
     const offset = this._getChildOffset(el);
 
-    if (offset) {
+    if (offset && this._isScrollAxisMeasured(offset)) {
       this._doScroll(offset);
     }
   };
@@ -208,6 +160,14 @@ class ScrollViewBase extends PureComponent<ScrollViewProps, ScrollViewState> {
     const viewportBounds = viewport.getBoundingClientRect();
     const { horizontal } = this.props;
     const { x, y } = this.state.offset;
+
+    if (
+      horizontal
+        ? !isAxisMeasured(viewportBounds.w, containerBounds.w)
+        : !isAxisMeasured(viewportBounds.h, containerBounds.h)
+    ) {
+      return;
+    }
 
     const nextX = horizontal
       ? getEnsureVisibleOffset(
@@ -285,8 +245,7 @@ class ScrollViewBase extends PureComponent<ScrollViewProps, ScrollViewState> {
   }
 
   public render(): JSX.Element {
-    const { children, style, contentContainerStyle, horizontal, ...props } =
-      this.props;
+    const { children, style, contentContainerStyle, horizontal, ...props } = this.props;
     const flexDirection = horizontal ? 'row' : 'column';
 
     return (
@@ -326,15 +285,11 @@ class ScrollViewBase extends PureComponent<ScrollViewProps, ScrollViewState> {
 
   private _getChildOffset = (child?: LightningElement | Rect | null) => {
     const isElement = child instanceof LightningViewElement;
-    const rect = isElement
-      ? child.getBoundingClientRect(this._containerRef.current)
-      : child;
+    const rect = isElement ? child.getBoundingClientRect(this._containerRef.current) : child;
 
     return getScrollInfo(
       this._viewportRef.current?.getBoundingClientRect(),
-      this._containerRef.current?.getBoundingClientRect(
-        this._viewportRef.current,
-      ),
+      this._containerRef.current?.getBoundingClientRect(this._viewportRef.current),
       rect,
       // If we're getting offset via a positional value, we make sure we don't
       // use the snapToAlignment to calculate the offset since the offset should
@@ -351,16 +306,22 @@ class ScrollViewBase extends PureComponent<ScrollViewProps, ScrollViewState> {
     this._viewportRef.current = ref ?? null;
   };
 
-  private _doScroll(newOffset: NativeScrollEvent) {
-    if (
-      newOffset &&
-      (this.state.offset.x !== newOffset.contentOffset.x ||
-        this.state.offset.y !== newOffset.contentOffset.y)
-    ) {
-      const { x, y } = newOffset.contentOffset;
-      const clampedX = newOffset.layoutMeasurement.width ? x : 0;
-      const clampedY = newOffset.layoutMeasurement.height ? y : 0;
+  private _isScrollAxisMeasured({ layoutMeasurement, contentSize }: NativeScrollEvent): boolean {
+    return this.props.horizontal
+      ? isAxisMeasured(layoutMeasurement.width, contentSize.width)
+      : isAxisMeasured(layoutMeasurement.height, contentSize.height);
+  }
 
+  private _doScroll(newOffset: NativeScrollEvent) {
+    const { contentOffset, layoutMeasurement, contentSize } = newOffset;
+    const clampedX = clampScrollOffset(contentOffset.x, layoutMeasurement.width, contentSize.width);
+    const clampedY = clampScrollOffset(
+      contentOffset.y,
+      layoutMeasurement.height,
+      contentSize.height,
+    );
+
+    if (this.state.offset.x !== clampedX || this.state.offset.y !== clampedY) {
       this.setState({ offset: { x: clampedX, y: clampedY } });
 
       if (this._viewportRef.current) {
@@ -396,15 +357,14 @@ export const ScrollView: ForwardRefExoticComponent<
       return;
     }
 
-    return focusManager.on(
-      'focusPathChanged',
-      (focusPath: LightningElement[]) => {
-        const leaf = focusPath[focusPath.length - 1];
-        if (leaf) {
-          instanceRef.current?.scrollFocusIntoView(leaf);
-        }
-      },
-    );
+    return focusManager.on('focusPathChanged', (focusPath: LightningElement[]) => {
+      const leaf = focusPath[focusPath.length - 1];
+      const instance = instanceRef.current;
+
+      if (leaf && instance?.getScrollableNode()?.visible) {
+        instance.scrollFocusIntoView(leaf);
+      }
+    });
   }, [focusManager]);
 
   return <ScrollViewBase ref={combinedRef} {...props} />;
