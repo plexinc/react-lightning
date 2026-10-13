@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { type FocusAnchor, resolveFocusResnap } from './resolveFocusResnap';
+import {
+  type FocusAnchor,
+  resolveFocusResnap,
+  resolveFocusResnapScroll,
+} from './resolveFocusResnap';
 
 const anchor: FocusAnchor = {
   index: 3,
@@ -29,5 +33,26 @@ describe('resolveFocusResnap', () => {
 
   it('moves the child back when a row above shrinks', () => {
     expect(resolveFocusResnap(anchor, 850)?.childOffset).toBe(890);
+  });
+});
+
+describe('resolveFocusResnapScroll', () => {
+  const targetFor = (max: number) => (a: FocusAnchor) => Math.min(a.childOffset - 128, max);
+
+  it('leaves a settled row alone', () => {
+    expect(resolveFocusResnapScroll(anchor, 900, 812, targetFor(5000))).toBeUndefined();
+  });
+
+  it('re-scrolls when the scroll range grew after focus landed', () => {
+    const result = resolveFocusResnapScroll(anchor, 900, 700, targetFor(5000));
+
+    expect(result).toEqual({ anchor, target: 812 });
+  });
+
+  it('follows a moved cell', () => {
+    const result = resolveFocusResnapScroll(anchor, 1020, 812, targetFor(5000));
+
+    expect(result?.anchor.childOffset).toBe(1060);
+    expect(result?.target).toBe(932);
   });
 });
