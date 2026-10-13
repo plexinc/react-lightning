@@ -336,6 +336,107 @@ export class LightningViewElement<
     }
   }
 
+  public _firstRealNode(): RendererNode<LightningElement> | null {
+    if (!this._flattened) {
+      return this.node as RendererNode<LightningElement>;
+    }
+
+    for (let i = 0; i < this.children.length; i++) {
+      const node = this.children[i]?._firstRealNode();
+
+      if (node) {
+        return node;
+      }
+    }
+
+    return null;
+  }
+
+  public _placeInHost(): void {
+    const host = this._parent?._hostNode();
+    const hostChildren = host?.children as RendererNode<LightningElement>[] | undefined;
+
+    if (!host || !hostChildren) {
+      return;
+    }
+
+    const anchor = this._nextHostNode(host);
+    const moved = this._moveFrontierBefore(host, hostChildren, anchor);
+
+    if (moved) {
+      host.sortChildren();
+      host.stage.requestRender();
+    }
+  }
+
+  private _nextHostNode(
+    host: RendererNode<LightningElement>,
+  ): RendererNode<LightningElement> | null {
+    let element: LightningElement | null = null;
+    let parent = this._parent;
+
+    while (parent) {
+      const siblings = parent.children;
+
+      for (
+        let i = siblings.indexOf(element ?? (this as LightningElement)) + 1;
+        i < siblings.length;
+        i++
+      ) {
+        const node = siblings[i]?._firstRealNode();
+
+        if (node && node.parent === host) {
+          return node;
+        }
+      }
+
+      if (!parent.isFlattened) {
+        return null;
+      }
+
+      element = parent;
+      parent = parent.parent;
+    }
+
+    return null;
+  }
+
+  private _moveFrontierBefore(
+    host: RendererNode<LightningElement>,
+    hostChildren: RendererNode<LightningElement>[],
+    anchor: RendererNode<LightningElement> | null,
+  ): boolean {
+    if (!this._flattened) {
+      const node = this.node as RendererNode<LightningElement>;
+
+      if (node.parent !== host) {
+        return false;
+      }
+
+      const from = hostChildren.indexOf(node);
+      const anchorIndex = anchor ? hostChildren.indexOf(anchor) : hostChildren.length;
+
+      if (from < 0 || anchorIndex < 0 || from === anchorIndex - 1) {
+        return false;
+      }
+
+      hostChildren.splice(from, 1);
+      hostChildren.splice(from < anchorIndex ? anchorIndex - 1 : anchorIndex, 0, node);
+
+      return true;
+    }
+
+    let moved = false;
+
+    for (let i = 0; i < this.children.length; i++) {
+      if (this.children[i]?._moveFrontierBefore(host, hostChildren, anchor)) {
+        moved = true;
+      }
+    }
+
+    return moved;
+  }
+
   /** Write a layout axis, folding flattened-ancestor offsets into the node. */
   private _writeAxis(key: 'x' | 'y', value: number): boolean {
     const previous = key === 'x' ? this._layoutX : this._layoutY;
@@ -432,6 +533,7 @@ export class LightningViewElement<
       this.children[i]?._applyFlattenedLink(0, 0, node, true);
     }
 
+    this._placeInHost();
     this.recalculateVisibility();
   }
 
@@ -841,6 +943,10 @@ export class LightningViewElement<
 
     child.parent = this;
 
+    if (beforeChild || this._flattened || child.isFlattened) {
+      child._placeInHost();
+    }
+
     if (this._deferTarget) {
       child.deferTarget = this._deferTarget;
     }
@@ -866,6 +972,7 @@ export class LightningViewElement<
     const toIndex = beforeChild ? this.children.indexOf(beforeChild) : this.children.length;
 
     this.children.splice(toIndex, 0, child);
+    child._placeInHost();
 
     if (toIndex !== fromIndex) {
       this._eventEmitter.emit('childMoved', child, fromIndex, toIndex);
