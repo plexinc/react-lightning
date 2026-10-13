@@ -422,6 +422,51 @@ describe('focus regions', () => {
         expect(late.focused).toBe(false);
       });
 
+      const strandedClaim = () => {
+        const scope = grp('scope');
+        fm.addElement(scope, null, { scope: true });
+        const row = grp('row');
+        fm.addElement(row, scope);
+        vi.advanceTimersByTime(1100);
+        const r = grp('claim');
+        fm.addElement(r, row, {
+          initialFocus: 10,
+          destinationKeys: ['late'],
+          focusRedirect: true,
+        });
+
+        expect(fm.focusPath.at(-1)).toBe(r);
+
+        return { row, r };
+      };
+
+      it('moves out of an empty claim when its key registers after the patience', () => {
+        const { row } = strandedClaim();
+        const late = keyed(row, 'late');
+
+        expect(late.focused).toBe(true);
+      });
+
+      it('moves out of an empty claim when its key becomes focusable', () => {
+        const { row } = strandedClaim();
+        const late = keyed(row, 'late', false);
+
+        expect(late.focused).toBe(false);
+
+        late.focusable = true;
+        fm.updateElement(late, { focusKey: 'late' });
+
+        expect(late.focused).toBe(true);
+      });
+
+      it('moves out of an empty claim after a directional key ended the claims', () => {
+        const { row, r } = strandedClaim();
+        pressDown(r);
+        const late = keyed(row, 'late');
+
+        expect(late.focused).toBe(true);
+      });
+
       it('stops after a directional key', () => {
         const scope = grp('scope');
         fm.addElement(scope, null, { scope: true });
@@ -530,6 +575,39 @@ describe('focus regions', () => {
         const episode = keyed(r, 'episode');
 
         expect(episode.focused).toBe(true);
+      });
+
+      it('gives a claim that mounts after the patience its own patience', () => {
+        const scope = grp('scope');
+        fm.addElement(scope, null, { scope: true });
+
+        vi.advanceTimersByTime(1500);
+        const r = claim(scope, 2, ['last-focused', 'episode']);
+        const first = leaf('first');
+        fm.addElement(first, r);
+
+        expect(first.focused).toBe(true);
+
+        vi.advanceTimersByTime(11);
+        const episode = keyed(r, 'episode');
+
+        expect(episode.focused).toBe(true);
+      });
+
+      it('leaves a late claim alone once its own patience is up', () => {
+        const scope = grp('scope');
+        fm.addElement(scope, null, { scope: true });
+
+        vi.advanceTimersByTime(1500);
+        const r = claim(scope, 2, ['late', 'first']);
+        const filler = leaf('filler');
+        fm.addElement(filler, r);
+
+        vi.advanceTimersByTime(1100);
+        const late = keyed(r, 'late');
+
+        expect(filler.focused).toBe(true);
+        expect(late.focused).toBe(false);
       });
     });
   });
@@ -814,6 +892,37 @@ describe('focus regions', () => {
       await flush();
 
       expect(late.focused).toBe(true);
+    });
+
+    it('moves out of an empty claim whose key registers after the patience', async () => {
+      vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+
+      try {
+        const scope = grp('scope');
+        const row = grp('row');
+        const claim = grp('claim');
+        const late = leaf('late');
+
+        batch.addElement(scope, null, { scope: true });
+        batch.addElement(row, scope);
+        await flush();
+        vi.advanceTimersByTime(1100);
+        batch.addElement(claim, row, {
+          initialFocus: 10,
+          destinationKeys: ['late'],
+          focusRedirect: true,
+        });
+        await flush();
+
+        expect(batch.focusPath.at(-1)).toBe(claim);
+
+        batch.addElement(late, row, { focusKey: 'late' });
+        await flush();
+
+        expect(late.focused).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('waits for the new items of a re-rendered list before repicking', async () => {
