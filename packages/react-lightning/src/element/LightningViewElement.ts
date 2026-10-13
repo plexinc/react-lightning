@@ -1192,6 +1192,8 @@ export class LightningViewElement<
         [key]: target,
       },
       this.props.transition?.[key],
+      key as string,
+      value,
     ).start();
   }
 
@@ -1614,11 +1616,20 @@ export class LightningViewElement<
   private _createAnimation(
     props: Partial<INodeAnimateProps>,
     animationSettings?: Partial<AnimationSettings>,
+    styleKey?: string,
+    styleTarget?: unknown,
   ) {
     const animation = this.node.animate(props, animationSettings || {});
 
     animation.once('stopped', (controller) => {
       this._eventEmitter.emit('animationFinished', controller);
+
+      if (styleKey !== undefined) {
+        this.props.onTransitionEnd?.({
+          propertyName: styleKey,
+          finished: this._animTargets.get(styleKey) === styleTarget,
+        });
+      }
     });
 
     return animation;

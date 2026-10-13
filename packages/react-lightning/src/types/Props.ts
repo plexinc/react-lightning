@@ -12,11 +12,17 @@ import type {
   LightningViewElementStyle,
 } from './Styles';
 
+export interface TransitionEndEvent {
+  propertyName: string;
+  finished: boolean;
+}
+
 export interface LightningElementEventProps {
   onBeforeLayout?: (rect: Rect) => void;
   onLayout?: (rect: Rect) => void;
   onResize?: (dimensions: { w: number; h: number }) => void;
   onRender?: () => void;
+  onTransitionEnd?: (event: TransitionEndEvent) => void;
   onBeforeRender?: () => void;
   onTextureReady?: (dimensions: Dimensions) => void;
   onTextureError?: (dimensions: Dimensions) => void;
