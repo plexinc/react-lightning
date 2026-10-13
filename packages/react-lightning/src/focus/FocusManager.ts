@@ -145,6 +145,17 @@ function defaultMeasure(element: unknown, out: FocusRect): boolean {
 }
 
 const CLAIM_HOLD_MS = 1000;
+const FOCUS_BY_KEY_TIMEOUT_MS = 2000;
+
+export type FocusByKeyOptions = {
+  timeoutMs?: number;
+  signal?: AbortSignal;
+};
+
+type PendingKeyFocus = {
+  key: string;
+  settle: (focused: boolean) => void;
+};
 const CLAIM_PATIENCE_MS = 1000;
 
 interface DeferredRepick<T extends Focusable> {
@@ -181,6 +192,7 @@ export class FocusManager<
    * per element, each resolving against its own parent.
    */
   private _pendingPreferredChildren: Set<T> = new Set();
+  private _pendingKeyFocus: PendingKeyFocus | null = null;
   private _keyedElements: Map<string, T> = new Map();
   private _elementKeys: Map<T, string> = new Map();
   private _boundaryHandlers: Map<T, { enter?: () => void; leave?: () => void }> = new Map();
@@ -347,6 +359,7 @@ export class FocusManager<
     // focusable).
     this._tryFulfillPendingPreferredChild(child);
     this._tryFulfillPendingFocus(child);
+    this._tryFulfillPendingKeyFocus();
     this._runClaimsAfterAdd();
   }
 
@@ -363,6 +376,7 @@ export class FocusManager<
     if (node) {
       this._applyOptions(node, options, true);
       this._recalculateFocusPath();
+      this._tryFulfillPendingKeyFocus();
       this._runClaims();
     }
   }
@@ -812,6 +826,10 @@ export class FocusManager<
     if (key) {
       this._elementKeys.set(element, key);
       this._keyedElements.set(key, element);
+
+      if (this._pendingKeyFocus?.key === key) {
+        this._tryFulfillPendingKeyFocus();
+      }
     }
   }
 
@@ -836,6 +854,73 @@ export class FocusManager<
     }
 
     return element.focused;
+  }
+
+  public requestFocusByKey(key: string, options?: FocusByKeyOptions): Promise<boolean> {
+    this.cancelFocusByKey();
+
+    const signal = options?.signal;
+
+    if (signal?.aborted) {
+      return Promise.resolve(false);
+    }
+
+    if (this._isKeyReady(key)) {
+      return Promise.resolve(this.focusByKey(key));
+    }
+
+    return new Promise<boolean>((resolve) => {
+      const onAbort = () => {
+        if (this._pendingKeyFocus === pending) {
+          this.cancelFocusByKey();
+        }
+      };
+      const timer = setTimeout(onAbort, options?.timeoutMs ?? FOCUS_BY_KEY_TIMEOUT_MS);
+      const pending: PendingKeyFocus = {
+        key,
+        settle: (focused) => {
+          clearTimeout(timer);
+          signal?.removeEventListener('abort', onAbort);
+          resolve(focused);
+        },
+      };
+
+      signal?.addEventListener('abort', onAbort, { once: true });
+      this._pendingKeyFocus = pending;
+    });
+  }
+
+  public cancelFocusByKey(): void {
+    const pending = this._pendingKeyFocus;
+
+    if (pending) {
+      this._pendingKeyFocus = null;
+      pending.settle(false);
+    }
+  }
+
+  public containsFocus(key: string): boolean {
+    const element = this._keyedElements.get(key);
+
+    return element !== undefined && this.activeLayer.focusPath.includes(element);
+  }
+
+  private _isKeyReady(key: string): boolean {
+    const element = this._keyedElements.get(key);
+    const node = element && this.activeLayer.elements.get(element);
+
+    return !!node && this._isEffectivelyFocusable(node);
+  }
+
+  private _tryFulfillPendingKeyFocus(): void {
+    const pending = this._pendingKeyFocus;
+
+    if (!pending || !this._isKeyReady(pending.key)) {
+      return;
+    }
+
+    this._pendingKeyFocus = null;
+    pending.settle(this.focusByKey(pending.key));
   }
 
   public setDestinationKeys(element: T, keys?: readonly string[] | null): void {
@@ -946,8 +1031,7 @@ export class FocusManager<
   public pushLayer(): void {
     // A pending focus or preferred-child preference targets the layer it was
     // requested in; drop it on a layer change so it can't fulfill against the
-    // wrong layer.
-    this._pendingFocus = null;
+    this._dropPendingFocusIn(this.activeLayer);
     this._pendingPreferredChildren.clear();
 
     // Store the current layer before creating new one
@@ -990,10 +1074,7 @@ export class FocusManager<
       return;
     }
 
-    // A pending focus or preferred-child preference targets the layer it was
-    // requested in; drop it on a layer change so it can't fulfill against the
-    // wrong layer.
-    this._pendingFocus = null;
+    this._dropPendingFocusIn(this.activeLayer);
     this._pendingPreferredChildren.clear();
 
     // Get current layer info before popping
@@ -1028,6 +1109,18 @@ export class FocusManager<
 
     // Update the focus path to trigger any necessary events
     this._eventEmitter.emit('focusPathChanged', restoredLayer.focusPath);
+
+    if (this._pendingFocus) {
+      this._tryFulfillPendingFocus(this._pendingFocus);
+    }
+
+    this._tryFulfillPendingKeyFocus();
+  }
+
+  private _dropPendingFocusIn(layer: FocusLayer<T>): void {
+    if (this._pendingFocus && layer.elements.has(this._pendingFocus)) {
+      this._pendingFocus = null;
+    }
   }
 
   public popAllLayers(): void {
@@ -1226,6 +1319,7 @@ export class FocusManager<
         if (isFocusable) {
           this._tryFulfillPendingPreferredChild(element);
           this._tryFulfillPendingFocus(element);
+          this._tryFulfillPendingKeyFocus();
         }
 
         this._runClaims();

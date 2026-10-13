@@ -28,6 +28,7 @@ export {
   useTVEventHandler,
 } from './exports/TVEventHandler';
 export { TouchableHighlight, type TouchableHighlightProps } from './exports/TouchableHighlight';
+export { TVFocusGuideView, type TVFocusGuideViewProps } from './exports/TVFocusGuideView';
 export { TouchableOpacity, type TouchableOpacityProps } from './exports/TouchableOpacity';
 export {
   TouchableWithoutFeedback,
