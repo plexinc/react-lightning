@@ -9,7 +9,19 @@ export { LightningViewElement } from './element/LightningViewElement';
 export { PARTIAL_STYLE } from './element/partialStyle';
 export { FocusGroup, type FocusGroupProps } from './focus/FocusGroup';
 export { FocusGroupContext } from './focus/FocusGroupContext';
-export { FocusManager, type FocusEntry, type FocusExits } from './focus/FocusManager';
+export {
+  containsFocus,
+  focusByKey,
+  getFocusManager,
+  refocusInitial,
+  registerFocusManager,
+} from './focus/activeFocusManager';
+export {
+  FocusManager,
+  type FocusByKeyOptions,
+  type FocusEntry,
+  type FocusExits,
+} from './focus/FocusManager';
 export { FocusManagerContext } from './focus/FocusManagerContext';
 export { focusable } from './focus/focusable';
 export { useFocus } from './focus/useFocus';

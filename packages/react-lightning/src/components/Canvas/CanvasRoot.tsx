@@ -1,5 +1,6 @@
-import { type FC, useContext, useEffect, useRef, useState } from 'react';
+import { type FC, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
+import { registerFocusManager } from '../../focus/activeFocusManager';
 import { FocusGroup } from '../../focus/FocusGroup';
 import { FocusKeyManager } from '../../focus/FocusKeyManager';
 import { FocusManager } from '../../focus/FocusManager';
@@ -20,6 +21,8 @@ export const CanvasRoot: FC<Props> = ({ width, height, children, keyMap }) => {
   );
   const [focusKeyManager] = useState(() => new FocusKeyManager(focusManager));
   const rootContext = useContext(LightningRootContext);
+
+  useLayoutEffect(() => registerFocusManager(focusManager), [focusManager]);
 
   useEffect(() => {
     if (!import.meta.env.DEV || !rootContext) {

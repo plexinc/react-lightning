@@ -80,6 +80,7 @@ export class FocusKeyManager<T extends LightningElement> {
     }
 
     this._focusManager.endInitialClaims();
+    this._focusManager.cancelFocusByKey();
 
     return this._tryFocusNext(element, event, direction);
   };
