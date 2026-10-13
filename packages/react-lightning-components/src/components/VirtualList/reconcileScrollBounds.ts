@@ -5,8 +5,9 @@ export interface ScrollBoundsParams {
   totalContentSize: number;
   viewportSize: number;
   onEndReachedThreshold: number | null;
-  /** Current onEndReached latch (whether it has already fired at the end). */
-  endReached: boolean;
+  endReachedForCount: number;
+  itemCount: number;
+  isScroll: boolean;
   /** Whether an onEndReached callback is wired. */
   hasEndReachedListener: boolean;
 }
@@ -17,38 +18,36 @@ export interface ScrollBoundsResult {
   didClamp: boolean;
   /** Distance from the end, measured from the clamped offset. */
   distanceFromEnd: number;
-  /** True when onEndReached should fire this pass (within threshold, not yet latched). */
   fireEndReached: boolean;
-  /** Next value for the onEndReached latch. */
-  endReached: boolean;
+  endReachedForCount: number;
 }
 
 // The clamp + onEndReached-threshold decision native ScrollView/FlashList make on
-// every layout pass. Shared by the scroll handler and the content-size effect so
-// a shrink reclamps the offset and a short list still primes onEndReached on mount.
 export function reconcileScrollBounds({
   scrollOffset,
   maxScroll,
   totalContentSize,
   viewportSize,
   onEndReachedThreshold,
-  endReached,
+  endReachedForCount,
+  itemCount,
+  isScroll,
   hasEndReachedListener,
 }: ScrollBoundsParams): ScrollBoundsResult {
   const clampedOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
   const distanceFromEnd = totalContentSize - clampedOffset - viewportSize;
 
   let fireEndReached = false;
-  let nextEndReached = endReached;
+  let nextCount = endReachedForCount;
 
   if (hasEndReachedListener) {
     if (distanceFromEnd <= viewportSize * (onEndReachedThreshold ?? 0.5)) {
-      if (!endReached) {
+      if (itemCount > 0 && itemCount !== endReachedForCount) {
         fireEndReached = true;
-        nextEndReached = true;
+        nextCount = itemCount;
       }
-    } else {
-      nextEndReached = false;
+    } else if (isScroll) {
+      nextCount = 0;
     }
   }
 
@@ -57,6 +56,6 @@ export function reconcileScrollBounds({
     didClamp: clampedOffset !== scrollOffset,
     distanceFromEnd,
     fireEndReached,
-    endReached: nextEndReached,
+    endReachedForCount: nextCount,
   };
 }

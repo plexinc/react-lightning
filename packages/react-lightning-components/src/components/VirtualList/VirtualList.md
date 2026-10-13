@@ -79,7 +79,11 @@ Supporting modules: `useScrollHandler.ts` (scroll math, animation, focus-driven 
 - **`initialScrollIndex` / `initialScrollIndexParams`** — scroll to a specific index on mount.
 - **`snapToAlignment?: 'start' | 'center' | 'end'`** (default `'start'`) — where focused items land in the viewport.
 - **`animationDuration?: number`** (default `300`) — scroll animation duration.
-- **`onScroll` / `onEndReached` / `onEndReachedThreshold`** — scroll callbacks.
+- **`scrollAnimationEnabled?: boolean`** (default `true`) — `false` makes every scroll, focus-follow and imperative, jump without animating.
+- **`keepFocusedItemSnapped?: boolean`** (default `true`) — when items before the focused one resize after its focus snap (rows above measuring late), re-run the snap so the focused item stays where it landed. An imperative scroll drops the anchor until focus moves again.
+- **`shouldSuppressFocusScroll?: () => boolean`** — checked on every focus-follow scroll and re-snap; return `true` to leave the scroll alone (e.g. while a Magic Remote pointer drives focus).
+- **`onScroll` / `onEndReached` / `onEndReachedThreshold`** — scroll callbacks. `onEndReached` fires once per item count while within the threshold, like RN's once-per-content-length; scrolling back out of the threshold re-arms it.
+- **`onContentSizeChange?: (width, height) => void`** — RN parity, the scrollable content size including padding, header and footer.
 - **`onViewableItemsChanged` / `viewabilityConfig`** — viewability tracking.
 - **`onLoad`** — fires once when first items render (with elapsed ms since mount).
 - **`onLayout`** — fires when content dimensions change.
@@ -88,7 +92,7 @@ Supporting modules: `useScrollHandler.ts` (scroll math, animation, focus-driven 
 
 ### Imperative — `VirtualListRef`
 
-- `scrollToIndex({ index, animated?, viewPosition?, viewOffset? })`
+- `scrollToIndex({ index, animated?, viewPosition?, viewOffset? })` — held until the viewport is measured (`viewPosition` aligns against it), then replayed; the latest request wins. `scrollToEnd` is held the same way.
 - `scrollToOffset({ offset, animated? })`
 - `scrollToEnd({ animated? })`
 - `getScrollOffset()`

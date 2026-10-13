@@ -145,6 +145,7 @@ export interface VirtualListProps<T> {
 
   /** Called when the content dimensions change (e.g. items measured, data changed). */
   onLayout?: (rect: { w: number; h: number }) => void;
+  onContentSizeChange?: (width: number, height: number) => void;
 
   /**
    * Focus/blur handlers on the list's outer element. Focus events bubble up
@@ -165,6 +166,9 @@ export interface VirtualListProps<T> {
   snapToItemPadding?: number;
   /** Duration of scroll animations in ms. Default 300. */
   animationDuration?: number;
+  scrollAnimationEnabled?: boolean;
+  keepFocusedItemSnapped?: boolean;
+  shouldSuppressFocusScroll?: () => boolean;
 
   /** Auto-focus the first focusable child on mount. */
   autoFocus?: boolean;

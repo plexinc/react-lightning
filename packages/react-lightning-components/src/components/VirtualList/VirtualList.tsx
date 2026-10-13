@@ -141,11 +141,15 @@ function VirtualListInner<T>(
     viewabilityConfig,
     onLoad,
     onLayout,
+    onContentSizeChange,
     onFocus,
     onBlur,
     snapToAlignment = 'start',
     snapToItemPadding,
     animationDuration = 300,
+    scrollAnimationEnabled = true,
+    keepFocusedItemSnapped = true,
+    shouldSuppressFocusScroll,
     autoFocus,
     trapFocusUp,
     trapFocusRight,
@@ -431,7 +435,7 @@ function VirtualListInner<T>(
     totalContentSize,
     viewportCrossSize,
     totalCrossSize: finalCross,
-    animationDuration,
+    animationDuration: scrollAnimationEnabled ? animationDuration : 0,
     snapToAlignment,
     snapToItemPadding,
     onScroll,
@@ -444,6 +448,9 @@ function VirtualListInner<T>(
     onAnimationEnd: handleAnimationEnd,
     onMomentumScrollBegin,
     onMomentumScrollEnd,
+    itemCount: data.length,
+    keepFocusedItemSnapped,
+    shouldSuppressFocusScroll,
   });
 
   // Backstop for non-focus scrolls (touch/wheel/imperative scrollToOffset).
@@ -526,16 +533,6 @@ function VirtualListInner<T>(
   // to the cache. Writing before alignment captures the pre-scroll offset
   // and restore requires a second focus event to converge.
   const handleVLFocus = (child: LightningElement) => {
-    if (skipNextFocus) {
-      setSkipNextFocus(false);
-
-      if (!skipChildFocusScroll) {
-        handleChildFocused(child);
-      }
-
-      return;
-    }
-
     const el = contentRef.current;
     let resolvedIdx = -1;
 
@@ -550,7 +547,13 @@ function VirtualListInner<T>(
     }
 
     if (!skipChildFocusScroll) {
-      handleChildFocused(child);
+      handleChildFocused(child, resolvedIdx);
+    }
+
+    if (skipNextFocus) {
+      setSkipNextFocus(false);
+
+      return;
     }
 
     if (resolvedIdx >= 0) {
@@ -765,7 +768,7 @@ function VirtualListInner<T>(
   }, [data.length, onLoad]);
 
   useEffect(() => {
-    if (!onLayout) {
+    if (!onLayout && !onContentSizeChange) {
       return;
     }
 
@@ -782,9 +785,17 @@ function VirtualListInner<T>(
 
     if (prev.w !== contentW || prev.h !== contentH) {
       prevLayoutRef.current = { w: contentW, h: contentH };
-      onLayout({ w: contentW, h: contentH });
+      onLayout?.({ w: contentW, h: contentH });
+      onContentSizeChange?.(contentW, contentH);
     }
-  }, [onLayout, horizontal, totalContentSize, viewportCrossSize, crossSizeIsEstimate]);
+  }, [
+    onLayout,
+    onContentSizeChange,
+    horizontal,
+    totalContentSize,
+    viewportCrossSize,
+    crossSizeIsEstimate,
+  ]);
 
   const outerStyle: LightningViewElementStyle = {
     ...resolveOuterFlex(horizontal),
