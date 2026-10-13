@@ -222,4 +222,38 @@ describe('CSSStyleBinding', () => {
 
     expect(element.pushes).toHaveLength(pushes);
   });
+
+  it('catches up on focus that moved while paused', () => {
+    const element = new FakeElement();
+    const { parts, transition } = parse(focusStyle);
+    const binding = new CSSStyleBinding(null);
+
+    binding.setElement(element.asElement());
+    binding.update(parts, transition);
+    element.setFocused(true);
+    binding.pause();
+    element.setFocused(false);
+
+    expect(element.pushes.at(-1)?.style).toMatchObject({ opacity: 0.5 });
+
+    binding.resume();
+    expect(element.pushes.at(-1)?.style).toMatchObject({ opacity: 1 });
+
+    element.setFocused(true);
+    expect(element.pushes.at(-1)?.style).toMatchObject({ opacity: 0.5 });
+  });
+
+  it('does nothing on resume when it was never paused', () => {
+    const element = new FakeElement();
+    const { parts, transition } = parse(focusStyle);
+    const binding = new CSSStyleBinding(null);
+
+    binding.setElement(element.asElement());
+    binding.update(parts, transition);
+
+    const pushes = element.pushes.length;
+
+    binding.resume();
+    expect(element.pushes).toHaveLength(pushes);
+  });
 });
