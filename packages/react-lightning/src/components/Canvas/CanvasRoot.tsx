@@ -4,6 +4,7 @@ import { FocusGroup } from '../../focus/FocusGroup';
 import { FocusKeyManager } from '../../focus/FocusKeyManager';
 import { FocusManager } from '../../focus/FocusManager';
 import { FocusManagerContext } from '../../focus/FocusManagerContext';
+import { keyEventBusHandlers } from '../../input/keyEventBus';
 import { KeyMapContext } from '../../input/KeyMapContext';
 import { KeyPressHandler } from '../../input/KeyPressHandler';
 import { LightningRootContext } from '../../render';
@@ -59,7 +60,14 @@ export const CanvasRoot: FC<Props> = ({ width, height, children, keyMap }) => {
               clipping: true,
             }}
           >
-            {children}
+            <lng-view
+              style={{ w: width ?? 1920, h: height ?? 1080 }}
+              onKeyDown={keyEventBusHandlers.onKeyDown}
+              onKeyUp={keyEventBusHandlers.onKeyUp}
+              onLongPress={keyEventBusHandlers.onLongPress}
+            >
+              {children}
+            </lng-view>
           </FocusGroup>
         </KeyPressHandler>
       </FocusManagerContext.Provider>

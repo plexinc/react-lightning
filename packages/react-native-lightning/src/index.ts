@@ -9,6 +9,7 @@ export * from 'react-native-web';
 
 // Override RN exports with our own
 export { ActivityIndicator, type ActivityIndicatorProps } from './exports/ActivityIndicator';
+export { BackHandler } from './exports/BackHandler';
 export { Button, type ButtonProps } from './exports/Button';
 export { FocusGroup, type FocusGroupProps } from './exports/FocusGroup';
 export { Image, type ImageProps } from './exports/Image';
@@ -19,6 +20,13 @@ export { Pressable, type PressableProps } from './exports/Pressable';
 export { ScrollView, type ScrollViewProps } from './exports/ScrollView';
 export * as StyleSheet from './exports/StyleSheet';
 export { Text, type TextProps } from './exports/Text';
+export {
+  type HWEvent,
+  TVEventControl,
+  TVEventHandler,
+  type TVEventType,
+  useTVEventHandler,
+} from './exports/TVEventHandler';
 export { TouchableHighlight, type TouchableHighlightProps } from './exports/TouchableHighlight';
 export { TouchableOpacity, type TouchableOpacityProps } from './exports/TouchableOpacity';
 export {

@@ -16,6 +16,13 @@ export { useFocus } from './focus/useFocus';
 export { useFocusManager } from './focus/useFocusManager';
 export { useCombinedRef } from './hooks/useCombinedRef';
 export { Keys } from './input/Keys';
+export {
+  createKeyEventBus,
+  keyEventBus,
+  type KeyEventBus,
+  type KeyEventListener,
+  type KeyEventPhase,
+} from './input/keyEventBus';
 export { createRoot, type LightningRoot, LightningRootContext, type RenderOptions } from './render';
 export type { Plugin } from './render/Plugin';
 export * from './types';
