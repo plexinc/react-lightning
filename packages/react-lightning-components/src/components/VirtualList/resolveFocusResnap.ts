@@ -19,3 +19,25 @@ export function resolveFocusResnap(
 
   return { ...anchor, cellOffset, childOffset: anchor.childOffset + delta };
 }
+
+export interface FocusResnapScroll {
+  anchor: FocusAnchor;
+  target: number;
+}
+
+export function resolveFocusResnapScroll(
+  anchor: FocusAnchor,
+  cellOffset: number,
+  scrollOffset: number,
+  targetFor: (anchor: FocusAnchor) => number,
+): FocusResnapScroll | undefined {
+  const moved = resolveFocusResnap(anchor, cellOffset);
+  const next = moved ?? anchor;
+  const target = targetFor(next);
+
+  if (!moved && Math.abs(target - scrollOffset) < 1) {
+    return undefined;
+  }
+
+  return { anchor: next, target };
+}

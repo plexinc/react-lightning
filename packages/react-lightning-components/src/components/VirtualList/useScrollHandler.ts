@@ -6,8 +6,9 @@ import { type MomentumCallbacks, createMomentumTracker } from './createMomentumT
 import type { LayoutManager } from './LayoutManager';
 import { reconcileScrollBounds } from './reconcileScrollBounds';
 import { resolveChildSnapTarget } from './resolveChildSnapAlignment';
-import { type FocusAnchor, resolveFocusResnap } from './resolveFocusResnap';
+import { type FocusAnchor, resolveFocusResnapScroll } from './resolveFocusResnap';
 import { resolveFocusScrollTarget } from './resolveFocusScrollTarget';
+import { resolveScrollIntentRescroll } from './resolveScrollIntentRescroll';
 import { resolveScrollToIndexTarget } from './resolveScrollToIndexTarget';
 import { createCriticalSpring } from './scrollSpring';
 import type { ScrollEvent } from './VirtualListTypes';
@@ -145,6 +146,7 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
   const endReachedForCountRef = useRef(0);
   const heldScrollRef = useRef<HeldScroll | null>(null);
   const focusAnchorRef = useRef<FocusAnchor | null>(null);
+  const indexIntentRef = useRef<number | null>(null);
   const animationIdRef = useRef(0);
   // True from the moment an animated scroll begins until the animation loop
   // completes (or `resetScroll` cancels). Guards both ends of the start/end
@@ -355,6 +357,7 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
 
   function scrollToOffset(offset: number, animated = true): void {
     focusAnchorRef.current = null;
+    indexIntentRef.current = null;
     scrollTo(offset, animated, true);
   }
 
@@ -380,6 +383,7 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     }
 
     scrollToOffset(target, animated);
+    indexIntentRef.current = target;
   }
 
   function scrollToEnd(animated = true): void {
@@ -427,6 +431,7 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
 
   function handleChildFocused(child: LightningElement, index: number): void {
     focusAnchorRef.current = null;
+    indexIntentRef.current = null;
 
     // Pointer hover moves focus; don't scroll to follow it or the row slides out
     // from under a stationary cursor and the next click misses.
@@ -476,16 +481,35 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
       return;
     }
 
-    const moved = resolveFocusResnap(anchor, itemAreaOffset + cell.offset);
+    const resnap = resolveFocusResnapScroll(
+      anchor,
+      itemAreaOffset + cell.offset,
+      scrollOffsetRef.current,
+      (next) => clamp(resolveFocusTarget(next)),
+    );
 
-    if (moved) {
-      focusAnchorRef.current = moved;
-      scrollTo(resolveFocusTarget(moved), true, false);
+    if (resnap) {
+      focusAnchorRef.current = resnap.anchor;
+      scrollTo(resnap.target, true, false);
     }
   });
 
+  // oxlint-disable-next-line react-hooks/exhaustive-deps -- keyed on the range the clamp depends on
+  useLayoutEffect(() => {
+    const target = resolveScrollIntentRescroll(
+      indexIntentRef.current,
+      scrollOffsetRef.current,
+      maxScroll,
+    );
+
+    if (target !== undefined) {
+      scrollTo(target, false, false);
+    }
+  }, [maxScroll]);
+
   function resetScroll(offset: number): void {
     focusAnchorRef.current = null;
+    indexIntentRef.current = null;
     heldScrollRef.current = null;
     scrollOffsetRef.current = offset;
     setCommittedScrollOffset(offset);
