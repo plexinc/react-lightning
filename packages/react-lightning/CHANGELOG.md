@@ -1,5 +1,24 @@
 # @plextv/react-lightning
 
+## 0.5.0-alpha.8
+
+### Patch Changes
+
+- c3c7bf5: Directional moves pick the next sibling by beaming from the focused leaf instead of the group's focused child, as on tvOS and Android. Up from a tile at the left of a full-width row now goes to what sits above that tile, not to whatever sits above the row's centre. When nothing lines up with the leaf, the row is used as before.
+- 816b99a: Where a claim lands on its own no longer counts as the region's last-focused item. A claim like `['last-focused', episodeKey]` that falls back to its first child while the episode key is still mounting now moves to the episode when it registers, instead of resolving 'last-focused' to its own fallback and staying put. A side effect: until the user moves inside the claimed region, a later `autoFocus` child there can still take its preferred slot.
+- fa56a4b: focus leaves an empty claim once its destination can take focus, and a second registration from further up no longer pulls an element out of the focus group around it.
+- 9b977c0: add `getFocusManager()`, `containsFocus(key)`, `refocusInitial()` and a `focusByKey(key)` that waits (bounded, cancellable) for a key that hasn't mounted yet, and keep a pending `focus()` request across a layer change when its target isn't in the layer being left.
+- 9bc21a1: repick focus when the focused screen hides but stays registered, instead of leaving the focus path on it.
+- 9bc21a1: keep a stack of covered focus targets so focus returns through a modal over a screen over home instead of falling to the first focusable sibling.
+- fa56a4b: when a screen that took focus from a hidden (covered) sibling goes away, focus returns to that sibling once it shows again instead of landing on whatever became focusable first.
+- 9d493f6: add a `Freeze` component that suspends a subtree while `frozen`, keeping its state and hiding it through hideInstance.
+- fa56a4b: a claim that mounts after the screen's patience is up still moves to a destination key that registers right after it, so a late episodes row lands on its episode instead of its first item.
+- fd21f94: add an onTransitionEnd prop that fires when a style transition stops, with finished false when a newer transition retargeted the property.
+- dbd9e34: keep renderer paint order in step with the element tree on insert-before, moves, materialize and hoisting out of flattened views
+- d45447a: An empty group that only forwards focus (`destinationKeys` or `destinations` with no focusable children, like a claim region) is no longer picked when a focused item unmounts or when focus enters its parent. Before, a remounting button could leave focus stuck on the invisible claim region next to it.
+- 9d21511: A claim that was removed no longer blocks the next one. Before, once the target of a lower priority claim unmounted, a later higher priority claim in the same scope never took focus.
+- 1de7a5c: Add `BackHandler`, `useTVEventHandler`, `TVEventHandler`, `TVEventControl` and the `HWEvent` type, fed by a global key bus (`keyEventBus`) that `CanvasRoot` dispatches every key press nothing on the focus path handled to, newest listener first, so apps no longer need their own key handler provider.
+
 ## 0.5.0-alpha.7
 
 ### Patch Changes

@@ -1,5 +1,32 @@
 # @plextv/react-native-lightning
 
+## 1.0.0-alpha.5
+
+### Patch Changes
+
+- dfeb224: scrollview keeps its offset while hidden or unmeasured instead of resetting to 0, and clamps it to the scrollable range once it has a size.
+- dfeb224: hidden scroll views skip the per-key focus scroll check, so frozen screens kept mounted cost almost nothing on focus changes.
+- 9b977c0: export `TVFocusGuideView` with react-native-tvos props on top of `FocusGroup`, and resolve the active focus manager for `requestTVFocus()` and `setDestinations()` without walking the fiber tree.
+- 1de7a5c: Add `BackHandler`, `useTVEventHandler`, `TVEventHandler`, `TVEventControl` and the `HWEvent` type, fed by a global key bus (`keyEventBus`) that `CanvasRoot` dispatches every key press nothing on the focus path handled to, newest listener first, so apps no longer need their own key handler provider.
+- Updated dependencies [c3c7bf5]
+- Updated dependencies [816b99a]
+- Updated dependencies [fa56a4b]
+- Updated dependencies [9b977c0]
+- Updated dependencies [9bc21a1]
+- Updated dependencies [9bc21a1]
+- Updated dependencies [fa56a4b]
+- Updated dependencies [9d493f6]
+- Updated dependencies [fa56a4b]
+- Updated dependencies [fd21f94]
+- Updated dependencies [dbd9e34]
+- Updated dependencies [d45447a]
+- Updated dependencies [9d21511]
+- Updated dependencies [1de7a5c]
+- Updated dependencies [d28ca50]
+- Updated dependencies [ea0a6cf]
+  - @plextv/react-lightning@0.5.0-alpha.8
+  - @plextv/react-lightning-components@1.0.0-alpha.6
+
 ## 1.0.0-alpha.4
 
 ### Minor Changes
