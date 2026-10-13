@@ -47,6 +47,7 @@ export class CSSStyleBinding {
   private _applied: Record<string, unknown> = {};
   private _hasPushed = false;
   private _disposers: (() => void)[] = [];
+  private _paused = false;
 
   public constructor(focusManager: FocusManager<LightningElement> | null) {
     this._focusManager = focusManager;
@@ -78,6 +79,21 @@ export class CSSStyleBinding {
     this._element = null;
   }
 
+  public pause(): void {
+    this._paused = true;
+    this._unsubscribe();
+  }
+
+  public resume(): void {
+    if (!this._paused) {
+      return;
+    }
+
+    this._paused = false;
+    this._resubscribe();
+    this._apply();
+  }
+
   private _unsubscribe(): void {
     for (const dispose of this._disposers) {
       dispose();
@@ -88,6 +104,10 @@ export class CSSStyleBinding {
 
   private _resubscribe(): void {
     this._unsubscribe();
+
+    if (this._paused) {
+      return;
+    }
 
     const element = this._element;
 

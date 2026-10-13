@@ -36,6 +36,7 @@ import {
 import { isAnimatedStyle } from '../isAnimatedStyle';
 import type { AnimatedStyle } from '../types/AnimatedStyle';
 import type { ReanimatedAnimation } from '../types/ReanimatedAnimation';
+import { getExitTimeout, takeExitTranslate } from '../utils/detachedExit';
 import { toLightningAnimationAndStyles } from '../utils/toLightningAnimationAndStyles';
 
 type NativeLightningElement = NativeMethods & LightningElement;
@@ -183,6 +184,7 @@ export function createAnimatedComponent<TProps extends {}>(
     }
 
     componentDidMount(): void {
+      this._css?.resume();
       this._runAnimation(this._getCachedBuilder(this.props.entering));
     }
 
@@ -212,8 +214,7 @@ export function createAnimatedComponent<TProps extends {}>(
     }
 
     componentWillUnmount(): void {
-      this._css?.destroy();
-      this._css = null;
+      this._css?.pause();
 
       if (!this.props.exiting || !this._ref) {
         return;
@@ -348,13 +349,41 @@ export function createAnimatedComponent<TProps extends {}>(
         }
 
         const lightningAnimation = toLightningAnimationAndStyles(layoutAnimation.animations);
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        let finished = false;
 
-        el.once('animationFinished', () => {
-          if (layoutAnimation.callback) {
-            layoutAnimation.callback(true);
+        const finish = () => {
+          if (finished) {
+            return;
           }
+
+          finished = true;
+          clearTimeout(timer);
+          offFinished();
+          layoutAnimation.callback?.(true);
           callback?.();
-        });
+        };
+
+        const offFinished = el.once('animationFinished', finish);
+
+        // An exit that animates nothing (a no-op target, an unsupported prop)
+        // never fires animationFinished, and its node would stay painted.
+        if (callback) {
+          timer = setTimeout(finish, getExitTimeout(lightningAnimation.transition));
+        }
+
+        const exitTargets = callback
+          ? takeExitTranslate(
+              lightningAnimation.style as Parameters<typeof takeExitTranslate>[0],
+              {
+                x: el.node.x - ((el as { _flatOffsetX?: number })._flatOffsetX ?? 0),
+                y: el.node.y - ((el as { _flatOffsetY?: number })._flatOffsetY ?? 0),
+                w,
+                h,
+              },
+              (el.style as { transform?: Parameters<typeof takeExitTranslate>[2] }).transform,
+            )
+          : null;
 
         for (const [key, value] of Object.entries(layoutAnimation.initialValues)) {
           el.setNodeProp(key as keyof RendererNode<NativeLightningElement>, value, false);
@@ -367,6 +396,14 @@ export function createAnimatedComponent<TProps extends {}>(
           style: lightningAnimation.style as LightningViewElementStyle,
           transition: lightningAnimation.transition,
         });
+
+        if (exitTargets?.x !== undefined) {
+          el.setNodeProp('x', exitTargets.x);
+        }
+
+        if (exitTargets?.y !== undefined) {
+          el.setNodeProp('y', exitTargets.y);
+        }
       });
     }
   }
