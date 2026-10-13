@@ -10,7 +10,9 @@ const shrunk = {
   totalContentSize: 1000 + 1920, // maxScroll + viewportSize
   viewportSize: 1920,
   onEndReachedThreshold: 0.5,
-  endReached: false,
+  endReachedForCount: 0,
+  itemCount: 20,
+  isScroll: false,
   hasEndReachedListener: true,
 };
 
@@ -36,18 +38,27 @@ describe('reconcileScrollBounds', () => {
 
   it('fires onEndReached on mount when a short list is within threshold', () => {
     const result = reconcileScrollBounds({
+      ...shrunk,
       scrollOffset: 0,
       maxScroll: 0,
       totalContentSize: 400, // shorter than the viewport
-      viewportSize: 1920,
-      onEndReachedThreshold: 0.5,
-      endReached: false,
-      hasEndReachedListener: true,
     });
 
     expect(result.fireEndReached).toBe(true);
-    expect(result.endReached).toBe(true);
+    expect(result.endReachedForCount).toBe(20);
     expect(result.distanceFromEnd).toBe(400 - 0 - 1920);
+  });
+
+  it('does not fire for an empty list', () => {
+    const result = reconcileScrollBounds({
+      ...shrunk,
+      scrollOffset: 0,
+      maxScroll: 0,
+      totalContentSize: 0,
+      itemCount: 0,
+    });
+
+    expect(result.fireEndReached).toBe(false);
   });
 
   it('reports distanceFromEnd 0 and fires when the shrink lands us at the end', () => {
@@ -55,29 +66,49 @@ describe('reconcileScrollBounds', () => {
 
     expect(result.distanceFromEnd).toBe(0);
     expect(result.fireEndReached).toBe(true);
-    expect(result.endReached).toBe(true);
   });
 
-  it('does not re-fire while already latched at the end', () => {
-    const result = reconcileScrollBounds({ ...shrunk, endReached: true });
+  it('does not re-fire for the same item count', () => {
+    const result = reconcileScrollBounds({ ...shrunk, endReachedForCount: 20 });
 
     expect(result.fireEndReached).toBe(false);
-    expect(result.endReached).toBe(true);
+    expect(result.endReachedForCount).toBe(20);
   });
 
-  it('re-arms the latch once back outside the threshold', () => {
+  it('fires again once the item count changes while still within threshold', () => {
     const result = reconcileScrollBounds({
+      ...shrunk,
+      endReachedForCount: 20,
+      itemCount: 40,
+    });
+
+    expect(result.fireEndReached).toBe(true);
+    expect(result.endReachedForCount).toBe(40);
+  });
+
+  it('keeps the latch when content grows past the threshold without a scroll', () => {
+    const grown = { ...shrunk, scrollOffset: 0, maxScroll: 8000, totalContentSize: 8000 + 1920 };
+    const out = reconcileScrollBounds({ ...grown, endReachedForCount: 20 });
+
+    expect(out.endReachedForCount).toBe(20);
+
+    const back = reconcileScrollBounds({ ...shrunk, endReachedForCount: out.endReachedForCount });
+
+    expect(back.fireEndReached).toBe(false);
+  });
+
+  it('re-arms once a scroll moves back outside the threshold', () => {
+    const result = reconcileScrollBounds({
+      ...shrunk,
       scrollOffset: 0,
       maxScroll: 8000,
       totalContentSize: 8000 + 1920,
-      viewportSize: 1920,
-      onEndReachedThreshold: 0.5,
-      endReached: true,
-      hasEndReachedListener: true,
+      endReachedForCount: 20,
+      isScroll: true,
     });
 
     expect(result.fireEndReached).toBe(false);
-    expect(result.endReached).toBe(false);
+    expect(result.endReachedForCount).toBe(0);
   });
 
   it('never fires without a listener', () => {
@@ -92,13 +123,9 @@ describe('reconcileScrollBounds', () => {
   it('defaults the threshold to 0.5 of the viewport when null', () => {
     // distanceFromEnd 900 sits just inside 0.5 * 1920 = 960.
     const result = reconcileScrollBounds({
+      ...shrunk,
       scrollOffset: 100,
-      maxScroll: 1000,
-      totalContentSize: 1000 + 1920,
-      viewportSize: 1920,
       onEndReachedThreshold: null,
-      endReached: false,
-      hasEndReachedListener: true,
     });
 
     expect(result.distanceFromEnd).toBe(1000 + 1920 - 100 - 1920);

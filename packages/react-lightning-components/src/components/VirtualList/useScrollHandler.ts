@@ -1,4 +1,4 @@
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import type { LightningElement } from '@plextv/react-lightning';
 
@@ -6,7 +6,9 @@ import { type MomentumCallbacks, createMomentumTracker } from './createMomentumT
 import type { LayoutManager } from './LayoutManager';
 import { reconcileScrollBounds } from './reconcileScrollBounds';
 import { resolveChildSnapTarget } from './resolveChildSnapAlignment';
+import { type FocusAnchor, resolveFocusResnap } from './resolveFocusResnap';
 import { resolveFocusScrollTarget } from './resolveFocusScrollTarget';
+import { resolveScrollToIndexTarget } from './resolveScrollToIndexTarget';
 import { createCriticalSpring } from './scrollSpring';
 import type { ScrollEvent } from './VirtualListTypes';
 
@@ -67,7 +69,14 @@ export interface UseScrollHandlerOptions {
   onMomentumScrollBegin?: (event: ScrollEvent) => void;
   /** Momentum-scroll parity: end once when the animated scroll settles or is cancelled. */
   onMomentumScrollEnd?: (event: ScrollEvent) => void;
+  itemCount: number;
+  keepFocusedItemSnapped: boolean;
+  shouldSuppressFocusScroll?: () => boolean;
 }
+
+type HeldScroll =
+  | { kind: 'index'; index: number; animated?: boolean; viewPosition?: number; viewOffset?: number }
+  | { kind: 'end'; animated?: boolean };
 
 export interface UseScrollHandlerResult {
   contentRef: RefObject<LightningElement | null>;
@@ -84,7 +93,7 @@ export interface UseScrollHandlerResult {
     viewOffset?: number,
   ) => void;
   scrollToEnd: (animated?: boolean) => void;
-  handleChildFocused: (child: LightningElement) => void;
+  handleChildFocused: (child: LightningElement, index: number) => void;
   /** Jump to an offset with no animation or onScroll/onEndReached side-effects (cellKey-restore path). */
   resetScroll: (offset: number) => void;
 }
@@ -111,7 +120,13 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     onAnimationEnd,
     onMomentumScrollBegin,
     onMomentumScrollEnd,
+    itemCount,
+    keepFocusedItemSnapped,
+    shouldSuppressFocusScroll,
   } = options;
+
+  const isFocusScrollSuppressed = (): boolean =>
+    isPointerFocusScrollSuppressed() || shouldSuppressFocusScroll?.() === true;
 
   // Keep the tracker stable across renders (owns the begin/end balance) while
   // reading the latest consumer callbacks off a ref updated post-commit — the
@@ -127,7 +142,9 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
 
   const contentRef = useRef<LightningElement>(null);
   const scrollOffsetRef = useRef(initialScrollOffset);
-  const endReachedRef = useRef(false);
+  const endReachedForCountRef = useRef(0);
+  const heldScrollRef = useRef<HeldScroll | null>(null);
+  const focusAnchorRef = useRef<FocusAnchor | null>(null);
   const animationIdRef = useRef(0);
   // True from the moment an animated scroll begins until the animation loop
   // completes (or `resetScroll` cancels). Guards both ends of the start/end
@@ -290,7 +307,7 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     }
   }
 
-  function scrollToOffset(offset: number, animated = true): void {
+  function scrollTo(offset: number, animated: boolean, isScroll: boolean): void {
     const clamped = clamp(offset);
 
     // A focus move can fire duplicate scroll requests for the same target; restarting the
@@ -317,11 +334,13 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
       totalContentSize,
       viewportSize,
       onEndReachedThreshold,
-      endReached: endReachedRef.current,
+      endReachedForCount: endReachedForCountRef.current,
+      itemCount,
+      isScroll,
       hasEndReachedListener: !!onEndReached,
     });
 
-    endReachedRef.current = bounds.endReached;
+    endReachedForCountRef.current = bounds.endReachedForCount;
 
     if (bounds.fireEndReached) {
       onEndReached?.({ distanceFromEnd: bounds.distanceFromEnd });
@@ -334,6 +353,11 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     }
   }
 
+  function scrollToOffset(offset: number, animated = true): void {
+    focusAnchorRef.current = null;
+    scrollTo(offset, animated, true);
+  }
+
   function scrollToIndex(index: number, animated = true, viewPosition = 0, viewOffset = 0): void {
     const layout = layoutManager.getLayout(index);
 
@@ -341,20 +365,72 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
       return;
     }
 
-    const absOffset = itemAreaOffset + layout.offset;
-    const target = absOffset - viewPosition * (viewportSize - layout.size) + viewOffset;
+    const target = resolveScrollToIndexTarget({
+      itemOffset: itemAreaOffset + layout.offset,
+      itemSize: layout.size,
+      viewportSize,
+      viewPosition,
+      viewOffset,
+    });
+
+    if (target === undefined) {
+      heldScrollRef.current = { kind: 'index', index, animated, viewPosition, viewOffset };
+
+      return;
+    }
 
     scrollToOffset(target, animated);
   }
 
   function scrollToEnd(animated = true): void {
+    if (viewportSize <= 0) {
+      heldScrollRef.current = { kind: 'end', animated };
+
+      return;
+    }
+
     scrollToOffset(maxScroll, animated);
   }
 
-  function handleChildFocused(child: LightningElement): void {
+  // oxlint-disable-next-line react-hooks/exhaustive-deps -- replays with this render's scroll functions once the viewport lands
+  useLayoutEffect(() => {
+    const held = heldScrollRef.current;
+
+    if (!held || viewportSize <= 0) {
+      return;
+    }
+
+    heldScrollRef.current = null;
+
+    if (held.kind === 'end') {
+      scrollToEnd(held.animated);
+    } else {
+      scrollToIndex(held.index, held.animated, held.viewPosition, held.viewOffset);
+    }
+  }, [viewportSize]);
+
+  function resolveFocusTarget(anchor: FocusAnchor): number {
+    return resolveFocusScrollTarget({
+      childOffset: anchor.childOffset,
+      childSize: anchor.childSize,
+      viewportSize,
+      snapToAlignment: anchor.align,
+      snapOffset: anchor.snapOffset,
+      snapToItemPadding,
+      paddingStart,
+      paddingEnd,
+      headerSize: itemAreaOffset - paddingStart,
+      footerSize: totalContentSize - itemAreaOffset - layoutManager.totalSize - paddingEnd,
+      maxScroll,
+    });
+  }
+
+  function handleChildFocused(child: LightningElement, index: number): void {
+    focusAnchorRef.current = null;
+
     // Pointer hover moves focus; don't scroll to follow it or the row slides out
     // from under a stationary cursor and the next click misses.
-    if (isPointerFocusScrollSuppressed()) {
+    if (isFocusScrollSuppressed()) {
       return;
     }
 
@@ -365,34 +441,52 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     }
 
     const pos = child.getRelativePosition(el);
-    const childOffset = horizontal ? pos.x : pos.y;
-    const childSize = horizontal ? child.node.w : child.node.h;
-
-    const headerSize = itemAreaOffset - paddingStart;
-    const footerSize = totalContentSize - itemAreaOffset - layoutManager.totalSize - paddingEnd;
-
     // A row's own scrollSnapAlign/scrollSnapOffset wins over the list-level alignment,
     // matching react-native-tvos ("item" defers to rows, markerless rows get 'start').
     const childTarget = resolveChildSnapTarget(child);
-    const target = resolveFocusScrollTarget({
-      childOffset,
-      childSize,
-      viewportSize,
-      snapToAlignment:
-        childTarget?.align ?? (snapToAlignment === 'item' ? 'start' : snapToAlignment),
+    const cell = index >= 0 ? layoutManager.getLayout(index) : undefined;
+    const anchor: FocusAnchor = {
+      index,
+      cellOffset: cell ? itemAreaOffset + cell.offset : 0,
+      childOffset: horizontal ? pos.x : pos.y,
+      childSize: horizontal ? child.node.w : child.node.h,
+      align: childTarget?.align ?? (snapToAlignment === 'item' ? 'start' : snapToAlignment),
       snapOffset: childTarget?.offset,
-      snapToItemPadding,
-      paddingStart,
-      paddingEnd,
-      headerSize,
-      footerSize,
-      maxScroll,
-    });
+    };
 
-    scrollToOffset(target, true);
+    if (keepFocusedItemSnapped && cell) {
+      focusAnchorRef.current = anchor;
+    }
+
+    scrollTo(resolveFocusTarget(anchor), true, true);
   }
 
+  useLayoutEffect(() => {
+    const anchor = focusAnchorRef.current;
+
+    if (!anchor || isFocusScrollSuppressed()) {
+      return;
+    }
+
+    const cell = layoutManager.getLayout(anchor.index);
+
+    if (!cell) {
+      focusAnchorRef.current = null;
+
+      return;
+    }
+
+    const moved = resolveFocusResnap(anchor, itemAreaOffset + cell.offset);
+
+    if (moved) {
+      focusAnchorRef.current = moved;
+      scrollTo(resolveFocusTarget(moved), true, false);
+    }
+  });
+
   function resetScroll(offset: number): void {
+    focusAnchorRef.current = null;
+    heldScrollRef.current = null;
     scrollOffsetRef.current = offset;
     setCommittedScrollOffset(offset);
 
@@ -442,7 +536,9 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
       totalContentSize,
       viewportSize,
       onEndReachedThreshold,
-      endReached: endReachedRef.current,
+      endReachedForCount: endReachedForCountRef.current,
+      itemCount,
+      isScroll: false,
       hasEndReachedListener: !!onEndReached,
     });
 
@@ -453,12 +549,12 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
       onScroll?.(makeScrollEvent(bounds.clampedOffset));
     }
 
-    endReachedRef.current = bounds.endReached;
+    endReachedForCountRef.current = bounds.endReachedForCount;
 
     if (bounds.fireEndReached) {
       onEndReached?.({ distanceFromEnd: bounds.distanceFromEnd });
     }
-  }, [totalContentSize, viewportSize]);
+  }, [totalContentSize, viewportSize, itemCount]);
 
   return {
     contentRef,
