@@ -329,3 +329,77 @@ describe('LightningViewElement same-parent child moves', () => {
     expect(moved).toEqual([]);
   });
 });
+
+describe('LightningViewElement onTransitionEnd', () => {
+  function createTransitionElement() {
+    const stops: (() => void)[] = [];
+    const node = createMockNode({
+      animate() {
+        const controller = {
+          once(_event: string, cb: (c: unknown) => void) {
+            stops.push(() => cb(controller));
+
+            return controller;
+          },
+          start() {
+            return controller;
+          },
+        };
+
+        return controller;
+      },
+    });
+    const transitionRenderer = {
+      createNode: () => node,
+      createTextNode: () => node,
+      createShader: () => ({ props: {} }),
+      createTexture: () => ({}),
+      destroyNode() {},
+    } as unknown as RendererMain;
+    const events: { propertyName: string; finished: boolean }[] = [];
+    const el = new LightningViewElement(
+      {
+        style: { alpha: 1 },
+        transition: { alpha: { duration: 100 } },
+        onTransitionEnd: (event) => events.push(event),
+      } as LightningViewElementProps<LightningViewElementStyle>,
+      transitionRenderer,
+      [],
+      {} as Fiber,
+    );
+
+    return { el, stops, events };
+  }
+
+  it('reports a style transition that ran to its target', () => {
+    const { el, stops, events } = createTransitionElement();
+
+    el.animateStyle('alpha', 0);
+    stops[0]?.();
+
+    expect(events).toEqual([{ propertyName: 'alpha', finished: true }]);
+  });
+
+  it('reports a retargeted transition as not finished', () => {
+    const { el, stops, events } = createTransitionElement();
+
+    el.animateStyle('alpha', 0);
+    el.animateStyle('alpha', 0.5);
+    stops[0]?.();
+    stops[1]?.();
+
+    expect(events).toEqual([
+      { propertyName: 'alpha', finished: false },
+      { propertyName: 'alpha', finished: true },
+    ]);
+  });
+
+  it('does not report shader animations', () => {
+    const { el, stops, events } = createTransitionElement();
+
+    el.animateShader({});
+    stops[0]?.();
+
+    expect(events).toEqual([]);
+  });
+});
