@@ -1777,10 +1777,26 @@ export class FocusManager<
         parent.focusedElement = node;
       }
     } else if (parent.focusedElement === node) {
-      parent.focusedElement = this._restoreAfterLoss(node) ?? this._findNextBestFocus(parent, node);
+      const restored = this._restoreAfterLoss(node);
+
+      if (restored) {
+        parent.focusedElement = restored;
+      } else {
+        parent.focusedElement = this._findNextBestFocus(parent, node);
+        this._holdForReturn(parent, node);
+      }
     }
 
     this._checkFocusableChildren(parent);
+  }
+
+  private _holdForReturn(parent: FocusNode<T> | RootNode<T>, node: FocusNode<T>): void {
+    if (parent.focusedElement === node) {
+      return;
+    }
+
+    parent.restoreStack = [...(parent.restoreStack ?? []).filter((n) => n !== node), node];
+    parent.restorePending = true;
   }
 
   private _hasLeafParent(element: T, leafNodes: Set<number>, parentNode: T | null): boolean {
