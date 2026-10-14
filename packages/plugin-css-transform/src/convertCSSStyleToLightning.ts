@@ -1,6 +1,7 @@
+import { PARTIAL_STYLE } from '@plextv/react-lightning';
 import type { LightningElementStyle, LightningTextElementStyle } from '@plextv/react-lightning';
 
-import type { AllStyleProps } from './types/ReactStyle';
+import type { AllStyleProps, AllStyles } from './types/ReactStyle';
 import { flattenStyles } from './utils/flattenStyles';
 import { htmlColorToLightningColor } from './utils/htmlColorToLightningColor';
 import { parseLinearGradient } from './utils/parseLinearGradient';
@@ -10,6 +11,10 @@ import { parseTransform } from './utils/parseTransform';
 // borderRadius (number, or [tl, tr, br, bl]). Expand the longhands so they aren't dropped.
 // Logical start/end map to physical left/right (LTR only, which is all the app ships).
 // Non-numeric values (animated nodes, '50%') aren't supported by the shader, so they're skipped.
+function num(value: unknown): number | undefined {
+  return typeof value === 'number' ? value : undefined;
+}
+
 interface CornerRadii {
   borderRadius?: unknown;
   borderTopLeftRadius?: unknown;
@@ -37,9 +42,6 @@ function resolveBorderRadius(
     borderBottomEndRadius,
   } = radii;
 
-  const num = (value: unknown): number | undefined =>
-    typeof value === 'number' ? value : undefined;
-
   const topLeft = num(borderTopLeftRadius) ?? num(borderTopStartRadius);
   const topRight = num(borderTopRightRadius) ?? num(borderTopEndRadius);
   const bottomRight = num(borderBottomRightRadius) ?? num(borderBottomEndRadius);
@@ -61,6 +63,43 @@ function resolveBorderRadius(
   ];
 }
 
+const CONVERTED_KEYS: ReadonlySet<string> = new Set([
+  'backgroundColor',
+  'color',
+  'border',
+  'borderWidth',
+  'borderColor',
+  'outlineWidth',
+  'outlineColor',
+  'outlineOffset',
+  'outlineStyle',
+  'shadowColor',
+  'textShadowColor',
+  'textShadowOffset',
+  'textShadowRadius',
+  'textAlign',
+  'opacity',
+  'overflow',
+  'overflowX',
+  'overflowY',
+  'tintColor',
+  'fontWeight',
+  'transform',
+  'width',
+  'height',
+  'backgroundImage',
+  'experimental_backgroundImage',
+  'borderRadius',
+  'borderTopLeftRadius',
+  'borderTopRightRadius',
+  'borderBottomLeftRadius',
+  'borderBottomRightRadius',
+  'borderTopStartRadius',
+  'borderTopEndRadius',
+  'borderBottomStartRadius',
+  'borderBottomEndRadius',
+]);
+
 export function convertCSSStyleToLightning(
   style: AllStyleProps,
 ): LightningElementStyle | undefined {
@@ -68,6 +107,7 @@ export function convertCSSStyleToLightning(
     return;
   }
 
+  const flatStyle = flattenStyles<AllStyles>(style);
   const {
     backgroundColor,
     color,
@@ -77,8 +117,6 @@ export function convertCSSStyleToLightning(
     outlineWidth,
     outlineColor,
     outlineOffset,
-    // Dropped: the shader only draws a solid ring, dashed/dotted have no equivalent.
-    outlineStyle: _outlineStyle,
     shadowColor,
     textShadowColor,
     textShadowOffset,
@@ -95,20 +133,24 @@ export function convertCSSStyleToLightning(
     height,
     backgroundImage,
     experimental_backgroundImage,
-    borderRadius,
-    borderTopLeftRadius,
-    borderTopRightRadius,
-    borderBottomLeftRadius,
-    borderBottomRightRadius,
-    borderTopStartRadius,
-    borderTopEndRadius,
-    borderBottomStartRadius,
-    borderBottomEndRadius,
-    ...otherStyles
-  } = flattenStyles(style);
-  const finalStyle = {
-    ...otherStyles,
-  } as LightningElementStyle;
+  } = flatStyle;
+  const finalStyle = {} as LightningElementStyle;
+
+  for (const key in flatStyle) {
+    if (!CONVERTED_KEYS.has(key)) {
+      const value = flatStyle[key as keyof AllStyles];
+
+      if (value !== undefined) {
+        (finalStyle as Record<string, unknown>)[key] = value;
+      }
+    }
+  }
+
+  const partial = (flatStyle as Record<PropertyKey, unknown>)[PARTIAL_STYLE];
+
+  if (partial !== undefined) {
+    (finalStyle as Record<PropertyKey, unknown>)[PARTIAL_STYLE] = partial;
+  }
 
   if (backgroundColor != null && color == null) {
     finalStyle.color = htmlColorToLightningColor(backgroundColor);
@@ -198,26 +240,26 @@ export function convertCSSStyleToLightning(
     finalStyle.outlineOffset = outlineOffset;
   }
 
-  if (otherStyles.display === 'none') {
+  if (flatStyle.display === 'none') {
     finalStyle.alpha = 0;
   } else if (opacity != null && typeof opacity === 'number') {
     finalStyle.alpha = opacity;
-  } else if (otherStyles.display === 'flex') {
+  } else if (flatStyle.display === 'flex') {
     finalStyle.alpha = 1;
   }
 
   // We don't destructure the following properties since we still want them set
   // in the final style object
-  if (otherStyles.left != null) {
+  if (flatStyle.left != null) {
     finalStyle.x =
-      typeof otherStyles.left === 'number'
-        ? otherStyles.left
-        : Number.parseInt(otherStyles.left.toString(), 10);
+      typeof flatStyle.left === 'number'
+        ? flatStyle.left
+        : Number.parseInt(flatStyle.left.toString(), 10);
   }
 
-  if (otherStyles.top != null) {
+  if (flatStyle.top != null) {
     finalStyle.y =
-      typeof otherStyles.top === 'number' ? otherStyles.top : Number.parseInt(otherStyles.top, 10);
+      typeof flatStyle.top === 'number' ? flatStyle.top : Number.parseInt(flatStyle.top, 10);
   }
 
   // The renderer resolves the full 100-900 scale (and the keyword weights) to
@@ -272,17 +314,7 @@ export function convertCSSStyleToLightning(
     finalStyle.clipping = true;
   }
 
-  const cornerRadii = resolveBorderRadius({
-    borderRadius,
-    borderTopLeftRadius,
-    borderTopRightRadius,
-    borderBottomLeftRadius,
-    borderBottomRightRadius,
-    borderTopStartRadius,
-    borderTopEndRadius,
-    borderBottomStartRadius,
-    borderBottomEndRadius,
-  });
+  const cornerRadii = resolveBorderRadius(flatStyle);
   if (cornerRadii != null) {
     finalStyle.borderRadius = cornerRadii;
   }

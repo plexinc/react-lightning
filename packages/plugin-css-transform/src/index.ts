@@ -46,11 +46,9 @@ export function plugin(): Plugin {
         return props;
       }
 
-      const { style, ...otherProps } = props;
-
       return {
-        ...otherProps,
-        style: convertCSSStyleToLightning(style as AllStyleProps),
+        ...props,
+        style: convertCSSStyleToLightning(props.style as AllStyleProps),
       };
     },
   };
