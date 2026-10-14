@@ -141,3 +141,27 @@ describe('convertCSSStyleToLightning outline', () => {
     expect(result.outlineWidth).toBe(2);
   });
 });
+
+describe('convertCSSStyleToLightning pass-through', () => {
+  it('copies unconverted keys, drops undefined ones and leaves the input untouched', () => {
+    const input = {
+      flexDirection: 'row',
+      marginLeft: 12,
+      zIndex: undefined,
+      width: 100,
+      backgroundColor: '#ff0000',
+      opacity: 0.5,
+    } as AllStyleProps;
+    const snapshot = { ...(input as object) };
+
+    expect(convert(input)).toEqual({
+      flexDirection: 'row',
+      marginLeft: 12,
+      color: 0xff0000ff,
+      alpha: 0.5,
+      w: 100,
+    });
+    expect('zIndex' in convert(input)).toBe(false);
+    expect(input).toEqual(snapshot);
+  });
+});
