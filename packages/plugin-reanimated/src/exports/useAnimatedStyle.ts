@@ -1,17 +1,13 @@
 import type { DependencyList } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import type { useAnimatedStyle as useAnimatedStyleRN } from 'react-native-reanimated-original';
 import type { Mutable } from 'react-native-reanimated/lib/typescript/commonTypes';
 import type { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/commonTypes';
-import type { useAnimatedStyle as useAnimatedStyleRN } from 'react-native-reanimated-original';
+
 import { PARTIAL_STYLE } from '@plextv/react-lightning';
-import type {
-  LightningElement,
-  LightningElementStyle,
-} from '@plextv/react-lightning';
-import {
-  type RunningProgram,
-  reconcileRunners,
-} from '../animation/reconcileRunners';
+import type { LightningElement, LightningElementStyle } from '@plextv/react-lightning';
+
+import { type RunningProgram, reconcileRunners } from '../animation/reconcileRunners';
 import { runAnimationProgram } from '../animation/runAnimationProgram';
 import type { AnimatedObject } from '../types/AnimatedObject';
 import type { AnimatedStyle } from '../types/AnimatedStyle';
@@ -21,14 +17,9 @@ import {
 } from '../utils/toLightningAnimationAndStyles';
 import { useTrackedReaction } from './useTrackedReaction';
 
-type UseAnimatedStyleFn = (
-  ...args: Parameters<typeof useAnimatedStyleRN>
-) => AnimatedStyle;
+type UseAnimatedStyleFn = (...args: Parameters<typeof useAnimatedStyleRN>) => AnimatedStyle;
 
-type Runners = WeakMap<
-  LightningElement,
-  Map<keyof LightningElementStyle, RunningProgram>
->;
+type Runners = WeakMap<LightningElement, Map<keyof LightningElementStyle, RunningProgram>>;
 
 function setStyles(
   view: LightningElement,
@@ -49,12 +40,16 @@ function setStyles(
     style: style as LightningElementStyle,
   });
 
+  const running = runners.get(view);
+
+  if (running === undefined && schedules.length === 0) {
+    return;
+  }
+
   // Only (re)start programs whose key changed; unchanged loops keep running and
   // a removed key (e.g. a reset to a static value) is cancelled.
-  const next = reconcileRunners(
-    runners.get(view) ?? new Map(),
-    schedules,
-    (schedule) => runAnimationProgram(view, schedule.prop, schedule.program),
+  const next = reconcileRunners(running ?? new Map(), schedules, (schedule) =>
+    runAnimationProgram(view, schedule.prop, schedule.program),
   );
 
   if (next.size) {
@@ -76,8 +71,7 @@ function applyComputedStyle(
   lastApplied: { current: AppliedStyles },
   runners: Runners,
 ): void {
-  const { transition, style, schedules } =
-    toLightningAnimationAndStyles(computedStyle);
+  const { transition, style, schedules } = toLightningAnimationAndStyles(computedStyle);
 
   lastApplied.current = { transition, style, schedules };
 
