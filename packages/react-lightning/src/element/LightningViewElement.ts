@@ -135,7 +135,7 @@ export class LightningViewElement<
   private _hasStagedUpdates = false;
   private _hasLayout = false;
   /** Last requested animation target per style key, for the no-op-skip guard. */
-  private _animTargets = new Map<PropertyKey, unknown>();
+  private _animTargets: Map<PropertyKey, unknown> | null = null;
   private _paintWithheld = false;
   private _unsettledLayouts = 0;
   private _reactHidden = false;
@@ -1269,7 +1269,7 @@ export class LightningViewElement<
     // an active animation for delay+duration, keeping the scene hot and
     // full-redrawing every frame; focus moves fire several (e.g. a popover's
     // delayed alpha 1 -> 1) and stall low-end devices for their whole window.
-    const inFlight = this._animTargets.get(key);
+    const inFlight = this._animTargets?.get(key);
 
     if (
       (this.node as unknown as Record<PropertyKey, unknown>)[key] === value &&
@@ -1278,7 +1278,7 @@ export class LightningViewElement<
       return noopAnimationController;
     }
 
-    this._animTargets.set(key, value);
+    (this._animTargets ??= new Map()).set(key, value);
 
     let target = value;
 
@@ -1743,7 +1743,7 @@ export class LightningViewElement<
       if (styleKey !== undefined) {
         this.props.onTransitionEnd?.({
           propertyName: styleKey,
-          finished: this._animTargets.get(styleKey) === styleTarget,
+          finished: this._animTargets?.get(styleKey) === styleTarget,
         });
       }
     });
