@@ -7,10 +7,8 @@ const hexRgbRegex = /^#?([a-f0-9]{6})$/i;
 const hexShortRgbaRegex = /^#?([a-f0-9]{4})$/i;
 const hexShortRgbRegex = /^#?([a-f0-9]{3})$/i;
 // Accept both legacy comma form and modern space form with a `/` alpha delimiter.
-const rgbRegex =
-  /^rgba?\(([0-9.]+)[,\s]+([0-9.]+)[,\s]+([0-9.]+)[,\s/]*([0-9.]+)?\)$/i;
-const hslRegex =
-  /^hsla?\(([0-9.]+)(?:deg)?[,\s]+([0-9.]+)%[,\s]+([0-9.]+)%[,\s/]*([0-9.]+)?\)$/i;
+const rgbRegex = /^rgba?\(([0-9.]+)[,\s]+([0-9.]+)[,\s]+([0-9.]+)[,\s/]*([0-9.]+)?\)$/i;
+const hslRegex = /^hsla?\(([0-9.]+)(?:deg)?[,\s]+([0-9.]+)%[,\s]+([0-9.]+)%[,\s/]*([0-9.]+)?\)$/i;
 // Keyword colors (inherit, currentColor, …) have no fixed value to resolve, so
 // they reach the throw below and take the whole screen down. Drop them instead.
 const cssKeywordColorRegex = /^(inherit|initial|unset|revert|currentcolor)$/i;
@@ -20,14 +18,9 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   l /= 100;
   const k = (n: number): number => (n + h / 30) % 12;
   const a = s * Math.min(l, 1 - l);
-  const f = (n: number): number =>
-    l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  const f = (n: number): number => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
 
-  return [
-    Math.round(f(0) * 255),
-    Math.round(f(8) * 255),
-    Math.round(f(4) * 255),
-  ];
+  return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
 }
 
 function packRgba(r: number, g: number, b: number, alpha?: string): number {
@@ -39,18 +32,13 @@ function packRgba(r: number, g: number, b: number, alpha?: string): number {
   );
 }
 
-function withAlphaOverride(
-  color: number,
-  overrideAlpha?: number | string,
-): number {
+function withAlphaOverride(color: number, overrideAlpha?: number | string): number {
   if (overrideAlpha == null) {
     return color;
   }
 
   const alphaInt =
-    typeof overrideAlpha === 'string'
-      ? Number.parseInt(overrideAlpha, 16)
-      : overrideAlpha;
+    typeof overrideAlpha === 'string' ? Number.parseInt(overrideAlpha, 16) : overrideAlpha;
 
   // Create a bitmask for the alpha value
   const alphaMask = 0xffffff00 | alphaInt;
@@ -58,6 +46,9 @@ function withAlphaOverride(
   // Combine the color and alpha values and convert to unsigned
   return (color & alphaMask) >>> 0;
 }
+
+const MAX_CACHED_COLORS = 512;
+const parsedColors = new Map<string, number | undefined>();
 
 export function htmlColorToLightningColor(
   color?: ColorValue | number,
@@ -78,23 +69,36 @@ export function htmlColorToLightningColor(
     return undefined;
   }
 
-  const colorLower = String(color).toLowerCase();
+  const colorString = color as string;
+  const cached = parsedColors.get(colorString);
+
+  if (cached !== undefined || parsedColors.has(colorString)) {
+    return cached === undefined ? undefined : withAlphaOverride(cached, overrideAlpha);
+  }
+
+  const parsed = parseColorString(colorString);
+
+  if (parsedColors.size >= MAX_CACHED_COLORS) {
+    parsedColors.clear();
+  }
+
+  parsedColors.set(colorString, parsed);
+
+  return parsed === undefined ? undefined : withAlphaOverride(parsed, overrideAlpha);
+}
+
+function parseColorString(color: string): number | undefined {
+  const colorLower = color.toLowerCase();
   const colorFromCode = htmlColorCodes[colorLower];
 
   if (colorFromCode != null) {
-    return withAlphaOverride(colorFromCode, overrideAlpha);
+    return colorFromCode;
   }
 
   const rgbResult = rgbRegex.exec(colorLower);
 
   if (rgbResult) {
-    const [, r, g, b, alpha] = rgbResult.slice() as [
-      string,
-      string,
-      string,
-      string,
-      string?,
-    ];
+    const [, r, g, b, alpha] = rgbResult.slice() as [string, string, string, string, string?];
     const rgbColor = packRgba(
       Number.parseInt(r, 10),
       Number.parseInt(g, 10),
@@ -102,44 +106,28 @@ export function htmlColorToLightningColor(
       alpha,
     );
 
-    return withAlphaOverride(rgbColor, overrideAlpha);
+    return rgbColor;
   }
 
   const hslResult = hslRegex.exec(colorLower);
 
   if (hslResult) {
-    const [, h, s, l, alpha] = hslResult.slice() as [
-      string,
-      string,
-      string,
-      string,
-      string?,
-    ];
-    const [r, g, b] = hslToRgb(
-      Number.parseFloat(h),
-      Number.parseFloat(s),
-      Number.parseFloat(l),
-    );
+    const [, h, s, l, alpha] = hslResult.slice() as [string, string, string, string, string?];
+    const [r, g, b] = hslToRgb(Number.parseFloat(h), Number.parseFloat(s), Number.parseFloat(l));
 
-    return withAlphaOverride(packRgba(r, g, b, alpha), overrideAlpha);
+    return packRgba(r, g, b, alpha);
   }
 
   const hexRgbaResult = hexRgbaRegex.exec(colorLower);
 
   if (hexRgbaResult?.[1]) {
-    return withAlphaOverride(
-      Number.parseInt(hexRgbaResult[1], 16),
-      overrideAlpha,
-    );
+    return Number.parseInt(hexRgbaResult[1], 16);
   }
 
   const hexRgbResult = hexRgbRegex.exec(colorLower);
 
   if (hexRgbResult?.[1]) {
-    return withAlphaOverride(
-      Number.parseInt(`${hexRgbResult[1]}ff`, 16),
-      overrideAlpha,
-    );
+    return Number.parseInt(`${hexRgbResult[1]}ff`, 16);
   }
 
   const hexShortRgbaResult = hexShortRgbaRegex.exec(colorLower);
@@ -148,7 +136,7 @@ export function htmlColorToLightningColor(
     const short = hexShortRgbaResult[1];
     const rgbaText = [...short].map((c) => `${c}${c}`).join('');
 
-    return withAlphaOverride(Number.parseInt(rgbaText, 16), overrideAlpha);
+    return Number.parseInt(rgbaText, 16);
   }
 
   const hexShortRgbResult = hexShortRgbRegex.exec(colorLower);
@@ -157,14 +145,12 @@ export function htmlColorToLightningColor(
     const short = hexShortRgbResult[1];
     const rgbText = `${[...short].map((c) => `${c}${c}`).join('')}ff`;
 
-    return withAlphaOverride(Number.parseInt(rgbText, 16), overrideAlpha);
+    return Number.parseInt(rgbText, 16);
   }
 
   if (cssKeywordColorRegex.test(colorLower)) {
     return undefined;
   }
 
-  throw new Error(
-    `Invalid hex value specified for conversion: ${color.toString()}`,
-  );
+  throw new Error(`Invalid hex value specified for conversion: ${color.toString()}`);
 }
