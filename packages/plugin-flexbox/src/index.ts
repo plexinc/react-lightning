@@ -117,6 +117,10 @@ export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
         !isPartialStyle,
       );
 
+      if (isPartialStyle) {
+        (remainingStyles as Record<PropertyKey, unknown>)[PARTIAL_STYLE] = true;
+      }
+
       return {
         ...props,
         style: remainingStyles as Partial<LightningElementStyle>,
