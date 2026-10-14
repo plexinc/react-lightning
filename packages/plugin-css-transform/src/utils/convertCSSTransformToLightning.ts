@@ -12,9 +12,7 @@ function parseTranslateValue(value: string | number): number | `${number}%` {
 
   const trimmed = value.trim();
 
-  return trimmed.endsWith('%')
-    ? (trimmed as `${number}%`)
-    : Number.parseInt(trimmed, 10);
+  return trimmed.endsWith('%') ? (trimmed as `${number}%`) : Number.parseInt(trimmed, 10);
 }
 
 function getXYTranslate(
@@ -79,16 +77,20 @@ export function convertCSSTransformToLightning(
   transformType: string,
   transformValue: string | number | number[] | Record<string, number | string | number[]>,
 ): Transform {
-  const transformResult: Transform = {};
+  return writeCSSTransform({}, transformType, transformValue);
+}
 
+export function writeCSSTransform(
+  transformResult: Transform,
+  transformType: string,
+  transformValue: string | number | number[] | Record<string, number | string | number[]>,
+): Transform {
   if (typeof transformValue === 'object') {
     for (const key in transformValue) {
       const value = (transformValue as Record<string, number | string | number[]>)[key];
 
       if (value != null) {
-        const result = convertCSSTransformToLightning(key, value);
-
-        Object.assign(transformResult, result);
+        writeCSSTransform(transformResult, key, value);
       }
     }
 
@@ -105,14 +107,10 @@ export function convertCSSTransformToLightning(
       }
       break;
     case 'translateX':
-      transformResult.translateX = parseTranslateValue(
-        transformValue as string | number,
-      );
+      transformResult.translateX = parseTranslateValue(transformValue as string | number);
       break;
     case 'translateY':
-      transformResult.translateY = parseTranslateValue(
-        transformValue as string | number,
-      );
+      transformResult.translateY = parseTranslateValue(transformValue as string | number);
       break;
     case 'scale':
       {
