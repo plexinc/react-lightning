@@ -106,11 +106,16 @@ export class FontMetrics {
 
     let width = 0;
     let prevCodepoint = 0;
+    let codepointLength = 1;
 
-    for (const char of text) {
-      const codepoint = char.codePointAt(0);
+    // Index loop rather than for...of: no per-character string. A surrogate
+    // pair advances by two, a lone surrogate by one, same as the iterator.
+    for (let i = 0; i < text.length; i += codepointLength) {
+      const codepoint = text.codePointAt(i) as number;
 
-      if (codepoint === undefined || isZeroWidthSpace(codepoint)) {
+      codepointLength = codepoint > 0xffff ? 2 : 1;
+
+      if (isZeroWidthSpace(codepoint)) {
         continue;
       }
 
