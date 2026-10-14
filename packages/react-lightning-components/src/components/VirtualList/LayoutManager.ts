@@ -53,6 +53,7 @@ export class LayoutManager<T> {
   private _cellCrossSize: number;
   private _keyExtractor?: (item: T, index: number) => string;
   private _measuredSizes = new Map<string, number>();
+  private _measurementsSnapshot: Map<string, number> | null = null;
   /** While true, reports accumulate per-userKey and skip dampening. Drained on `setBatching(false)`. */
   private _batching = false;
   private _batchedSizes = new Map<string, number>();
@@ -62,10 +63,7 @@ export class LayoutManager<T> {
    * fires. Filters multi-frame measurement cascades during scroll/focus
    * animations and async content settling.
    */
-  private _pendingSizes = new Map<
-    string,
-    { size: number; firstSeenAt: number }
-  >();
+  private _pendingSizes = new Map<string, { size: number; firstSeenAt: number }>();
   /** Backstop timers — required because a cell can push once and go quiet (props stable). */
   private _pendingTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private _onChange?: () => void;
@@ -100,9 +98,15 @@ export class LayoutManager<T> {
     this._onChange = cb;
   }
 
-  /** Copy so the cache snapshot doesn't alias live state. */
   getMeasurements(): Map<string, number> {
-    return new Map(this._measuredSizes);
+    this._measurementsSnapshot ??= new Map(this._measuredSizes);
+
+    return this._measurementsSnapshot;
+  }
+
+  private _setMeasuredSize(userKey: string, size: number): void {
+    this._measuredSizes.set(userKey, size);
+    this._measurementsSnapshot = null;
   }
 
   /**
@@ -112,6 +116,7 @@ export class LayoutManager<T> {
    */
   setMeasurements(measurements: Map<string, number>): void {
     this._measuredSizes = new Map(measurements);
+    this._measurementsSnapshot = null;
     this._batchedSizes.clear();
     this._pendingSizes.clear();
 
@@ -152,7 +157,7 @@ export class LayoutManager<T> {
         continue;
       }
 
-      this._measuredSizes.set(userKey, size);
+      this._setMeasuredSize(userKey, size);
 
       if (this._firstMeasuredSize === 0 && size > 0) {
         this._firstMeasuredSize = size;
@@ -195,34 +200,22 @@ export class LayoutManager<T> {
       changed = true;
     }
 
-    if (
-      config.extraData !== undefined &&
-      config.extraData !== this._extraData
-    ) {
+    if (config.extraData !== undefined && config.extraData !== this._extraData) {
       this._extraData = config.extraData;
       changed = true;
     }
 
-    if (
-      config.separatorSize !== undefined &&
-      config.separatorSize !== this._separatorSize
-    ) {
+    if (config.separatorSize !== undefined && config.separatorSize !== this._separatorSize) {
       this._separatorSize = config.separatorSize;
       changed = true;
     }
 
-    if (
-      config.cellCrossSize !== undefined &&
-      config.cellCrossSize !== this._cellCrossSize
-    ) {
+    if (config.cellCrossSize !== undefined && config.cellCrossSize !== this._cellCrossSize) {
       this._cellCrossSize = config.cellCrossSize;
       changed = true;
     }
 
-    if (
-      config.keyExtractor !== undefined &&
-      config.keyExtractor !== this._keyExtractor
-    ) {
+    if (config.keyExtractor !== undefined && config.keyExtractor !== this._keyExtractor) {
       this._keyExtractor = config.keyExtractor;
       changed = true;
     }
@@ -264,7 +257,7 @@ export class LayoutManager<T> {
     // First measurement, or a fixpoint-settled size — apply immediately,
     // nothing to thrash against.
     if (existing == null || final) {
-      this._measuredSizes.set(userKey, size);
+      this._setMeasuredSize(userKey, size);
 
       if (this._firstMeasuredSize === 0) {
         this._firstMeasuredSize = size;
@@ -283,7 +276,7 @@ export class LayoutManager<T> {
     if (pending != null && Math.abs(pending.size - size) < 1) {
       // Same as pending — don't reset the timer; commit if window elapsed.
       if (now - pending.firstSeenAt >= LayoutManager._STABILITY_MS) {
-        this._measuredSizes.set(userKey, size);
+        this._setMeasuredSize(userKey, size);
         this._clearPending(userKey);
         this._dirty = true;
 
@@ -306,7 +299,7 @@ export class LayoutManager<T> {
         return;
       }
 
-      this._measuredSizes.set(userKey, size);
+      this._setMeasuredSize(userKey, size);
       this._pendingSizes.delete(userKey);
       this._pendingTimers.delete(userKey);
       this._dirty = true;
@@ -340,6 +333,7 @@ export class LayoutManager<T> {
     }
 
     this._measuredSizes.clear();
+    this._measurementsSnapshot = null;
     this._batchedSizes.clear();
     this._pendingSizes.clear();
 
@@ -370,7 +364,7 @@ export class LayoutManager<T> {
       return false;
     }
 
-    this._measuredSizes.set(userKey, 0);
+    this._setMeasuredSize(userKey, 0);
     this._clearPending(userKey);
     this._dirty = true;
 
@@ -556,11 +550,7 @@ export class LayoutManager<T> {
     }
   }
 
-  private _resolveSize(
-    index: number,
-    isEmpty: boolean,
-    override: { size?: number },
-  ): number {
+  private _resolveSize(index: number, isEmpty: boolean, override: { size?: number }): number {
     if (isEmpty) {
       return 0;
     }
@@ -571,9 +561,7 @@ export class LayoutManager<T> {
       // Match VirtualListCell: it reports with String(index) when no
       // keyExtractor is configured, so per-item lookup must use the same
       // key. Without this, measurements would be stored but never found.
-      const userKey = this._keyExtractor
-        ? this._keyExtractor(item, index)
-        : String(index);
+      const userKey = this._keyExtractor ? this._keyExtractor(item, index) : String(index);
       const measured = this._measuredSizes.get(userKey);
 
       if (measured != null) {
@@ -588,9 +576,7 @@ export class LayoutManager<T> {
     // Prefer the first-measured size once any cell has reported. Per-key
     // measurements above still win for cells that have actually been seen —
     // this is the fallback for unmeasured ones only.
-    return this._firstMeasuredSize > 0
-      ? this._firstMeasuredSize
-      : DEFAULT_ITEM_SIZE;
+    return this._firstMeasuredSize > 0 ? this._firstMeasuredSize : DEFAULT_ITEM_SIZE;
   }
 
   private _recomputeSingleColumn(count: number): void {
@@ -646,10 +632,7 @@ export class LayoutManager<T> {
         const item = this._data[i];
         const isEmpty = item === undefined || item === null;
         const override = this._getOverride(i);
-        const span = Math.min(
-          override.span ?? 1,
-          this._numColumns - columnsUsed,
-        );
+        const span = Math.min(override.span ?? 1, this._numColumns - columnsUsed);
         const size = this._resolveSize(i, isEmpty, override);
 
         layout.offset = offset;
