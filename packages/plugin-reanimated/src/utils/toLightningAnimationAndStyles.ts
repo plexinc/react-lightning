@@ -43,7 +43,8 @@ function applyTransform(
   schedules: ScheduledAnimation[],
   animatableTransform: AnimatableTransform,
 ) {
-  for (const [key, value] of Object.entries(animatableTransform)) {
+  for (const key in animatableTransform) {
+    const value = animatableTransform[key as keyof Transform];
     const actualValue = value instanceof AnimatedValue ? value.value : value;
 
     switch (key) {
@@ -75,11 +76,7 @@ function applyTransform(
           break;
         }
 
-        // Using our lightning style transform instead of RN
-        style.transform = {
-          ...style.transform,
-          ...convertCSSTransformToLightning(key, actualValue),
-        };
+        Object.assign((style.transform ??= {}), convertCSSTransformToLightning(key, actualValue));
 
         if (value instanceof AnimatedValue) {
           if (key === 'translate' || key === 'translateX') {
