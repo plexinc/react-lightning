@@ -101,3 +101,12 @@ describe('layoutText', () => {
     expect(height).toBe(40);
   });
 });
+
+describe('FontMetrics.measureText codepoints', () => {
+  it('measures astral, lone surrogate and zero-width characters per codepoint', () => {
+    expect(font.measureText('a\u{1F600}b', 0)).toBe(10 + 7 + 10);
+    expect(font.measureText('a\uD83Db', 0)).toBe(10 + 7 + 10);
+    expect(font.measureText('a​b', 1)).toBe(10 + 1 + 10 + 1);
+    expect(font.measureText('a?', 0)).toBe(10 + 7 - 2);
+  });
+});
