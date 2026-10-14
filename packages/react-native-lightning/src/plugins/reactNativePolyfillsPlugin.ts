@@ -13,7 +13,8 @@ import { flattenStyles } from '@plextv/react-lightning-plugin-css-transform';
 type LightningNativeViewElement = NativeMethods &
   LightningViewElement & {
     __loaded?: boolean;
-    __loadPromise: Promise<void>;
+    __loadPromise?: Promise<void>;
+    __resolveLoad?: () => void;
     setDestinations(destinations?: LightningViewElement[]): void;
     requestTVFocus(): void;
   };
@@ -40,6 +41,14 @@ function tryFindFocusManager(fiber: Fiber): FocusManager<LightningViewElement> |
   }
 
   return null;
+}
+
+function whenLoaded(element: LightningNativeViewElement): Promise<void> {
+  element.__loadPromise ??= new Promise<void>((resolve) => {
+    element.__resolveLoad = resolve;
+  });
+
+  return element.__loadPromise;
 }
 
 let polyfilled = false;
@@ -86,14 +95,14 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
             const rect = this.getBoundingClientRect();
             callback(this.node.x, this.node.y, rect.w, rect.h, rect.x, rect.y);
           } else {
-            this.__loadPromise.then(() => nativeMethods.measure.call(this, callback));
+            whenLoaded(this).then(() => nativeMethods.measure.call(this, callback));
           }
         },
         measureInWindow(this: LightningNativeViewElement, callback) {
           if (this.__loaded) {
             callback(this.node.x, this.node.y, this.node.w, this.node.h);
           } else {
-            this.__loadPromise.then(() => nativeMethods.measureInWindow.call(this, callback));
+            whenLoaded(this).then(() => nativeMethods.measureInWindow.call(this, callback));
           }
         },
         measureLayout(this: LightningNativeViewElement, relative, onSuccess) {
@@ -102,7 +111,7 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
 
             onSuccess(x, y, this.node.w, this.node.h);
           } else {
-            this.__loadPromise.then(() =>
+            whenLoaded(this).then(() =>
               nativeMethods.measureLayout.call(this, relative, onSuccess),
             );
           }
@@ -164,12 +173,9 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
     onCreateInstance(instance) {
       const nativeInstance = instance as LightningNativeViewElement;
 
-      // Initialize the load promise to resolve when the instance is available
-      nativeInstance.__loadPromise = new Promise<void>((resolve) => {
-        nativeInstance.once('layout', () => {
-          nativeInstance.__loaded = true;
-          resolve();
-        });
+      nativeInstance.once('layout', () => {
+        nativeInstance.__loaded = true;
+        nativeInstance.__resolveLoad?.();
       });
     },
   };
