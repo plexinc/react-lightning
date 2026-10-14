@@ -1411,10 +1411,7 @@ export class LightningViewElement<
       this._reconcileResizeObserving();
     }
 
-    const lngProps = this._toLightningNodeProps({
-      ...this.props,
-      ...transformedProps,
-    });
+    const lngProps = this._toLightningNodeProps(this.props);
 
     if (import.meta.env.DEV) {
       __checkProps(Object.keys(lngProps));
@@ -1984,7 +1981,10 @@ export class LightningViewElement<
       ) {
         this.animateShader(this._shaderDef.props);
       } else if (this._shaderDef.type === oldShader?.type && this.shader.props) {
-        for (const [key, value] of Object.entries(this._shaderDef.props)) {
+        const shaderProps = this._shaderDef.props;
+
+        for (const key in shaderProps) {
+          const value = shaderProps[key];
           // Gate on key existence, not truthiness: a prop whose current value
           // is falsy (e.g. a transparent `border-color` of 0) must still be
           // updatable — otherwise toggling a focus-ring border from
