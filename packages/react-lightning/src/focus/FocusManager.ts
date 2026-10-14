@@ -1721,8 +1721,10 @@ export class FocusManager<
     const children = parentNode.children;
     const childrenLength = children.length;
 
-    const leafNodes = new Set<number>();
+    const parentElement = parentNode.element;
     let hasFocusableChildren = false;
+    let hasLeaf = false;
+    let allDirect = parentElement !== null;
 
     for (let i = 0; i < childrenLength; i++) {
       // oxlint-disable-next-line typescript/no-non-null-assertion -- Already asserted that child exists
@@ -1733,19 +1735,33 @@ export class FocusManager<
       }
 
       if (child.children.length === 0) {
-        leafNodes.add(child.element.id);
+        hasLeaf = true;
+      }
+
+      if (child.element.parent !== parentElement) {
+        allDirect = false;
       }
     }
 
     parentNode.hasFocusableChildren = hasFocusableChildren;
 
     // Check each child for leaf node ancestry and update focusability
-    if (leafNodes.size > 0) {
+    if (hasLeaf && !allDirect) {
+      const leafNodes = new Set<number>();
+
+      for (let i = 0; i < childrenLength; i++) {
+        const child = children[i];
+
+        if (child && child.children.length === 0) {
+          leafNodes.add(child.element.id);
+        }
+      }
+
       for (let i = 0; i < childrenLength; i++) {
         // oxlint-disable-next-line typescript/no-non-null-assertion -- Already asserted that child exists
         const child = children[i]!;
 
-        if (this._hasLeafParent(child.element, leafNodes, parentNode.element)) {
+        if (this._hasLeafParent(child.element, leafNodes, parentElement)) {
           child.element.focusable = false;
 
           if (parentNode.focusedElement === child) {
