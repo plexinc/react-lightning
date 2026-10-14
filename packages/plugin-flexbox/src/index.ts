@@ -1,6 +1,7 @@
 import { PARTIAL_STYLE } from '@plextv/react-lightning';
 import type { LightningElement, LightningElementStyle, Plugin } from '@plextv/react-lightning';
 
+import { clampSize } from './clampSize';
 import { LightningManager } from './LightningManager';
 import { getFlexboxManager, setFlexboxManager } from './manager';
 import type { YogaOptions } from './types/YogaOptions';
@@ -101,6 +102,14 @@ export function plugin(yogaOptions?: YogaOptions): Plugin<LightningElement> {
         } else {
           remainingStyles[key] = value;
         }
+      }
+
+      if (typeof remainingStyles.w === 'number') {
+        remainingStyles.w = clampSize(remainingStyles.w, styles.minWidth, styles.maxWidth);
+      }
+
+      if (typeof remainingStyles.h === 'number') {
+        remainingStyles.h = clampSize(remainingStyles.h, styles.minHeight, styles.maxHeight);
       }
 
       // flexStyles is complete for this render, so a missing key means the
