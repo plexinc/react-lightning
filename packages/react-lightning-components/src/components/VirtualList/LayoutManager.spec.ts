@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DEFAULT_ITEM_SIZE, LayoutManager } from './LayoutManager';
 
-const makeData = (n: number) =>
-  Array.from({ length: n }, (_, i) => ({ id: i }));
+const makeData = (n: number) => Array.from({ length: n }, (_, i) => ({ id: i }));
 
 describe('LayoutManager', () => {
   describe('single column', () => {
@@ -80,11 +79,7 @@ describe('LayoutManager', () => {
     });
 
     it('collapses undefined data entries to size 0', () => {
-      const data: Array<{ id: number } | undefined> = [
-        { id: 0 },
-        undefined,
-        { id: 2 },
-      ];
+      const data: Array<{ id: number } | undefined> = [{ id: 0 }, undefined, { id: 2 }];
       const lm = new LayoutManager({
         data,
         numColumns: 1,
@@ -735,5 +730,40 @@ describe('LayoutManager', () => {
 
       expect(lm.hasPendingSizes).toBe(false);
     });
+  });
+});
+
+describe('LayoutManager measurement snapshots', () => {
+  it('reuses the snapshot until a measurement changes, without aliasing live state', () => {
+    const lm = new LayoutManager({ data: makeData(3), numColumns: 1, cellCrossSize: 200 });
+
+    lm.reportItemSize('0', 120);
+
+    const first = lm.getMeasurements();
+
+    expect(first).toEqual(new Map([['0', 120]]));
+    expect(lm.getMeasurements()).toBe(first);
+
+    lm.reportItemSize('1', 80);
+
+    const second = lm.getMeasurements();
+
+    expect(second).not.toBe(first);
+    expect(first).toEqual(new Map([['0', 120]]));
+    expect(second).toEqual(
+      new Map([
+        ['0', 120],
+        ['1', 80],
+      ]),
+    );
+
+    lm.reportItemEmpty('2');
+    expect(lm.getMeasurements().get('2')).toBe(0);
+
+    lm.setMeasurements(new Map([['0', 50]]));
+    expect(lm.getMeasurements()).toEqual(new Map([['0', 50]]));
+
+    lm.clearMeasurements();
+    expect(lm.getMeasurements().size).toBe(0);
   });
 });
