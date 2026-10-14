@@ -52,51 +52,26 @@ export class RecyclerPool {
 
     visibleSet.clear();
 
-    for (const idx of visibleIndices) {
-      visibleSet.add(idx);
+    for (let i = 0; i < visibleIndices.length; i++) {
+      visibleSet.add(visibleIndices[i] as number);
     }
 
-    let released = 0;
-    let preferredReused = 0;
-    let pooled = 0;
-    let created = 0;
+    this._active.forEach(this._releaseIfHidden);
 
-    for (const [index, key] of this._active) {
-      if (!visibleSet.has(index)) {
-        this._release(key);
-        this._active.delete(index);
-        this._slotToLastIndex.set(key, index);
-        released++;
-      }
-    }
+    for (let i = 0; i < visibleIndices.length; i++) {
+      const index = visibleIndices[i] as number;
 
-    for (const index of visibleIndices) {
       if (!this._active.has(index)) {
         const type = getType(index);
         const preferred = this._lastSlotForIndex.get(index);
-        let key: string;
-
-        if (preferred !== undefined && this._tryClaimPreferred(type, preferred)) {
-          key = preferred;
-          preferredReused++;
-        } else {
-          const before = this._nextId;
-
-          key = this._acquire(type);
-
-          if (this._nextId > before) {
-            created++;
-          } else {
-            pooled++;
-          }
-        }
+        const key =
+          preferred !== undefined && this._tryClaimPreferred(type, preferred)
+            ? preferred
+            : this._acquire(type);
 
         this._active.set(index, key);
+        this._lastSlotForIndex.set(index, key);
       }
-    }
-
-    for (const [index, key] of this._active) {
-      this._lastSlotForIndex.set(index, key);
     }
 
     return this._active;
@@ -129,6 +104,14 @@ export class RecyclerPool {
 
     return true;
   }
+
+  private _releaseIfHidden = (key: string, index: number): void => {
+    if (!this._visibleSet.has(index)) {
+      this._release(key);
+      this._active.delete(index);
+      this._slotToLastIndex.set(key, index);
+    }
+  };
 
   getSlotKey(index: number): string | undefined {
     return this._active.get(index);
