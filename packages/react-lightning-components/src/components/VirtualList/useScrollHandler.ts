@@ -2,7 +2,7 @@ import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 're
 
 import type { LightningElement } from '@plextv/react-lightning';
 
-import { type MomentumCallbacks, createMomentumTracker } from './createMomentumTracker';
+import { createMomentumTracker } from './createMomentumTracker';
 import type { LayoutManager } from './LayoutManager';
 import { reconcileScrollBounds } from './reconcileScrollBounds';
 import { resolveChildSnapTarget } from './resolveChildSnapAlignment';
@@ -129,17 +129,12 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
   const isFocusScrollSuppressed = (): boolean =>
     isPointerFocusScrollSuppressed() || shouldSuppressFocusScroll?.() === true;
 
-  // Keep the tracker stable across renders (owns the begin/end balance) while
-  // reading the latest consumer callbacks off a ref updated post-commit — the
-  // momentum props fire async from the animation loop, never during render.
-  const momentumCallbacksRef = useRef<MomentumCallbacks>({});
+  // Not a ref: passing one to a function in render makes the React Compiler skip the hook.
+  const [momentum] = useState(() => createMomentumTracker({ current: {} }));
 
   useEffect(() => {
-    momentumCallbacksRef.current.onMomentumScrollBegin = onMomentumScrollBegin;
-    momentumCallbacksRef.current.onMomentumScrollEnd = onMomentumScrollEnd;
-  }, [onMomentumScrollBegin, onMomentumScrollEnd]);
-
-  const [momentum] = useState(() => createMomentumTracker(momentumCallbacksRef));
+    momentum.setCallbacks({ onMomentumScrollBegin, onMomentumScrollEnd });
+  }, [momentum, onMomentumScrollBegin, onMomentumScrollEnd]);
 
   const contentRef = useRef<LightningElement>(null);
   const scrollOffsetRef = useRef(initialScrollOffset);
