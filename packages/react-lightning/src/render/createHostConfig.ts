@@ -42,6 +42,14 @@ export type LightningHostConfig = HostConfig<
   extraDevToolsConfig: unknown;
 };
 
+function hasKeys(object: object): boolean {
+  for (const _ in object) {
+    return true;
+  }
+
+  return false;
+}
+
 type LightningHostConfigOptions = Pick<LightningHostConfig, 'isPrimaryRenderer'>;
 
 export function createHostConfig(options?: LightningHostConfigOptions): LightningHostConfig {
@@ -228,11 +236,11 @@ export function createHostConfig(options?: LightningHostConfigOptions): Lightnin
 
       const updatePayload = mapReactPropsToLightning(type, diffedProps);
 
-      if (!updatePayload || Object.keys(updatePayload).length === 0) {
-        return null;
+      if (hasKeys(updatePayload)) {
+        instance.setProps(updatePayload);
       }
 
-      instance.setProps(updatePayload);
+      return null;
     },
 
     commitTextUpdate(instance, oldText, newText) {
