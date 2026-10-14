@@ -1478,6 +1478,12 @@ export class LightningViewElement<
       }
     }
 
+    if (lngProps.shader === null) {
+      // CoreNode's null-shader branch leaves a pending uniform update flagged, and the next
+      // update() then calls update() on the default shader, which has none.
+      (this.node as { updateShaderUniforms?: boolean }).updateShaderUniforms = false;
+    }
+
     Object.assign(this.node, lngProps);
 
     if (flattenedMoved) {
