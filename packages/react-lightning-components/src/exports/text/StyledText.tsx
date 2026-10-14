@@ -142,12 +142,16 @@ const applyTags = (
   });
 };
 
+const NO_VALUES: Record<string, string> = {};
+const NO_TAG_STYLES: Record<string, LightningTextElementStyle> = {};
+const NO_STYLE = {};
+
 const StyledText: FC<StyledTextProps> = ({
   text,
-  values = {},
-  tagStyles = {},
-  textStyle = {},
-  style = {},
+  values = NO_VALUES,
+  tagStyles = NO_TAG_STYLES,
+  textStyle = NO_STYLE,
+  style = NO_STYLE,
 }) => {
   const containerRef = useRef<LightningViewElement>(null);
   const [positionVersion, setPositionVersion] = useState(0);
