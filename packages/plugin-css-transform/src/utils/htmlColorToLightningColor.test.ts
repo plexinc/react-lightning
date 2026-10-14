@@ -67,12 +67,8 @@ describe('htmlColorToLightningColor', () => {
 
   it('should convert hsl/hsla strings to a number', () => {
     expect(htmlColorToLightningColor('hsl(300, 100%, 50%)')).toBe(0xff00ffff);
-    expect(htmlColorToLightningColor('hsla(300, 100%, 50%, 0.4)')).toBe(
-      0xff00ff66,
-    );
-    expect(htmlColorToLightningColor('hsl(300 100% 50% / 0.4)')).toBe(
-      0xff00ff66,
-    );
+    expect(htmlColorToLightningColor('hsla(300, 100%, 50%, 0.4)')).toBe(0xff00ff66);
+    expect(htmlColorToLightningColor('hsl(300 100% 50% / 0.4)')).toBe(0xff00ff66);
   });
 
   it('should convert html color code to a number', () => {
@@ -110,14 +106,7 @@ describe('htmlColorToLightningColor', () => {
   });
 
   it('should return undefined for unresolvable css keyword colors', () => {
-    for (const value of [
-      'inherit',
-      'initial',
-      'unset',
-      'revert',
-      'currentColor',
-      'CurrentColor',
-    ]) {
+    for (const value of ['inherit', 'initial', 'unset', 'revert', 'currentColor', 'CurrentColor']) {
       expect(htmlColorToLightningColor(value)).toBeUndefined();
     }
   });
@@ -131,5 +120,29 @@ describe('htmlColorToLightningColor', () => {
     expect(warn).toHaveBeenCalled();
 
     warn.mockRestore();
+  });
+
+  it('returns the same values from the cache, with or without an alpha override', () => {
+    expect(htmlColorToLightningColor('#e5a00d')).toBe(0xe5a00dff);
+    expect(htmlColorToLightningColor('#e5a00d')).toBe(0xe5a00dff);
+    expect(htmlColorToLightningColor('#e5a00d', 0x80)).toBe(0xe5a00d80);
+    expect(htmlColorToLightningColor('#E5A00D', 'cc')).toBe(0xe5a00dcc);
+    expect(htmlColorToLightningColor('inherit')).toBeUndefined();
+    expect(htmlColorToLightningColor('inherit')).toBeUndefined();
+  });
+
+  it('keeps throwing for an invalid color on repeat calls', () => {
+    expect(() => htmlColorToLightningColor('#zz')).toThrow('Invalid hex value');
+    expect(() => htmlColorToLightningColor('#zz')).toThrow('Invalid hex value');
+  });
+
+  it('keeps converting correctly past the cache bound', () => {
+    for (let i = 0; i < 1200; i++) {
+      const alpha = (i % 100) / 100;
+
+      expect(htmlColorToLightningColor(`rgba(10, 20, 30, ${alpha})`)).toBe(
+        0x0a141e00 + Math.round(alpha * 255),
+      );
+    }
   });
 });
