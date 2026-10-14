@@ -17,8 +17,12 @@ class EmittingElement extends MockElement {
     return () => listeners.delete(listener);
   }) as unknown as MockElement['on'];
 
-  public setVisible(visible: boolean) {
+  public setVisible(visible: boolean, emit = true) {
     this.visible = visible;
+
+    if (!emit) {
+      return;
+    }
 
     for (const listener of this._listeners.get('focusableChanged') ?? []) {
       listener(this, this.focusable);
@@ -219,5 +223,50 @@ describe('focus restore for covered screens', () => {
     await flush();
 
     expect(fm.focusPath).toEqual([tree.app, tree.home, row, rate]);
+  });
+  it('returns to a grid whose rows show again after the category list', async () => {
+    const app = make('app', { x: 0, y: 0, w: 1920, h: 1080 }, true);
+    const home = make('home', { x: 0, y: 128, w: 1920, h: 952 }, true);
+    const cats = make('cats', { x: 128, y: 560, w: 200, h: 400 }, true);
+    const cat = make('cat', { x: 128, y: 560, w: 200, h: 64 });
+    const grid = make('grid', { x: 400, y: 560, w: 1400, h: 400 }, true);
+    const list = make('list', { x: 400, y: 560, w: 1400, h: 400 }, true);
+    const row = make('row', { x: 400, y: 560, w: 1400, h: 64 }, true);
+    const cell = make('cell', { x: 400, y: 560, w: 300, h: 64 });
+
+    fm.addElement(app);
+    fm.addElement(home, app);
+    fm.addElement(cats, home);
+    fm.addElement(cat, cats);
+    fm.addElement(grid, home);
+    fm.addElement(list, grid);
+    fm.addElement(row, list);
+    fm.addElement(cell, row);
+    fm.focus(cell);
+    await flush();
+
+    const all = [cat, cats, cell, row, list, grid];
+
+    for (const element of all) {
+      element.setVisible(false, false);
+    }
+
+    for (const element of all) {
+      element.setVisible(false);
+    }
+
+    await flush();
+
+    for (const element of all) {
+      element.setVisible(true, false);
+    }
+
+    for (const element of all) {
+      element.setVisible(true);
+    }
+
+    await flush();
+
+    expect(fm.focusPath).toEqual([app, home, grid, list, row, cell]);
   });
 });
