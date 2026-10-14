@@ -12,6 +12,7 @@ export interface MomentumTracker {
   settle: (event: ScrollEvent) => void;
   /** Fire onMomentumScrollEnd once when an in-flight animation is cancelled. */
   cancel: (event: ScrollEvent) => void;
+  setCallbacks: (next: MomentumCallbacks) => void;
 }
 
 // Guards the momentum begin/end pair so consumers see a balanced lifecycle:
@@ -41,5 +42,9 @@ export function createMomentumTracker(callbacks: { current: MomentumCallbacks })
     },
     settle: finish,
     cancel: finish,
+    setCallbacks(next) {
+      callbacks.current.onMomentumScrollBegin = next.onMomentumScrollBegin;
+      callbacks.current.onMomentumScrollEnd = next.onMomentumScrollEnd;
+    },
   };
 }
