@@ -1,5 +1,15 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 1.0.0-alpha.7
+
+### Patch Changes
+
+- a06f2fa: clamp a node's width and height by its min/max before handing them to the renderer, so a node no longer renders wider than its maxWidth when Yoga reports no new layout.
+- a748152: keep the partial style marker when the plugin rebuilds a style, so an animated push no longer clears the node's shader.
+- Updated dependencies [9823989]
+- Updated dependencies [afbd1c8]
+  - @plextv/react-lightning@0.5.0-alpha.9
+
 ## 1.0.0-alpha.6
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @plextv/react-lightning
 
+## 0.5.0-alpha.9
+
+### Patch Changes
+
+- 9823989: clear a pending shader uniform update when a node's shader is removed, so the next renderer update no longer throws.
+- afbd1c8: A withheld node no longer reveals at its untransformed origin when a pixel translate takes more than one layout pass to fold into the position. The reveal was bounded to a single extra layout, so anything deeper in the async flex tree painted at its base position for a frame — a drawer laid out on screen and translated off would flash open at mount. The reveal now waits for the translate to actually settle, bounded so a translate that can't be detected still can't strand the node invisible.
+
 ## 0.5.0-alpha.8
 
 ### Patch Changes
