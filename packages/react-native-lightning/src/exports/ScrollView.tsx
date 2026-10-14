@@ -90,6 +90,11 @@ function getScrollInfo(
 
 class ScrollViewBase extends PureComponent<ScrollViewProps, ScrollViewState> {
   private _containerRef = createRef<LightningViewElement>();
+  private _animatedTransition = { x: { duration: 200 }, y: { duration: 200 } };
+  private _blurSource?: ScrollViewProps['onBlur'];
+  private _blurHandler?: ReturnType<typeof createHandler<'blur'>>;
+  private _focusSource?: ScrollViewProps['onFocus'];
+  private _focusHandler?: ReturnType<typeof createHandler<'focus'>>;
   private _viewportRef = createRef<NativeLightningViewElement>();
 
   public static displayName = 'LightningScrollView';
@@ -257,8 +262,8 @@ class ScrollViewBase extends PureComponent<ScrollViewProps, ScrollViewState> {
           { overflow: 'hidden', flexDirection, flexGrow: 1, flexShrink: 1 },
         ]}
         {...props}
-        onBlur={createHandler(this.props.onBlur)}
-        onFocus={createHandler(this.props.onFocus)}
+        onBlur={this._getBlurHandler()}
+        onFocus={this._getFocusHandler()}
       >
         <View
           ref={this._containerRef}
@@ -268,19 +273,30 @@ class ScrollViewBase extends PureComponent<ScrollViewProps, ScrollViewState> {
             contentContainerStyle,
             this.state.offset,
           ]}
-          transition={
-            this.state.animated
-              ? {
-                  x: { duration: 200 },
-                  y: { duration: 200 },
-                }
-              : undefined
-          }
+          transition={this.state.animated ? this._animatedTransition : undefined}
         >
           {children}
         </View>
       </View>
     );
+  }
+
+  private _getBlurHandler() {
+    if (!this._blurHandler || this._blurSource !== this.props.onBlur) {
+      this._blurSource = this.props.onBlur;
+      this._blurHandler = createHandler<'blur'>(this.props.onBlur);
+    }
+
+    return this._blurHandler;
+  }
+
+  private _getFocusHandler() {
+    if (!this._focusHandler || this._focusSource !== this.props.onFocus) {
+      this._focusSource = this.props.onFocus;
+      this._focusHandler = createHandler<'focus'>(this.props.onFocus);
+    }
+
+    return this._focusHandler;
   }
 
   private _getChildOffset = (child?: LightningElement | Rect | null) => {
