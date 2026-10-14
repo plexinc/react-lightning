@@ -1,5 +1,18 @@
 # @plextv/react-lightning-example
 
+## 0.4.4-alpha.9
+
+### Patch Changes
+
+- Updated dependencies [9823989]
+- Updated dependencies [a06f2fa]
+- Updated dependencies [a748152]
+- Updated dependencies [435c396]
+- Updated dependencies [afbd1c8]
+  - @plextv/react-lightning@0.5.0-alpha.9
+  - @plextv/react-lightning-plugin-flexbox@1.0.0-alpha.7
+  - @plextv/react-lightning-components@1.0.0-alpha.7
+
 ## 0.4.4-alpha.8
 
 ### Patch Changes

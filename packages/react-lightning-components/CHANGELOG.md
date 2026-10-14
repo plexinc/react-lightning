@@ -1,5 +1,17 @@
 # @plextv/react-lightning-components
 
+## 1.0.0-alpha.7
+
+### Patch Changes
+
+- 435c396: hold onContentSizeChange and onLayout until the visible cells' sizes have settled, so consumers no longer see placeholder widths.
+- Updated dependencies [9823989]
+- Updated dependencies [a06f2fa]
+- Updated dependencies [a748152]
+- Updated dependencies [afbd1c8]
+  - @plextv/react-lightning@0.5.0-alpha.9
+  - @plextv/react-lightning-plugin-flexbox@1.0.0-alpha.7
+
 ## 1.0.0-alpha.6
 
 ### Patch Changes
