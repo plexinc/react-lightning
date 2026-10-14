@@ -1132,9 +1132,15 @@ export class LightningViewElement<
   }
 
   public setProps(payload: Partial<TProps>): void {
-    const { style, transition, ...otherProps } = payload;
+    const { style, transition } = payload;
+    const staged = this._stagedUpdates;
 
-    Object.assign(this._stagedUpdates, otherProps);
+    for (const key in payload) {
+      if (key !== 'style' && key !== 'transition') {
+        staged[key] = payload[key];
+      }
+    }
+
     this._hasStagedUpdates = true;
 
     // Transitions can be applied to props immediately instead of staging it.
