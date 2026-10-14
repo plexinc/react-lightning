@@ -1,41 +1,44 @@
 import type { Transform } from '@plextv/react-lightning-plugin-flexbox';
 
-import { convertCSSTransformToLightning } from './convertCSSTransformToLightning';
+import { writeCSSTransform } from './convertCSSTransformToLightning';
 
 const transformPartRegex = /(\w+)\(([^)]+)\)/g;
 
 export function parseTransform(transform?: string | object | Array<object | string>): Transform {
+  return parseTransformInto({}, transform);
+}
+
+function parseTransformInto(
+  transformResult: Transform,
+  transform?: string | object | Array<object | string>,
+): Transform {
   if (!transform) {
-    return {};
+    return transformResult;
   }
 
   if (Array.isArray(transform)) {
-    const transforms = {};
-
-    for (const t of transform) {
-      Object.assign(transforms, parseTransform(t));
+    for (let i = 0; i < transform.length; i++) {
+      parseTransformInto(transformResult, transform[i]);
     }
 
-    return transforms;
+    return transformResult;
   }
 
   if (typeof transform === 'object') {
-    const safeTransform: Transform = {};
     const originalTranform = transform as Record<string, string | number | number[]>;
 
-    for (const t of Object.keys(originalTranform)) {
-      if (originalTranform[t] == null) {
-        continue;
-      }
+    for (const t in originalTranform) {
+      const value = originalTranform[t];
 
-      Object.assign(safeTransform, convertCSSTransformToLightning(t, originalTranform[t]));
+      if (value != null) {
+        writeCSSTransform(transformResult, t, value);
+      }
     }
 
-    return safeTransform;
+    return transformResult;
   }
 
   const transformParts = transform.match(transformPartRegex);
-  const transformResult: Transform = {};
 
   if (!transformParts) {
     return transformResult;
@@ -49,7 +52,7 @@ export function parseTransform(transform?: string | object | Array<object | stri
       continue;
     }
 
-    Object.assign(transformResult, convertCSSTransformToLightning(transformType, transformValue));
+    writeCSSTransform(transformResult, transformType, transformValue);
   }
 
   return transformResult;
