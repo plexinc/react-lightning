@@ -715,4 +715,25 @@ describe('LayoutManager', () => {
       expect(lm.findIndexAt(offset, 9999)).toBe(lm.findIndexAtOffset(offset));
     });
   });
+
+  describe('hasPendingSizes', () => {
+    it('is true while a changed size waits out its stability window', () => {
+      const lm = new LayoutManager({
+        data: makeData(1),
+        numColumns: 1,
+        cellCrossSize: 200,
+      });
+
+      expect(lm.hasPendingSizes).toBe(false);
+
+      lm.reportItemSize('0', 150);
+      lm.reportItemSize('0', 80);
+
+      expect(lm.hasPendingSizes).toBe(true);
+
+      lm.reportItemSize('0', 80, true);
+
+      expect(lm.hasPendingSizes).toBe(false);
+    });
+  });
 });

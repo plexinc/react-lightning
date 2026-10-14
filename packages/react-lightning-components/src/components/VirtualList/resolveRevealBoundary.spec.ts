@@ -11,7 +11,11 @@ describe('resolveRevealBoundary', () => {
   it('reveals everything when every cell is exempt (fixed-size list)', () => {
     const result = resolveRevealBoundary([0, 1, 2], allExempt, never);
 
-    expect(result).toEqual({ revealThrough: 2, nextCheckMs: Infinity });
+    expect(result).toEqual({
+      revealThrough: 2,
+      nextCheckMs: Infinity,
+      allRevealed: true,
+    });
   });
 
   it('reveals nothing while the first cell is unsettled', () => {
@@ -19,7 +23,11 @@ describe('resolveRevealBoundary', () => {
       i === 0 ? 50 : 0,
     );
 
-    expect(result).toEqual({ revealThrough: -1, nextCheckMs: 50 });
+    expect(result).toEqual({
+      revealThrough: -1,
+      nextCheckMs: 50,
+      allRevealed: false,
+    });
   });
 
   it('reveals the settled prefix and stops at the first unsettled cell', () => {
@@ -28,7 +36,11 @@ describe('resolveRevealBoundary', () => {
       i === 2 ? 40 : 0,
     );
 
-    expect(result).toEqual({ revealThrough: 1, nextCheckMs: 40 });
+    expect(result).toEqual({
+      revealThrough: 1,
+      nextCheckMs: 40,
+      allRevealed: false,
+    });
   });
 
   it('withholds the unsettled cell itself so it never grows on screen', () => {
@@ -47,18 +59,30 @@ describe('resolveRevealBoundary', () => {
       (i) => (i === 2 ? 25 : 0),
     );
 
-    expect(result).toEqual({ revealThrough: 1, nextCheckMs: 25 });
+    expect(result).toEqual({
+      revealThrough: 1,
+      nextCheckMs: 25,
+      allRevealed: false,
+    });
   });
 
   it('does not schedule a timer for a never-measured blocker', () => {
     const result = resolveRevealBoundary([0, 1], noneExempt, never);
 
-    expect(result).toEqual({ revealThrough: -1, nextCheckMs: Infinity });
+    expect(result).toEqual({
+      revealThrough: -1,
+      nextCheckMs: Infinity,
+      allRevealed: false,
+    });
   });
 
   it('reveals all when the whole visible range has settled', () => {
     const result = resolveRevealBoundary([4, 5, 6], noneExempt, settled);
 
-    expect(result).toEqual({ revealThrough: 6, nextCheckMs: Infinity });
+    expect(result).toEqual({
+      revealThrough: 6,
+      nextCheckMs: Infinity,
+      allRevealed: true,
+    });
   });
 });

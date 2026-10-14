@@ -11,6 +11,7 @@ export interface RevealBoundary {
    * wake the list via its first size report).
    */
   nextCheckMs: number;
+  allRevealed: boolean;
 }
 
 /**
@@ -42,8 +43,9 @@ export function resolveRevealBoundary(
     return {
       revealThrough,
       nextCheckMs: Number.isFinite(remaining) ? remaining : Infinity,
+      allRevealed: false,
     };
   }
 
-  return { revealThrough, nextCheckMs: Infinity };
+  return { revealThrough, nextCheckMs: Infinity, allRevealed: true };
 }
