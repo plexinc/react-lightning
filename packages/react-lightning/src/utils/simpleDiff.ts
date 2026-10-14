@@ -1,9 +1,7 @@
 const REACT_ELEMENT_TYPE = Symbol.for('react.element');
 const REACT_TRANSITIONAL_ELEMENT_TYPE = Symbol.for('react.transitional.element');
 
-// This is a list of properties that should be deeply compared, specifically for
-// React elements.
-const DEEP_PROPS = ['style'];
+const DEEP_PROP = 'style';
 
 interface ReactElement {
   $$typeof: symbol;
@@ -75,7 +73,7 @@ function areValuesEqual(first: unknown, second: unknown): boolean {
       const secondValue = (second as Record<string, unknown>)[key];
 
       if (!(key in second) || firstValue !== secondValue) {
-        if (DEEP_PROPS.includes(key)) {
+        if (key === DEEP_PROP) {
           if (!areValuesEqual(firstValue, secondValue)) {
             return false;
           }
@@ -126,45 +124,24 @@ export function simpleDiff<T extends object>(first: T, second: T): Partial<T> | 
     return null;
   }
 
-  const secondCopy = { ...second };
-  let hasDiffs = false;
-  let firstKeyCount = 0;
+  let diff: Partial<T> | null = null;
+
+  for (const key in second) {
+    if (!(key in first) || !areValuesEqual(first[key], second[key])) {
+      diff ??= {};
+      diff[key] = second[key];
+    }
+  }
+
+  if (diff !== null) {
+    return diff;
+  }
 
   for (const key in first) {
-    firstKeyCount++;
-    const firstValue = first[key as keyof T];
-    const secondHasKey = key in secondCopy;
-    const secondValue = secondCopy[key as keyof T];
-
-    // If key doesn't exist in second object, it's a difference - already undefined in second
-    if (!secondHasKey) {
-      hasDiffs = true;
-      continue;
-    }
-
-    // Compare values based on their types
-    if (areValuesEqual(firstValue, secondValue)) {
-      // Values are equal, so remove this property from second
-      delete secondCopy[key as keyof T];
-    } else {
-      // Values are different, keep the property in second
-      hasDiffs = true;
+    if (!(key in second)) {
+      return {};
     }
   }
 
-  // Check for keys that are only in the second object
-  if (!hasDiffs) {
-    let secondKeyCount = 0;
-
-    for (const _ in second) {
-      secondKeyCount++;
-
-      if (secondKeyCount > firstKeyCount) {
-        hasDiffs = true;
-        break;
-      }
-    }
-  }
-
-  return hasDiffs ? secondCopy : null;
+  return null;
 }
