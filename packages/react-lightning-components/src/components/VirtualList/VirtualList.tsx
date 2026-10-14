@@ -37,6 +37,7 @@ import { computeItemRect } from './computeItemRect';
 import { parseContentStyle } from './parseContentStyle';
 import { resolveCrossSize } from './resolveCrossSize';
 import { resolveOuterFlex } from './resolveOuterFlex';
+import { resolveContentReport } from './resolveContentReport';
 import { resolveRevealBoundary } from './resolveRevealBoundary';
 import { resolveSectionSize } from './resolveSectionSize';
 import { resolveVisibleMainSpan } from './resolveVisibleMainSpan';
@@ -185,7 +186,7 @@ function VirtualListInner<T>(
   // tracked on resize. Caps the self-measured viewport fallback below.
   const outerElementRef = useRef<LightningElement>(null);
   const [visibleMainSpan, setVisibleMainSpan] = useState(0);
-  const [, setLayoutVersion] = useState(0);
+  const [layoutVersion, setLayoutVersion] = useState(0);
   const [separatorSize, setSeparatorSize] = useState(0);
   const separatorSizeRef = useRef(0);
   const [measuredHeaderSize, setMeasuredHeaderSize] = useState(0);
@@ -206,6 +207,7 @@ function VirtualListInner<T>(
   // rows below it down). Starts at -1: nothing paints until the gate settles it.
   const [revealGate] = useState(() => new RevealGate());
   const [revealThrough, setRevealThrough] = useState(-1);
+  const [revealSettled, setRevealSettled] = useState(false);
   const revealTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
@@ -625,7 +627,11 @@ function VirtualListInner<T>(
       }
     }
 
-    const { revealThrough: nextRevealThrough, nextCheckMs } =
+    const {
+      revealThrough: nextRevealThrough,
+      nextCheckMs,
+      allRevealed,
+    } =
       resolveRevealBoundary(
         order,
         (index) => layoutManager.hasOverrideSize(index),
@@ -651,6 +657,8 @@ function VirtualListInner<T>(
     setRevealThrough((prev) =>
       prev === nextRevealThrough ? prev : nextRevealThrough,
     );
+
+    setRevealSettled(allRevealed);
 
     if (revealTimerRef.current != null) {
       clearTimeout(revealTimerRef.current);
@@ -781,14 +789,21 @@ function VirtualListInner<T>(
 
     const contentW = horizontal ? totalContentSize : viewportCrossSize;
     const contentH = horizontal ? viewportCrossSize : totalContentSize;
-    const prev = prevLayoutRef.current;
+    const next = resolveContentReport(
+      prevLayoutRef.current,
+      { w: contentW, h: contentH },
+      revealSettled && !layoutManager.hasPendingSizes,
+    );
 
-    if (prev.w !== contentW || prev.h !== contentH) {
-      prevLayoutRef.current = { w: contentW, h: contentH };
-      onLayout?.({ w: contentW, h: contentH });
-      onContentSizeChange?.(contentW, contentH);
+    if (next) {
+      prevLayoutRef.current = next;
+      onLayout?.(next);
+      onContentSizeChange?.(next.w, next.h);
     }
   }, [
+    layoutVersion,
+    revealSettled,
+    layoutManager,
     onLayout,
     onContentSizeChange,
     horizontal,

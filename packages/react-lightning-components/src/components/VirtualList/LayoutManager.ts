@@ -318,6 +318,10 @@ export class LayoutManager<T> {
     return false;
   }
 
+  get hasPendingSizes(): boolean {
+    return this._pendingSizes.size > 0;
+  }
+
   private _clearPending(userKey: string): void {
     const timer = this._pendingTimers.get(userKey);
 
