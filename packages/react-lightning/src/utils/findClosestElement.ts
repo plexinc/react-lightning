@@ -112,13 +112,14 @@ function calculateShortestDistance(
   target: Dimensions,
 ): number | null {
   const euclidean = getDistance(direction, source, target);
-  const displacement = getDisplacement(direction, source, target);
-  const overlap = getOverlap(direction, source, target);
-  const alignment = getAlignment(direction, source, overlap);
 
   if (euclidean === null) {
     return null;
   }
+
+  const displacement = getDisplacement(direction, source, target);
+  const overlap = getOverlap(direction, source, target);
+  const alignment = getAlignment(direction, source, overlap);
 
   return euclidean + displacement - alignment - Math.sqrt(overlap);
 }
@@ -241,6 +242,16 @@ export function findClosestElement(
 
     const otherDimensions = fillDimensions(_scratchTarget, otherElement, parentElement);
 
+    const isOverlapped = isHorizontal
+      ? sourceDimensions.y < otherDimensions.y + otherDimensions.h &&
+        sourceDimensions.y + sourceDimensions.h > otherDimensions.y
+      : sourceDimensions.x < otherDimensions.x + otherDimensions.w &&
+        sourceDimensions.x + sourceDimensions.w > otherDimensions.x;
+
+    if (!isOverlapped && closest === null) {
+      continue;
+    }
+
     // getDistance enters a target that encloses the source vertically, because
     // a container's content lies below the source. An enclosing leaf (a
     // full-height edge catcher) has nothing below it, so it isn't a Down
@@ -254,13 +265,6 @@ export function findClosestElement(
     ) {
       continue;
     }
-
-    // Inline overlap check for the relevant axis to avoid object allocation
-    const isOverlapped = isHorizontal
-      ? sourceDimensions.y < otherDimensions.y + otherDimensions.h &&
-        sourceDimensions.y + sourceDimensions.h > otherDimensions.y
-      : sourceDimensions.x < otherDimensions.x + otherDimensions.w &&
-        sourceDimensions.x + sourceDimensions.w > otherDimensions.x;
 
     const distance = calculateShortestDistance(direction, sourceDimensions, otherDimensions);
 
