@@ -76,6 +76,8 @@ function collectStyles<T>(
   }
 }
 
+const NO_STYLE_SOURCE = Symbol('noStyleSource');
+
 function flattenStyles<T>(style: StyleProp<T>): [Set<AnimatedStyle>, CSSStyleParts] {
   const animatedStyles = new Set<AnimatedStyle>();
   const parts = createCSSStyleParts();
@@ -171,7 +173,8 @@ export function createAnimatedComponent<TProps extends {}>(
     private _css: CSSStyleBinding | null = null;
     private _focusContext: FocusContext = null;
     private _animatedStyles: Set<AnimatedStyle> = new Set();
-    private _styles: Partial<ViewStyle> | null = null;
+    private _styleSource: StyleProp<ViewStyle> | typeof NO_STYLE_SOURCE = NO_STYLE_SOURCE;
+    private _flattened: [Set<AnimatedStyle>, CSSStyleParts] | null = null;
     private _cachedBuilders = new WeakMap<ReanimatedAnimation, LayoutAnimationFunction | null>();
 
     // React only assigns `this.context` after construction, so take it from the
@@ -181,6 +184,17 @@ export function createAnimatedComponent<TProps extends {}>(
 
       this._focusContext = context as FocusContext;
       this._transformStyles();
+    }
+
+    // Flattened from the props of the render in progress, so a changed static style
+    // paints with the commit that changed it instead of the next one.
+    private _getFlattened(): [Set<AnimatedStyle>, CSSStyleParts] {
+      if (!this._flattened || this._styleSource !== this.props.style) {
+        this._flattened = flattenStyles(this.props.style);
+        this._styleSource = this.props.style;
+      }
+
+      return this._flattened;
     }
 
     componentDidMount(): void {
@@ -226,7 +240,13 @@ export function createAnimatedComponent<TProps extends {}>(
     }
 
     render() {
-      return <ComponentToAnimate {...this.props} style={this._styles} ref={this._setRefs} />;
+      return (
+        <ComponentToAnimate
+          {...this.props}
+          style={this._getFlattened()[1].style as Partial<ViewStyle>}
+          ref={this._setRefs}
+        />
+      );
     }
 
     _resolveComponentRef = (ref: NativeLightningElement | null) => {
@@ -276,7 +296,7 @@ export function createAnimatedComponent<TProps extends {}>(
     };
 
     _transformStyles() {
-      const [newAnimatedStyles, parts] = flattenStyles(this.props.style);
+      const [newAnimatedStyles, parts] = this._getFlattened();
 
       if (this._ref) {
         // Remove refs for any animated styles that were removed
@@ -291,7 +311,6 @@ export function createAnimatedComponent<TProps extends {}>(
       }
 
       this._animatedStyles = newAnimatedStyles;
-      this._styles = parts.style as Partial<ViewStyle>;
 
       this._updateCSSStyle(parts);
     }
