@@ -21,6 +21,7 @@ import {
   type Focusable,
   type LightningElement,
   type LightningElementEvents,
+  type LightningElementObserver,
   type LightningElementStyle,
   LightningElementType,
   type LightningViewElementProps,
@@ -71,6 +72,8 @@ function createTexture(renderer: RendererMain, textureDef: TextureDef): Texture 
 }
 
 let idCounter = 0;
+
+type ObserverCall = (element: LightningElement, a?: unknown, b?: unknown, c?: unknown) => void;
 
 type OnArgs = Parameters<IEventEmitter<LightningElementEvents>['on']>;
 type OnceArgs = Parameters<IEventEmitter<LightningElementEvents>['once']>;
@@ -182,6 +185,7 @@ export class LightningViewElement<
   private _reactHidden = false;
   private _withheldAlpha = 1;
   private _eventEmitter = new EventEmitter<LightningElementEvents>();
+  private _observers: LightningElementObserver[] | null = null;
   private _deferTarget: LightningElement | null = null;
   private _deferNodeRemovalHandler: ((destroy: () => void) => void) | null = null;
   private _resizeObserver: NodeResizeObserver | null = null;
@@ -953,6 +957,7 @@ export class LightningViewElement<
 
     delete LightningViewElement.allElements[this.id];
 
+    this._notifyObservers('destroy');
     this._eventEmitter.emit('destroy');
   }
 
@@ -994,6 +999,51 @@ export class LightningViewElement<
     ...args: Parameters<LightningElementEvents[EventKey]>
   ): boolean {
     return this._eventEmitter.emit(event, ...args);
+  }
+
+  /** Register a lifecycle observer, see {@link LightningElementObserver}. */
+  public observe(observer: LightningElementObserver): void {
+    if (this._observers === null) {
+      this._observers = [observer];
+    } else {
+      this._observers.push(observer);
+    }
+  }
+
+  public unobserve(observer: LightningElementObserver): void {
+    const observers = this._observers;
+
+    if (observers === null) {
+      return;
+    }
+
+    // Replaced rather than spliced: an observer may unobserve while being notified.
+    if (observers.length === 1) {
+      if (observers[0] === observer) {
+        this._observers = null;
+      }
+    } else {
+      const remaining = observers.filter((o) => o !== observer);
+
+      this._observers = remaining.length > 0 ? remaining : null;
+    }
+  }
+
+  protected _notifyObservers(
+    method: keyof LightningElementObserver,
+    a?: unknown,
+    b?: unknown,
+    c?: unknown,
+  ): void {
+    const observers = this._observers;
+
+    if (observers === null) {
+      return;
+    }
+
+    for (let i = 0; i < observers.length; i++) {
+      (observers[i]?.[method] as ObserverCall | undefined)?.(this as LightningElement, a, b, c);
+    }
   }
 
   public setLightningNode(node: RendererNode<LightningElement>): void {
@@ -1055,6 +1105,7 @@ export class LightningViewElement<
       child.deferTarget = this._deferTarget;
     }
 
+    this._notifyObservers('childAdded', child, index);
     this._eventEmitter.emit('childAdded', child, index);
   }
 
@@ -1079,6 +1130,7 @@ export class LightningViewElement<
     child._placeInHost();
 
     if (toIndex !== fromIndex) {
+      this._notifyObservers('childMoved', child, fromIndex, toIndex);
       this._eventEmitter.emit('childMoved', child, fromIndex, toIndex);
     }
   }
@@ -1098,6 +1150,7 @@ export class LightningViewElement<
       child.node.parent = null;
     }
 
+    this._notifyObservers('childRemoved', child, index);
     this._eventEmitter.emit('childRemoved', child, index);
   }
 
@@ -1487,6 +1540,7 @@ export class LightningViewElement<
       const changed = this._doUpdate();
 
       if (changed) {
+        this._notifyObservers('propsChanged', this.props);
         this._eventEmitter.emit('propsChanged', this.props);
       }
     });
@@ -1636,6 +1690,7 @@ export class LightningViewElement<
     }
 
     if (hasStyleChanges) {
+      this._notifyObservers('stylesChanged', this.props.style);
       this._eventEmitter.emit('stylesChanged', this.props.style as Partial<LightningElementStyle>);
     }
 
@@ -1800,6 +1855,7 @@ export class LightningViewElement<
       this.recalculateVisibility();
     }
 
+    this._notifyObservers('stylesChanged', this.props.style);
     this._eventEmitter.emit('stylesChanged', this.props.style as Partial<LightningElementStyle>);
 
     this._isUpdateQueued = false;
@@ -1816,11 +1872,13 @@ export class LightningViewElement<
   }
 
   private _onInViewport: NodeRenderStateEventHandler = (node, renderState) => {
+    this._notifyObservers('inViewport', node, renderState);
     this._eventEmitter.emit('inViewport', node, renderState);
   };
 
   private _onTextureLoaded: NodeLoadedEventHandler = (node, event) => {
     this._handleTextureLoaded(event);
+    this._notifyObservers('textureLoaded', node, event);
     this._eventEmitter.emit('textureLoaded', node, event);
     this.props.onTextureReady?.(event.dimensions);
   };

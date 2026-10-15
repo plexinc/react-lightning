@@ -5,6 +5,7 @@ export type * from './Geometry';
 export type * from './jsx';
 export type { KeyEvent } from './KeyEvent';
 export type { LightningElementEvents } from './LightningElementEvents';
+export type { LightningElementObserver } from './LightningElementObserver';
 export { LightningElementType } from './LightningElementType';
 export type { RendererNode, TextRendererNode } from './LightningNode';
 export type * from './Props';
