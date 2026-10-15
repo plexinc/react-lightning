@@ -40,6 +40,19 @@ const MAX_SIZEOF_UPDATE = 1024 * 10;
 const MAX_LAYOUT_PASSES = 10;
 const TEXT_MEASURE_SLACK = 0.01;
 
+function isSameTextMeasure(a: TextMeasureProps, b: TextMeasureProps): boolean {
+  return (
+    a.text === b.text &&
+    a.fontSize === b.fontSize &&
+    a.letterSpacing === b.letterSpacing &&
+    a.lineHeight === b.lineHeight &&
+    a.maxLines === b.maxLines &&
+    a.maxHeight === b.maxHeight &&
+    a.wordBreak === b.wordBreak &&
+    a.overflowSuffix === b.overflowSuffix
+  );
+}
+
 export class YogaManager {
   private _elementMap: Map<number, ManagerNode> = new Map();
   private _hiddenElements: Set<number> = new Set();
@@ -128,14 +141,33 @@ export class YogaManager {
    * Set (or refresh) synchronous text measurement for a node. Installs a Yoga
    * measure function the first time so wrapping/sizing happen during layout.
    */
-  public setTextMeasure(elementId: number, fontFamily: string, props: TextMeasureProps): void {
+  public setTextMeasure(
+    elementId: number,
+    fontFamily: string,
+    props: TextMeasureProps,
+    force = false,
+  ): void {
     const yogaNode = this._elementMap.get(elementId);
 
     if (!yogaNode) {
       return;
     }
 
-    const isFirst = yogaNode.text === undefined;
+    const previous = yogaNode.text;
+
+    // Every text style change lands here. A dirty node may have had a w/h
+    // written since its measure, so only a clean one with the same props skips.
+    if (
+      !force &&
+      previous !== undefined &&
+      previous.fontFamily === fontFamily &&
+      isSameTextMeasure(previous.props, props) &&
+      !yogaNode.node.isDirty()
+    ) {
+      return;
+    }
+
+    const isFirst = previous === undefined;
     yogaNode.text = { fontFamily, props };
 
     if (isFirst) {
@@ -505,6 +537,10 @@ export class YogaManager {
       }
     }
 
+    // A percent translate lives outside yoga (resolved at readback), so a push
+    // that sets or clears one has to lay out even though no yoga input moved.
+    let touchedPercent = false;
+
     if (style.transform) {
       const { x, y, transform } = style;
 
@@ -517,6 +553,7 @@ export class YogaManager {
         // A string translate is a percentage of the node's OWN size, which
         // yoga can't express as a position edge — stash it and resolve at
         // readback (_getUpdatedStyles). Recomputed on every transform push.
+        touchedPercent = yogaNode.translatePercent !== undefined;
         yogaNode.translatePercent = undefined;
         yogaNode.resolvedTranslate = undefined;
 
@@ -567,10 +604,14 @@ export class YogaManager {
           applyFlexPropToYoga(yoga, this._yogaOptions, node, edge, value);
           pixelTranslate.y = translateY != null;
         }
+
+        touchedPercent ||= yogaNode.translatePercent !== undefined;
       }
     }
 
-    if (!skipRender) {
+    // Yoga setters only dirty on a real change, and tree ops dirty the parent,
+    // so a clean node means nothing layout reads moved (scale, colour).
+    if (!skipRender && (touchedPercent || yogaNode.node.isDirty())) {
       this.queueRender(elementId);
     }
   }
