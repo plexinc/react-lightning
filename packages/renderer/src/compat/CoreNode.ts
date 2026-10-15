@@ -1,3 +1,4 @@
+import type { TextEntry } from '../TextAtlas';
 import type { Texture } from '../TextureManager';
 import { Animation, type AnimationSettings } from './Animation';
 import type { CompatStage } from './CompatStage';
@@ -105,7 +106,7 @@ export class CoreNode extends EventEmitter {
   // Text only, kept here so every node has the same shape.
   public _tp: TextProps | null = null;
   public _layout: TextLayoutResult | null = null;
-  public _textTex: Texture | null = null;
+  public _textEntry: TextEntry | null = null;
   public _textKey = '';
   public _waitingFont = false;
 

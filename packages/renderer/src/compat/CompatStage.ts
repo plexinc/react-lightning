@@ -2,6 +2,7 @@ import { MODE_AVATAR, MODE_DITHER, MODE_QUAD, MODE_SPINNER, MODE_TEXT, QuadBatch
 
 /** Screen-space clip; `r` > 0 when the innermost clipping node is rounded (screen px). */
 type Rect = BaseRect & { r: number; rx0: number; ry0: number; rx1: number; ry1: number };
+import { TextAtlas } from '../TextAtlas';
 import { TEX_FAILED, TEX_READY, type Texture, TextureManager } from '../TextureManager';
 import { AnimationManager } from './Animation';
 import {
@@ -82,6 +83,7 @@ export class CompatStage {
   public readonly animations: AnimationManager;
   public readonly fonts = new FontRegistry();
   public readonly textures: TextureManager;
+  public readonly textAtlas: TextAtlas;
   public readonly options: CompatStageOptions;
   public readonly stats: CompatStats = {
     frames: 0,
@@ -158,9 +160,11 @@ export class CompatStage {
 
     this.gl = gl;
     this.textures = new TextureManager(gl, () => this.requestRender(), {
-      memoryCap: options.textureMemoryCap ?? 64 * 1024 * 1024,
+      // The text atlas keeps its two 4 MB pages outside this cap.
+      memoryCap: (options.textureMemoryCap ?? 64 * 1024 * 1024) - 8 * 1024 * 1024,
     });
     this._batcher = new QuadBatcher(gl);
+    this.textAtlas = new TextAtlas(gl);
     this.animations = new AnimationManager(() => this.requestRender());
 
     const shTypes: Record<string, ShaderType> = {};
@@ -254,11 +258,12 @@ export class CompatStage {
   }
 
   public releaseText(node: CoreNode): void {
-    if (node._textTex) {
-      this.textures.release(node._textTex);
-      node._textTex = null;
-      node._textKey = '';
+    if (node._textEntry) {
+      this.textAtlas.release(node._textEntry);
+      node._textEntry = null;
     }
+
+    node._textKey = '';
   }
 
   private readonly _frame = (now: number): void => {
@@ -622,26 +627,26 @@ export class CompatStage {
 
     const key = textKey(tp);
 
-    if (node._textKey !== key || !node._textTex) {
-      const old = node._textTex;
-      const tex = this.textures.acquireCanvas(key, () => {
+    if (node._textKey !== key) {
+      const old = node._textEntry;
+
+      node._textEntry = this.textAtlas.acquire(key, () => {
         this.stats.textRasterized++;
 
         return rasterizeText(layout, tp.letterSpacing);
       });
+      node._textKey = key;
 
       if (old) {
-        this.textures.release(old);
+        this.textAtlas.release(old);
       }
 
-      node._textTex = tex;
-      node._textKey = key;
       this._batcher.resetBindings();
     }
 
-    const tex = node._textTex;
+    const entry = node._textEntry;
 
-    if (!tex || tex.state !== TEX_READY) {
+    if (!entry) {
       return;
     }
 
@@ -667,7 +672,7 @@ export class CompatStage {
 
     const tint = withAlpha(node._color, node._worldAlpha);
 
-    this._quad(node, tex, cx, cy, cx + tex.w, cy + tex.h, 0, 0, 1, 1, tint, tint, tint, tint, cx, cy, tex.w, tex.h, 0, 0, 0, clip, null, MODE_TEXT, this.textGamma);
+    this._quad(node, entry.tex, cx, cy, cx + entry.w, cy + entry.h, entry.u0, entry.v0, entry.u1, entry.v1, tint, tint, tint, tint, cx, cy, entry.w, entry.h, 0, 0, 0, clip, null, MODE_TEXT, this.textGamma);
   }
 
   private _draw(node: CoreNode, clip: Rect | null): void {
