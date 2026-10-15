@@ -12,9 +12,8 @@ import {
   type RendererNode,
 } from '../types';
 import { scheduleMicrotask } from '../utils/scheduleMicrotask';
-import { simpleDiff } from '../utils/simpleDiff';
 import { isPrimitiveTextContent } from './isValidTextChild';
-import { mapReactPropsToLightning } from './mapReactPropsToLightning';
+import { diffReactPropsToLightning, mapReactPropsToLightning } from './mapReactPropsToLightning';
 import type { Plugin } from './Plugin';
 
 export type ReconcilerContainer = {
@@ -42,14 +41,6 @@ export type LightningHostConfig = HostConfig<
   rendererVersion: string;
   extraDevToolsConfig: unknown;
 };
-
-function hasKeys(object: object): boolean {
-  for (const _ in object) {
-    return true;
-  }
-
-  return false;
-}
 
 type LightningHostConfigOptions = Pick<LightningHostConfig, 'isPrimaryRenderer'>;
 
@@ -229,15 +220,9 @@ export function createHostConfig(options?: LightningHostConfigOptions): Lightnin
     },
 
     commitUpdate(instance, type, oldProps, newProps) {
-      const diffedProps: Partial<LightningElementProps> | null = simpleDiff(oldProps, newProps);
+      const updatePayload = diffReactPropsToLightning(type, oldProps, newProps);
 
-      if (!diffedProps) {
-        return null;
-      }
-
-      const updatePayload = mapReactPropsToLightning(type, diffedProps);
-
-      if (hasKeys(updatePayload)) {
+      if (updatePayload) {
         instance.setProps(updatePayload);
       }
 

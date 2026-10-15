@@ -18,7 +18,7 @@ function isReactElement(value: unknown): value is ReactElement {
   );
 }
 
-function areValuesEqual(first: unknown, second: unknown): boolean {
+export function areValuesEqual(first: unknown, second: unknown): boolean {
   // Strict equality check for primitives and same references
   if (first === second) {
     return true;
