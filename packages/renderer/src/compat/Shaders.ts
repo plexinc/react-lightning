@@ -134,6 +134,68 @@ export function normalizeProp(key: string, value: unknown): unknown {
   return value;
 }
 
+const CORNER_KEYS = ['top-left', 'top-right', 'bottom-right', 'bottom-left'];
+
+/**
+ * Lightning's corner radii for a w x h node: a number or a 1-4 entry array
+ * (CSS-style fill), `top-left`... overrides, then scaled down together so
+ * adjacent corners never overlap (calcFactoredRadiusArray). Fills `out` as
+ * [tl, tr, br, bl] and returns the radius when all four are equal, else -1.
+ */
+export function cornerRadii(props: Record<string, unknown>, w: number, h: number, out: number[]): number {
+  const v = props.radius;
+  let r0 = 0;
+  let r1 = 0;
+  let r2 = 0;
+  let r3 = 0;
+
+  if (typeof v === 'number') {
+    r0 = r1 = r2 = r3 = v;
+  } else if (Array.isArray(v) && v.length > 0) {
+    r0 = num(v[0]);
+    r1 = v.length > 1 ? num(v[1]) : r0;
+    r2 = v.length > 2 ? num(v[2]) : r0;
+    r3 = v.length > 3 ? num(v[3]) : v.length === 3 ? r0 : r1;
+  }
+
+  for (let i = 0; i < 4; i++) {
+    const c = props[CORNER_KEYS[i]];
+
+    if (typeof c === 'number' && c > 0) {
+      if (i === 0) r0 = c;
+      else if (i === 1) r1 = c;
+      else if (i === 2) r2 = c;
+      else r3 = c;
+    }
+  }
+
+  if (w > 0 && h > 0) {
+    const f = Math.min(
+      w / Math.max(w, r0 + r1),
+      w / Math.max(w, r2 + r3),
+      h / Math.max(h, r0 + r3),
+      h / Math.max(h, r1 + r2),
+      1,
+    );
+
+    r0 *= f;
+    r1 *= f;
+    r2 *= f;
+    r3 *= f;
+  }
+
+  out[0] = r0;
+  out[1] = r1;
+  out[2] = r2;
+  out[3] = r3;
+
+  return r0 === r1 && r1 === r2 && r2 === r3 ? r0 : -1;
+}
+
+function num(x: unknown): number {
+  return typeof x === 'number' && x > 0 ? x : 0;
+}
+
 /** Highest of a number or [tl, tr, br, bl]; the batcher has one radius per quad. */
 export function maxRadius(v: unknown): number {
   if (typeof v === 'number') {

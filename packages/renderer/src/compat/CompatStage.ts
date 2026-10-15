@@ -29,7 +29,7 @@ import {
   KIND_ULTRABLUR,
   KIND_UNSUPPORTED,
   type ShaderType,
-  maxRadius,
+  cornerRadii,
   resolveShaderProps,
 } from './Shaders';
 import { type TextProps, layoutText, rasterizeText, textKey } from './TextLayout';
@@ -114,6 +114,8 @@ export class CompatStage {
   private _active = false;
   private _lastFrame = 0;
   private readonly _clipStack: Rect[] = [];
+  private readonly _radii = [0, 0, 0, 0];
+  private readonly _outerRadii = [0, 0, 0, 0];
   private _clipDepth = 0;
   private _events: PendingEvent[] = [];
   private readonly _warned = new Set<string>();
@@ -448,7 +450,7 @@ export class CompatStage {
       if (node.isTextNode) {
         this._drawText(node, clip);
       } else {
-        this._draw(node, clip, axisAligned);
+        this._draw(node, clip);
       }
     }
 
@@ -660,7 +662,7 @@ export class CompatStage {
     this._quad(node, tex, cx, cy, cx + tex.w, cy + tex.h, 0, 0, 1, 1, tint, tint, tint, tint, cx, cy, tex.w, tex.h, 0, 0, 0, clip);
   }
 
-  private _draw(node: CoreNode, clip: Rect | null, axisAligned: boolean): void {
+  private _draw(node: CoreNode, clip: Rect | null): void {
     const w = node._w;
     const h = node._h;
     const a = node._worldAlpha;
@@ -719,6 +721,7 @@ export class CompatStage {
     }
 
     let radius = 0;
+    let radii: number[] | null = null;
     let bw = 0;
     let bc = 0;
     let align = 0;
@@ -730,7 +733,12 @@ export class CompatStage {
       props = shader.props;
 
       if (kind === KIND_ROUNDED || kind === KIND_ROUNDED_BORDER || kind === KIND_GRADIENT) {
-        radius = maxRadius(props.radius);
+        radius = cornerRadii(props, w, h, this._radii);
+
+        if (radius < 0) {
+          radii = this._radii;
+          radius = Math.max(radii[0], radii[1], radii[2], radii[3]);
+        }
       }
 
       if (kind === KIND_BORDER || kind === KIND_ROUNDED_BORDER) {
@@ -811,14 +819,14 @@ export class CompatStage {
     }
 
     if (kind === KIND_GRADIENT && props) {
-      this._drawGradient(node, props, radius, clip, axisAligned);
+      this._drawGradient(node, props, radius, radii, clip);
 
       return;
     }
 
     if (sides) {
       if (hasFill) {
-        this._quad(node, tex, qx0, qy0, qx1, qy1, u0, v0, u1, v1, tint, tint, tint, tint, 0, 0, w, h, radius, 0, 0, clip);
+        this._quad(node, tex, qx0, qy0, qx1, qy1, u0, v0, u1, v1, tint, tint, tint, tint, 0, 0, w, h, radius, 0, 0, clip, radii);
       }
 
       const white = this.textures.white;
@@ -834,7 +842,7 @@ export class CompatStage {
 
     if (bw > 0 && (align > 0 || gap > 0)) {
       if (hasFill && (tint & 255) !== 0) {
-        this._quad(node, tex, qx0, qy0, qx1, qy1, u0, v0, u1, v1, tint, tint, tint, tint, ins, ins, iw, ih, radius, 0, 0, clip);
+        this._quad(node, tex, qx0, qy0, qx1, qy1, u0, v0, u1, v1, tint, tint, tint, tint, ins, ins, iw, ih, radius, 0, 0, clip, radii);
       }
 
       if ((borderColor & 255) === 0) {
@@ -845,8 +853,17 @@ export class CompatStage {
       const e = gap + bw * align;
       const er = radius > 0 ? radius + e : 0;
       const white = this.textures.white;
+      let outer: number[] | null = null;
 
-      this._quad(node, white, -e, -e, w + e, h + e, 0, 0, 1, 1, 0, 0, 0, 0, ins - e, ins - e, iw + 2 * e, ih + 2 * e, er, bw, borderColor, clip);
+      if (radii) {
+        outer = this._outerRadii;
+        outer[0] = radii[0] + e;
+        outer[1] = radii[1] + e;
+        outer[2] = radii[2] + e;
+        outer[3] = radii[3] + e;
+      }
+
+      this._quad(node, white, -e, -e, w + e, h + e, 0, 0, 1, 1, 0, 0, 0, 0, ins - e, ins - e, iw + 2 * e, ih + 2 * e, er, bw, borderColor, clip, outer);
 
       return;
     }
@@ -860,20 +877,20 @@ export class CompatStage {
     }
 
     if (!hasFill) {
-      this._quad(node, this.textures.white, 0, 0, w, h, 0, 0, 1, 1, 0, 0, 0, 0, ins, ins, iw, ih, radius, bw, borderColor, clip);
+      this._quad(node, this.textures.white, 0, 0, w, h, 0, 0, 1, 1, 0, 0, 0, 0, ins, ins, iw, ih, radius, bw, borderColor, clip, radii);
 
       return;
     }
 
-    this._quad(node, tex, qx0, qy0, qx1, qy1, u0, v0, u1, v1, tint, tint, tint, tint, ins, ins, iw, ih, radius, bw, borderColor, clip);
+    this._quad(node, tex, qx0, qy0, qx1, qy1, u0, v0, u1, v1, tint, tint, tint, tint, ins, ins, iw, ih, radius, bw, borderColor, clip, radii);
   }
 
   private _drawGradient(
     node: CoreNode,
     props: Record<string, unknown>,
     radius: number,
+    radii: number[] | null,
     clip: Rect | null,
-    _axisAligned: boolean,
   ): void {
     const w = node._w;
     const h = node._h;
@@ -906,7 +923,7 @@ export class CompatStage {
       const c2 = colorAt(distAt(0, h));
       const c3 = colorAt(distAt(w, h));
 
-      this._quad(node, white, 0, 0, w, h, 0, 0, 1, 1, c0, c1, c2, c3, 0, 0, w, h, radius, 0, 0, clip);
+      this._quad(node, white, 0, 0, w, h, 0, 0, 1, 1, c0, c1, c2, c3, 0, 0, w, h, radius, 0, 0, clip, radii);
 
       return;
     }
@@ -953,9 +970,9 @@ export class CompatStage {
       const cb = colorAt(d0 + (d1 - d0) * tb);
 
       if (vertical) {
-        this._quad(node, white, 0, ta * len, w, tb * len, 0, 0, 1, 1, ca, ca, cb, cb, 0, 0, w, h, radius, 0, 0, clip);
+        this._quad(node, white, 0, ta * len, w, tb * len, 0, 0, 1, 1, ca, ca, cb, cb, 0, 0, w, h, radius, 0, 0, clip, radii);
       } else {
-        this._quad(node, white, ta * len, 0, tb * len, h, 0, 0, 1, 1, ca, cb, ca, cb, 0, 0, w, h, radius, 0, 0, clip);
+        this._quad(node, white, ta * len, 0, tb * len, h, 0, 0, 1, 1, ca, cb, ca, cb, 0, 0, w, h, radius, 0, 0, clip, radii);
       }
     }
   }
