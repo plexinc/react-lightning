@@ -5,6 +5,7 @@ import type { Fiber } from 'react-reconciler';
 import {
   type FocusManager,
   getFocusManager,
+  type LightningElementObserver,
   LightningViewElement,
   type Plugin,
 } from '@plextv/react-lightning';
@@ -52,6 +53,18 @@ function whenLoaded(element: LightningNativeViewElement): Promise<void> {
 }
 
 let polyfilled = false;
+
+// Marks an element loaded on its first layout, like a `once('layout')` would.
+const loadedObserver: LightningElementObserver = {
+  layout(element) {
+    const nativeInstance = element as LightningNativeViewElement;
+
+    if (!nativeInstance.__loaded) {
+      nativeInstance.__loaded = true;
+      nativeInstance.__resolveLoad?.();
+    }
+  },
+};
 
 export const reactNativePolyfillsPlugin = (): Plugin => {
   let fiberFocusManager: FocusManager<LightningViewElement> | null = null;
@@ -172,6 +185,13 @@ export const reactNativePolyfillsPlugin = (): Plugin => {
 
     onCreateInstance(instance) {
       const nativeInstance = instance as LightningNativeViewElement;
+
+      // One shared observer for every element instead of a once listener each.
+      if (typeof (nativeInstance as { observe?: unknown }).observe === 'function') {
+        nativeInstance.observe(loadedObserver);
+
+        return;
+      }
 
       nativeInstance.once('layout', () => {
         nativeInstance.__loaded = true;
