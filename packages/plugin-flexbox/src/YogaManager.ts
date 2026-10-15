@@ -1,5 +1,5 @@
 import { EventEmitter } from 'tseep';
-import { type Config, loadYoga, type Yoga } from 'yoga-layout/load';
+import type { Config, Yoga } from 'yoga-layout/load';
 
 import type { LightningElementStyle, Rect } from '@plextv/react-lightning';
 
@@ -10,6 +10,7 @@ import type { YogaOptions } from './types/YogaOptions';
 import applyReactPropsToYoga, { applyFlexPropToYoga } from './util/applyReactPropsToYoga';
 import { resolveHorizontalTranslate, resolveVerticalTranslate } from './util/resolveTranslateInset';
 import { SimpleDataView } from './util/SimpleDataView';
+import { loadYoga } from './yoga/loadYoga';
 
 export type BatchedUpdate = Record<number, Partial<Rect>>;
 
@@ -361,8 +362,9 @@ export class YogaManager {
 
     // Microtask runs AFTER the current synchronous batch of style/node
     // ops (arriving from postMessage handlers); setTimeout's 1ms+ minimum
-    // would fragment a batch into many render passes.
-    queueMicrotask(() => {
+    // would fragment a batch into many render passes. Not queueMicrotask: it
+    // needs Chrome 71, and nothing polyfills the inline worker.
+    void Promise.resolve().then(() => {
       this._isRenderQueued = false;
 
       if (this._independentRoots.size === 0) {

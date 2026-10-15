@@ -6,7 +6,7 @@ import type { YogaOptions } from './types/YogaOptions';
 import { SimpleDataView } from './util/SimpleDataView';
 import { YogaManager } from './YogaManager';
 
-// Mock the yoga-layout/load module
+// Mock the vendored yoga loader
 const mockNode = {
   create: vi.fn(),
   free: vi.fn(),
@@ -63,7 +63,7 @@ const mockYoga = {
   DISPLAY_NONE: 1,
 };
 
-vi.mock('yoga-layout/load', () => ({
+vi.mock('./yoga/loadYoga', () => ({
   loadYoga: vi.fn(() => Promise.resolve(mockYoga)),
 }));
 

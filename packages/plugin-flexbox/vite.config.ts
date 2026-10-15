@@ -20,5 +20,11 @@ export default defineConfig((env) =>
     build: {
       target: buildTarget,
     },
+    // The inline worker is a separate bundle that doesn't inherit build.target.
+    worker: {
+      rolldownOptions: {
+        transform: { target: buildTarget },
+      },
+    },
   }),
 );

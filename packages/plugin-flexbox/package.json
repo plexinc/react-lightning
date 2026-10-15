@@ -49,7 +49,8 @@
     "test:unit": "vitest run --passWithNoTests",
     "bench": "tsx bench/cli.ts",
     "bench:update": "tsx bench/cli.ts --update",
-    "bench:save": "tsx bench/cli.ts save"
+    "bench:save": "tsx bench/cli.ts save",
+    "vendor:yoga": "tsx scripts/vendorYoga.ts"
   },
   "dependencies": {
     "tseep": "catalog:",

@@ -1,7 +1,8 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { loadYoga, type Yoga } from 'yoga-layout/load';
+import type { Yoga } from 'yoga-layout/load';
 
 import type { YogaOptions } from '../types/YogaOptions';
+import { loadYoga } from '../yoga/loadYoga';
 import { applyFlexPropToYoga } from './applyReactPropsToYoga';
 
 const options = { expandToAutoFlexBasis: false } as YogaOptions;
