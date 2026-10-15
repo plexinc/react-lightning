@@ -1,11 +1,12 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Node } from 'yoga-layout';
-import { loadYoga, type Yoga } from 'yoga-layout/load';
+import type { Yoga } from 'yoga-layout/load';
 
 import type { LightningViewElementStyle } from '@plextv/react-lightning';
 
 import type { ManagerNode } from '../types/ManagerNode';
 import type { YogaOptions } from '../types/YogaOptions';
+import { loadYoga } from '../yoga/loadYoga';
 import applyReactPropsToYoga, { applyFlexPropToYoga } from './applyReactPropsToYoga';
 
 // Yoga resolves `alignSelf: auto` to the parent's alignItems, and treats

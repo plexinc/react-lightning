@@ -1,10 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Node } from 'yoga-layout';
-import { loadYoga, type Yoga } from 'yoga-layout/load';
+import type { Yoga } from 'yoga-layout/load';
 
 import type { LightningViewElementStyle } from '@plextv/react-lightning';
 
 import type { YogaOptions } from '../types/YogaOptions';
+import { loadYoga } from '../yoga/loadYoga';
 import { applyFlexPropToYoga } from './applyReactPropsToYoga';
 
 // RN ships logical start/end insets (LTR: start=left, end=right). react-lightning

@@ -20,5 +20,5 @@
     "jsx-a11y/mouse-events-have-key-events": "off",
     "jsx-a11y/click-events-have-key-events": "off"
   },
-  "ignorePatterns": ["dist", ".changeset", "**/public"]
+  "ignorePatterns": ["dist", ".changeset", "**/public", "packages/plugin-flexbox/src/yoga/vendor"]
 }

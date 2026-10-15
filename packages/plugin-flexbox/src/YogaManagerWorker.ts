@@ -39,7 +39,8 @@ function debounceMicrotask<T extends (...args: unknown[]) => void | Promise<void
     }
 
     scheduled = true;
-    queueMicrotask(() => {
+    // Not queueMicrotask, which needs Chrome 71.
+    void Promise.resolve().then(() => {
       scheduled = false;
       fn.apply(this, latestArgs);
     });
@@ -396,7 +397,7 @@ function resolveFontUrls(yogaOptions?: YogaOptions): YogaOptions | undefined {
     return yogaOptions;
   }
 
-  const baseHref = globalThis.location?.href;
+  const baseHref = typeof location === 'undefined' ? undefined : location.href;
 
   return {
     ...yogaOptions,
