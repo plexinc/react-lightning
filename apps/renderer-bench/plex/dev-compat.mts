@@ -1,20 +1,32 @@
-// Local-only launcher: the Plex Lightning dev server with a runtime switch between the stock
-// @lightningjs/renderer and the own-renderer compat layer. Run from apps/plex/targets/lightning:
+// Local-only launcher: the Plex Lightning dev server with a runtime renderer switch. Run from
+// apps/plex/targets/lightning:
 //   LNG_DEV_PORT=3421 node_modules/.bin/tsx <this file>
-// ?renderer=own|stock or F9 picks the renderer (stored in localStorage, default stock).
+// ?renderer=stock|compat|direct (own = compat) or F9 (stock -> compat -> direct) picks it, stored in localStorage.
 //
-// `@lightningjs/renderer*` resolves to /__renderer/<entry>.js, redirected by cookie to one implementation.
-// A top-level-await switch reordered module evaluation and hung the app on its splash, hence the redirect.
-import { mkdirSync, writeFileSync } from 'node:fs';
+// stock:  @lightningjs/renderer 3.1.1.
+// compat: the own renderer behind the @lightningjs/renderer compat layer (packages/renderer/src/compat).
+// direct: @plextv/react-native-webtv's `renderer: 'webtv'`, react-lightning elements drawn as scene nodes.
+//
+// Every @plextv package the app imports is served from this worktree's source in all three modes, so they
+// compare the same react-lightning code. `@lightningjs/renderer*` resolves to /__renderer/<entry>.js,
+// redirected by cookie to stock or compat (a top-level-await switch hung the app on its splash).
+import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+// Vite serve sets this anyway; set it first so the app's React Compiler config only warns about
+// compile errors in the worktree's source packages instead of throwing.
+process.env.NODE_ENV ??= 'development';
+
 const lightningDir = process.cwd();
-const switchDir = join(dirname(fileURLToPath(import.meta.url)), 'switch');
+const benchDir = dirname(fileURLToPath(import.meta.url));
+const switchDir = join(benchDir, 'switch');
 const genDir = join(switchDir, '.gen');
-const compatDir =
-  process.env.VITE_OWN_RENDERER_DIR ??
-  '/Volumes/Development/react-lightning-worktrees/own-renderer-compat/packages/renderer/src/compat';
+const repoDir = join(benchDir, '../../..');
+const packagesDir = join(repoDir, 'packages');
+const compatDir = process.env.VITE_OWN_RENDERER_DIR ?? join(packagesDir, 'renderer/src/compat');
+const shim = join(switchDir, 'react-lightning.ts');
 
 const vite = await import(
   pathToFileURL(join(lightningDir, 'node_modules/vite/dist/node/index.js')).href
@@ -68,99 +80,197 @@ for (const mode of ['own', 'stock'] as const) {
 }
 
 // Runs before any module script: applies ?renderer= (then reloads without it) and mirrors the
-// stored choice into the cookie the /__renderer/ redirect reads.
+// stored choice into the cookie the /__renderer/ redirect reads (direct draws with the compat stage).
 const headScript = `(() => {
   const key = 'lng.renderer';
   const params = new URLSearchParams(location.search);
-  const requested = params.get('renderer');
+  let requested = params.get('renderer');
+  if (requested === 'compat') requested = 'own';
   let mode = null;
   try { mode = localStorage.getItem(key); } catch {}
-  if (requested === 'own' || requested === 'stock') {
+  if (requested === 'own' || requested === 'stock' || requested === 'direct') {
     try { localStorage.setItem(key, requested); } catch {}
     params.delete('renderer');
     const query = params.toString();
     location.replace(location.pathname + (query ? '?' + query : '') + location.hash);
     mode = requested;
   }
-  document.cookie = key + '=' + (mode === 'own' ? 'own' : 'stock') + '; path=/; SameSite=Lax';
+  document.cookie = key + '=' + (mode === 'own' || mode === 'direct' ? 'own' : 'stock') + '; path=/; SameSite=Lax';
 })();`;
+
+// @plextv packages -> this worktree's source, through each package's own `exports`.
+const sourcePackages: Record<string, string> = {
+  '@plextv/react-lightning': 'react-lightning',
+  '@plextv/react-lightning-components': 'react-lightning-components',
+  '@plextv/react-lightning-plugin-css-transform': 'plugin-css-transform',
+  '@plextv/react-lightning-plugin-flexbox': 'plugin-flexbox',
+  '@plextv/react-lightning-plugin-reanimated': 'plugin-reanimated',
+  '@plextv/react-native-lightning': 'react-native-lightning',
+  '@plextv/react-native-webtv': 'react-native-webtv',
+};
+
+const sourceExports = new Map<string, Record<string, string>>();
+
+for (const [name, dir] of Object.entries(sourcePackages)) {
+  const pkg = JSON.parse(readFileSync(join(packagesDir, dir, 'package.json'), 'utf8'));
+
+  sourceExports.set(name, pkg.exports);
+}
+
+const sourceFile = (name: string, sub: string): string | null => {
+  const exports = sourceExports.get(name);
+  const target = exports?.[sub ? `./${sub}` : '.'];
+
+  return typeof target === 'string' ? join(packagesDir, sourcePackages[name], target) : null;
+};
+
+// The app's installed copies, as the Plex vite config aliases them (absolute dirs, both spellings).
+const appRequire = createRequire(join(lightningDir, 'package.json'));
+const configRequire = createRequire(
+  join(lightningDir, '../../../../packages/config/package.json'),
+);
+const installedDirs: [string, string][] = [];
+
+for (const name of Object.keys(sourcePackages)) {
+  for (const req of [appRequire, configRequire]) {
+    try {
+      const dir = dirname(req.resolve(`${name}/package.json`));
+
+      installedDirs.push([dir, name], [realpathSync(dir), name]);
+    } catch {}
+  }
+}
+
+const fromInstalled = (id: string): string | null => {
+  for (const [dir, name] of installedDirs) {
+    if (id === dir || id.startsWith(`${dir}/`)) {
+      const rest = id.slice(dir.length + 1);
+
+      // Package root, or its built main file: the source entry.
+      if (rest === '' || rest.startsWith('dist/index')) {
+        return sourceFile(name, '');
+      }
+
+      return sourceFile(name, rest) ?? sourceFile(name, '');
+    }
+  }
+
+  return null;
+};
+
+const toSource = (id: string, importer?: string): string | null => {
+  if (id === '@plextv/react-lightning' && importer !== shim && !importer?.includes('/react-native-webtv/')) {
+    return shim;
+  }
+
+  const bare = /^(@plextv\/[^/]+)(?:\/(.+))?$/.exec(id);
+
+  if (bare && sourceExports.has(bare[1])) {
+    return sourceFile(bare[1], bare[2] ?? '');
+  }
+
+  if (id.startsWith('/') && !id.startsWith(PREFIX)) {
+    return fromInstalled(id);
+  }
+
+  if (id === 'react-native-reanimated') {
+    return sourceFile('@plextv/react-lightning-plugin-reanimated', '');
+  }
+
+  return null;
+};
 
 const match = (id: string) => entries.find(([sub]) => id === specifier(sub));
 const fromSwitch = (importer?: string) => !!importer && importer.startsWith(genDir);
 const switchUrl = (sub: string) => `${PREFIX}${entryName(sub)}.js`;
 
-const final = vite.mergeConfig(config, {
-  plugins: [
-    {
-      name: 'renderer-switch',
-      enforce: 'pre',
-      resolveId(id: string, importer?: string) {
-        if (id.startsWith(PREFIX)) {
-          return id;
+const rendererSwitch = {
+  name: 'renderer-switch',
+  enforce: 'pre' as const,
+  resolveId(id: string, importer?: string) {
+    if (id.startsWith(PREFIX)) {
+      return id;
+    }
+
+    const hit = match(id);
+
+    if (hit) {
+      return fromSwitch(importer) ? null : switchUrl(hit[0]);
+    }
+
+    const source = toSource(id, importer);
+
+    return source && importer !== source ? source : null;
+  },
+  load(id: string) {
+    // Only reached by Vite's own pre-transform; browsers get the redirect below.
+    return id.startsWith(PREFIX) ? 'export {};' : null;
+  },
+  transformIndexHtml: () => [{ tag: 'script', children: headScript, injectTo: 'head-prepend' }],
+  configureServer(server: { middlewares: { use: (fn: unknown) => void } }) {
+    server.middlewares.use(
+      (
+        req: { url?: string; headers: { cookie?: string } },
+        res: { statusCode: number; setHeader: (k: string, v: string) => void; end: () => void },
+        next: () => void,
+      ) => {
+        const path = req.url?.split('?')[0];
+
+        if (!path?.startsWith(PREFIX)) {
+          return next();
         }
 
-        const hit = match(id);
-
-        return hit && !fromSwitch(importer) ? switchUrl(hit[0]) : null;
+        const own = /(?:^|;\s*)lng\.renderer=own(?:;|$)/.test(req.headers.cookie ?? '');
+        const file = join(genDir, own ? 'own' : 'stock', path.slice(PREFIX.length));
+        res.statusCode = 302;
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('Location', `/@fs${file}`);
+        res.end();
       },
-      load(id: string) {
-        // Only reached by Vite's own pre-transform; browsers get the redirect below.
-        return id.startsWith(PREFIX) ? 'export {};' : null;
-      },
-      transformIndexHtml: () => [
-        { tag: 'script', children: headScript, injectTo: 'head-prepend' },
-      ],
-      configureServer(server: { middlewares: { use: (fn: unknown) => void } }) {
-        server.middlewares.use(
-          (
-            req: { url?: string; headers: { cookie?: string } },
-            res: { statusCode: number; setHeader: (k: string, v: string) => void; end: () => void },
-            next: () => void,
-          ) => {
-            const path = req.url?.split('?')[0];
+    );
+  },
+};
 
-            if (!path?.startsWith(PREFIX)) {
-              return next();
-            }
-
-            const own = /(?:^|;\s*)lng\.renderer=own(?:;|$)/.test(req.headers.cookie ?? '');
-            const file = join(genDir, own ? 'own' : 'stock', path.slice(PREFIX.length));
-            res.statusCode = 302;
-            res.setHeader('Cache-Control', 'no-store');
-            res.setHeader('Location', `/@fs${file}`);
-            res.end();
-          },
-        );
-      },
-    },
-  ],
-  server: { fs: { allow: [compatDir, switchDir] } },
+const final = vite.mergeConfig(config, {
+  resolve: {
+    dedupe: ['react-native-reanimated', 'react-native-worklets'],
+  },
+  server: { fs: { allow: [repoDir] } },
   optimizeDeps: {
     // Stock stays prebundled as in a normal run; the stock switch modules import it by name.
     include: entries.map(([sub]) => specifier(sub)),
     rolldownOptions: {
       plugins: [
         {
-          // Keep both renderers out of the react-lightning prebundle.
+          // Keep both renderers and the source packages out of other prebundles.
           name: 'renderer-switch-external',
           resolveId(id: string, importer?: string) {
             const hit = importer && !fromSwitch(importer) ? match(id) : undefined;
 
-            return hit ? { id: switchUrl(hit[0]), external: true } : null;
+            if (hit) {
+              return { id: switchUrl(hit[0]), external: true };
+            }
+
+            return /^@plextv\//.test(id) && sourceExports.has(id.split('/').slice(0, 2).join('/'))
+              ? { id, external: true }
+              : null;
           },
         },
       ],
     },
   },
-  cacheDir: process.env.VITE_CACHE_DIR ?? join(lightningDir, 'node_modules/.vite-renderer-switch'),
+  cacheDir: join(lightningDir, 'node_modules/.vite-renderer-switch-direct'),
 });
 
-console.log('[dev-compat] renderer switch: stock or', compatDir);
+// First, so the reanimated and react-native aliases of the app's plugins resolve to source too.
+final.plugins = [rendererSwitch, ...(final.plugins ?? [])];
+
+console.log('[dev-compat] renderer switch: stock, compat or direct; packages from', packagesDir);
 
 const server = await vite.createServer({ ...final, configFile: false });
 
 // Files outside the Vite root aren't watched by default.
-server.watcher.add([join(compatDir, '..'), switchDir]);
+server.watcher.add([packagesDir, switchDir]);
 
 await server.listen();
 server.printUrls();

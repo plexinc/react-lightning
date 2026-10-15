@@ -387,7 +387,7 @@ export class CompatStage {
       const e = events[i];
 
       if (!e.node.destroyed) {
-        e.node.emit(e.name, e.data);
+        e.node._emitRender(e.name, e.data);
       }
     }
   }
@@ -520,7 +520,7 @@ export class CompatStage {
       childClip = this._pushClip(minX, minY, maxX, maxY, clip, node._clipRadius > 0 && axisAligned ? node._clipRadius * node._wa : 0);
     }
 
-    const list = node._drawOrder ?? node.children;
+    const list = node._drawOrder ?? node._kids;
 
     for (let i = 0; i < list.length; i++) {
       this._visit(list[i], moved, faded, childClip);
@@ -602,7 +602,7 @@ export class CompatStage {
 
       if (glTex.state === TEX_FAILED) {
         tex.state = 'failed';
-        node.emit('failed', { type: 'texture', error: new Error(`Failed to load ${src}`) });
+        node._emitRender('failed', { type: 'texture', error: new Error(`Failed to load ${src}`) });
 
         return;
       }
@@ -1426,7 +1426,7 @@ function computeWorld(node: CoreNode): void {
 }
 
 function updateDrawOrder(node: CoreNode): void {
-  const children = node.children;
+  const children = node._kids;
   let hasZ = false;
 
   for (let i = 0; i < children.length; i++) {

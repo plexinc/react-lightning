@@ -3,7 +3,10 @@
 const KEY = 'lng.renderer';
 const TOGGLE_KEY = 'F9';
 
-type Mode = 'own' | 'stock';
+type Mode = 'stock' | 'own' | 'direct';
+
+const ORDER: Mode[] = ['stock', 'own', 'direct'];
+const LABEL: Record<Mode, string> = { stock: 'stock', own: 'compat', direct: 'direct' };
 
 const read = (): string | null => {
   try {
@@ -13,7 +16,9 @@ const read = (): string | null => {
   }
 };
 
-export const mode: Mode = read() === 'own' ? 'own' : 'stock';
+const stored = read();
+
+export const mode: Mode = stored === 'own' || stored === 'direct' ? stored : 'stock';
 
 window.addEventListener(
   'keydown',
@@ -26,7 +31,7 @@ window.addEventListener(
     event.stopImmediatePropagation();
 
     try {
-      localStorage.setItem(KEY, mode === 'own' ? 'stock' : 'own');
+      localStorage.setItem(KEY, ORDER[(ORDER.indexOf(mode) + 1) % ORDER.length]);
     } catch {}
 
     location.reload();
@@ -48,7 +53,7 @@ let lastFpsAt = 0;
 const paint = () => {
   const stale = performance.now() - lastFpsAt > 1500;
   const suffix = fps == null ? '' : stale ? ' · idle' : ` · ${fps} fps`;
-  badge.textContent = `renderer: ${mode}${suffix}`;
+  badge.textContent = `renderer: ${LABEL[mode]}${suffix}`;
 };
 
 paint();

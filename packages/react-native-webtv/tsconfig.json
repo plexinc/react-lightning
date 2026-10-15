@@ -1,0 +1,19 @@
+{
+  "extends": "@repo/configs/tsconfig.react-library.json",
+  "compilerOptions": {
+    "types": [
+      "node",
+      "vite/client"
+    ],
+    "noUncheckedIndexedAccess": false,
+    "isolatedDeclarations": false
+  },
+  "include": [
+    "src",
+    "../../types/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

@@ -58,7 +58,8 @@ let nextId = 1;
 export class CoreNode extends EventEmitter {
   public readonly stage: CompatStage;
   public readonly isTextNode: boolean = false;
-  public children: CoreNode[] = [];
+  /** Render children; CompatStage and scene elements share this name, `children` is the Lightning API. */
+  public _kids: CoreNode[] = [];
   public destroyed = false;
   public renderState: CoreNodeRenderState = CoreNodeRenderState.Init;
   public data: Record<string, unknown> | undefined = undefined;
@@ -118,6 +119,15 @@ export class CoreNode extends EventEmitter {
 
   public get id(): number {
     return this._id;
+  }
+
+  public get children(): CoreNode[] {
+    return this._kids;
+  }
+
+  /** Stage events (render state, texture loaded/failed) come in here. */
+  public _emitRender(name: string, data: unknown): void {
+    this.emit(name, data);
   }
 
   public _mark(flag: number): void {
@@ -364,10 +374,10 @@ export class CoreNode extends EventEmitter {
     }
 
     if (old) {
-      const idx = old.children.indexOf(this);
+      const idx = old._kids.indexOf(this);
 
       if (idx >= 0) {
-        old.children.splice(idx, 1);
+        old._kids.splice(idx, 1);
       }
 
       old._flags |= DIRTY_ORDER;
@@ -376,7 +386,7 @@ export class CoreNode extends EventEmitter {
     this._parent = p;
 
     if (p) {
-      p.children.push(this);
+      p._kids.push(this);
       p._flags |= DIRTY_ORDER;
     }
 
@@ -462,9 +472,13 @@ export class CoreNode extends EventEmitter {
     this.removeAllListeners();
     this.destroyed = true;
 
-    while (this.children.length > 0) {
-      this.children[0].destroy();
+    const kids = this._kids.slice();
+
+    for (let i = 0; i < kids.length; i++) {
+      kids[i].destroy();
     }
+
+    this._kids.length = 0;
 
     if (this._parent) {
       this.parent = null;

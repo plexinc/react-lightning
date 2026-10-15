@@ -11,6 +11,7 @@
     "./react": "./src/react/index.ts",
     "./package.json": "./package.json",
     "./compat": "./src/compat/index.ts",
+    "./compat/scene": "./src/compat/scene.ts",
     "./compat/webgl": "./src/compat/webgl.ts",
     "./compat/webgl/shaders": "./src/compat/shaderExports.ts",
     "./compat/canvas": "./src/compat/canvas.ts",

@@ -1,0 +1,62 @@
+{
+  "name": "@plextv/react-native-webtv",
+  "version": "0.0.0-alpha.0",
+  "private": true,
+  "description": "react-native-lightning with a renderer switch: the stock @lightningjs/renderer or the own WebGL renderer",
+  "bugs": {
+    "url": "https://github.com/plexinc/react-lightning/issues/new"
+  },
+  "license": "MIT",
+  "author": "Plex Inc.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plexinc/react-lightning.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./lightning": "./src/lightning.ts",
+    "./webtv": "./src/webtv.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": "./dist/index.js",
+      "./lightning": "./dist/lightning.js",
+      "./webtv": "./dist/webtv.js",
+      "./package.json": "./package.json"
+    },
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown --config-loader unrun",
+    "watch": "tsdown -w",
+    "clean": "del ./dist",
+    "check:types": "tsc --noEmit",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@plextv/react-lightning-renderer": "workspace:*"
+  },
+  "devDependencies": {
+    "@lightningjs/renderer": "catalog:",
+    "@repo/configs": "workspace:*",
+    "@types/node": "25.6.0",
+    "@types/react": "catalog:",
+    "@types/react-reconciler": "catalog:"
+  },
+  "peerDependencies": {
+    "@lightningjs/renderer": "catalog:",
+    "@plextv/react-lightning": "workspace:^",
+    "@plextv/react-native-lightning": "workspace:^",
+    "react": "catalog:"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  }
+}
