@@ -102,7 +102,9 @@ void main() {
     vec2 q = abs(p) - halfSize + r;
     float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
     if (vMisc.z > 0.0) {
-      c = mix(c, vBorderColor, clamp(0.5 + d + vMisc.z, 0.0, 1.0));
+      // Composited over the fill like Lightning's border, so a translucent border doesn't punch through it.
+      float k = clamp(0.5 + d + vMisc.z, 0.0, 1.0);
+      c = vBorderColor * k + c * (1.0 - vBorderColor.a * k);
     }
     c *= clamp(0.5 - d, 0.0, 1.0);
   }
