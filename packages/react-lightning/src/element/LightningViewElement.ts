@@ -73,6 +73,13 @@ function createTexture(renderer: RendererMain, textureDef: TextureDef): Texture 
 
 let idCounter = 0;
 
+// The renderer's alpha and clipping setters don't skip an unchanged value, and
+// each write re-propagates world alpha or clipping through the whole subtree on
+// the next frame. Every full update rewrites them, so compare first.
+function isUnguardedNodeProp(key: string): boolean {
+  return key === 'alpha' || key === 'clipping';
+}
+
 type ObserverCall = (element: LightningElement, a?: unknown, b?: unknown, c?: unknown) => void;
 
 type OnArgs = Parameters<IEventEmitter<LightningElementEvents>['on']>;
@@ -1669,7 +1676,13 @@ export class LightningViewElement<
         continue;
       }
 
-      node[key] = lngProps[key];
+      const value = lngProps[key];
+
+      if (isUnguardedNodeProp(key) && node[key] === value) {
+        continue;
+      }
+
+      node[key] = value;
     }
 
     if (flattenedMoved) {
@@ -1830,7 +1843,10 @@ export class LightningViewElement<
         typeof value === 'number'
       ) {
         this._writeAxis(key as 'x' | 'y', value);
-      } else {
+      } else if (
+        !isUnguardedNodeProp(key) ||
+        (this.node as unknown as Record<string, unknown>)[key] !== value
+      ) {
         // oxlint-disable-next-line typescript/no-explicit-any -- direct node property assignment
         (this.node as any)[key] = value;
       }
