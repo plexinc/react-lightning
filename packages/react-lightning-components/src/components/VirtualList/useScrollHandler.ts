@@ -13,12 +13,22 @@ import { resolveScrollToIndexTarget } from './resolveScrollToIndexTarget';
 import { createCriticalSpring } from './scrollSpring';
 import type { ScrollEvent } from './VirtualListTypes';
 
-// Lightning Magic Remote / mouse support (in the host app) installs this hook
-// while a pointer is driving focus. Read it off globalThis so this subtree stays
-// free of app imports; undefined (a no-op) on every platform that never loads it.
+type PointerFocusScrollHost = { __plexShouldSuppressPointerFocusScroll?: () => boolean };
+
+// The host app's pointer support installs this hook on the global, keeping app imports
+// out of here. Not globalThis: it needs Chrome 71, and webOS 5 / Tizen 5.x are older.
+const hostGlobal = (
+  typeof window !== 'undefined'
+    ? window
+    : typeof self !== 'undefined'
+      ? self
+      : typeof global !== 'undefined'
+        ? global
+        : undefined
+) as PointerFocusScrollHost | undefined;
+
 const isPointerFocusScrollSuppressed = (): boolean => {
-  const fn = (globalThis as { __plexShouldSuppressPointerFocusScroll?: () => boolean })
-    .__plexShouldSuppressPointerFocusScroll;
+  const fn = hostGlobal?.__plexShouldSuppressPointerFocusScroll;
 
   return typeof fn === 'function' && fn();
 };
