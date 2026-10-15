@@ -559,6 +559,16 @@ export class LightningManager {
     }
   }
 
+  private _regrowText = (measuredAt: number, textId: number) => {
+    const textEl = this._elements.get(textId);
+    const contextWidth = textEl?.parent?.node.w ?? 0;
+
+    if (textEl && contextWidth > measuredAt) {
+      this._textContextWidth.set(textId, contextWidth);
+      this._syncTextMeasure(textEl, true);
+    }
+  };
+
   private _applyUpdates = (buffer: ArrayBuffer) => {
     // Raw `DataView` over `SimpleDataView` — this is a per-frame hot path
     // that doesn't need overflow handling or write tracking.
@@ -613,6 +623,12 @@ export class LightningManager {
       // computed size IS the text box: apply it and pin contain:'width' so the
       // renderer wraps to the same width and textAlign has a box to align in.
       const isMeasuredText = isText && this._measuredText.has(elementId);
+
+      // Its first layout measured it against the parent's width (parents come
+      // first in the buffer), so that's the baseline. Seeding 0 re-ran mount.
+      if (isMeasuredText && !this._textContextWidth.has(elementId)) {
+        this._textContextWidth.set(elementId, el.parent?.node.w ?? 0);
+      }
 
       if (width !== 0 && (!isText || isMeasuredText)) {
         if (isMeasuredText) {
@@ -669,21 +685,8 @@ export class LightningManager {
     // the widest the container ever offered, which never clips. New text on a
     // recycled node is handled separately by the `textChanged` → setTextMeasure
     // measure-func reinstall, so a narrower reuse still re-measures correctly.
-    if (this._measuredText.size > 0) {
-      for (const textId of this._measuredText) {
-        const textEl = this._elements.get(textId);
-
-        if (!textEl) {
-          continue;
-        }
-
-        const contextWidth = textEl.parent?.node.w ?? 0;
-
-        if (contextWidth > (this._textContextWidth.get(textId) ?? 0)) {
-          this._textContextWidth.set(textId, contextWidth);
-          this._syncTextMeasure(textEl, true);
-        }
-      }
-    }
+    // Only texts laid out since they were measured have a baseline, the rest
+    // measure fresh. forEach because for...of allocates per entry in lower JIT tiers.
+    this._textContextWidth.forEach(this._regrowText);
   };
 }
