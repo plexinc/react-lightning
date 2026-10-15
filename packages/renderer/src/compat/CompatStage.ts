@@ -30,7 +30,6 @@ import {
   KIND_ULTRABLUR,
   KIND_UNSUPPORTED,
   type ShaderType,
-  cornerRadii,
   resolveShaderProps,
 } from './Shaders';
 import { type TextProps, layoutText, rasterizeText, textKey } from './TextLayout';
@@ -116,10 +115,10 @@ export class CompatStage {
   private readonly _h: number;
   private _scheduled = false;
   private _lost = false;
+  private readonly _ultraBlur = new WeakMap<CompatShader, { v: number; w: number; h: number; a: number; grid: number[] }>();
   private _active = false;
   private _lastFrame = 0;
   private readonly _clipStack: Rect[] = [];
-  private readonly _radii = [0, 0, 0, 0];
   private readonly _outerRadii = [0, 0, 0, 0];
   private _clipDepth = 0;
   private _events: PendingEvent[] = [];
@@ -788,10 +787,10 @@ export class CompatStage {
       props = shader.props;
 
       if (kind === KIND_ROUNDED || kind === KIND_ROUNDED_BORDER || kind === KIND_GRADIENT) {
-        radius = cornerRadii(props, w, h, this._radii);
+        radius = shader.cornerRadii(w, h);
 
         if (radius < 0) {
-          radii = this._radii;
+          radii = shader.radii;
           radius = Math.max(radii[0], radii[1], radii[2], radii[3]);
         }
       }
@@ -1046,65 +1045,16 @@ export class CompatStage {
     const w = node._w;
     const h = node._h;
     const a = node._worldAlpha;
-    const bg = rgba((props.background_color as number) ?? 0x000000ff);
-    const tl = rgba((props.tl_color as number) ?? (props.background_color as number) ?? 0);
-    const tr = rgba((props.tr_color as number) ?? (props.background_color as number) ?? 0);
-    const br = rgba((props.br_color as number) ?? (props.background_color as number) ?? 0);
-    const bl = rgba((props.bl_color as number) ?? (props.background_color as number) ?? 0);
-    const mask = (props.edge_mask as number) ?? 0;
+    const shader = node._shader as CompatShader;
     const N = 8;
-    const grid: number[] = [];
-    const out = [0, 0, 0, 0];
-    const dist = (cx: number, cy: number, px: number, py: number) =>
-      Math.hypot((px - cx) / (w * 0.95), (py - cy) / (h * 0.95));
-    const mix = (t: number, c: number[]) => {
-      const k = t < 0 ? 0 : t > 1 ? 1 : t;
+    let memo = this._ultraBlur.get(shader);
 
-      out[0] += (c[0] - out[0]) * k;
-      out[1] += (c[1] - out[1]) * k;
-      out[2] += (c[2] - out[2]) * k;
-      out[3] += (c[3] - out[3]) * k;
-    };
-
-    for (let j = 0; j <= N; j++) {
-      for (let i = 0; i <= N; i++) {
-        const px = (i / N) * w;
-        const py = h - (j / N) * h;
-
-        out[0] = bg[0];
-        out[1] = bg[1];
-        out[2] = bg[2];
-        out[3] = bg[3];
-        mix(1 - dist(w, 0, px, py), br);
-        mix(1 - dist(0, 0, px, py), bl);
-        mix(1 - dist(w, h, px, py), tr);
-        mix(1 - dist(0, h, px, py), tl);
-
-        let alpha = a;
-
-        if (mask > 0) {
-          const u = i / N;
-          const v = j / N;
-          const nx = (1 - u) / 0.67;
-          const ny = v / 0.65;
-          const m = Math.max(nx, ny);
-          const len = Math.sqrt(nx * nx + ny * ny);
-          const d = len + (m - len) * smoothstep(0.3, 1, m);
-          const t = Math.min(1, Math.max(0, (1 - smoothstep(0, 1, d)) * 1.2));
-
-          alpha *= 1 + (1 - t - 1) * mask;
-        }
-
-        grid.push(
-          ((Math.round(out[0] * 255) << 24) |
-            (Math.round(out[1] * 255) << 16) |
-            (Math.round(out[2] * 255) << 8) |
-            Math.round(Math.min(1, out[3] * alpha) * 255)) >>>
-            0,
-        );
-      }
+    if (!memo || memo.v !== shader.version || memo.w !== w || memo.h !== h || memo.a !== a) {
+      memo = { v: shader.version, w, h, a, grid: ultraBlurGrid(props, w, h, a, N) };
+      this._ultraBlur.set(shader, memo);
     }
 
+    const grid = memo.grid;
     const white = this.textures.white;
 
     for (let j = 0; j < N; j++) {
@@ -1312,6 +1262,69 @@ export class CompatStage {
     );
     this._batcher.setScissor(null);
   }
+}
+
+/** Chroma's UltraBlur colors at the (N + 1)^2 grid vertices; it works in y-up gl_FragCoord space, hence the flipped py. */
+function ultraBlurGrid(props: Record<string, unknown>, w: number, h: number, a: number, N: number): number[] {
+  const bg = rgba((props.background_color as number) ?? 0x000000ff);
+  const tl = rgba((props.tl_color as number) ?? (props.background_color as number) ?? 0);
+  const tr = rgba((props.tr_color as number) ?? (props.background_color as number) ?? 0);
+  const br = rgba((props.br_color as number) ?? (props.background_color as number) ?? 0);
+  const bl = rgba((props.bl_color as number) ?? (props.background_color as number) ?? 0);
+  const mask = (props.edge_mask as number) ?? 0;
+  const grid: number[] = [];
+  const out = [0, 0, 0, 0];
+  const dist = (cx: number, cy: number, px: number, py: number) =>
+    Math.hypot((px - cx) / (w * 0.95), (py - cy) / (h * 0.95));
+  const mix = (t: number, c: number[]) => {
+    const k = t < 0 ? 0 : t > 1 ? 1 : t;
+
+    out[0] += (c[0] - out[0]) * k;
+    out[1] += (c[1] - out[1]) * k;
+    out[2] += (c[2] - out[2]) * k;
+    out[3] += (c[3] - out[3]) * k;
+  };
+
+  for (let j = 0; j <= N; j++) {
+    for (let i = 0; i <= N; i++) {
+      const px = (i / N) * w;
+      const py = h - (j / N) * h;
+
+      out[0] = bg[0];
+      out[1] = bg[1];
+      out[2] = bg[2];
+      out[3] = bg[3];
+      mix(1 - dist(w, 0, px, py), br);
+      mix(1 - dist(0, 0, px, py), bl);
+      mix(1 - dist(w, h, px, py), tr);
+      mix(1 - dist(0, h, px, py), tl);
+
+      let alpha = a;
+
+      if (mask > 0) {
+        const u = i / N;
+        const v = j / N;
+        const nx = (1 - u) / 0.67;
+        const ny = v / 0.65;
+        const m = Math.max(nx, ny);
+        const len = Math.sqrt(nx * nx + ny * ny);
+        const d = len + (m - len) * smoothstep(0.3, 1, m);
+        const t = Math.min(1, Math.max(0, (1 - smoothstep(0, 1, d)) * 1.2));
+
+        alpha *= 1 + (1 - t - 1) * mask;
+      }
+
+      grid.push(
+        ((Math.round(out[0] * 255) << 24) |
+          (Math.round(out[1] * 255) << 16) |
+          (Math.round(out[2] * 255) << 8) |
+          Math.round(Math.min(1, out[3] * alpha) * 255)) >>>
+          0,
+      );
+    }
+  }
+
+  return grid;
 }
 
 function rgba(c: number): number[] {

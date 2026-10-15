@@ -60,22 +60,47 @@ export class CompatShader {
   public readonly shaderType: string;
   public readonly kind: number;
   public props: Record<string, unknown>;
+  /** Corner radii for the last size asked, see `cornerRadii`. */
+  public readonly radii = [0, 0, 0, 0];
+  /** Bumped on every prop change, for callers that cache what they derive from the props. */
+  public version = 0;
+  private _rw = -1;
+  private _rh = -1;
+  private _radius = 0;
 
   public constructor(type: string, props: Record<string, unknown>, onChange: () => void) {
     this.shaderType = type;
     this.kind = KINDS[type] ?? KIND_UNSUPPORTED;
+
+    const invalidate = () => {
+      this._rw = -1;
+      this.version++;
+    };
+
     this.props = new Proxy(props, {
       set(target, key, raw) {
         const value = normalizeProp(key as string, raw);
 
         if (target[key as string] !== value) {
           target[key as string] = value;
+          invalidate();
           onChange();
         }
 
         return true;
       },
     });
+  }
+
+  /** `cornerRadii` for a w x h node, recomputed only when the size or a prop changes. */
+  public cornerRadii(w: number, h: number): number {
+    if (w !== this._rw || h !== this._rh) {
+      this._radius = cornerRadii(this.props, w, h, this.radii);
+      this._rw = w;
+      this._rh = h;
+    }
+
+    return this._radius;
   }
 }
 

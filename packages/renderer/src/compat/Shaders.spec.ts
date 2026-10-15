@@ -52,3 +52,16 @@ describe('cornerRadii', () => {
     expect(out).toEqual([12, 0, 0, 0]);
   });
 });
+
+describe('CompatShader.cornerRadii', () => {
+  it('recomputes after a prop change', () => {
+    const shader = new CompatShader('Rounded', { radius: 10 }, () => {});
+
+    expect(shader.cornerRadii(100, 100)).toBe(10);
+    shader.props.radius = [4, 0];
+    expect(shader.cornerRadii(100, 100)).toBe(-1);
+    expect(shader.radii).toEqual([4, 0, 4, 0]);
+    expect(shader.cornerRadii(6, 100)).toBe(-1);
+    expect(shader.radii[0]).toBeCloseTo(4, 5);
+  });
+});
