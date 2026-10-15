@@ -38,5 +38,6 @@ export {
 export { createRoot, type LightningRoot, LightningRootContext, type RenderOptions } from './render';
 export type { Plugin } from './render/Plugin';
 export * from './types';
+export { scheduleMicrotask } from './utils/scheduleMicrotask';
 export { simpleDiff } from './utils/simpleDiff';
 export { CanvasRoot } from './components/Canvas/CanvasRoot';

@@ -43,7 +43,9 @@ class FocusWithinTracker {
   }
 
   private _contains(element: LightningElement, path: LightningElement[]): boolean {
-    for (let node: LightningElement | null | undefined = path.at(-1); node; node = node.parent) {
+    const leaf: LightningElement | undefined = path[path.length - 1];
+
+    for (let node: LightningElement | null | undefined = leaf; node; node = node.parent) {
       if (node === element) {
         return true;
       }
@@ -55,7 +57,9 @@ class FocusWithinTracker {
   private _onFocusPathChanged = (path: LightningElement[]): void => {
     const next = new Set<LightningElement>();
 
-    for (let node: LightningElement | null | undefined = path.at(-1); node; node = node.parent) {
+    const leaf: LightningElement | undefined = path[path.length - 1];
+
+    for (let node: LightningElement | null | undefined = leaf; node; node = node.parent) {
       if (this._listeners.has(node)) {
         next.add(node);
       }
