@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useImperativeHandle,
+  useInsertionEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -705,26 +706,64 @@ function VirtualListInner<T>(
     }
   };
 
-  useImperativeHandle(ref, () => ({
-    scrollToIndex: (params) =>
-      scrollToIndex(
-        params.index,
-        params.animated,
-        params.viewPosition,
-        params.viewOffset,
-      ),
-    scrollToOffset: (params) => scrollToOffset(params.offset, params.animated),
-    scrollToEnd: (params) => scrollToEnd(params?.animated),
-    getScrollOffset: () => scrollOffsetRef.current,
-    getVisibleRange: () => visibleRange,
-    getLayout: (index) => {
-      const layout = layoutManager.getLayout(index);
+  const handleStateRef = useRef({
+    scrollToIndex,
+    scrollToOffset,
+    scrollToEnd,
+    visibleRange,
+    itemAreaOffset,
+    paddingCross,
+    horizontal,
+  });
 
-      return layout
-        ? computeItemRect(layout, itemAreaOffset, paddingCross, horizontal)
-        : undefined;
-    },
-  }));
+  // Insertion effects run before any layout effect in the commit, so cells
+  // calling the handle from their own layout effects already see this render.
+  useInsertionEffect(() => {
+    handleStateRef.current = {
+      scrollToIndex,
+      scrollToOffset,
+      scrollToEnd,
+      visibleRange,
+      itemAreaOffset,
+      paddingCross,
+      horizontal,
+    };
+  });
+
+  // One handle for the list's lifetime: a rebuilt handle detaches the ref
+  // for the whole commit, so cells' layout effects would read null.
+  useImperativeHandle(
+    ref,
+    () => ({
+      scrollToIndex: (params) =>
+        handleStateRef.current.scrollToIndex(
+          params.index,
+          params.animated,
+          params.viewPosition,
+          params.viewOffset,
+        ),
+      scrollToOffset: (params) =>
+        handleStateRef.current.scrollToOffset(params.offset, params.animated),
+      scrollToEnd: (params) =>
+        handleStateRef.current.scrollToEnd(params?.animated),
+      getScrollOffset: () => scrollOffsetRef.current,
+      getVisibleRange: () => handleStateRef.current.visibleRange,
+      getLayout: (index) => {
+        const layout = layoutManager.getLayout(index);
+        const state = handleStateRef.current;
+
+        return layout
+          ? computeItemRect(
+              layout,
+              state.itemAreaOffset,
+              state.paddingCross,
+              state.horizontal,
+            )
+          : undefined;
+      },
+    }),
+    [],
+  );
 
   const loadTimeRef = useRef(Date.now());
   const hasLoadedRef = useRef(false);
