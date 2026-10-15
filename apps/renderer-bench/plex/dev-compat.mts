@@ -152,7 +152,7 @@ const final = vite.mergeConfig(config, {
       ],
     },
   },
-  cacheDir: join(lightningDir, 'node_modules/.vite-renderer-switch'),
+  cacheDir: process.env.VITE_CACHE_DIR ?? join(lightningDir, 'node_modules/.vite-renderer-switch'),
 });
 
 console.log('[dev-compat] renderer switch: stock or', compatDir);
