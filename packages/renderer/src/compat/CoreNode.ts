@@ -80,7 +80,8 @@ export class CoreNode extends EventEmitter {
   public _alpha = 1;
   public _color = 0;
   public _zIndex = 0;
-  public _zIndexLocked = 0;
+  // undefined like Lightning 3.1.1; react-lightning materializes a flattened parent for any non-null value.
+  public _zIndexLocked: number | undefined = undefined;
   public _clipping = false;
   public _clipRadius = 0;
   public _boundsMargin: number | number[] | null = null;
@@ -290,10 +291,10 @@ export class CoreNode extends EventEmitter {
       this._mark(DIRTY_ORDER);
     }
   }
-  get zIndexLocked(): number {
+  get zIndexLocked(): number | undefined {
     return this._zIndexLocked;
   }
-  set zIndexLocked(v: number) {
+  set zIndexLocked(v: number | undefined) {
     this._zIndexLocked = v;
   }
   get clipping(): boolean {
