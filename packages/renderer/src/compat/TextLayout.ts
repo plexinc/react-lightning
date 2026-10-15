@@ -140,10 +140,15 @@ export function rasterizeText(
 
   const spacing = ctx as unknown as { letterSpacing?: string };
   const hasSpacing = 'letterSpacing' in ctx;
+  const base = letterSpacing || 0;
+  // Setting letterSpacing re-resolves the font, so only touch it when the value changes.
+  const setSpacing = (px: number) => {
+    const v = `${px}px`;
 
-  if (hasSpacing) {
-    spacing.letterSpacing = `${letterSpacing || 0}px`;
-  }
+    if (spacing.letterSpacing !== v) {
+      spacing.letterSpacing = v;
+    }
+  };
 
   for (let i = 0; i < layout.lines.length; i++) {
     const line = layout.lines[i];
@@ -153,6 +158,11 @@ export function rasterizeText(
     }
 
     const y = layout.baseline + line.y;
+
+    if (hasSpacing) {
+      setSpacing(base);
+    }
+
     const drawn = layout.hanging ? line.width : ctx.measureText(line.text).width;
     const diff = line.width - drawn;
 
@@ -166,9 +176,8 @@ export function rasterizeText(
     const n = [...line.text].length;
 
     if (hasSpacing && n > 1) {
-      spacing.letterSpacing = `${(letterSpacing || 0) + diff / (n - 1)}px`;
+      setSpacing(base + diff / (n - 1));
       ctx.fillText(line.text, line.x, y);
-      spacing.letterSpacing = `${letterSpacing || 0}px`;
     } else {
       ctx.save();
       ctx.translate(line.x, 0);
