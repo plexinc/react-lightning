@@ -370,12 +370,12 @@ function wrapWorker<T>(worker: Worker): Workerized<T> {
     removeIndependentRoot: (elementId: number) => nodeOperation('removeIndependentRoot', elementId),
     // Text measurement ops must land after the node's addNode (and any pending
     // styles), so flush the buffered pipeline before posting them.
-    setTextMeasure: (elementId: number, fontFamily: string, props: unknown) => {
+    setTextMeasure: (elementId: number, fontFamily: string, props: unknown, force?: boolean) => {
       flushChildOperations();
       flushSendStyles();
       worker.postMessage({
         method: 'setTextMeasure',
-        args: [elementId, fontFamily, props],
+        args: [elementId, fontFamily, props, force],
       });
     },
     clearTextMeasure: (elementId: number) => {

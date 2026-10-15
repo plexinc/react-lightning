@@ -14,6 +14,8 @@ const mockNode = {
   removeChild: vi.fn(),
   calculateLayout: vi.fn(),
   hasNewLayout: vi.fn(),
+  // The mocked setters don't track state, so treat every node as changed.
+  isDirty: vi.fn(() => true),
   getComputedLayout: vi.fn(),
   getComputedLeft: vi.fn(),
   getComputedTop: vi.fn(),

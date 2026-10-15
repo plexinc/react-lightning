@@ -279,7 +279,7 @@ export class LightningManager {
    * anything else (no family, or a non-measurable font like the canvas
    * `plex-icons` glyph font) is left to the renderer's own sizing.
    */
-  private _syncTextMeasure(element: LightningElement): void {
+  private _syncTextMeasure(element: LightningElement, force = false): void {
     if (!this._yogaManager) {
       return;
     }
@@ -297,17 +297,22 @@ export class LightningManager {
     }
 
     this._measuredText.add(element.id);
-    this._yogaManager.setTextMeasure(element.id, fontFamily, {
-      text: (element as LightningTextElement).text ?? '',
-      fontSize: style.fontSize || 16,
-      letterSpacing: style.letterSpacing || 0,
-      // 0 / undefined lineHeight → natural (1× metrics); a value > 3 is px.
-      lineHeight: style.lineHeight || 1,
-      maxLines: style.maxLines || 0,
-      maxHeight: style.maxHeight || 0,
-      wordBreak: (style.wordBreak as TextMeasureProps['wordBreak']) || 'break-word',
-      overflowSuffix: style.overflowSuffix ?? '...',
-    });
+    this._yogaManager.setTextMeasure(
+      element.id,
+      fontFamily,
+      {
+        text: (element as LightningTextElement).text ?? '',
+        fontSize: style.fontSize || 16,
+        letterSpacing: style.letterSpacing || 0,
+        // 0 / undefined lineHeight → natural (1× metrics); a value > 3 is px.
+        lineHeight: style.lineHeight || 1,
+        maxLines: style.maxLines || 0,
+        maxHeight: style.maxHeight || 0,
+        wordBreak: (style.wordBreak as TextMeasureProps['wordBreak']) || 'break-word',
+        overflowSuffix: style.overflowSuffix ?? '...',
+      },
+      force,
+    );
   }
 
   public trackElement(element: LightningElement): void {
@@ -676,7 +681,7 @@ export class LightningManager {
 
         if (contextWidth > (this._textContextWidth.get(textId) ?? 0)) {
           this._textContextWidth.set(textId, contextWidth);
-          this._syncTextMeasure(textEl);
+          this._syncTextMeasure(textEl, true);
         }
       }
     }
