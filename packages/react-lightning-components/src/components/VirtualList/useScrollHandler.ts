@@ -361,7 +361,14 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
   }
 
   function scrollToOffset(offset: number, animated = true): void {
-    focusAnchorRef.current = null;
+    const anchor = focusAnchorRef.current;
+
+    // A request for the spot the focused item already snaps to (a focus handler
+    // echoing the list's own scroll) keeps the item snapped as rows above resize.
+    if (!anchor || Math.abs(clamp(offset) - clamp(resolveFocusTarget(anchor))) >= 1) {
+      focusAnchorRef.current = null;
+    }
+
     indexIntentRef.current = null;
     scrollTo(offset, animated, true);
   }
@@ -388,7 +395,11 @@ export function useScrollHandler(options: UseScrollHandlerOptions): UseScrollHan
     }
 
     scrollToOffset(target, animated);
-    indexIntentRef.current = target;
+
+    // A kept focus anchor already follows the item; a fixed intent would pull it back.
+    if (!focusAnchorRef.current) {
+      indexIntentRef.current = target;
+    }
   }
 
   function scrollToEnd(animated = true): void {
