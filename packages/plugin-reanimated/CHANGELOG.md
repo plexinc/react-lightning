@@ -1,5 +1,16 @@
 # @plextv/react-lightning-plugin-reanimated
 
+## 1.0.0-alpha.8
+
+### Patch Changes
+
+- 996aeb4: don't stop a finished, pooled animation controller when a composed animation is cancelled
+- 5e30445: bump @lightningjs/renderer to 3.7.0
+- Updated dependencies [5e30445]
+  - @plextv/react-lightning@0.5.0-alpha.12
+  - @plextv/react-native-lightning@1.0.0-alpha.8
+  - @plextv/react-lightning-plugin-css-transform@1.0.0-alpha.6
+
 ## 1.0.0-alpha.7
 
 ### Patch Changes

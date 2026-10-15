@@ -1,5 +1,13 @@
 # @plextv/react-lightning-plugin-css-transform
 
+## 1.0.0-alpha.6
+
+### Patch Changes
+
+- 5e30445: bump @lightningjs/renderer to 3.7.0
+- Updated dependencies [5e30445]
+  - @plextv/react-lightning@0.5.0-alpha.12
+
 ## 1.0.0-alpha.5
 
 ### Patch Changes

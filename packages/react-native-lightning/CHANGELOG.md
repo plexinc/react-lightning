@@ -1,5 +1,18 @@
 # @plextv/react-native-lightning
 
+## 1.0.0-alpha.8
+
+### Patch Changes
+
+- 5e30445: bump @lightningjs/renderer to 3.7.0
+- Updated dependencies [5e30445]
+- Updated dependencies [6ecc122]
+- Updated dependencies [fbe68d4]
+- Updated dependencies [213cffb]
+  - @plextv/react-lightning@0.5.0-alpha.12
+  - @plextv/react-lightning-plugin-css-transform@1.0.0-alpha.6
+  - @plextv/react-lightning-components@1.0.0-alpha.10
+
 ## 1.0.0-alpha.7
 
 ### Patch Changes
