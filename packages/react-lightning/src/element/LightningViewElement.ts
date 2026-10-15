@@ -1396,8 +1396,17 @@ export class LightningViewElement<
     }
   }
 
-  // Don't pass down the `data` prop to the lightning node.
-  private _createNode({ data: _data, ...props }: Partial<INodeProps>): RendererNode<this> {
+  // Don't pass down the `data` prop to the lightning node. The renderer copies
+  // the props into its own object, so only a props object carrying `data` needs a copy.
+  private _createNode(nodeProps: Partial<INodeProps>): RendererNode<this> {
+    let props = nodeProps;
+
+    if ('data' in nodeProps) {
+      const { data: _data, ...rest } = nodeProps;
+
+      props = rest;
+    }
+
     const node = this.isTextElement
       ? this._renderer.createTextNode(props)
       : this._renderer.createNode(props);
@@ -1938,19 +1947,23 @@ export class LightningViewElement<
     initial = false,
   ): Partial<INodeProps> {
     // There is no style object in the lightning node, all the style props are on the
-    // node itself, so we need to destructure the style object into props.
-    const {
-      // These props are ignored as they conflict with lightning nodes
-      id: _id,
-      data: _data,
-      // These props require processing and mapping to lightning node props
-      style,
-      shader,
-      texture,
-      ...otherProps
-    } = props;
+    // node itself, so the style keys are written next to the other props.
+    const { style, shader, texture } = props;
+    const finalProps: Partial<INodeProps> = {};
 
-    const finalStyle: Partial<INodeProps> = {};
+    for (const key in props) {
+      // id and data conflict with lightning nodes; style, shader and texture
+      // are mapped below.
+      if (
+        key !== 'id' &&
+        key !== 'data' &&
+        key !== 'style' &&
+        key !== 'shader' &&
+        key !== 'texture'
+      ) {
+        (finalProps as Record<string, unknown>)[key] = props[key];
+      }
+    }
 
     if (style !== undefined && style !== null) {
       const transition = !initial ? this.props.transition : undefined;
@@ -1974,23 +1987,23 @@ export class LightningViewElement<
           const rect = value as NonNullable<TStyleProps['initialDimensions']>;
 
           if (!style.w) {
-            finalStyle.w = rect.w;
+            finalProps.w = rect.w;
           }
 
           if (!style.h) {
-            finalStyle.h = rect.h;
+            finalProps.h = rect.h;
           }
 
           if (!style.x) {
-            finalStyle.x = rect.x;
+            finalProps.x = rect.x;
           }
 
           if (!style.y) {
-            finalStyle.y = rect.y;
+            finalProps.y = rect.y;
           }
         } else {
           // oxlint-disable-next-line typescript/no-explicit-any -- TODO
-          (finalStyle as any)[key] = value;
+          (finalProps as any)[key] = value;
         }
       }
     }
@@ -2053,7 +2066,7 @@ export class LightningViewElement<
           }
         }
       } else {
-        finalStyle.shader = this._renderer.createShader(
+        finalProps.shader = this._renderer.createShader(
           this._shaderDef.type,
           this._shaderDef.props,
         );
@@ -2063,12 +2076,12 @@ export class LightningViewElement<
       // has none — clear it so the previous shader stops painting. Setting the
       // node's shader to null resets it to the stage's default shader. Without
       // this a removed border would linger on an already-mounted node.
-      (finalStyle as { shader: INode['shader'] | null }).shader = null;
+      (finalProps as { shader: INode['shader'] | null }).shader = null;
     }
 
     if (texture && texture !== this._textureDef) {
       this._textureDef = texture;
-      finalStyle.texture = createTexture(this._renderer, texture);
+      finalProps.texture = createTexture(this._renderer, texture);
     }
 
     // borderRadius + clipping (overflow: hidden) = rounded clipping, like the
@@ -2088,11 +2101,9 @@ export class LightningViewElement<
       const clipRadius = (Array.isArray(radius) ? Math.max(...radius) : (radius as number)) || 0;
 
       if (initial ? clipRadius > 0 : (this.node.clipRadius ?? 0) !== clipRadius) {
-        finalStyle.clipRadius = clipRadius;
+        finalProps.clipRadius = clipRadius;
       }
     }
-
-    const finalProps = Object.assign(otherProps, finalStyle);
 
     if (
       initial === true &&
