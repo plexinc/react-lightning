@@ -351,7 +351,7 @@ describe('SceneElement matches LightningViewElement', () => {
       await flush();
 
       (b as unknown as { text: string }).text = 'three';
-      para.recomputeChildText();
+      (para as unknown as { recomputeChildText(): void }).recomputeChildText();
       title.setNodeProp('w', 400);
       (title.node as unknown as { contain: string }).contain = 'width';
       title.setProps({ text: 'Other title', style: { fontSize: 30, maxLines: 2 } });
@@ -508,7 +508,7 @@ describe('SceneElement matches LightningViewElement', () => {
         h.mount();
         await flush();
 
-        el.setProps({ style: { width: 200, height: 100, backgroundColor: '#00ff00', borderRadius: 4 } });
+        el.setProps({ style: { width: 200, height: 100, backgroundColor: '#00ff00', borderRadius: 4 } } as never);
         await flush();
       },
       () => [cssTransformPlugin() as Plugin<LightningElement>],

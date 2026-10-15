@@ -47,6 +47,8 @@ type Listener = (...args: never[]) => unknown;
 type RenderParent = SceneElement | CoreNode;
 
 const EMPTY: never[] = Object.freeze([]) as unknown as never[];
+const EMPTY_RECORD: Record<string, unknown> = Object.freeze({});
+const NO_WRITE = Symbol('no write');
 
 let idCounter = 0;
 
@@ -207,16 +209,6 @@ function needsRealNode(key: string, value: unknown): boolean {
     default:
       return true;
   }
-}
-
-function isLayoutOnlyNodeProps(props: AnyRecord): boolean {
-  for (const key in props) {
-    if (needsRealNode(key, props[key])) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 function getImageType(src?: string | null): string | null {
@@ -517,43 +509,28 @@ export class SceneElement {
     this.rawProps = initialProps;
     this.props = (this._transformProps(initialProps) ?? {}) as Props;
 
-    const lngProps = this._toNodeProps(this.props, true);
+    const props = this.props as AnyRecord;
+    const style = props.style as Style | null | undefined;
+    const shader = this._resolveShader(props, style, true);
+    const texture = this._resolveTexture(props);
+    const clipRadius = this._resolveClipRadius(style, true);
 
-    this._styleTarget = (this.props.style ?? {}) as AnyRecord;
+    this._styleTarget = (style ?? {}) as AnyRecord;
 
     if (
       SceneElement.flattenLayoutViewsEnabled &&
       kind === KIND_VIEW &&
-      this.props.transition === undefined &&
-      isLayoutOnlyNodeProps(lngProps)
+      props.transition === undefined &&
+      !this._needsRealNodeFor(props, style, true, shader, texture, clipRadius)
     ) {
       this._flattened = true;
     }
 
     if (kind === KIND_TEXT) {
-      this._tp = createTextProps(lngProps);
-
-      for (const key in lngProps) {
-        const value = lngProps[key];
-
-        if (value !== undefined && !TEXT_INITIAL_SKIP.has(key)) {
-          this._setNodeKey(key, value);
-        }
-      }
-    } else {
-      for (const key in lngProps) {
-        const value = lngProps[key];
-
-        if (value !== undefined) {
-          this._setNodeKey(key, value);
-        }
-      }
+      this._tp = createTextProps(EMPTY_RECORD);
     }
 
-    if (SceneElement.flattenLayoutViewsEnabled) {
-      this._layoutX = typeof lngProps.x === 'number' ? lngProps.x : 0;
-      this._layoutY = typeof lngProps.y === 'number' ? lngProps.y : 0;
-    }
+    this._writeNodeProps(props, style, true, shader, texture, clipRadius);
 
     (LightningViewElement.allElements as Record<number, unknown>)[this.id] = this;
 
@@ -1646,61 +1623,24 @@ export class SceneElement {
       this._reconcileResizeObserving();
     }
 
-    const lngProps = this._toNodeProps(this.props, false);
+    const style = props.style as Style | null | undefined;
+    const shader = this._resolveShader(props, style, false);
+    const texture = this._resolveTexture(props);
+    const clipRadius = this._resolveClipRadius(style, false);
 
     if (import.meta.env.DEV) {
       Object.assign(this.rawProps, payload);
     }
 
-    if (typeof lngProps.w !== 'number') {
-      delete lngProps.w;
+    if (
+      SceneElement.flattenLayoutViewsEnabled &&
+      this._flattened &&
+      (props.transition !== undefined || this._needsRealNodeFor(props, style, false, shader, texture, clipRadius))
+    ) {
+      this._materialize();
     }
 
-    if (typeof lngProps.h !== 'number') {
-      delete lngProps.h;
-    }
-
-    if (this._paintWithheld && lngProps.alpha !== undefined) {
-      this._withheldAlpha = lngProps.alpha as number;
-      delete lngProps.alpha;
-    }
-
-    let flattenedMoved = false;
-
-    if (SceneElement.flattenLayoutViewsEnabled) {
-      if (this._flattened && (this.props.transition !== undefined || !isLayoutOnlyNodeProps(lngProps))) {
-        this._materialize();
-      }
-
-      this._containStackingIndex('zIndex', lngProps.zIndex);
-      this._containStackingIndex('zIndexLocked', lngProps.zIndexLocked);
-
-      if (typeof lngProps.x === 'number') {
-        flattenedMoved = this._flattened && this._layoutX !== lngProps.x;
-        this._layoutX = lngProps.x;
-
-        if (!this._flattened) {
-          lngProps.x += this._flatOffsetX;
-        }
-      }
-
-      if (typeof lngProps.y === 'number') {
-        flattenedMoved = flattenedMoved || (this._flattened && this._layoutY !== lngProps.y);
-        this._layoutY = lngProps.y;
-
-        if (!this._flattened) {
-          lngProps.y += this._flatOffsetY;
-        }
-      }
-    }
-
-    for (const key in lngProps) {
-      this._setNodeKey(key, lngProps[key]);
-    }
-
-    if (flattenedMoved) {
-      this._refreshFlattenedChildren(false);
-    }
+    this._writeNodeProps(props, style, false, shader, texture, clipRadius);
 
     Object.assign(this._styleTarget, this.props.style);
 
@@ -2000,6 +1940,400 @@ export class SceneElement {
     }
 
     return undefined;
+  }
+
+
+  // ---------------------------------------------------------------- prop writes
+  //
+  // LightningViewElement builds a node-props object (_toLightningNodeProps) and Object.assigns it
+  // onto the node. Here the same rules run as one pass of field writes: style keys after props
+  // keys, then shader, texture and clipRadius, with x/y/w/h/alpha/color/zIndex applied last.
+
+  private _resolveShader(props: AnyRecord, style: Style | null | undefined, initial: boolean): unknown {
+    const shader = props.shader as ShaderDef | undefined;
+    const isPartialStyle = style != null && (style as Record<PropertyKey, unknown>)[PARTIAL_STYLE] === true;
+    const shaderStyle = isPartialStyle ? ({ ...this._styleTarget, ...style } as Style) : style;
+    const styleShader = this._getShaderFromStyle(shaderStyle);
+
+    if (shader && styleShader && import.meta.env.DEV) {
+      console.warn(
+        `Warning: The styles on element ${this.id} requires a shader (${styleShader.type}). Only one shader can be applied to a node. Move the 'shader' prop or the styles to a parent element.`,
+      );
+    }
+
+    const oldShader = this._shaderDef;
+    const def = shader === undefined && isPartialStyle && !styleShader && oldShader ? oldShader : shader || styleShader;
+
+    this._shaderDef = def;
+
+    if (def?.props) {
+      const current = this._shader;
+
+      if (
+        def.type === oldShader?.type &&
+        initial === false &&
+        (this.props.transition as AnyRecord | undefined)?.shaderProps &&
+        def.props
+      ) {
+        this.animateShader(def.props as AnyRecord);
+      } else if (def.type === oldShader?.type && current?.props) {
+        const shaderProps = def.props as AnyRecord;
+
+        for (const key in shaderProps) {
+          if (key in current.props) {
+            current.props[key] = shaderProps[key];
+          }
+        }
+      } else {
+        return this._renderer.createShader(def.type as string, def.props as AnyRecord);
+      }
+    } else if (oldShader) {
+      return null;
+    }
+
+    return NO_WRITE;
+  }
+
+  private _resolveTexture(props: AnyRecord): unknown {
+    const texture = props.texture as TextureDef | undefined;
+
+    if (texture && texture !== this._textureDef) {
+      this._textureDef = texture;
+
+      return this._renderer.createTexture(texture.type as string, texture.props as AnyRecord);
+    }
+
+    return NO_WRITE;
+  }
+
+  private _resolveClipRadius(style: Style | null | undefined, initial: boolean): unknown {
+    if (!SceneElement.roundedClippingEnabled) {
+      return NO_WRITE;
+    }
+
+    const shaderType = this._shaderDef?.type;
+    const effectiveClipping = initial ? style?.clipping : (style?.clipping ?? this._styleTarget.clipping);
+    const radius =
+      effectiveClipping === true && (shaderType === 'Rounded' || shaderType === 'RoundedWithBorder')
+        ? (this._shaderDef?.props as AnyRecord | undefined)?.radius
+        : 0;
+    const clipRadius = (Array.isArray(radius) ? Math.max(...radius) : (radius as number)) || 0;
+
+    if (initial ? clipRadius > 0 : this._clipRadius !== clipRadius) {
+      return clipRadius;
+    }
+
+    return NO_WRITE;
+  }
+
+  /** Whether the props LightningViewElement would write to the node include a visual one. */
+  private _needsRealNodeFor(
+    props: AnyRecord,
+    style: Style | null | undefined,
+    initial: boolean,
+    shader: unknown,
+    texture: unknown,
+    clipRadius: unknown,
+  ): boolean {
+    const withheld = !initial && this._paintWithheld;
+
+    for (const key in props) {
+      if (
+        key !== 'id' &&
+        key !== 'data' &&
+        key !== 'style' &&
+        key !== 'shader' &&
+        key !== 'texture' &&
+        !(withheld && key === 'alpha') &&
+        needsRealNode(key, props[key])
+      ) {
+        return true;
+      }
+    }
+
+    if (style) {
+      const transition = initial ? undefined : (this.props.transition as AnyRecord | undefined);
+
+      for (const key in style) {
+        if (!transition?.[key] && !(withheld && key === 'alpha') && needsRealNode(key, style[key])) {
+          return true;
+        }
+      }
+    }
+
+    return (
+      (shader !== NO_WRITE && needsRealNode('shader', shader)) ||
+      (texture !== NO_WRITE && needsRealNode('texture', texture)) ||
+      (clipRadius !== NO_WRITE && needsRealNode('clipRadius', clipRadius))
+    );
+  }
+
+  private _writeNodeProps(
+    props: AnyRecord,
+    style: Style | null | undefined,
+    initial: boolean,
+    shader: unknown,
+    texture: unknown,
+    clipRadius: unknown,
+  ): void {
+    const kind = this._kind;
+    const isText = kind === KIND_TEXT;
+    let x: unknown = NO_WRITE;
+    let y: unknown = NO_WRITE;
+    let w: unknown = NO_WRITE;
+    let h: unknown = NO_WRITE;
+    let alpha: unknown = NO_WRITE;
+    let color: unknown = NO_WRITE;
+    let zIndex: unknown = NO_WRITE;
+    let zIndexLocked: unknown = NO_WRITE;
+
+    for (const key in props) {
+      const value = props[key];
+
+      // The stock node creation skips undefined values; later updates write them.
+      if (initial && value === undefined) {
+        continue;
+      }
+
+      switch (key) {
+        case 'id':
+        case 'data':
+        case 'style':
+        case 'shader':
+        case 'texture':
+          break;
+        case 'x':
+          x = value;
+          break;
+        case 'y':
+          y = value;
+          break;
+        case 'w':
+        case 'width':
+          if (!(isText && initial)) {
+            w = value;
+          }
+          break;
+        case 'h':
+        case 'height':
+          if (!(isText && initial)) {
+            h = value;
+          }
+          break;
+        case 'alpha':
+          alpha = value;
+          break;
+        case 'color':
+          color = value;
+          break;
+        case 'zIndex':
+          zIndex = value;
+          break;
+        case 'zIndexLocked':
+          zIndexLocked = value;
+          break;
+        default:
+          this._setNodeKey(key, value);
+      }
+    }
+
+    if (style !== undefined && style !== null) {
+      const transition = initial ? undefined : (this.props.transition as AnyRecord | undefined);
+
+      for (const key in style) {
+        if (isText && (key === 'w' || key === 'h')) {
+          continue;
+        }
+
+        const value = style[key];
+
+        if (value == null) {
+          continue;
+        }
+
+        if (transition?.[key]) {
+          this.animateStyle(key, value);
+          continue;
+        }
+
+        switch (key) {
+          case 'x':
+            x = value;
+            break;
+          case 'y':
+            y = value;
+            break;
+          case 'w':
+          case 'width':
+            w = value;
+            break;
+          case 'h':
+          case 'height':
+            h = value;
+            break;
+          case 'alpha':
+            alpha = value;
+            break;
+          case 'color':
+            color = value;
+            break;
+          case 'zIndex':
+            zIndex = value;
+            break;
+          case 'zIndexLocked':
+            zIndexLocked = value;
+            break;
+          case 'initialDimensions':
+            if (initial) {
+              const rect = value as Rect;
+
+              if (!style.w) {
+                w = rect.w;
+              }
+
+              if (!style.h) {
+                h = rect.h;
+              }
+
+              if (!style.x) {
+                x = rect.x;
+              }
+
+              if (!style.y) {
+                y = rect.y;
+              }
+            } else {
+              this._setNodeKey(key, value);
+            }
+            break;
+          default:
+            this._setNodeKey(key, value);
+        }
+      }
+    }
+
+    if (shader !== NO_WRITE) {
+      if (shader === null) {
+        this.updateShaderUniforms = false;
+      }
+
+      this.shader = shader as CompatShader | null;
+    }
+
+    if (texture !== NO_WRITE) {
+      this.texture = texture as CompatTexture | null;
+    }
+
+    if (clipRadius !== NO_WRITE) {
+      this.clipRadius = clipRadius as number;
+    }
+
+    if (kind === KIND_TEXT) {
+      if (color === NO_WRITE || color == null) {
+        color = 0xffffffff;
+      }
+    } else if (kind === KIND_IMAGE) {
+      if (color === NO_WRITE || !color) {
+        color = 0xffffffff;
+      }
+    } else if (initial && (color === NO_WRITE || color === undefined)) {
+      color = 0;
+    }
+
+    if (color !== NO_WRITE) {
+      this.color = color as number;
+    }
+
+    if (!initial) {
+      if (typeof w !== 'number') {
+        w = NO_WRITE;
+      }
+
+      if (typeof h !== 'number') {
+        h = NO_WRITE;
+      }
+
+      if (this._paintWithheld && alpha !== NO_WRITE && alpha !== undefined) {
+        this._withheldAlpha = alpha as number;
+        alpha = NO_WRITE;
+      }
+    }
+
+    if (w !== NO_WRITE) {
+      this.w = w as number;
+    }
+
+    if (h !== NO_WRITE) {
+      this.h = h as number;
+    }
+
+    if (alpha !== NO_WRITE) {
+      this.alpha = alpha as number;
+    }
+
+    const flatten = SceneElement.flattenLayoutViewsEnabled;
+
+    if (flatten && !initial) {
+      this._containStackingIndex('zIndex', zIndex === NO_WRITE ? undefined : zIndex);
+      this._containStackingIndex('zIndexLocked', zIndexLocked === NO_WRITE ? undefined : zIndexLocked);
+    }
+
+    if (zIndex !== NO_WRITE) {
+      this.zIndex = zIndex as number;
+    }
+
+    if (zIndexLocked !== NO_WRITE) {
+      this._zIndexLocked = zIndexLocked as number | undefined;
+    }
+
+    if (initial) {
+      if (x !== NO_WRITE) {
+        this.x = x as number;
+      }
+
+      if (y !== NO_WRITE) {
+        this.y = y as number;
+      }
+
+      if (flatten) {
+        this._layoutX = typeof x === 'number' ? x : 0;
+        this._layoutY = typeof y === 'number' ? y : 0;
+      }
+
+      return;
+    }
+
+    let flattenedMoved = false;
+
+    if (flatten && typeof x === 'number') {
+      flattenedMoved = this._flattened && this._layoutX !== x;
+      this._layoutX = x;
+
+      if (!this._flattened) {
+        x += this._flatOffsetX;
+      }
+    }
+
+    if (flatten && typeof y === 'number') {
+      flattenedMoved = flattenedMoved || (this._flattened && this._layoutY !== y);
+      this._layoutY = y;
+
+      if (!this._flattened) {
+        y += this._flatOffsetY;
+      }
+    }
+
+    if (x !== NO_WRITE) {
+      this.x = x as number;
+    }
+
+    if (y !== NO_WRITE) {
+      this.y = y as number;
+    }
+
+    if (flattenedMoved) {
+      this._refreshFlattenedChildren(false);
+    }
   }
 
   public _toLightningNodeProps(props: AnyRecord, initial = false): AnyRecord {
