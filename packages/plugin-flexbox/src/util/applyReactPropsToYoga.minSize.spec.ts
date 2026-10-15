@@ -21,7 +21,7 @@ describe('applyFlexPropToYoga min size', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const node = yoga.Node.create();
 
-    expect(applyFlexPropToYoga(yoga, options, node, key, 'auto')).toBe(true);
+    expect(applyFlexPropToYoga(yoga, options, node, key, 'auto' as never)).toBe(true);
     expect(errorSpy).not.toHaveBeenCalled();
   });
 
