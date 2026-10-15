@@ -488,15 +488,21 @@ export class YogaManager {
       return;
     }
 
+    // Display only changes through a display key or the reset of one, so the
+    // hidden set is already right otherwise (and getDisplay is a wasm call).
+    const mayChangeDisplay = 'display' in style || (resetMissing && 'display' in yogaNode.props);
+
     applyReactPropsToYoga(this._yoga, this._yogaOptions, yogaNode, style, resetMissing);
 
     // Yoga zeroes the computed box of a display:none node, so emitting its
     // layout would drag the node back to the origin — a node parked off screen
     // by a translate lands in view of anything reading the scene graph.
-    if (yogaNode.node.getDisplay() === this._yoga.DISPLAY_NONE) {
-      this._hiddenElements.add(elementId);
-    } else {
-      this._hiddenElements.delete(elementId);
+    if (mayChangeDisplay) {
+      if (yogaNode.node.getDisplay() === this._yoga.DISPLAY_NONE) {
+        this._hiddenElements.add(elementId);
+      } else {
+        this._hiddenElements.delete(elementId);
+      }
     }
 
     if (style.transform) {
