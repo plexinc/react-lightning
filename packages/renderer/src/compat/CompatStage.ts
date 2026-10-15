@@ -1,4 +1,7 @@
-import { QuadBatcher, type Rect } from '../QuadBatcher';
+import { QuadBatcher, type Rect as BaseRect } from '../QuadBatcher';
+
+/** Screen-space clip; `r` > 0 when the innermost clipping node is rounded (screen px). */
+type Rect = BaseRect & { r: number; rx0: number; ry0: number; rx1: number; ry1: number };
 import { TEX_FAILED, TEX_READY, type Texture, TextureManager } from '../TextureManager';
 import { AnimationManager } from './Animation';
 import {
@@ -21,6 +24,7 @@ import {
   KIND_NONE,
   KIND_ROUNDED,
   KIND_ROUNDED_BORDER,
+  KIND_ULTRABLUR,
   KIND_UNSUPPORTED,
   type ShaderType,
   maxRadius,
@@ -171,6 +175,12 @@ export class CompatStage {
     this.root._w = this._w;
     this.root._h = this._h;
     this.requestRender();
+
+    // Render-on-dirty: a resize or tab switch can drop the presented buffer, so draw again.
+    const redraw = () => this.requestRender();
+
+    window.addEventListener('resize', redraw);
+    document.addEventListener('visibilitychange', redraw);
   }
 
   public warnOnce(key: string, msg: string): void {
@@ -449,7 +459,7 @@ export class CompatStage {
         return;
       }
 
-      childClip = this._pushClip(minX, minY, maxX, maxY, clip);
+      childClip = this._pushClip(minX, minY, maxX, maxY, clip, node._clipRadius > 0 && axisAligned ? node._clipRadius * node._wa : 0);
     }
 
     const list = node._drawOrder ?? node.children;
@@ -463,11 +473,18 @@ export class CompatStage {
     }
   }
 
-  private _pushClip(x0: number, y0: number, x1: number, y1: number, parent: Rect | null): Rect {
+  private _pushClip(
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+    parent: Rect | null,
+    radius: number,
+  ): Rect {
     let r = this._clipStack[this._clipDepth];
 
     if (!r) {
-      r = { x0: 0, y0: 0, x1: 0, y1: 0 };
+      r = { x0: 0, y0: 0, x1: 0, y1: 0, r: 0, rx0: 0, ry0: 0, rx1: 0, ry1: 0 };
       this._clipStack[this._clipDepth] = r;
     }
 
@@ -476,6 +493,22 @@ export class CompatStage {
     r.y0 = parent ? Math.max(parent.y0, y0) : y0;
     r.x1 = parent ? Math.min(parent.x1, x1) : x1;
     r.y1 = parent ? Math.min(parent.y1, y1) : y1;
+
+    if (radius > 0) {
+      r.r = radius;
+      r.rx0 = x0;
+      r.ry0 = y0;
+      r.rx1 = x1;
+      r.ry1 = y1;
+    } else if (parent && parent.r > 0) {
+      r.r = parent.r;
+      r.rx0 = parent.rx0;
+      r.ry0 = parent.ry0;
+      r.rx1 = parent.rx1;
+      r.ry1 = parent.ry1;
+    } else {
+      r.r = 0;
+    }
 
     return r;
   }
@@ -686,7 +719,7 @@ export class CompatStage {
     let radius = 0;
     let bw = 0;
     let bc = 0;
-    let outside = false;
+    let align = 0;
     let gap = 0;
     let sides: number[] | null = null;
     let props: Record<string, unknown> | null = null;
@@ -704,7 +737,9 @@ export class CompatStage {
 
         bw = typeof wv === 'number' ? wv : 0;
         bc = (props[`${p}color`] as number) ?? 0;
-        outside = props[`${p}align`] === 'outside';
+        const al = props[`${p}align`];
+
+        align = typeof al === 'number' ? al : al === 'outside' ? 1 : al === 'center' ? 0.5 : 0;
         gap = (props[`${p}gap`] as number) || 0;
 
         const t = (props[`${p}top`] as number) || 0;
@@ -735,6 +770,12 @@ export class CompatStage {
     const tint = ct && ct.type === 'ColorTexture' ? withAlpha(ct.color, a) : withAlpha(node._color, a);
     const borderColor = withAlpha(bc, a);
 
+    if (kind === KIND_ULTRABLUR && props) {
+      this._drawUltraBlur(node, props, clip);
+
+      return;
+    }
+
     if (kind === KIND_GRADIENT && props) {
       this._drawGradient(node, props, radius, clip, axisAligned);
 
@@ -757,12 +798,13 @@ export class CompatStage {
       return;
     }
 
-    if (bw > 0 && outside) {
+    if (bw > 0 && (align > 0 || gap > 0)) {
       if (hasFill) {
         this._quad(node, tex, qx0, qy0, qx1, qy1, u0, v0, u1, v1, tint, tint, tint, tint, 0, 0, w, h, radius, 0, 0, clip);
       }
 
-      const e = outside ? gap + bw : gap;
+      // Lightning grows the border quad by gap + width * align and draws the band inward from that edge.
+      const e = gap + bw * align;
       const er = radius > 0 ? radius + e : 0;
       const white = this.textures.white;
 
@@ -881,6 +923,91 @@ export class CompatStage {
   }
 
   /**
+   * Chroma's UltraBlur evaluated on a coarse grid with per-corner colors, so it
+   * batches like everything else. Smooth enough at 1080p; the noise is dropped.
+   */
+  private _drawUltraBlur(node: CoreNode, props: Record<string, unknown>, clip: Rect | null): void {
+    const w = node._w;
+    const h = node._h;
+    const a = node._worldAlpha;
+    const bg = rgba((props.background_color as number) ?? 0x000000ff);
+    const tl = rgba((props.tl_color as number) ?? (props.background_color as number) ?? 0);
+    const tr = rgba((props.tr_color as number) ?? (props.background_color as number) ?? 0);
+    const br = rgba((props.br_color as number) ?? (props.background_color as number) ?? 0);
+    const bl = rgba((props.bl_color as number) ?? (props.background_color as number) ?? 0);
+    const mask = (props.edge_mask as number) ?? 0;
+    const N = 8;
+    const grid: number[] = [];
+    const out = [0, 0, 0, 0];
+    const dist = (cx: number, cy: number, px: number, py: number) =>
+      Math.hypot((px - cx) / (w * 0.95), (py - cy) / (h * 0.95));
+    const mix = (t: number, c: number[]) => {
+      const k = t < 0 ? 0 : t > 1 ? 1 : t;
+
+      out[0] += (c[0] - out[0]) * k;
+      out[1] += (c[1] - out[1]) * k;
+      out[2] += (c[2] - out[2]) * k;
+      out[3] += (c[3] - out[3]) * k;
+    };
+
+    for (let j = 0; j <= N; j++) {
+      for (let i = 0; i <= N; i++) {
+        const px = (i / N) * w;
+        const py = h - (j / N) * h;
+
+        out[0] = bg[0];
+        out[1] = bg[1];
+        out[2] = bg[2];
+        out[3] = bg[3];
+        mix(1 - dist(w, 0, px, py), br);
+        mix(1 - dist(0, 0, px, py), bl);
+        mix(1 - dist(w, h, px, py), tr);
+        mix(1 - dist(0, h, px, py), tl);
+
+        let alpha = a;
+
+        if (mask > 0) {
+          const u = i / N;
+          const v = j / N;
+          const nx = (1 - u) / 0.67;
+          const ny = v / 0.65;
+          const m = Math.max(nx, ny);
+          const len = Math.sqrt(nx * nx + ny * ny);
+          const d = len + (m - len) * smoothstep(0.3, 1, m);
+          const t = Math.min(1, Math.max(0, (1 - smoothstep(0, 1, d)) * 1.2));
+
+          alpha *= 1 + (1 - t - 1) * mask;
+        }
+
+        grid.push(
+          ((Math.round(out[0] * 255) << 24) |
+            (Math.round(out[1] * 255) << 16) |
+            (Math.round(out[2] * 255) << 8) |
+            Math.round(Math.min(1, out[3] * alpha) * 255)) >>>
+            0,
+        );
+      }
+    }
+
+    const white = this.textures.white;
+
+    for (let j = 0; j < N; j++) {
+      for (let i = 0; i < N; i++) {
+        const c0 = grid[j * (N + 1) + i];
+        const c1 = grid[j * (N + 1) + i + 1];
+        const c2 = grid[(j + 1) * (N + 1) + i];
+        const c3 = grid[(j + 1) * (N + 1) + i + 1];
+        const x0 = (i / N) * w;
+        const x1 = ((i + 1) / N) * w;
+        const y0 = (j / N) * h;
+        const y1 = ((j + 1) / N) * h;
+
+        this._quad(node, white, x0, y0, x1, y1, 0, 0, 1, 1, c0, c1, c2, c3, 0, 0, w, h, 0, 0, 0, clip);
+      }
+    }
+  }
+
+  /**
    * One quad in the node's local space: (lx0..ly1) is what's drawn, (sx, sy, sw, sh)
    * the rect the rounded/border SDF is evaluated against. Axis-aligned quads are
    * clipped on the CPU; anything rotated falls back to scissor.
@@ -915,6 +1042,15 @@ export class CompatStage {
     const wd = node._wd;
     const wx = node._wx;
     const wy = node._wy;
+
+    if (clip && clip.r > 0 && radius === 0 && border === 0 && wb === 0 && wc === 0 && wa > 0 && wd > 0) {
+      // Rounded clipping without a stencil: evaluate the clip's rounded rect as this quad's SDF.
+      sx = (clip.rx0 - wx) / wa;
+      sy = (clip.ry0 - wy) / wd;
+      sw = (clip.rx1 - clip.rx0) / wa;
+      sh = (clip.ry1 - clip.ry0) / wd;
+      radius = clip.r / wa;
+    }
 
     if (wb === 0 && wc === 0 && wa > 0 && wd > 0) {
       let x0 = wx + wa * lx0;
@@ -1048,6 +1184,16 @@ export class CompatStage {
     );
     this._batcher.setScissor(null);
   }
+}
+
+function rgba(c: number): number[] {
+  return [((c >>> 24) & 255) / 255, ((c >>> 16) & 255) / 255, ((c >>> 8) & 255) / 255, (c & 255) / 255];
+}
+
+function smoothstep(e0: number, e1: number, x: number): number {
+  const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
+
+  return t * t * (3 - 2 * t);
 }
 
 function withAlpha(c: number, a: number): number {

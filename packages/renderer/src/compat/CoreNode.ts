@@ -310,7 +310,7 @@ export class CoreNode extends EventEmitter {
   }
   set clipRadius(v: number) {
     if (v && !this._clipRadius) {
-      this.stage.warnOnce('clipRadius', 'rounded clipping is not implemented, clipping to the rect');
+      this.stage.warnOnce('clipRadius', 'rounded clipping is approximated: innermost clip only, and only on quads without their own radius');
     }
 
     this._clipRadius = v;

@@ -41,6 +41,7 @@ export const KIND_BORDER = 2;
 export const KIND_ROUNDED_BORDER = 3;
 export const KIND_GRADIENT = 4;
 export const KIND_UNSUPPORTED = 5;
+export const KIND_ULTRABLUR = 6;
 
 const KINDS: Record<string, number> = {
   Default: KIND_NONE,
@@ -48,6 +49,7 @@ const KINDS: Record<string, number> = {
   Border: KIND_BORDER,
   RoundedWithBorder: KIND_ROUNDED_BORDER,
   LinearGradient: KIND_GRADIENT,
+  UltraBlur: KIND_ULTRABLUR,
 };
 
 export class CompatShader {
