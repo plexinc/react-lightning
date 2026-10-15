@@ -208,6 +208,7 @@ export function createHostConfig(options?: LightningHostConfigOptions): Lightnin
     removeChild(parentInstance, child) {
       if (child) {
         parentInstance.removeChild(child);
+        child.markDeleted();
       }
     },
 

@@ -244,6 +244,8 @@ export class LightningViewElement<
   public _flatOffsetX = 0;
   public _flatOffsetY = 0;
   private _isObservingResize = false;
+  private _destroyed = false;
+  private _deleted = false;
 
   public get visible(): boolean {
     return this._visible;
@@ -832,7 +834,40 @@ export class LightningViewElement<
     this._eventEmitter.emit('initialized');
   }
 
+  /**
+   * Marks the root of a subtree React deleted. It's already out of its parent,
+   * so its descendants can skip detaching one by one as they're destroyed.
+   */
+  public markDeleted(): void {
+    this._deleted = true;
+  }
+
+  // Memoized up the chain, so a deleted subtree costs one walk in total.
+  private _isInDeletedTree(): boolean {
+    if (this._deleted || this._destroyed) {
+      return true;
+    }
+
+    if (this._parent?._isInDeletedTree()) {
+      this._deleted = true;
+
+      return true;
+    }
+
+    return false;
+  }
+
   public destroy(): void {
+    // React calls detachDeletedInstance for a fiber and its alternate, which
+    // share this instance.
+    if (this._destroyed) {
+      return;
+    }
+
+    const detached = this._isInDeletedTree();
+
+    this._destroyed = true;
+
     if (this._isObservingResize && this._resizeObserver) {
       this._resizeObserver.unobserve(this);
       this._isObservingResize = false;
@@ -846,7 +881,10 @@ export class LightningViewElement<
       this.children[i]?.destroy();
     }
 
-    this.parent?.removeChild(this);
+    if (!detached) {
+      this.parent?.removeChild(this);
+    }
+
     this.children.length = 0; // More efficient than reassigning
 
     if (this._deferNodeRemovalHandler) {
@@ -985,12 +1023,8 @@ export class LightningViewElement<
   public removeChild(child: LightningElement): void {
     const index = this.children.indexOf(child);
 
-    // Idempotent — React's reconciler hits this path twice per unmount:
-    // first via the host-config `removeChild`, then again from inside
-    // `destroy()` (`this.parent?.removeChild(this)`). The second call is
-    // a no-op for `this.children` but used to re-emit `childRemoved`,
-    // doubling downstream worker traffic in plugin-flexbox (each emit
-    // fires `removeNode` + `queueRender` etc.).
+    // Idempotent: a removed child that's destroyed later (outside a React
+    // deletion) lands here again, and must not re-emit `childRemoved`.
     if (index < 0) {
       return;
     }
