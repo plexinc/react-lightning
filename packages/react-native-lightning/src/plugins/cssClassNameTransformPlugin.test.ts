@@ -224,7 +224,7 @@ describe('cssClassNameTransformPlugin style fast path', () => {
     expect(rec.styles).toEqual([{ flexDirection: 'row', alpha: 0.5 }]);
   });
 
-  it('leaves css-transform keys on the slow path', async () => {
+  it('converts opacity and transform on the fast path, other css-transform keys go slow', async () => {
     const rec = recorder();
     const el = createElement({ style: { w: 10 } }, [
       cssClassNameTransformPlugin(),
@@ -237,9 +237,15 @@ describe('cssClassNameTransformPlugin style fast path', () => {
     await flush();
     expect(rec.styles).toEqual([]);
 
-    el.setProps({ style: { opacity: 0.25 } } as never);
+    el.setProps({ style: { opacity: 0.25, transform: [{ scale: 2 }] } } as never);
+    await flush();
+    expect(rec.styles).toEqual([]);
+    expect(el.node.alpha).toBe(0.25);
+    expect(el.node.scaleX).toBe(2);
+
+    el.setProps({ style: { opacity: 0.75, backgroundColor: '#ff0000' } } as never);
     await flush();
     expect(rec.styles).toHaveLength(1);
-    expect(el.node.alpha).toBe(0.25);
+    expect(el.node.alpha).toBe(0.75);
   });
 });

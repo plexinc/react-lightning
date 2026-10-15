@@ -45,4 +45,12 @@ export type Plugin<T extends LightningElement = LightningElement> = {
    * for this plugin.
    */
   needsTransform?(instance: SetOptional<T, 'node'>, props: T['props']): boolean;
+
+  /**
+   * Converts the style of a style-only update that touches handledStyleProps,
+   * so it can still take the fast path. Must return the style transformProps
+   * would produce for that update, or null when the update needs the full
+   * transform pipeline.
+   */
+  transformStyle?(instance: SetOptional<T, 'node'>, style: object): object | null;
 };
