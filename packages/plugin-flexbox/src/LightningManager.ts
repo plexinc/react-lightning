@@ -1,5 +1,6 @@
 import type {
   LightningElement,
+  LightningElementObserver,
   LightningElementStyle,
   LightningTextElement,
   LightningTextElementStyle,
@@ -329,146 +330,35 @@ export class LightningManager {
       this._syncTextMeasure(element);
     }
 
+    // Real elements take the shared observer: no per-element listeners or
+    // disposers. Anything else that looks like an element gets events.
+    if (typeof (element as { observe?: unknown }).observe === 'function') {
+      element.observe(this._observer);
+
+      return;
+    }
+
     const disposers = [
       element.on('destroy', () => {
         for (const dispose of disposers) {
           dispose();
         }
 
-        const yogaParent = this._yogaParents.get(element.id);
-
-        if (yogaParent !== undefined) {
-          this._clearYogaParent(element.id, yogaParent);
-        }
-
-        this._elements.delete(element.id);
-        this._boundaries.delete(element.id);
-        this._flexRoots.delete(element.id);
-        this._yogaChildCounts.delete(element.id);
-        this._measuredText.delete(element.id);
-        this._textContextWidth.delete(element.id);
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. But avoiding the nullish operator for perf reasons
-        this._yogaManager!.applyStyle(element.id, null, true);
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
-        this._yogaManager!.removeIndependentRoot(element.id);
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
-        this._yogaManager!.removeNode(element.id);
+        this._onDestroy(element);
       }),
-
-      element.on('childAdded', (child, index) => {
-        if (this._isInBoundary(element)) {
-          return;
-        }
-
-        // Translate React index → yoga index. Skipped siblings (boundaries,
-        // flex roots) cause "memory access out of bounds" otherwise.
-        const yogaIndex = this._yogaIndexFor(element, index);
-
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
-        this._yogaManager!.addChildNode(element.id, child.id, yogaIndex);
-        this._setYogaParent(child.id, element.id);
-        // See _reattachChildren — withhold paint until first layout.
-        child.withholdPaintUntilLayout();
-        this.applyStyle(element.id, element.style);
-
-        // React mounts bottom-up: `child`'s descendants were inserted
-        // before `child` joined the flex tree, so they were skipped at
-        // their own childAdded time. Promote them now.
-        if (!this._boundaries.has(child.id)) {
-          this._reattachChildren(child);
-        }
-      }),
-
-      element.on('childRemoved', (child) => {
-        const childYogaParent = this._yogaParents.get(child.id);
-
-        if (childYogaParent !== undefined) {
-          this._clearYogaParent(child.id, childYogaParent);
-        }
-
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
-        this._yogaManager!.applyStyle(child.id, null, true);
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
-        this._yogaManager!.removeNode(child.id);
-
-        // Re-layout — without this a shrink-fit parent keeps the old size
-        // (node.w/h stay at last computed) and NodeResizeObserver never
-        // fires the shrink event to consumers like VL.reportItemSize.
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
-        this._yogaManager!.queueRender(element.id);
-      }),
-
-      // Same-parent reorder (React's keyed move). Reindex in place, keep the yoga node alive.
-      element.on('childMoved', (child, _fromIndex, toIndex) => {
-        if (this._yogaParents.get(child.id) !== element.id) {
-          // Not one of this parent's yoga children (boundary or flex root), nothing to reindex.
-          return;
-        }
-
-        // Detach before computing the index: the append-at-end fast path in
-        // _yogaIndexFor reads the cached count, which must not include the child.
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
-        this._yogaManager!.detachChildNode(element.id, child.id);
-        this._clearYogaParent(child.id, element.id);
-
-        const yogaIndex = this._yogaIndexFor(element, toIndex);
-
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
-        this._yogaManager!.addChildNode(element.id, child.id, yogaIndex);
-        this._setYogaParent(child.id, element.id);
-        // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
-        this._yogaManager!.queueRender(element.id);
-      }),
-
-      element.on('inViewport', () => {
-        if (!element.isTextElement && !element.isImageElement) {
-          this.applyStyle(element.id, element.props.style);
-        }
-      }),
-
-      element.on('stylesChanged', () => {
-        this.applyStyle(element.id, element.props.style);
-
-        // Font/size/maxLines changes affect measurement.
-        if (element.isTextElement) {
-          this._syncTextMeasure(element);
-        }
-      }),
-
+      element.on('childAdded', (child, index) => this._onChildAdded(element, child, index)),
+      element.on('childRemoved', (child) => this._onChildRemoved(element, child)),
+      element.on('childMoved', (child, _fromIndex, toIndex) =>
+        this._onChildMoved(element, child, toIndex),
+      ),
+      element.on('inViewport', () => this._onInViewport(element)),
+      element.on('stylesChanged', () => this._onStylesChanged(element)),
       element.on(
         'textureLoaded',
         (
           node: RendererNode<LightningElement> | TextRendererNode<LightningTextElement>,
           event: { type: string; dimensions: { w: number; h: number } },
-        ) => {
-          if (element.isTextElement) {
-            // Static text (set once at mount via the initial-props path, not the
-            // `text` setter) never fires `textChanged`, so `_syncTextMeasure`
-            // only ran at trackElement before the content existed and the node
-            // was never measured. The renderer's texture-loaded event is the
-            // first point where `node.text` is reliably populated — sync now so
-            // such text gets a measure func and wraps like dynamic text does.
-            if (!this._measuredText.has(element.id)) {
-              this._syncTextMeasure(element);
-            }
-
-            // When Yoga measures the text itself, it owns the node's size —
-            // pushing the async texture size back would fight the measure func.
-            if (this._measuredText.has(element.id)) {
-              return;
-            }
-
-            this.applyStyle(element.id, {
-              w: event.dimensions.w,
-              h: event.dimensions.h,
-            });
-          } else {
-            this.applyStyle(element.id, {
-              w: node.w,
-              h: node.h,
-            });
-          }
-        },
+        ) => this._onTextureLoaded(element, node, event),
       ),
     ];
 
@@ -485,6 +375,166 @@ export class LightningManager {
           this._syncTextMeasure(element);
         }),
       );
+    }
+  }
+
+  private _observer: LightningElementObserver = {
+    destroy: (element) => {
+      element.unobserve(this._observer);
+      this._onDestroy(element);
+    },
+    childAdded: (element, child, index) => this._onChildAdded(element, child, index),
+    childRemoved: (element, child) => this._onChildRemoved(element, child),
+    childMoved: (element, child, _fromIndex, toIndex) =>
+      this._onChildMoved(element, child, toIndex),
+    inViewport: (element) => this._onInViewport(element),
+    stylesChanged: (element) => this._onStylesChanged(element),
+    textureLoaded: (element, node, event) => this._onTextureLoaded(element, node, event),
+    // Text only, like the propsChanged/textChanged listeners above.
+    propsChanged: (element) => {
+      if (element.isTextElement) {
+        this._syncTextMeasure(element);
+      }
+    },
+    textChanged: (element) => {
+      if (element.isTextElement) {
+        this._syncTextMeasure(element);
+      }
+    },
+  };
+
+  private _onDestroy(element: LightningElement): void {
+    const yogaParent = this._yogaParents.get(element.id);
+
+    if (yogaParent !== undefined) {
+      this._clearYogaParent(element.id, yogaParent);
+    }
+
+    this._elements.delete(element.id);
+    this._boundaries.delete(element.id);
+    this._flexRoots.delete(element.id);
+    this._yogaChildCounts.delete(element.id);
+    this._measuredText.delete(element.id);
+    this._textContextWidth.delete(element.id);
+    // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. But avoiding the nullish operator for perf reasons
+    this._yogaManager!.applyStyle(element.id, null, true);
+    // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
+    this._yogaManager!.removeIndependentRoot(element.id);
+    // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
+    this._yogaManager!.removeNode(element.id);
+  }
+
+  private _onChildAdded(element: LightningElement, child: LightningElement, index: number): void {
+    if (this._isInBoundary(element)) {
+      return;
+    }
+
+    // Translate React index → yoga index. Skipped siblings (boundaries,
+    // flex roots) cause "memory access out of bounds" otherwise.
+    const yogaIndex = this._yogaIndexFor(element, index);
+
+    // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
+    this._yogaManager!.addChildNode(element.id, child.id, yogaIndex);
+    this._setYogaParent(child.id, element.id);
+    // See _reattachChildren — withhold paint until first layout.
+    child.withholdPaintUntilLayout();
+    this.applyStyle(element.id, element.style);
+
+    // React mounts bottom-up: `child`'s descendants were inserted
+    // before `child` joined the flex tree, so they were skipped at
+    // their own childAdded time. Promote them now.
+    if (!this._boundaries.has(child.id)) {
+      this._reattachChildren(child);
+    }
+  }
+
+  private _onChildRemoved(element: LightningElement, child: LightningElement): void {
+    const childYogaParent = this._yogaParents.get(child.id);
+
+    if (childYogaParent !== undefined) {
+      this._clearYogaParent(child.id, childYogaParent);
+    }
+
+    // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
+    this._yogaManager!.applyStyle(child.id, null, true);
+    // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
+    this._yogaManager!.removeNode(child.id);
+
+    // Re-layout — without this a shrink-fit parent keeps the old size
+    // (node.w/h stay at last computed) and NodeResizeObserver never
+    // fires the shrink event to consumers like VL.reportItemSize.
+    // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
+    this._yogaManager!.queueRender(element.id);
+  }
+
+  // Same-parent reorder (React's keyed move). Reindex in place, keep the yoga node alive.
+  private _onChildMoved(element: LightningElement, child: LightningElement, toIndex: number): void {
+    if (this._yogaParents.get(child.id) !== element.id) {
+      // Not one of this parent's yoga children (boundary or flex root), nothing to reindex.
+      return;
+    }
+
+    // Detach before computing the index: the append-at-end fast path in
+    // _yogaIndexFor reads the cached count, which must not include the child.
+    // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
+    this._yogaManager!.detachChildNode(element.id, child.id);
+    this._clearYogaParent(child.id, element.id);
+
+    const yogaIndex = this._yogaIndexFor(element, toIndex);
+
+    // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
+    this._yogaManager!.addChildNode(element.id, child.id, yogaIndex);
+    this._setYogaParent(child.id, element.id);
+    // oxlint-disable-next-line typescript/no-non-null-assertion -- Guaranteed to exist. See above
+    this._yogaManager!.queueRender(element.id);
+  }
+
+  private _onInViewport(element: LightningElement): void {
+    if (!element.isTextElement && !element.isImageElement) {
+      this.applyStyle(element.id, element.props.style);
+    }
+  }
+
+  private _onStylesChanged(element: LightningElement): void {
+    this.applyStyle(element.id, element.props.style);
+
+    // Font/size/maxLines changes affect measurement.
+    if (element.isTextElement) {
+      this._syncTextMeasure(element);
+    }
+  }
+
+  private _onTextureLoaded(
+    element: LightningElement,
+    node: RendererNode<LightningElement> | TextRendererNode<LightningTextElement>,
+    event: { type: string; dimensions: { w: number; h: number } },
+  ): void {
+    if (element.isTextElement) {
+      // Static text (set once at mount via the initial-props path, not the
+      // `text` setter) never fires `textChanged`, so `_syncTextMeasure`
+      // only ran at trackElement before the content existed and the node
+      // was never measured. The renderer's texture-loaded event is the
+      // first point where `node.text` is reliably populated — sync now so
+      // such text gets a measure func and wraps like dynamic text does.
+      if (!this._measuredText.has(element.id)) {
+        this._syncTextMeasure(element);
+      }
+
+      // When Yoga measures the text itself, it owns the node's size —
+      // pushing the async texture size back would fight the measure func.
+      if (this._measuredText.has(element.id)) {
+        return;
+      }
+
+      this.applyStyle(element.id, {
+        w: event.dimensions.w,
+        h: event.dimensions.h,
+      });
+    } else {
+      this.applyStyle(element.id, {
+        w: node.w,
+        h: node.h,
+      });
     }
   }
 

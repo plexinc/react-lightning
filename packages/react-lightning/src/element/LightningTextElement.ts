@@ -47,6 +47,7 @@ export class LightningTextElement extends LightningViewElement<
     // on every value change, not just prop changes.
     if (v !== this._lastEmittedText) {
       this._lastEmittedText = v;
+      this._notifyObservers('textChanged');
       this.emit('textChanged', this);
 
       // A fragment nested more than one level deep (Text > Text > string)

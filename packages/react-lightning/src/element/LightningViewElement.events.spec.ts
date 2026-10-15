@@ -154,3 +154,73 @@ describe('LightningViewElement style proxy', () => {
     expect((el.style as Record<PropertyKey, unknown>)[AllStyleProps]).toMatchObject({ w: 10 });
   });
 });
+
+describe('LightningViewElement observers', () => {
+  it('calls observers with the element ahead of the event listeners', () => {
+    const parent = createElement();
+    const child = createElement();
+    const calls: string[] = [];
+
+    parent.on('childAdded', () => calls.push('listener'));
+    parent.observe({
+      childAdded: (element, added, index) => {
+        calls.push(`observer ${element === parent} ${added === child} ${index}`);
+      },
+    });
+
+    parent.insertChild(child);
+
+    expect(calls).toEqual(['observer true true 0', 'listener']);
+  });
+
+  it('reports child moves, removals and style changes', async () => {
+    const parent = createElement();
+    const [a, b] = [createElement(), createElement()];
+    const calls: unknown[][] = [];
+
+    parent.insertChild(a);
+    parent.insertChild(b);
+    parent.observe({
+      childMoved: (_e, child, from, to) => calls.push(['moved', child === b, from, to]),
+      childRemoved: (_e, child, index) => calls.push(['removed', child === a, index]),
+      stylesChanged: (_e, styles) => calls.push(['styles', styles]),
+      propsChanged: () => calls.push(['props']),
+    });
+
+    parent.insertChild(b, a);
+    parent.removeChild(a);
+    parent.setProps({ style: { w: 3 } });
+    await flush();
+
+    expect(calls).toEqual([
+      ['moved', true, 1, 0],
+      ['removed', true, 1],
+      ['styles', { w: 3 }],
+      ['props'],
+    ]);
+  });
+
+  it('lets an observer unobserve while it is being notified', () => {
+    const el = createElement();
+    const calls: string[] = [];
+    const first = {
+      destroy: () => {
+        calls.push('first');
+        el.unobserve(first);
+      },
+    };
+    const second = { destroy: () => calls.push('second') };
+
+    el.observe(first);
+    el.observe(second);
+    el.destroy();
+
+    expect(calls).toEqual(['first', 'second']);
+
+    el.unobserve(second);
+    el.observe(first);
+    el.unobserve(first);
+    el.insertChild(createElement());
+    expect(calls).toEqual(['first', 'second']);
+  });
+});
