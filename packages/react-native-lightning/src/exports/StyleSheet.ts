@@ -4,10 +4,26 @@ export function create(
   return stylesObject;
 }
 
+// Array.prototype.flat needs Chrome 69.
+function flattenDeep(values: readonly unknown[], out: unknown[]): unknown[] {
+  for (const value of values) {
+    if (Array.isArray(value)) {
+      flattenDeep(value, out);
+    } else {
+      out.push(value);
+    }
+  }
+
+  return out;
+}
+
 export function flatten<T>(...args: T[]): Exclude<T, false | null | undefined> {
   return Object.assign(
     {},
-    ...args.filter((obj) => obj != null && obj !== false).flat(Number.POSITIVE_INFINITY),
+    ...flattenDeep(
+      args.filter((obj) => obj != null && obj !== false),
+      [],
+    ),
   );
 }
 

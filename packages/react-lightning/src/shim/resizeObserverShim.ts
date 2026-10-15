@@ -1,7 +1,39 @@
 import { LightningViewElement } from '../element/LightningViewElement';
 import type { Rect } from '../types';
 
-class LightningResizeObserver extends window.ResizeObserver {
+// Chrome < 64 (Tizen 5.0) has no ResizeObserver: Lightning targets still
+// report, DOM targets are ignored.
+class NoopResizeObserver {
+  public constructor(_callback: ResizeObserverCallback) {}
+  public observe(_target: Element, _options?: ResizeObserverOptions): void {}
+  public unobserve(_target: Element): void {}
+  public disconnect(): void {}
+}
+
+const BaseResizeObserver: typeof ResizeObserver =
+  (window.ResizeObserver as typeof ResizeObserver | undefined) ?? NoopResizeObserver;
+
+function toRect(dimensions: Rect): DOMRectReadOnly {
+  if (typeof DOMRectReadOnly !== 'undefined') {
+    return new DOMRectReadOnly(dimensions.x, dimensions.y, dimensions.w, dimensions.h);
+  }
+
+  const { x, y, w, h } = dimensions;
+
+  return {
+    x,
+    y,
+    width: w,
+    height: h,
+    top: y,
+    left: x,
+    right: x + w,
+    bottom: y + h,
+    toJSON: () => ({ x, y, width: w, height: h }),
+  };
+}
+
+class LightningResizeObserver extends BaseResizeObserver {
   private _callback: ResizeObserverCallback;
   // Per-target layout handler so each entry reports its own target's rect and
   // the handler ref stays removable on unobserve/disconnect.
@@ -80,12 +112,7 @@ class LightningResizeObserver extends window.ResizeObserver {
           inlineSize: dimensions.w,
         },
       ],
-      contentRect: new DOMRectReadOnly(
-        dimensions.x,
-        dimensions.y,
-        dimensions.w,
-        dimensions.h,
-      ),
+      contentRect: toRect(dimensions),
       target: target as unknown as Element,
     };
 

@@ -30,6 +30,7 @@ import {
   type ShaderDef,
   type TextureDef,
 } from '../types';
+import { scheduleMicrotask } from '../utils/scheduleMicrotask';
 import { AllStyleProps } from './AllStyleProps';
 import { createFlattenedNode } from './FlattenedRendererNode';
 import { isTranslateSettled, MAX_UNSETTLED_LAYOUTS } from './isTranslateSettled';
@@ -1370,7 +1371,7 @@ export class LightningViewElement<
 
     this._isUpdateQueued = true;
 
-    queueMicrotask(() => {
+    scheduleMicrotask(() => {
       const changed = this._doUpdate();
 
       if (changed) {
