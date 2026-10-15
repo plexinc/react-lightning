@@ -1,4 +1,5 @@
 import { EventEmitter } from './EventEmitter';
+import { normalizeProp } from './Shaders';
 import { type TimingFunction, getTimingFunction, mergeColorProgress } from './timing';
 
 export type AnimationSettings = {
@@ -71,13 +72,14 @@ export class Animation extends EventEmitter {
         shaderGroup = { keys: [], start: [], target: [], isColor: [] };
 
         for (const sk in sp) {
-          let start = node.shader.props[sk] as number | number[];
+          let start = normalizeProp(sk, node.shader.props[sk]) as number | number[];
 
           if (Array.isArray(start)) {
             start = start[0];
           }
 
-          const target = Array.isArray(sp[sk]) ? (sp[sk] as number[])[0] : (sp[sk] as number);
+          const raw = normalizeProp(sk, sp[sk]);
+          const target = Array.isArray(raw) ? (raw as number[])[0] : (raw as number);
 
           shaderGroup.keys.push(sk);
           shaderGroup.start.push(Number(start) || 0);

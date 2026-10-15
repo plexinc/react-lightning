@@ -15,7 +15,7 @@ export const Border = builtin({
   bottom: 0,
   left: 0,
   gap: 0,
-  align: 'center',
+  align: 0,
 });
 export const RoundedWithBorder = builtin({
   radius: 0,
@@ -26,7 +26,7 @@ export const RoundedWithBorder = builtin({
   'border-bottom': 0,
   'border-left': 0,
   'border-gap': 0,
-  'border-align': 'center',
+  'border-align': 0,
 });
 export const LinearGradient = builtin({ colors: [0x000000ff, 0xffffffff], stops: [0, 1], angle: 0 });
 export const RadialGradient = builtin({});
@@ -61,7 +61,9 @@ export class CompatShader {
     this.shaderType = type;
     this.kind = KINDS[type] ?? KIND_UNSUPPORTED;
     this.props = new Proxy(props, {
-      set(target, key, value) {
+      set(target, key, raw) {
+        const value = normalizeProp(key as string, raw);
+
         if (target[key as string] !== value) {
           target[key as string] = value;
           onChange();
@@ -93,7 +95,7 @@ export function resolveShaderProps(
   if (input) {
     for (const key in input) {
       if (input[key] !== undefined) {
-        out[key] = input[key];
+        out[key] = normalizeProp(key, input[key]);
       }
     }
   }
@@ -114,6 +116,18 @@ export function resolveShaderProps(
   }
 
   return out;
+}
+
+/**
+ * Lightning resolves `align` strings to numbers when the prop is set. Keeping
+ * the string breaks shader prop animations, which tween every prop as a number.
+ */
+export function normalizeProp(key: string, value: unknown): unknown {
+  if (typeof value === 'string' && (key === 'align' || key === 'border-align')) {
+    return value === 'outside' ? 1 : value === 'center' ? 0.5 : 0;
+  }
+
+  return value;
 }
 
 /** Highest of a number or [tl, tr, br, bl]; the batcher has one radius per quad. */

@@ -739,7 +739,7 @@ export class CompatStage {
         bc = (props[`${p}color`] as number) ?? 0;
         const al = props[`${p}align`];
 
-        align = typeof al === 'number' ? al : al === 'outside' ? 1 : al === 'center' ? 0.5 : 0;
+        align = typeof al === 'number' ? al : 0;
         gap = (props[`${p}gap`] as number) || 0;
 
         const t = (props[`${p}top`] as number) || 0;
@@ -769,6 +769,16 @@ export class CompatStage {
 
     const tint = ct && ct.type === 'ColorTexture' ? withAlpha(ct.color, a) : withAlpha(node._color, a);
     const borderColor = withAlpha(bc, a);
+    // Lightning's RoundedWithBorder evaluates fill and border 1px inside the quad.
+    const ins = kind === KIND_ROUNDED_BORDER ? 1 : 0;
+
+    if ((borderColor & 255) === 0) {
+      bw = 0;
+      sides = null;
+    }
+
+    const iw = w - 2 * ins;
+    const ih = h - 2 * ins;
 
     if (kind === KIND_ULTRABLUR && props) {
       this._drawUltraBlur(node, props, clip);
@@ -799,8 +809,12 @@ export class CompatStage {
     }
 
     if (bw > 0 && (align > 0 || gap > 0)) {
-      if (hasFill) {
-        this._quad(node, tex, qx0, qy0, qx1, qy1, u0, v0, u1, v1, tint, tint, tint, tint, 0, 0, w, h, radius, 0, 0, clip);
+      if (hasFill && (tint & 255) !== 0) {
+        this._quad(node, tex, qx0, qy0, qx1, qy1, u0, v0, u1, v1, tint, tint, tint, tint, ins, ins, iw, ih, radius, 0, 0, clip);
+      }
+
+      if ((borderColor & 255) === 0) {
+        return;
       }
 
       // Lightning grows the border quad by gap + width * align and draws the band inward from that edge.
@@ -808,7 +822,7 @@ export class CompatStage {
       const er = radius > 0 ? radius + e : 0;
       const white = this.textures.white;
 
-      this._quad(node, white, -e, -e, w + e, h + e, 0, 0, 1, 1, 0, 0, 0, 0, -e, -e, w + 2 * e, h + 2 * e, er, bw, borderColor, clip);
+      this._quad(node, white, -e, -e, w + e, h + e, 0, 0, 1, 1, 0, 0, 0, 0, ins - e, ins - e, iw + 2 * e, ih + 2 * e, er, bw, borderColor, clip);
 
       return;
     }
@@ -822,12 +836,12 @@ export class CompatStage {
     }
 
     if (!hasFill) {
-      this._quad(node, this.textures.white, 0, 0, w, h, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, w, h, radius, bw, borderColor, clip);
+      this._quad(node, this.textures.white, 0, 0, w, h, 0, 0, 1, 1, 0, 0, 0, 0, ins, ins, iw, ih, radius, bw, borderColor, clip);
 
       return;
     }
 
-    this._quad(node, tex, qx0, qy0, qx1, qy1, u0, v0, u1, v1, tint, tint, tint, tint, 0, 0, w, h, radius, bw, borderColor, clip);
+    this._quad(node, tex, qx0, qy0, qx1, qy1, u0, v0, u1, v1, tint, tint, tint, tint, ins, ins, iw, ih, radius, bw, borderColor, clip);
   }
 
   private _drawGradient(
