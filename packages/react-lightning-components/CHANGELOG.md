@@ -1,5 +1,15 @@
 # @plextv/react-lightning-components
 
+## 1.0.0-alpha.10
+
+### Patch Changes
+
+- 6ecc122: virtual list keeps its cross size when layout effects re-run without a data change (e.g. a suspense-frozen screen coming back).
+- fbe68d4: virtual list keeps the focused row snapped when a scrollToIndex or scrollToOffset asks for the spot focus already scrolled to, so rows above it resizing afterwards no longer leave it off its rest position.
+- 213cffb: virtual list keeps one ref handle for its lifetime, so cells reading it from a layout effect during a scroll no longer get null.
+- Updated dependencies [5e30445]
+  - @plextv/react-lightning@0.5.0-alpha.12
+
 ## 1.0.0-alpha.9
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @plextv/react-lightning
 
+## 0.5.0-alpha.12
+
+### Patch Changes
+
+- 5e30445: bump @lightningjs/renderer to 3.7.0
+
 ## 0.5.0-alpha.11
 
 ### Patch Changes
