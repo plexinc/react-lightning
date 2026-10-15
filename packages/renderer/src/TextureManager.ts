@@ -213,7 +213,27 @@ export class TextureManager {
       flushWaiters(tex);
     };
 
-    if (this._bitmapOk) {
+    const viaImage = () => {
+      const img = new Image();
+
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        if (typeof img.decode === 'function') {
+          img.decode().then(
+            () => done(img),
+            () => done(img),
+          );
+        } else {
+          done(img);
+        }
+      };
+      img.onerror = fail;
+      img.src = src;
+    };
+    const lower = src.slice(0, 32).toLowerCase();
+    const isSvg = lower.startsWith('data:image/svg') || /\.svg(\?|#|$)/i.test(src);
+
+    if (this._bitmapOk && !isSvg) {
       fetch(src, { mode: 'cors', credentials: 'omit' })
         .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
         .then((blob) =>
@@ -225,25 +245,19 @@ export class TextureManager {
             createImageBitmap(blob),
           ),
         )
-        .then(done, fail);
+        .then(done, (e: unknown) => {
+          // Status errors are final; a decode error may still work through <img> (e.g. svg served without the extension).
+          if (e instanceof Error && /^\d+$/.test(e.message)) {
+            fail();
+          } else {
+            viaImage();
+          }
+        });
 
       return;
     }
 
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      if (typeof img.decode === 'function') {
-        img.decode().then(
-          () => done(img),
-          () => done(img),
-        );
-      } else {
-        done(img);
-      }
-    };
-    img.onerror = fail;
-    img.src = src;
+    viaImage();
   }
 
   private _upload(tex: Texture, source: Source): void {

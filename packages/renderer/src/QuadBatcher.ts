@@ -245,6 +245,42 @@ export class QuadBatcher {
     border: number,
     borderColor: number,
   ): void {
+    this.pushQuadC(
+      tex, x0, y0, x1, y1, x2, y2, x3, y3, u0, v0, u1, v1,
+      color, color, color, color,
+      lx0, ly0, lx1, ly1, lw, lh, radius, border, borderColor,
+    );
+  }
+
+  /** Same as pushQuad with a color per corner (tl, tr, bl, br), for gradients. */
+  public pushQuadC(
+    tex: Texture,
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    x3: number,
+    y3: number,
+    u0: number,
+    v0: number,
+    u1: number,
+    v1: number,
+    color0: number,
+    color1: number,
+    color2: number,
+    color3: number,
+    lx0: number,
+    ly0: number,
+    lx1: number,
+    ly1: number,
+    lw: number,
+    lh: number,
+    radius: number,
+    border: number,
+    borderColor: number,
+  ): void {
     let slot = -1;
 
     for (let i = 0; i < this._texCount; i++) {
@@ -273,14 +309,13 @@ export class QuadBatcher {
 
     const f = this._f32;
     const u = this._u32;
-    const c = abgr(color);
     const bc = abgr(borderColor);
     let o = this._count * 4 * FLOATS_PER_VERTEX;
 
-    o = vert(f, u, o, x0, y0, u0, v0, c, slot, lx0, ly0, lw, lh, radius, border, bc);
-    o = vert(f, u, o, x1, y1, u1, v0, c, slot, lx1, ly0, lw, lh, radius, border, bc);
-    o = vert(f, u, o, x2, y2, u0, v1, c, slot, lx0, ly1, lw, lh, radius, border, bc);
-    vert(f, u, o, x3, y3, u1, v1, c, slot, lx1, ly1, lw, lh, radius, border, bc);
+    o = vert(f, u, o, x0, y0, u0, v0, abgr(color0), slot, lx0, ly0, lw, lh, radius, border, bc);
+    o = vert(f, u, o, x1, y1, u1, v0, abgr(color1), slot, lx1, ly0, lw, lh, radius, border, bc);
+    o = vert(f, u, o, x2, y2, u0, v1, abgr(color2), slot, lx0, ly1, lw, lh, radius, border, bc);
+    vert(f, u, o, x3, y3, u1, v1, abgr(color3), slot, lx1, ly1, lw, lh, radius, border, bc);
     this._count++;
     this.quads++;
   }

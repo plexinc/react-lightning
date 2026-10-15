@@ -9,7 +9,15 @@
   "exports": {
     ".": "./src/index.ts",
     "./react": "./src/react/index.ts",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./compat": "./src/compat/index.ts",
+    "./compat/webgl": "./src/compat/webgl.ts",
+    "./compat/webgl/shaders": "./src/compat/shaderExports.ts",
+    "./compat/canvas": "./src/compat/canvas.ts",
+    "./compat/canvas/shaders": "./src/compat/shaderExports.ts",
+    "./compat/inspector": "./src/compat/inspector.ts",
+    "./compat/utils": "./src/compat/utils.ts",
+    "./compat/platforms": "./src/compat/platforms.ts"
   },
   "scripts": {
     "check:types": "tsc --noEmit",
