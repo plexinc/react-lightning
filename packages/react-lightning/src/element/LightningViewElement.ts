@@ -193,7 +193,8 @@ export class LightningViewElement<
   private _unsettledLayouts = 0;
   private _reactHidden = false;
   private _withheldAlpha = 1;
-  private _eventEmitter = new EventEmitter<LightningElementEvents>();
+  // Created on the first subscription: most elements are never listened to.
+  private _eventEmitter: EventEmitter<LightningElementEvents> | null = null;
   private _observers: LightningElementObserver[] | null = null;
   private _deferTarget: LightningElement | null = null;
   private _deferNodeRemovalHandler: ((destroy: () => void) => void) | null = null;
@@ -627,7 +628,7 @@ export class LightningViewElement<
       this.blur();
     }
 
-    this._eventEmitter.emit('focusableChanged', this, this._focusable);
+    this._eventEmitter?.emit('focusableChanged', this, this._focusable);
   }
 
   public get focused(): boolean {
@@ -902,7 +903,7 @@ export class LightningViewElement<
       this._reconcileResizeObserving();
     }
 
-    this._eventEmitter.emit('initialized');
+    this._eventEmitter?.emit('initialized');
   }
 
   /**
@@ -969,11 +970,11 @@ export class LightningViewElement<
     delete LightningViewElement.allElements[this.id];
 
     this._notifyObservers('destroy');
-    this._eventEmitter.emit('destroy');
+    this._eventEmitter?.emit('destroy');
   }
 
   public on(event: OnArgs[0], listener: OnArgs[1]): () => void {
-    this._eventEmitter.on(event, listener);
+    this._getEventEmitter().on(event, listener);
 
     if (event === 'resized') {
       this._reconcileResizeObserving();
@@ -983,7 +984,7 @@ export class LightningViewElement<
   }
 
   public once(event: OnceArgs[0], listener: OnceArgs[1]): () => void {
-    this._eventEmitter.once(event, listener);
+    this._getEventEmitter().once(event, listener);
 
     if (event === 'resized') {
       this._reconcileResizeObserving();
@@ -996,7 +997,7 @@ export class LightningViewElement<
     event: EventKey,
     listener: LightningElementEvents[EventKey],
   ): IEventEmitter<LightningElementEvents> {
-    const result = this._eventEmitter.off(event, listener);
+    const result = this._getEventEmitter().off(event, listener);
 
     if (event === 'resized') {
       this._reconcileResizeObserving();
@@ -1009,7 +1010,15 @@ export class LightningViewElement<
     event: EventKey,
     ...args: Parameters<LightningElementEvents[EventKey]>
   ): boolean {
-    return this._eventEmitter.emit(event, ...args);
+    return this._eventEmitter?.emit(event, ...args) ?? false;
+  }
+
+  private _getEventEmitter(): EventEmitter<LightningElementEvents> {
+    if (this._eventEmitter === null) {
+      this._eventEmitter = new EventEmitter<LightningElementEvents>();
+    }
+
+    return this._eventEmitter;
   }
 
   /** Register a lifecycle observer, see {@link LightningElementObserver}. */
@@ -1117,7 +1126,7 @@ export class LightningViewElement<
     }
 
     this._notifyObservers('childAdded', child, index);
-    this._eventEmitter.emit('childAdded', child, index);
+    this._eventEmitter?.emit('childAdded', child, index);
   }
 
   private _moveChild(child: LightningElement, beforeChild?: LightningElement | null): void {
@@ -1142,7 +1151,7 @@ export class LightningViewElement<
 
     if (toIndex !== fromIndex) {
       this._notifyObservers('childMoved', child, fromIndex, toIndex);
-      this._eventEmitter.emit('childMoved', child, fromIndex, toIndex);
+      this._eventEmitter?.emit('childMoved', child, fromIndex, toIndex);
     }
   }
 
@@ -1162,14 +1171,14 @@ export class LightningViewElement<
     }
 
     this._notifyObservers('childRemoved', child, index);
-    this._eventEmitter.emit('childRemoved', child, index);
+    this._eventEmitter?.emit('childRemoved', child, index);
   }
 
   public focus(): void {
     if (!this._focused) {
       this.props.onFocusCapture?.(this);
       this._focused = true;
-      this._eventEmitter.emit('focusChanged', this, true);
+      this._eventEmitter?.emit('focusChanged', this, true);
       this.props.onFocus?.(this);
     }
   }
@@ -1177,7 +1186,7 @@ export class LightningViewElement<
   public blur(): void {
     if (this._focused) {
       this._focused = false;
-      this._eventEmitter.emit('focusChanged', this, false);
+      this._eventEmitter?.emit('focusChanged', this, false);
       this.props.onBlur?.(this);
     }
   }
@@ -1402,7 +1411,7 @@ export class LightningViewElement<
    * Not intended to be called by application code.
    */
   public _emitResize(dimensions: { w: number; h: number }): void {
-    this._eventEmitter.emit('resized', this, dimensions);
+    this._eventEmitter?.emit('resized', this, dimensions);
     this.props.onResize?.(dimensions);
   }
 
@@ -1413,7 +1422,7 @@ export class LightningViewElement<
     this._visible = this.node.alpha > 0 && (!this.parent || this.parent.visible);
 
     if (this._visible !== prevVisible) {
-      this._eventEmitter.emit('visibilityChanged', this._visible);
+      this._eventEmitter?.emit('visibilityChanged', this._visible);
 
       // Optimize child iteration - use traditional for loop for better performance
       for (let i = 0; i < this.children.length; i++) {
@@ -1424,7 +1433,7 @@ export class LightningViewElement<
     const currentFocusable = this.focusable;
 
     if (currentFocusable !== prevFocusable) {
-      this._eventEmitter.emit('focusableChanged', this, currentFocusable);
+      this._eventEmitter?.emit('focusableChanged', this, currentFocusable);
     }
   }
 
@@ -1503,7 +1512,8 @@ export class LightningViewElement<
   }
 
   private _reconcileResizeObserving(): void {
-    const shouldObserve = this.props.onResize != null || this._eventEmitter.hasListeners('resized');
+    const shouldObserve =
+      this.props.onResize != null || this._eventEmitter?.hasListeners('resized');
 
     if (shouldObserve === this._isObservingResize) {
       return;
@@ -1552,7 +1562,7 @@ export class LightningViewElement<
 
       if (changed) {
         this._notifyObservers('propsChanged', this.props);
-        this._eventEmitter.emit('propsChanged', this.props);
+        this._eventEmitter?.emit('propsChanged', this.props);
       }
     });
   }
@@ -1707,7 +1717,7 @@ export class LightningViewElement<
 
     if (hasStyleChanges) {
       this._notifyObservers('stylesChanged', this.props.style);
-      this._eventEmitter.emit('stylesChanged', this.props.style as Partial<LightningElementStyle>);
+      this._eventEmitter?.emit('stylesChanged', this.props.style as Partial<LightningElementStyle>);
     }
 
     this._isUpdateQueued = false;
@@ -1874,7 +1884,7 @@ export class LightningViewElement<
     }
 
     this._notifyObservers('stylesChanged', this.props.style);
-    this._eventEmitter.emit('stylesChanged', this.props.style as Partial<LightningElementStyle>);
+    this._eventEmitter?.emit('stylesChanged', this.props.style as Partial<LightningElementStyle>);
 
     this._isUpdateQueued = false;
 
@@ -1891,18 +1901,18 @@ export class LightningViewElement<
 
   private _onInViewport: NodeRenderStateEventHandler = (node, renderState) => {
     this._notifyObservers('inViewport', node, renderState);
-    this._eventEmitter.emit('inViewport', node, renderState);
+    this._eventEmitter?.emit('inViewport', node, renderState);
   };
 
   private _onTextureLoaded: NodeLoadedEventHandler = (node, event) => {
     this._handleTextureLoaded(event);
     this._notifyObservers('textureLoaded', node, event);
-    this._eventEmitter.emit('textureLoaded', node, event);
+    this._eventEmitter?.emit('textureLoaded', node, event);
     this.props.onTextureReady?.(event.dimensions);
   };
 
   private _onTextureFailed: NodeFailedEventHandler = (...args) => {
-    this._eventEmitter.emit('textureFailed', ...args);
+    this._eventEmitter?.emit('textureFailed', ...args);
   };
 
   private _onLayout(dimensions: Rect): void {
@@ -1943,7 +1953,7 @@ export class LightningViewElement<
     const animation = this.node.animate(props, animationSettings || {});
 
     animation.once('stopped', (controller) => {
-      this._eventEmitter.emit('animationFinished', controller);
+      this._eventEmitter?.emit('animationFinished', controller);
 
       if (styleKey !== undefined) {
         this.props.onTransitionEnd?.({

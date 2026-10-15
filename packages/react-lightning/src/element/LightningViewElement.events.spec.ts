@@ -84,6 +84,30 @@ describe('LightningViewElement events', () => {
   });
 });
 
+describe('LightningViewElement lazy event emitter', () => {
+  it('emits, removes and reports nothing before anything subscribes', () => {
+    const el = createElement();
+
+    expect(el.emit('layout', { x: 0, y: 0, w: 0, h: 0 })).toBe(false);
+    expect(() => el.off('layout', () => {})).not.toThrow();
+  });
+
+  it('delivers internal events once a listener subscribes later', () => {
+    const el = createElement();
+    const added: unknown[] = [];
+
+    el.insertChild(createElement());
+    el.on('childAdded', (child) => added.push(child));
+
+    const second = createElement();
+
+    el.insertChild(second);
+
+    expect(added).toEqual([second]);
+    expect(el.emit('childAdded', second, 1)).toBe(true);
+  });
+});
+
 describe('LightningViewElement deferred removal', () => {
   it('destroys the node once the deferred handler signals done', () => {
     destroyNode.mockClear();
