@@ -1,5 +1,32 @@
 # @plextv/react-lightning-plugin-reanimated
 
+## 1.0.0-alpha.6
+
+### Patch Changes
+
+- 512b4dd: A static style change on an animated component now paints with the commit that changed it. The wrapper handed its child the style from the previous render, so a changed `backgroundColor` (or any non-animated style key) showed up one update late, and a card that toggled its background on focus looked focused after it had blurred.
+- 80c2b6b: convert animated transforms without Object.entries and merge translate parts into one transform object instead of re-spreading it per part
+- 752c38c: skip the animation runner reconcile on an animated style push when nothing is scheduled or running
+- Updated dependencies [3fb6c2d]
+- Updated dependencies [fa5dc63]
+- Updated dependencies [4ba62a9]
+- Updated dependencies [c0d8168]
+- Updated dependencies [361fc96]
+- Updated dependencies [fbfa5a1]
+- Updated dependencies [46c8509]
+- Updated dependencies [dde8469]
+- Updated dependencies [928a8b9]
+- Updated dependencies [a45de22]
+- Updated dependencies [0af5d56]
+- Updated dependencies [ee8561f]
+- Updated dependencies [453894a]
+- Updated dependencies [f0be4ba]
+- Updated dependencies [8d25de6]
+  - @plextv/react-lightning-plugin-css-transform@1.0.0-alpha.4
+  - @plextv/react-lightning@0.5.0-alpha.10
+  - @plextv/react-native-lightning@1.0.0-alpha.6
+  - @plextv/react-lightning-plugin-flexbox@1.0.0-alpha.8
+
 ## 1.0.0-alpha.5
 
 ### Patch Changes

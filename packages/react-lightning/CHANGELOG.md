@@ -1,5 +1,18 @@
 # @plextv/react-lightning
 
+## 0.5.0-alpha.10
+
+### Patch Changes
+
+- fa5dc63: check for an empty commitUpdate payload without allocating an Object.keys array
+- c0d8168: skip the full props copy on every slow-path element update, and iterate shader props without Object.entries
+- 361fc96: skip the leaf-ancestry pass and its Set when every focus child is a direct child of the group element
+- fbfa5a1: Focus returns to the group it was on when a covered screen shows again. Its content comes back piece by piece, so the group read as empty for a moment and focus was repicked onto a sibling (the Live TV guide landed on its category list instead of the airing). The repick is now a stand-in: the group is remembered and takes focus back once it has focusable content again, unless focus moved in the meantime.
+- 46c8509: create the per-element animation target map on first animation instead of on every element
+- 453894a: stage setProps payloads with a key loop instead of a rest copy plus Object.assign
+- f0be4ba: build the commitUpdate prop diff from the changed keys instead of copying all props and deleting the equal ones
+- 8d25de6: skip scoring spatial navigation candidates that can't win: behind the source, or non-overlapping before any overlapping match
+
 ## 0.5.0-alpha.9
 
 ### Patch Changes

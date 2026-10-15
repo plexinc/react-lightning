@@ -1,5 +1,25 @@
 # @plextv/react-lightning-components
 
+## 1.0.0-alpha.8
+
+### Patch Changes
+
+- 5d1a0af: reconcile VirtualList slots without allocating an entry array per active slot, and record the last slot only when an index is assigned
+- ae366d6: reuse the VirtualList measurement snapshot until a measurement changes instead of copying the map on every focus move
+- 98e8314: let the React Compiler memoize the VirtualList scroll handler hook, which it skipped entirely because a ref was handed to a function during render
+- fac182b: use shared default props in StyledText so a re-render without them doesn't re-run its layout effect and restyle every segment
+- Updated dependencies [fa5dc63]
+- Updated dependencies [c0d8168]
+- Updated dependencies [361fc96]
+- Updated dependencies [fbfa5a1]
+- Updated dependencies [46c8509]
+- Updated dependencies [928a8b9]
+- Updated dependencies [453894a]
+- Updated dependencies [f0be4ba]
+- Updated dependencies [8d25de6]
+  - @plextv/react-lightning@0.5.0-alpha.10
+  - @plextv/react-lightning-plugin-flexbox@1.0.0-alpha.8
+
 ## 1.0.0-alpha.7
 
 ### Patch Changes

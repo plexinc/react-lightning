@@ -1,5 +1,24 @@
 # @plextv/react-lightning-plugin-css-transform
 
+## 1.0.0-alpha.4
+
+### Patch Changes
+
+- 3fb6c2d: cache parsed color strings so style updates skip the regex parse
+- 4ba62a9: convert styles with a single copy instead of a 34-key rest destructure plus a spread
+- a45de22: parse transforms into a single result object instead of allocating and merging one object per transform part
+- Updated dependencies [fa5dc63]
+- Updated dependencies [c0d8168]
+- Updated dependencies [361fc96]
+- Updated dependencies [fbfa5a1]
+- Updated dependencies [46c8509]
+- Updated dependencies [928a8b9]
+- Updated dependencies [453894a]
+- Updated dependencies [f0be4ba]
+- Updated dependencies [8d25de6]
+  - @plextv/react-lightning@0.5.0-alpha.10
+  - @plextv/react-lightning-plugin-flexbox@1.0.0-alpha.8
+
 ## 1.0.0-alpha.3
 
 ### Patch Changes

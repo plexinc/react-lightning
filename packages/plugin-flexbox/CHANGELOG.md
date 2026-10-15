@@ -1,5 +1,20 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 1.0.0-alpha.8
+
+### Patch Changes
+
+- 928a8b9: walk text by code point index when measuring instead of iterating per-character strings
+- Updated dependencies [fa5dc63]
+- Updated dependencies [c0d8168]
+- Updated dependencies [361fc96]
+- Updated dependencies [fbfa5a1]
+- Updated dependencies [46c8509]
+- Updated dependencies [453894a]
+- Updated dependencies [f0be4ba]
+- Updated dependencies [8d25de6]
+  - @plextv/react-lightning@0.5.0-alpha.10
+
 ## 1.0.0-alpha.7
 
 ### Patch Changes

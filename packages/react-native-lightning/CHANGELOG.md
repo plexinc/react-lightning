@@ -1,5 +1,33 @@
 # @plextv/react-native-lightning
 
+## 1.0.0-alpha.6
+
+### Patch Changes
+
+- dde8469: create the measure load promise only when an element is measured before its first layout, instead of one per element
+- 0af5d56: opt Pressable into the React Compiler, so a focus or press re-render no longer sends six fresh handlers through a slow-path element update
+- ee8561f: keep ScrollView's scroll transition and focus handlers stable across renders, so a scroll step no longer diffs them into both views
+- Updated dependencies [3fb6c2d]
+- Updated dependencies [fa5dc63]
+- Updated dependencies [4ba62a9]
+- Updated dependencies [c0d8168]
+- Updated dependencies [361fc96]
+- Updated dependencies [fbfa5a1]
+- Updated dependencies [46c8509]
+- Updated dependencies [928a8b9]
+- Updated dependencies [a45de22]
+- Updated dependencies [5d1a0af]
+- Updated dependencies [ae366d6]
+- Updated dependencies [98e8314]
+- Updated dependencies [453894a]
+- Updated dependencies [f0be4ba]
+- Updated dependencies [8d25de6]
+- Updated dependencies [fac182b]
+  - @plextv/react-lightning-plugin-css-transform@1.0.0-alpha.4
+  - @plextv/react-lightning@0.5.0-alpha.10
+  - @plextv/react-lightning-plugin-flexbox@1.0.0-alpha.8
+  - @plextv/react-lightning-components@1.0.0-alpha.8
+
 ## 1.0.0-alpha.5
 
 ### Patch Changes
