@@ -226,8 +226,15 @@ export class LightningViewElement<
     }
   }
 
-  private static _isLayoutOnlyNodeProps(props: Record<string, unknown>): boolean {
+  private static _isLayoutOnlyNodeProps(
+    props: Record<string, unknown>,
+    ignoreAlpha = false,
+  ): boolean {
     for (const key in props) {
+      if (ignoreAlpha && key === 'alpha') {
+        continue;
+      }
+
       if (LightningViewElement._needsRealNode(key, props[key])) {
         return false;
       }
@@ -1467,20 +1474,18 @@ export class LightningViewElement<
     // node itself. Once the layout system calculates the actual pixel values,
     // it will update the lightning node and remove the string values from the
     // style proxy.
-    if (typeof lngProps.w !== 'number') {
-      delete lngProps.w;
-    }
-
-    if (typeof lngProps.h !== 'number') {
-      delete lngProps.h;
-    }
+    // These keys are skipped when the props are copied onto the node below,
+    // rather than deleted here: a delete drops lngProps into dictionary mode.
+    const skipW = typeof lngProps.w !== 'number';
+    const skipH = typeof lngProps.h !== 'number';
 
     // While paint is withheld, a styled alpha change must update the alpha we
     // restore on first layout, not the node's (which stays 0 so the node keeps
     // hiding). See {@link withholdPaintUntilLayout}.
-    if (this._paintWithheld && lngProps.alpha !== undefined) {
-      this._withheldAlpha = lngProps.alpha;
-      delete lngProps.alpha;
+    const skipAlpha = this._paintWithheld && lngProps.alpha !== undefined;
+
+    if (skipAlpha) {
+      this._withheldAlpha = lngProps.alpha as number;
     }
 
     let flattenedMoved = false;
@@ -1489,7 +1494,10 @@ export class LightningViewElement<
       if (
         this._flattened &&
         (this.props.transition !== undefined ||
-          !LightningViewElement._isLayoutOnlyNodeProps(lngProps as Record<string, unknown>))
+          !LightningViewElement._isLayoutOnlyNodeProps(
+            lngProps as Record<string, unknown>,
+            skipAlpha,
+          ))
       ) {
         this._materialize();
       }
@@ -1524,7 +1532,16 @@ export class LightningViewElement<
       (this.node as { updateShaderUniforms?: boolean }).updateShaderUniforms = false;
     }
 
-    Object.assign(this.node, lngProps);
+    const node = this.node as unknown as Record<string, unknown>;
+    let key: keyof typeof lngProps;
+
+    for (key in lngProps) {
+      if ((key === 'w' && skipW) || (key === 'h' && skipH) || (key === 'alpha' && skipAlpha)) {
+        continue;
+      }
+
+      node[key] = lngProps[key];
+    }
 
     if (flattenedMoved) {
       this._refreshFlattenedChildren(false);

@@ -91,6 +91,17 @@ describe('flattenLayoutViews', () => {
     expect(el.node.h).toBe(50);
   });
 
+  it('stays flattened when a styled alpha lands while paint is withheld', async () => {
+    const el = createElement({ w: 100, h: 50 });
+
+    el.withholdPaintUntilLayout();
+    el.setProps({ testID: 'a', style: { w: 100, h: 50, alpha: 0.5 } } as never);
+    await flush();
+
+    expect(el.isFlattened).toBe(true);
+    expect(el.node.alpha).toBe(0);
+  });
+
   it('does not flatten a view with a visual prop', () => {
     const el = createElement({ w: 100, h: 50, color: 0xff0000ff });
 
