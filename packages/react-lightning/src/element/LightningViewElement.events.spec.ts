@@ -155,6 +155,33 @@ describe('LightningViewElement style proxy', () => {
   });
 });
 
+describe('LightningViewElement style target', () => {
+  it('merges updates into the target the style proxy reads', async () => {
+    const el = createElement({ w: 10, color: 1 });
+
+    el.setProps({ style: { w: 20 } });
+    await flush();
+
+    expect((el.style as Record<PropertyKey, unknown>)[AllStyleProps]).toMatchObject({
+      w: 20,
+      color: 1,
+    });
+  });
+
+  it('starts a fresh target when the style prop is replaced', async () => {
+    const el = createElement({ w: 10, color: 1 });
+
+    el.style = {} as LightningViewElementStyle;
+    el.setProps({ style: { h: 5 } });
+    await flush();
+
+    const target = (el.style as Record<PropertyKey, unknown>)[AllStyleProps];
+
+    expect(target).toEqual({ h: 5 });
+    expect(el.style.color).toBeUndefined();
+  });
+});
+
 describe('LightningViewElement observers', () => {
   it('calls observers with the element ahead of the event listeners', () => {
     const parent = createElement();

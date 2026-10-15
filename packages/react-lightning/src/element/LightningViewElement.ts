@@ -98,7 +98,7 @@ class StyleProxyHandler implements ProxyHandler<StyleRecord> {
   public set(target: StyleRecord, prop: PropertyKey, value: unknown): boolean {
     const element = this._element;
 
-    if ((element.style as StyleRecord)[prop] === value) {
+    if (this.get(target, prop) === value) {
       return true;
     }
 
@@ -169,6 +169,8 @@ export class LightningViewElement<
   protected _stagedUpdates: Partial<TProps> = {};
 
   private _styleProxy: Partial<TStyleProps>;
+  // The proxy's target, so internal reads and merges skip the proxy traps.
+  private _styleTarget: Partial<TStyleProps>;
   private _isUpdateQueued = false;
   private _shaderDef?: ShaderDef;
   private _textureDef?: TextureDef;
@@ -683,7 +685,8 @@ export class LightningViewElement<
   public set style(_style: TStyleProps) {
     // If you set the style prop, it creates a new CSSStyleDeclaration object.
     // We'll create a new proxy and reset the styles.
-    this._styleProxy = new Proxy({}, this._styleProxyHandler);
+    this._styleTarget = {};
+    this._styleProxy = new Proxy(this._styleTarget, this._styleProxyHandler);
 
     this.setProps({
       style: {},
@@ -851,7 +854,8 @@ export class LightningViewElement<
 
     const lngProps = this._toLightningNodeProps(this.props, true);
 
-    this._styleProxy = new Proxy(this.props.style ?? {}, this._styleProxyHandler);
+    this._styleTarget = this.props.style ?? {};
+    this._styleProxy = new Proxy(this._styleTarget, this._styleProxyHandler);
 
     if (import.meta.env.DEV) {
       __checkProps(Object.keys(lngProps));
@@ -1672,8 +1676,7 @@ export class LightningViewElement<
       this._refreshFlattenedChildren(false);
     }
 
-    // oxlint-disable-next-line typescript/no-explicit-any -- Required for accessing AllStyleProps symbol
-    Object.assign((this.style as any)[AllStyleProps], this.props.style);
+    Object.assign(this._styleTarget, this.props.style);
 
     if (previousOpacity !== this.node.alpha) {
       this.recalculateVisibility();
@@ -1833,8 +1836,7 @@ export class LightningViewElement<
       }
     }
 
-    // oxlint-disable-next-line typescript/no-explicit-any -- Required for accessing AllStyleProps symbol
-    Object.assign((this.style as any)[AllStyleProps], style);
+    Object.assign(this._styleTarget, style);
 
     // A direct `clipping` change must keep rounded clipping in sync. Shader
     // props force the slow path, so the shader is stable here.
@@ -2137,8 +2139,7 @@ export class LightningViewElement<
     // lone borderColor / outlineColor would rebuild the shader without a width.
     const shaderStyle = isPartialStyle
       ? ({
-          // oxlint-disable-next-line typescript/no-explicit-any -- Required for accessing AllStyleProps symbol
-          ...((this.style as any)[AllStyleProps] as TStyleProps),
+          ...(this._styleTarget as TStyleProps),
           ...style,
         } as TStyleProps)
       : style;
@@ -2211,7 +2212,7 @@ export class LightningViewElement<
       // At mount the style proxy doesn't exist yet; the passed style is full.
       const effectiveClipping = initial
         ? style?.clipping
-        : (style?.clipping ?? this.style.clipping);
+        : (style?.clipping ?? this._stagedUpdates.style?.clipping ?? this._styleTarget.clipping);
       const radius =
         effectiveClipping === true &&
         (shaderType === 'Rounded' || shaderType === 'RoundedWithBorder')
