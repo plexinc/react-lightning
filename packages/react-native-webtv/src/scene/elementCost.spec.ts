@@ -5,6 +5,9 @@ import { Session } from 'node:inspector/promises';
 import { getHeapSnapshot } from 'node:v8';
 
 import type { RendererMain } from '@lightningjs/renderer';
+import type { Fiber } from 'react-reconciler';
+import { describe, it } from 'vitest';
+
 import {
   createLightningElement,
   type LightningElement,
@@ -13,8 +16,6 @@ import {
   type Plugin,
 } from '@plextv/react-lightning';
 import { plugin as cssTransformPlugin } from '@plextv/react-lightning-plugin-css-transform';
-import type { Fiber } from 'react-reconciler';
-import { describe, it } from 'vitest';
 
 import { sceneElementFactory } from './sceneElementFactory';
 import { createTestRenderer } from './testRenderer';
@@ -35,7 +36,12 @@ const TILES = 300;
 const noop = () => {};
 
 function mountTiles(create: Create, renderer: RendererMain, plugins: Plugin<LightningElement>[]) {
-  const root = create(LightningElementType.View, { style: { w: 1920, h: 1080, clipping: true } }, renderer, plugins);
+  const root = create(
+    LightningElementType.View,
+    { style: { w: 1920, h: 1080, clipping: true } },
+    renderer,
+    plugins,
+  );
   const all: LightningElement[] = [root];
 
   root.setLightningNode(renderer.root as never);
@@ -44,7 +50,13 @@ function mountTiles(create: Create, renderer: RendererMain, plugins: Plugin<Ligh
     const tile = create(
       LightningElementType.View,
       {
-        style: { width: 200, height: 300, borderRadius: 8, backgroundColor: '#202020', transform: [{ scale: 1 }] },
+        style: {
+          width: 200,
+          height: 300,
+          borderRadius: 8,
+          backgroundColor: '#202020',
+          transform: [{ scale: 1 }],
+        },
         onFocus: noop,
         onBlur: noop,
         onLayout: noop,
@@ -53,11 +65,24 @@ function mountTiles(create: Create, renderer: RendererMain, plugins: Plugin<Ligh
       renderer,
       plugins,
     );
-    const wrap = create(LightningElementType.View, { style: { flexDirection: 'column', padding: 4 } }, renderer, plugins);
-    const image = create(LightningElementType.Image, { src: `https://img/${i}.jpg`, style: { width: 200, height: 260 } }, renderer, plugins);
+    const wrap = create(
+      LightningElementType.View,
+      { style: { flexDirection: 'column', padding: 4 } },
+      renderer,
+      plugins,
+    );
+    const image = create(
+      LightningElementType.Image,
+      { src: `https://img/${i}.jpg`, style: { width: 200, height: 260 } },
+      renderer,
+      plugins,
+    );
     const text = create(
       LightningElementType.Text,
-      { text: `Title ${i}`, style: { fontSize: 22, fontFamily: 'Inter', color: 'rgba(255,255,255,0.8)', maxLines: 1 } },
+      {
+        text: `Title ${i}`,
+        style: { fontSize: 22, fontFamily: 'Inter', color: 'rgba(255,255,255,0.8)', maxLines: 1 },
+      },
       renderer,
       plugins,
     );
@@ -129,7 +154,13 @@ describe.skipIf(!process.env.ELEMENT_COST)('element cost', () => {
 
           for (let i = 1; i < all.length; i += 4) {
             all[i].setProps({
-              style: { width: 200, height: 300, borderRadius: 8, backgroundColor: '#303030', transform: [{ scale: 1.1 }] },
+              style: {
+                width: 200,
+                height: 300,
+                borderRadius: 8,
+                backgroundColor: '#303030',
+                transform: [{ scale: 1.1 }],
+              },
             } as never);
           }
 
@@ -164,7 +195,8 @@ describe.skipIf(!process.env.ELEMENT_COST)('element cost', () => {
           session.disconnect();
         }
 
-        const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] as number;
+        const median = (xs: number[]) =>
+          [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] as number;
         const row: Record<string, number> = {};
 
         for (const [phase, xs] of Object.entries(times)) {
@@ -175,7 +207,9 @@ describe.skipIf(!process.env.ELEMENT_COST)('element cost', () => {
         const heap0 = process.memoryUsage().heapUsed;
         const nodes0 = gc ? await countHeapNodes() : 0;
         const renderer = createTestRenderer();
-        const keep = mountTiles(create, renderer, [cssTransformPlugin() as Plugin<LightningElement>]);
+        const keep = mountTiles(create, renderer, [
+          cssTransformPlugin() as Plugin<LightningElement>,
+        ]);
 
         await flush();
         gc?.();

@@ -1,4 +1,7 @@
 import type { RendererMain } from '@lightningjs/renderer';
+import type { Fiber } from 'react-reconciler';
+import { afterEach, describe, expect, it } from 'vitest';
+
 import {
   createLightningElement,
   type LightningElement,
@@ -8,8 +11,6 @@ import {
   type Plugin,
 } from '@plextv/react-lightning';
 import { plugin as cssTransformPlugin } from '@plextv/react-lightning-plugin-css-transform';
-import type { Fiber } from 'react-reconciler';
-import { afterEach, describe, expect, it } from 'vitest';
 
 import { SceneElement } from './SceneElement';
 import { sceneElementFactory } from './sceneElementFactory';
@@ -118,7 +119,9 @@ class Harness {
   }
 
   // CanvasRoot's FocusGroup view: clipping keeps it a real node.
-  public root(props: AnyRecord = { style: { w: 1920, h: 1080, clipping: true } }): LightningElement {
+  public root(
+    props: AnyRecord = { style: { w: 1920, h: 1080, clipping: true } },
+  ): LightningElement {
     return this.el('view', props);
   }
 
@@ -304,7 +307,9 @@ describe('SceneElement matches LightningViewElement', () => {
       await both(flags, async (h) => {
         const root = h.root();
         const tile = h.el('view', { style: { w: 100, h: 100, borderRadius: 8, clipping: true } });
-        const ring = h.el('view', { style: { w: 100, h: 100, outlineWidth: 4, outlineColor: 0xffffffff } });
+        const ring = h.el('view', {
+          style: { w: 100, h: 100, outlineWidth: 4, outlineColor: 0xffffffff },
+        });
         const grad = h.el('view', {
           style: {
             w: 100,
@@ -320,7 +325,15 @@ describe('SceneElement matches LightningViewElement', () => {
         h.mount();
         await flush();
 
-        tile.setProps({ style: { w: 100, h: 100, borderRadius: 8, clipping: true, border: { w: 2, color: 0xff0000ff } } });
+        tile.setProps({
+          style: {
+            w: 100,
+            h: 100,
+            borderRadius: 8,
+            clipping: true,
+            border: { w: 2, color: 0xff0000ff },
+          },
+        });
         await flush();
 
         const partial: Record<PropertyKey, unknown> = { borderColor: 0x00ff00ff };
@@ -383,10 +396,13 @@ describe('SceneElement matches LightningViewElement', () => {
         });
       }
 
-      (auto.node as unknown as { _emitRender(n: string, d: unknown): void })._emitRender('inViewport', {
-        previous: 0,
-        current: 8,
-      });
+      (auto.node as unknown as { _emitRender(n: string, d: unknown): void })._emitRender(
+        'inViewport',
+        {
+          previous: 0,
+          current: 8,
+        },
+      );
       auto.setProps({ src: 'https://x/c.jpg' });
       await flush();
       h.log.push(['calls', calls, (fixedW.node as unknown as { imageType: string }).imageType]);
@@ -410,7 +426,9 @@ describe('SceneElement matches LightningViewElement', () => {
       el.setProps({ style: { w: 10, h: 10, alpha: 0.2, x: 50, color: 0xffffffff } });
       await flush();
 
-      const animations = (h.renderer.stage as unknown as { animations: { update(dt: number): void } }).animations;
+      const animations = (
+        h.renderer.stage as unknown as { animations: { update(dt: number): void } }
+      ).animations;
 
       animations.update(16);
       animations.update(50);
@@ -499,16 +517,27 @@ describe('SceneElement matches LightningViewElement', () => {
       async (h) => {
         const root = h.root();
         const el = h.el('view', {
-          style: { width: 200, height: 100, backgroundColor: '#ff0000', opacity: 0.5, transform: [{ scale: 1.5 }] },
+          style: {
+            width: 200,
+            height: 100,
+            backgroundColor: '#ff0000',
+            opacity: 0.5,
+            transform: [{ scale: 1.5 }],
+          },
         });
-        const text = h.el('text', { text: 'css', style: { color: 'rgba(255,255,255,0.5)', fontWeight: 'bold' } });
+        const text = h.el('text', {
+          text: 'css',
+          style: { color: 'rgba(255,255,255,0.5)', fontWeight: 'bold' },
+        });
 
         root.insertChild(el);
         el.insertChild(text);
         h.mount();
         await flush();
 
-        el.setProps({ style: { width: 200, height: 100, backgroundColor: '#00ff00', borderRadius: 4 } } as never);
+        el.setProps({
+          style: { width: 200, height: 100, backgroundColor: '#00ff00', borderRadius: 4 },
+        } as never);
         await flush();
       },
       () => [cssTransformPlugin() as Plugin<LightningElement>],
@@ -519,7 +548,13 @@ describe('SceneElement matches LightningViewElement', () => {
 describe('SceneElement', () => {
   it('is a LightningViewElement and one object with its node', () => {
     const renderer = createTestRenderer();
-    const el = sceneElementFactory.createElement(LightningElementType.View, {}, renderer, [], fiber());
+    const el = sceneElementFactory.createElement(
+      LightningElementType.View,
+      {},
+      renderer,
+      [],
+      fiber(),
+    );
 
     expect(el).toBeInstanceOf(LightningViewElement);
     expect(el.node).toBe(el);
@@ -528,7 +563,13 @@ describe('SceneElement', () => {
 
   it('uses polyfills installed on LightningViewElement.prototype', () => {
     const renderer = createTestRenderer();
-    const el = sceneElementFactory.createElement(LightningElementType.View, {}, renderer, [], fiber());
+    const el = sceneElementFactory.createElement(
+      LightningElementType.View,
+      {},
+      renderer,
+      [],
+      fiber(),
+    );
     const marker = () => 'polyfilled';
 
     Object.defineProperty(LightningViewElement.prototype, '__testPolyfill', {
@@ -542,7 +583,13 @@ describe('SceneElement', () => {
 
   it('calls listeners added during an emit only on the next one, and removes once listeners', () => {
     const renderer = createTestRenderer();
-    const el = sceneElementFactory.createElement(LightningElementType.View, {}, renderer, [], fiber());
+    const el = sceneElementFactory.createElement(
+      LightningElementType.View,
+      {},
+      renderer,
+      [],
+      fiber(),
+    );
     const calls: string[] = [];
     const late = () => calls.push('late');
 

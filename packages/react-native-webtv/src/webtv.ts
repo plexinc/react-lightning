@@ -9,11 +9,16 @@ export { sceneElementFactory } from './scene/sceneElementFactory';
 
 /** The own WebGL renderer, drawing react-lightning's elements directly (no Lightning node per element). */
 export const backend: RendererBackend = {
-  async createRenderer({ useCanvas: _useCanvas, includeCanvasFontRenderer: _canvasText, ...settings }, target) {
+  async createRenderer(
+    { useCanvas: _useCanvas, includeCanvasFontRenderer: _canvasText, ...settings },
+    target,
+  ) {
     const renderer = new RendererMain(settings, target);
 
     return {
-      renderer: renderer as unknown as Awaited<ReturnType<RendererBackend['createRenderer']>>['renderer'],
+      renderer: renderer as unknown as Awaited<
+        ReturnType<RendererBackend['createRenderer']>
+      >['renderer'],
       shaders: shaders as Record<string, unknown>,
     };
   },

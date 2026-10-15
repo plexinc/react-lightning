@@ -1,3 +1,5 @@
+import type { Fiber } from 'react-reconciler';
+
 import {
   AllStyleProps,
   getNodeResizeObserver,
@@ -34,7 +36,6 @@ import {
   type TextProps,
   type TextureOptions,
 } from '@plextv/react-lightning-renderer/compat/scene';
-import type { Fiber } from 'react-reconciler';
 
 export const KIND_VIEW = 0;
 export const KIND_TEXT = 1;
@@ -137,29 +138,6 @@ const SHADER_STYLE_PROPS = new Set([
   'outlineColor',
   'outlineOffset',
   'linearGradient',
-]);
-
-// A text node takes w/h from its initial props as-is and lays out over them anyway, like Lightning's.
-const TEXT_INITIAL_SKIP = new Set([
-  'w',
-  'h',
-  'width',
-  'height',
-  'text',
-  'fontFamily',
-  'fontSize',
-  'fontStyle',
-  'textAlign',
-  'verticalAlign',
-  'letterSpacing',
-  'lineHeight',
-  'maxLines',
-  'maxWidth',
-  'maxHeight',
-  'overflowSuffix',
-  'wordBreak',
-  'contain',
-  'offsetY',
 ]);
 
 const ROOT_FIELDS = [
@@ -478,7 +456,8 @@ export class SceneElement {
     this._imageType = null;
     this._autosize = false;
     this._rtt = false;
-    this._flags = DIRTY_TRANSFORM | DIRTY_ALPHA | DIRTY_ORDER | (kind === KIND_TEXT ? DIRTY_TEXT : 0);
+    this._flags =
+      DIRTY_TRANSFORM | DIRTY_ALPHA | DIRTY_ORDER | (kind === KIND_TEXT ? DIRTY_TEXT : 0);
     this._wa = 1;
     this._wb = 0;
     this._wc = 0;
@@ -503,7 +482,11 @@ export class SceneElement {
     }
 
     for (let i = 0; i < this._plugins.length; i++) {
-      this._plugins[i]?.onCreateInstance?.(this as unknown as LightningElement, initialProps, fiber);
+      this._plugins[i]?.onCreateInstance?.(
+        this as unknown as LightningElement,
+        initialProps,
+        fiber,
+      );
     }
 
     this.rawProps = initialProps;
@@ -614,7 +597,11 @@ export class SceneElement {
   }
 
   public get rootElement(): LightningElement {
-    let root: SceneElement = this;
+    let root = this._lparent;
+
+    if (!root) {
+      return this as unknown as LightningElement;
+    }
 
     while (root._lparent) {
       root = root._lparent;
@@ -924,7 +911,9 @@ export class SceneElement {
       return;
     }
 
-    const index = beforeChild ? this.children.indexOf(beforeValue as LightningElement) : this.children.length;
+    const index = beforeChild
+      ? this.children.indexOf(beforeValue as LightningElement)
+      : this.children.length;
 
     if (beforeChild) {
       this.children.splice(index, 0, value);
@@ -1038,35 +1027,7 @@ export class SceneElement {
   }
 
   public getRelativePosition(ancestor?: LightningElement | null): { x: number; y: number } {
-    const flatten = SceneElement.flattenLayoutViewsEnabled;
-    const stop = ancestor as unknown as SceneElement | null | undefined;
-    let totalX = 0;
-    let totalY = 0;
-    let curr: SceneElement | null = this;
-
-    while (curr && curr !== stop) {
-      totalX += curr._x;
-      totalY += curr._y;
-
-      let next: SceneElement | null = curr._lparent;
-
-      if (flatten && !curr._flattened) {
-        while (next && next._flattened) {
-          if (next === stop) {
-            totalX -= next._flatOffsetX + next._layoutX;
-            totalY -= next._flatOffsetY + next._layoutY;
-            next = null;
-            break;
-          }
-
-          next = next._lparent;
-        }
-      }
-
-      curr = next;
-    }
-
-    return { x: totalX, y: totalY };
+    return relativePosition(this, ancestor as unknown as SceneElement | null | undefined);
   }
 
   public getBoundingClientRect(ancestor?: LightningElement | null) {
@@ -1206,7 +1167,11 @@ export class SceneElement {
 
     let target = value;
 
-    if (SceneElement.flattenLayoutViewsEnabled && (key === 'x' || key === 'y') && typeof value === 'number') {
+    if (
+      SceneElement.flattenLayoutViewsEnabled &&
+      (key === 'x' || key === 'y') &&
+      typeof value === 'number'
+    ) {
       if (key === 'x') {
         this._layoutX = value;
         target = value + this._flatOffsetX;
@@ -1218,7 +1183,9 @@ export class SceneElement {
 
     return this._createAnimation(
       { [key]: target },
-      (this.props.transition as AnyRecord | undefined)?.[key as string] as AnimationSettings | undefined,
+      (this.props.transition as AnyRecord | undefined)?.[key as string] as
+        | AnimationSettings
+        | undefined,
       key as string,
       value,
     ).start();
@@ -1227,12 +1194,19 @@ export class SceneElement {
   public animateShader(props: AnyRecord): AnimationController {
     return this._createAnimation(
       { shaderProps: props },
-      (this.props.transition as AnyRecord | undefined)?.shaderProps as AnimationSettings | undefined,
+      (this.props.transition as AnyRecord | undefined)?.shaderProps as
+        | AnimationSettings
+        | undefined,
     ).start();
   }
 
   public toString(expanded?: boolean): string {
-    const name = this._kind === KIND_TEXT ? 'SceneTextElement' : this._kind === KIND_IMAGE ? 'SceneImageElement' : 'SceneViewElement';
+    const name =
+      this._kind === KIND_TEXT
+        ? 'SceneTextElement'
+        : this._kind === KIND_IMAGE
+          ? 'SceneImageElement'
+          : 'SceneViewElement';
 
     return `${this._recycled ? '♻ ' : ''}${name} id=${this.id}${this.focusable ? ' focusable' : ''}${this.visible ? ' visible' : ''}${expanded ? ` props=${JSON.stringify(this.props)}` : ''}`;
   }
@@ -1319,7 +1293,12 @@ export class SceneElement {
     return this._lparent ? this._lparent._hostNode() : null;
   }
 
-  public _applyFlattenedLink(offsetX: number, offsetY: number, host: SceneElement | null, force: boolean): void {
+  public _applyFlattenedLink(
+    offsetX: number,
+    offsetY: number,
+    host: SceneElement | null,
+    force: boolean,
+  ): void {
     const offsetsChanged = this._flatOffsetX !== offsetX || this._flatOffsetY !== offsetY;
 
     if (!force && !offsetsChanged) {
@@ -1414,7 +1393,11 @@ export class SceneElement {
     return null;
   }
 
-  private _moveFrontierBefore(host: SceneElement, hostChildren: SceneElement[], anchor: SceneElement | null): boolean {
+  private _moveFrontierBefore(
+    host: SceneElement,
+    hostChildren: SceneElement[],
+    anchor: SceneElement | null,
+  ): boolean {
     if (!this._flattened) {
       if (this._parent !== host) {
         return false;
@@ -1635,7 +1618,8 @@ export class SceneElement {
     if (
       SceneElement.flattenLayoutViewsEnabled &&
       this._flattened &&
-      (props.transition !== undefined || this._needsRealNodeFor(props, style, false, shader, texture, clipRadius))
+      (props.transition !== undefined ||
+        this._needsRealNodeFor(props, style, false, shader, texture, clipRadius))
     ) {
       this._materialize();
     }
@@ -1858,7 +1842,14 @@ export class SceneElement {
       linearGradient,
     } = style as AnyRecord;
 
-    const hasBorder = !!(border || borderColor || borderTop || borderLeft || borderRight || borderBottom);
+    const hasBorder = !!(
+      border ||
+      borderColor ||
+      borderTop ||
+      borderLeft ||
+      borderRight ||
+      borderBottom
+    );
 
     if (borderRadius) {
       type = 'Rounded';
@@ -1942,16 +1933,20 @@ export class SceneElement {
     return undefined;
   }
 
-
   // ---------------------------------------------------------------- prop writes
   //
   // LightningViewElement builds a node-props object (_toLightningNodeProps) and Object.assigns it
   // onto the node. Here the same rules run as one pass of field writes: style keys after props
   // keys, then shader, texture and clipRadius, with x/y/w/h/alpha/color/zIndex applied last.
 
-  private _resolveShader(props: AnyRecord, style: Style | null | undefined, initial: boolean): unknown {
+  private _resolveShader(
+    props: AnyRecord,
+    style: Style | null | undefined,
+    initial: boolean,
+  ): unknown {
     const shader = props.shader as ShaderDef | undefined;
-    const isPartialStyle = style != null && (style as Record<PropertyKey, unknown>)[PARTIAL_STYLE] === true;
+    const isPartialStyle =
+      style != null && (style as Record<PropertyKey, unknown>)[PARTIAL_STYLE] === true;
     const shaderStyle = isPartialStyle ? ({ ...this._styleTarget, ...style } as Style) : style;
     const styleShader = this._getShaderFromStyle(shaderStyle);
 
@@ -1962,7 +1957,10 @@ export class SceneElement {
     }
 
     const oldShader = this._shaderDef;
-    const def = shader === undefined && isPartialStyle && !styleShader && oldShader ? oldShader : shader || styleShader;
+    const def =
+      shader === undefined && isPartialStyle && !styleShader && oldShader
+        ? oldShader
+        : shader || styleShader;
 
     this._shaderDef = def;
 
@@ -2012,7 +2010,9 @@ export class SceneElement {
     }
 
     const shaderType = this._shaderDef?.type;
-    const effectiveClipping = initial ? style?.clipping : (style?.clipping ?? this._styleTarget.clipping);
+    const effectiveClipping = initial
+      ? style?.clipping
+      : (style?.clipping ?? this._styleTarget.clipping);
     const radius =
       effectiveClipping === true && (shaderType === 'Rounded' || shaderType === 'RoundedWithBorder')
         ? (this._shaderDef?.props as AnyRecord | undefined)?.radius
@@ -2055,7 +2055,11 @@ export class SceneElement {
       const transition = initial ? undefined : (this.props.transition as AnyRecord | undefined);
 
       for (const key in style) {
-        if (!transition?.[key] && !(withheld && key === 'alpha') && needsRealNode(key, style[key])) {
+        if (
+          !transition?.[key] &&
+          !(withheld && key === 'alpha') &&
+          needsRealNode(key, style[key])
+        ) {
           return true;
         }
       }
@@ -2275,7 +2279,10 @@ export class SceneElement {
 
     if (flatten && !initial) {
       this._containStackingIndex('zIndex', zIndex === NO_WRITE ? undefined : zIndex);
-      this._containStackingIndex('zIndexLocked', zIndexLocked === NO_WRITE ? undefined : zIndexLocked);
+      this._containStackingIndex(
+        'zIndexLocked',
+        zIndexLocked === NO_WRITE ? undefined : zIndexLocked,
+      );
     }
 
     if (zIndex !== NO_WRITE) {
@@ -2345,7 +2352,13 @@ export class SceneElement {
     const out: AnyRecord = {};
 
     for (const key in props) {
-      if (key !== 'id' && key !== 'data' && key !== 'style' && key !== 'shader' && key !== 'texture') {
+      if (
+        key !== 'id' &&
+        key !== 'data' &&
+        key !== 'style' &&
+        key !== 'shader' &&
+        key !== 'texture'
+      ) {
         out[key] = props[key];
       }
     }
@@ -2395,7 +2408,8 @@ export class SceneElement {
       }
     }
 
-    const isPartialStyle = style != null && (style as Record<PropertyKey, unknown>)[PARTIAL_STYLE] === true;
+    const isPartialStyle =
+      style != null && (style as Record<PropertyKey, unknown>)[PARTIAL_STYLE] === true;
     const shaderStyle = isPartialStyle ? ({ ...this._styleTarget, ...style } as Style) : style;
     const styleShader = this._getShaderFromStyle(shaderStyle);
 
@@ -2408,7 +2422,9 @@ export class SceneElement {
     const oldShader = this._shaderDef;
 
     this._shaderDef =
-      shader === undefined && isPartialStyle && !styleShader && oldShader ? oldShader : shader || styleShader;
+      shader === undefined && isPartialStyle && !styleShader && oldShader
+        ? oldShader
+        : shader || styleShader;
 
     if (this._shaderDef?.props) {
       const current = this._shader;
@@ -2429,7 +2445,10 @@ export class SceneElement {
           }
         }
       } else {
-        out.shader = this._renderer.createShader(this._shaderDef.type as string, this._shaderDef.props as AnyRecord);
+        out.shader = this._renderer.createShader(
+          this._shaderDef.type as string,
+          this._shaderDef.props as AnyRecord,
+        );
       }
     } else if (oldShader) {
       out.shader = null;
@@ -2437,14 +2456,20 @@ export class SceneElement {
 
     if (texture && texture !== this._textureDef) {
       this._textureDef = texture;
-      out.texture = this._renderer.createTexture(texture.type as string, texture.props as AnyRecord);
+      out.texture = this._renderer.createTexture(
+        texture.type as string,
+        texture.props as AnyRecord,
+      );
     }
 
     if (SceneElement.roundedClippingEnabled) {
       const shaderType = this._shaderDef?.type;
-      const effectiveClipping = initial ? style?.clipping : (style?.clipping ?? this._styleTarget.clipping);
+      const effectiveClipping = initial
+        ? style?.clipping
+        : (style?.clipping ?? this._styleTarget.clipping);
       const radius =
-        effectiveClipping === true && (shaderType === 'Rounded' || shaderType === 'RoundedWithBorder')
+        effectiveClipping === true &&
+        (shaderType === 'Rounded' || shaderType === 'RoundedWithBorder')
           ? (this._shaderDef?.props as AnyRecord | undefined)?.radius
           : 0;
       const clipRadius = (Array.isArray(radius) ? Math.max(...radius) : (radius as number)) || 0;
@@ -2477,7 +2502,10 @@ export class SceneElement {
       const plugin = plugins[i] as Plugin<LightningElement>;
 
       if (plugin.transformProps) {
-        const result = plugin.transformProps(this as unknown as LightningElement, transformed as never);
+        const result = plugin.transformProps(
+          this as unknown as LightningElement,
+          transformed as never,
+        );
 
         if (result == null) {
           return null;
@@ -3216,6 +3244,42 @@ export class SceneElement {
   public set offsetY(v: number) {
     this._setNodeKey('offsetY', v);
   }
+}
+
+function relativePosition(
+  el: SceneElement,
+  stop: SceneElement | null | undefined,
+): { x: number; y: number } {
+  const flatten = SceneElement.flattenLayoutViewsEnabled;
+  let totalX = 0;
+  let totalY = 0;
+  let curr: SceneElement | null = el;
+
+  while (curr && curr !== stop) {
+    totalX += curr._x;
+    totalY += curr._y;
+
+    let next: SceneElement | null = curr.parent as unknown as SceneElement | null;
+
+    // A real node's x already folds in its flattened ancestors' offsets; skip those, and back the
+    // requested ancestor's own fold out if it is one of them.
+    if (flatten && !curr.isFlattened) {
+      while (next && next.isFlattened) {
+        if (next === stop) {
+          totalX -= next._flatOffsetX + next._layoutX;
+          totalY -= next._flatOffsetY + next._layoutY;
+          next = null;
+          break;
+        }
+
+        next = next.parent as unknown as SceneElement | null;
+      }
+    }
+
+    curr = next;
+  }
+
+  return { x: totalX, y: totalY };
 }
 
 // instanceof LightningViewElement, and the polyfills react-native-lightning installs on its

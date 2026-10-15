@@ -7,6 +7,9 @@
 // compat: the own renderer behind the @lightningjs/renderer compat layer (packages/renderer/src/compat).
 // direct: @plextv/react-native-webtv's `renderer: 'webtv'`, react-lightning elements drawn as scene nodes.
 //
+// LNG_BUILD=stock|own|direct LNG_BUILD_OUT=<dir> builds that one renderer for production instead (the
+// cookie switch only exists in the dev server), and LNG_PREVIEW_PORT=<port> then serves it.
+//
 // Every @plextv package the app imports is served from this worktree's source in all three modes, so they
 // compare the same react-lightning code. `@lightningjs/renderer*` resolves to /__renderer/<entry>.js,
 // redirected by cookie to stock or compat (a top-level-await switch hung the app on its splash).
@@ -126,9 +129,7 @@ const sourceFile = (name: string, sub: string): string | null => {
 
 // The app's installed copies, as the Plex vite config aliases them (absolute dirs, both spellings).
 const appRequire = createRequire(join(lightningDir, 'package.json'));
-const configRequire = createRequire(
-  join(lightningDir, '../../../../packages/config/package.json'),
-);
+const configRequire = createRequire(join(lightningDir, '../../../../packages/config/package.json'));
 const installedDirs: [string, string][] = [];
 
 for (const name of Object.keys(sourcePackages)) {
@@ -159,7 +160,11 @@ const fromInstalled = (id: string): string | null => {
 };
 
 const toSource = (id: string, importer?: string): string | null => {
-  if (id === '@plextv/react-lightning' && importer !== shim && !importer?.includes('/react-native-webtv/')) {
+  if (
+    id === '@plextv/react-lightning' &&
+    importer !== shim &&
+    !importer?.includes('/react-native-webtv/')
+  ) {
     return shim;
   }
 
@@ -180,6 +185,8 @@ const toSource = (id: string, importer?: string): string | null => {
   return null;
 };
 
+const buildMode = process.env.LNG_BUILD as 'stock' | 'own' | 'direct' | undefined;
+
 const match = (id: string) => entries.find(([sub]) => id === specifier(sub));
 const fromSwitch = (importer?: string) => !!importer && importer.startsWith(genDir);
 const switchUrl = (sub: string) => `${PREFIX}${entryName(sub)}.js`;
@@ -195,6 +202,12 @@ const rendererSwitch = {
     const hit = match(id);
 
     if (hit) {
+      if (buildMode) {
+        return buildMode === 'stock' || fromSwitch(importer)
+          ? null
+          : join(compatDir, `${hit[1]}.ts`);
+      }
+
       return fromSwitch(importer) ? null : switchUrl(hit[0]);
     }
 
@@ -206,7 +219,15 @@ const rendererSwitch = {
     // Only reached by Vite's own pre-transform; browsers get the redirect below.
     return id.startsWith(PREFIX) ? 'export {};' : null;
   },
-  transformIndexHtml: () => [{ tag: 'script', children: headScript, injectTo: 'head-prepend' }],
+  transformIndexHtml: () => [
+    {
+      tag: 'script',
+      children: buildMode
+        ? `try { localStorage.setItem('lng.renderer', ${JSON.stringify(buildMode)}); } catch {}`
+        : headScript,
+      injectTo: 'head-prepend',
+    },
+  ],
   configureServer(server: { middlewares: { use: (fn: unknown) => void } }) {
     server.middlewares.use(
       (
@@ -251,7 +272,8 @@ const final = vite.mergeConfig(config, {
               return { id: switchUrl(hit[0]), external: true };
             }
 
-            return /^@plextv\//.test(id) && sourceExports.has(id.split('/').slice(0, 2).join('/'))
+            return id.startsWith('@plextv/') &&
+              sourceExports.has(id.split('/').slice(0, 2).join('/'))
               ? { id, external: true }
               : null;
           },
@@ -265,12 +287,43 @@ const final = vite.mergeConfig(config, {
 // First, so the reanimated and react-native aliases of the app's plugins resolve to source too.
 final.plugins = [rendererSwitch, ...(final.plugins ?? [])];
 
-console.log('[dev-compat] renderer switch: stock, compat or direct; packages from', packagesDir);
+if (buildMode) {
+  const outDir = process.env.LNG_BUILD_OUT ?? join(genDir, `dist-${buildMode}`);
 
-const server = await vite.createServer({ ...final, configFile: false });
+  if (!process.env.LNG_PREVIEW_PORT) {
+    process.env.NODE_ENV = 'production';
+    await vite.build({
+      ...final,
+      configFile: false,
+      mode: 'production',
+      define: { ...final.define, __DEV__: 'false' },
+      build: { ...final.build, outDir, emptyOutDir: true, watch: null, sourcemap: false },
+    });
+    console.log('[dev-compat] built', buildMode, 'into', outDir);
+  } else {
+    const preview = await vite.preview({
+      ...final,
+      configFile: false,
+      build: { ...final.build, outDir },
+      preview: { ...final.preview, port: Number(process.env.LNG_PREVIEW_PORT), strictPort: true },
+    });
 
-// Files outside the Vite root aren't watched by default.
-server.watcher.add([packagesDir, switchDir]);
+    preview.printUrls();
+  }
 
-await server.listen();
-server.printUrls();
+  process.exitCode = 0;
+} else {
+  await serve();
+}
+
+async function serve() {
+  console.log('[dev-compat] renderer switch: stock, compat or direct; packages from', packagesDir);
+
+  const server = await vite.createServer({ ...final, configFile: false });
+
+  // Files outside the Vite root aren't watched by default.
+  server.watcher.add([packagesDir, switchDir]);
+
+  await server.listen();
+  server.printUrls();
+}

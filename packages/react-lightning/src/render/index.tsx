@@ -1,4 +1,3 @@
-import { LightningViewElement } from '../element/LightningViewElement';
 import type {
   CoreShaderType,
   RendererMain,
@@ -11,6 +10,7 @@ import { createContext, createElement } from 'react';
 import createReconciler, { type Reconciler } from 'react-reconciler';
 
 import type { LightningTextElement } from '../element/LightningTextElement';
+import { LightningViewElement } from '../element/LightningViewElement';
 import type { FocusManager } from '../focus/FocusManager';
 import type { LightningElement } from '../types';
 import { traceWrap } from '../utils/traceWrap';

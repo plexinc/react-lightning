@@ -1,4 +1,8 @@
-import { type ElementFactory, type LightningElement, LightningElementType } from '@plextv/react-lightning';
+import {
+  type ElementFactory,
+  type LightningElement,
+  LightningElementType,
+} from '@plextv/react-lightning';
 
 import { KIND_IMAGE, KIND_TEXT, KIND_VIEW, SceneElement } from './SceneElement';
 

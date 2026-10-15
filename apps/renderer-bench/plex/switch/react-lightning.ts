@@ -10,9 +10,8 @@ export async function createRoot(
   target: string | HTMLElement,
   options: WebTvRenderOptions | (() => WebTvRenderOptions),
 ) {
-  const { createRoot: createWebTvRoot } = await import(
-    '../../../../packages/react-native-webtv/src/index.ts'
-  );
+  const { createRoot: createWebTvRoot } =
+    await import('../../../../packages/react-native-webtv/src/index.ts');
   const resolved = typeof options === 'function' ? options() : options;
 
   if (mode !== 'direct') {

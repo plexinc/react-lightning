@@ -1,4 +1,5 @@
 import type { RendererMain as LightningRendererMain } from '@lightningjs/renderer';
+
 import { CompatStage, CoreNode, RendererMain } from '@plextv/react-lightning-renderer/compat';
 import { AnimationManager, Shaders } from '@plextv/react-lightning-renderer/compat/scene';
 
@@ -20,14 +21,19 @@ export function createTestRenderer(): LightningRendererMain {
   Object.assign(stage, {
     _warned: new Set<string>(),
     renders: 0,
-    shManager: { shTypes, registerShaderType: (name: string, type: unknown) => (shTypes[name] = type) },
+    shManager: {
+      shTypes,
+      registerShaderType: (name: string, type: unknown) => (shTypes[name] = type),
+    },
     animations: new AnimationManager(() => {}),
     requestRender() {
       (this as AnyRecord).renders = ((this as AnyRecord).renders as number) + 1;
     },
     warnOnce() {},
     releaseTexture(node: AnyRecord) {
-      node._texture && ((node._texture as AnyRecord).gl = null);
+      if (node._texture) {
+        (node._texture as AnyRecord).gl = null;
+      }
     },
     releaseText() {},
   });
@@ -82,8 +88,12 @@ export function snapshotScene(renderer: LightningRendererMain): unknown {
       zIndex: node._zIndex,
       clipping: node._clipping,
       clipRadius: node._clipRadius,
-      shader: node._shader ? { type: node._shader.shaderType, props: { ...node._shader.props } } : null,
-      texture: node._texture ? { type: node._texture.type, props: { ...node._texture.props } } : null,
+      shader: node._shader
+        ? { type: node._shader.shaderType, props: { ...node._shader.props } }
+        : null,
+      texture: node._texture
+        ? { type: node._texture.type, props: { ...node._texture.props } }
+        : null,
       imageType: node._imageType,
       children: kids.map(walk),
     };

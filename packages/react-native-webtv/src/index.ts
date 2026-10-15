@@ -20,7 +20,9 @@ export type WebTvRenderOptions = RenderOptions & {
  * import `@plextv/react-native-webtv/lightning` or `/webtv` directly to drop the other at build time.
  */
 export async function getRendererBackend(renderer: RendererName): Promise<RendererBackend> {
-  return renderer === 'webtv' ? (await import('./webtv')).backend : (await import('./lightning')).backend;
+  return renderer === 'webtv'
+    ? (await import('./webtv')).backend
+    : (await import('./lightning')).backend;
 }
 
 export async function createRoot(
