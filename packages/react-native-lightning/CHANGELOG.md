@@ -1,5 +1,39 @@
 # @plextv/react-native-lightning
 
+## 1.0.0-alpha.7
+
+### Patch Changes
+
+- 615ec28: add an optional `needsTransform` plugin hook so a plugin can let style-only updates take the fast path per instance, and use it in the className plugin: style-only updates on elements without resolved class styles no longer go through the full transform pipeline
+- 7f395f0: Run on Chrome 57-73 (webOS 5, Tizen 5.x): the ResizeObserver shim no longer crashes `render()` when the browser has no ResizeObserver or DOMRectReadOnly, microtasks fall back to a promise where `queueMicrotask` is missing, and `Array.prototype.at` / `flat` are no longer used on the render, focus and key paths.
+- 40cd955: mark react-native elements loaded through a shared layout observer instead of a once listener per element
+- Updated dependencies [615ec28]
+- Updated dependencies [d07de0c]
+- Updated dependencies [1f22409]
+- Updated dependencies [033db4e]
+- Updated dependencies [03e1384]
+- Updated dependencies [01edfc6]
+- Updated dependencies [c41901e]
+- Updated dependencies [48d72d6]
+- Updated dependencies [3c0759a]
+- Updated dependencies [d70b215]
+- Updated dependencies [2990e9a]
+- Updated dependencies [c999cdb]
+- Updated dependencies [3c02710]
+- Updated dependencies [7f395f0]
+- Updated dependencies [7931c0d]
+- Updated dependencies [02d8cc8]
+- Updated dependencies [73bc479]
+- Updated dependencies [40cd955]
+- Updated dependencies [d033ea6]
+- Updated dependencies [793429f]
+- Updated dependencies [e843276]
+- Updated dependencies [23cfaa1]
+  - @plextv/react-lightning@0.5.0-alpha.11
+  - @plextv/react-lightning-plugin-css-transform@1.0.0-alpha.5
+  - @plextv/react-lightning-plugin-flexbox@1.0.0-alpha.9
+  - @plextv/react-lightning-components@1.0.0-alpha.9
+
 ## 1.0.0-alpha.6
 
 ### Patch Changes

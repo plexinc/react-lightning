@@ -1,5 +1,24 @@
 # @plextv/react-lightning
 
+## 0.5.0-alpha.11
+
+### Patch Changes
+
+- 615ec28: add an optional `needsTransform` plugin hook so a plugin can let style-only updates take the fast path per instance, and use it in the className plugin: style-only updates on elements without resolved class styles no longer go through the full transform pipeline
+- d07de0c: add an optional `transformStyle` plugin hook so a plugin can convert the keys it handles inside the style fast path, and use it in css-transform for updates that only carry `transform` and `opacity` (reanimated's pushes), which used to go through the full transform pipeline
+- 1f22409: destroy each element once, and skip detaching descendants one by one when react deletes a whole subtree
+- 033db4e: let plugins observe element lifecycle through one shared observer, and track flexbox elements with it instead of nine listeners per element
+- 03e1384: move per-element event, visibility and style proxy closures to the prototype
+- 01edfc6: read and merge the element's own style target directly instead of through the style proxy
+- c999cdb: diff and map commitUpdate props in one pass, and skip diffing children on views and images
+- 3c02710: create an element's event emitter on its first subscription
+- 7f395f0: Run on Chrome 57-73 (webOS 5, Tizen 5.x): the ResizeObserver shim no longer crashes `render()` when the browser has no ResizeObserver or DOMRectReadOnly, microtasks fall back to a promise where `queueMicrotask` is missing, and `Array.prototype.at` / `flat` are no longer used on the render, focus and key paths.
+- 02d8cc8: map element props to node props in one object, without a rest copy
+- 73bc479: Animated styles and `:focus-within` no longer need Chrome 71+ / 92+: they schedule through the exported `scheduleMicrotask` (a promise where `queueMicrotask` is missing) and read the focus leaf by index instead of `Array.prototype.at`.
+- 40cd955: mark react-native elements loaded through a shared layout observer instead of a once listener per element
+- d033ea6: skip non-numeric sizes and a withheld alpha while copying props onto the node instead of deleting them first
+- 793429f: skip rewriting an unchanged alpha or clipping on the node, which made the renderer recompute the whole subtree
+
 ## 0.5.0-alpha.10
 
 ### Patch Changes

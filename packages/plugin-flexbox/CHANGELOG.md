@@ -1,5 +1,33 @@
 # @plextv/react-lightning-plugin-flexbox
 
+## 1.0.0-alpha.9
+
+### Patch Changes
+
+- 033db4e: let plugins observe element lifecycle through one shared observer, and track flexbox elements with it instead of nine listeners per element
+- c41901e: only read a node's display back from yoga when the style could have changed it
+- 48d72d6: skip clean flex roots and only read back nodes yoga laid out again
+- 3c0759a: check the raw style before reading the style proxy when applying layout positions
+- d70b215: lay out a new text node once on mount instead of re-measuring it in a second pass
+- 2990e9a: skip the layout pass when a style or text update changes nothing yoga reads
+- 7931c0d: minWidth and minHeight of auto are now treated as unset instead of throwing a Yoga error on every layout pass.
+- 23cfaa1: ship yoga with its wasm lowered to mvp so layout runs on chrome 57-73 tvs, and build the inline worker for chrome 56 like the rest of the package
+- Updated dependencies [615ec28]
+- Updated dependencies [d07de0c]
+- Updated dependencies [1f22409]
+- Updated dependencies [033db4e]
+- Updated dependencies [03e1384]
+- Updated dependencies [01edfc6]
+- Updated dependencies [c999cdb]
+- Updated dependencies [3c02710]
+- Updated dependencies [7f395f0]
+- Updated dependencies [02d8cc8]
+- Updated dependencies [73bc479]
+- Updated dependencies [40cd955]
+- Updated dependencies [d033ea6]
+- Updated dependencies [793429f]
+  - @plextv/react-lightning@0.5.0-alpha.11
+
 ## 1.0.0-alpha.8
 
 ### Patch Changes
