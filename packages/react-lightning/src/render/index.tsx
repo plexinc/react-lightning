@@ -1,13 +1,11 @@
 import { LightningViewElement } from '../element/LightningViewElement';
-import {
-  type CoreShaderType,
+import type {
+  CoreShaderType,
   RendererMain,
-  type RendererMainSettings,
-  type Stage,
-  type TextureMap,
+  RendererMainSettings,
+  Stage,
+  TextureMap,
 } from '@lightningjs/renderer';
-import { CanvasCoreRenderer, CanvasTextRenderer } from '@lightningjs/renderer/canvas';
-import { SdfTextRenderer, WebGlCoreRenderer } from '@lightningjs/renderer/webgl';
 import type { ComponentType, Context, ReactNode } from 'react';
 import { createContext, createElement } from 'react';
 import createReconciler, { type Reconciler } from 'react-reconciler';
@@ -18,6 +16,7 @@ import type { LightningElement } from '../types';
 import { traceWrap } from '../utils/traceWrap';
 import { createHostConfig, type ReconcilerContainer } from './createHostConfig';
 import type { Plugin } from './Plugin';
+import type { RendererBackend } from './RendererBackend';
 
 // https://github.com/lightning-js/devtools/blob/main/src/types/globals.d.ts
 declare global {
@@ -42,7 +41,6 @@ declare module 'react-reconciler' {
   }
 }
 
-type TextRenderer = RendererMainSettings['fontEngines'][number];
 type ShaderMap = string | Record<string, CoreShaderType>;
 type FontInfo = {
   type: Parameters<Stage['loadFont']>[0];
@@ -74,6 +72,12 @@ export type RenderOptions = Omit<
   flattenLayoutViews?: boolean;
   shaders?: ShaderMap[];
   textures?: Partial<TextureMap>;
+  /**
+   * The renderer and element classes to use. Defaults to the stock
+   * @lightningjs/renderer with react-lightning's own elements, loaded on demand
+   * so another backend keeps it out of the app's startup path.
+   */
+  backend?: RendererBackend;
 };
 
 export type LightningRoot = {
@@ -121,46 +125,25 @@ export async function createRoot(
     ...(typeof options === 'function' ? options() : options),
   };
 
-  LightningViewElement.roundedClippingEnabled = allOptions.roundedClipping === true;
-  LightningViewElement.flattenLayoutViewsEnabled =
-    allOptions.flattenLayoutViews === true;
+  const elementOptions = {
+    roundedClipping: allOptions.roundedClipping === true,
+    flattenLayoutViews: allOptions.flattenLayoutViews === true,
+  };
+
+  LightningViewElement.roundedClippingEnabled = elementOptions.roundedClipping;
+  LightningViewElement.flattenLayoutViewsEnabled = elementOptions.flattenLayoutViews;
 
   // Don't use the lightning inspector, we have our own.
-  const { fonts, useCanvas, includeCanvasFontRenderer, ...finalOptions } = allOptions;
+  const { fonts, backend: requestedBackend, ...finalOptions } = allOptions;
+  const backend = requestedBackend ?? (await import('./lightningBackend')).lightningBackend;
+  const elementFactory = backend.elementFactory;
 
-  const fontEngines: RendererMainSettings['fontEngines'] = [];
-  let renderEngine: RendererMainSettings['renderEngine'];
-  /* oxlint-disable typescript-eslint/consistent-type-imports -- typeof import() is the only way to type dynamic imports */
-  let shaders:
-    | typeof import('@lightningjs/renderer/webgl/shaders')
-    | typeof import('@lightningjs/renderer/canvas/shaders');
-  /* oxlint-enable typescript-eslint/consistent-type-imports */
+  elementFactory?.configure?.(elementOptions);
 
-  if (useCanvas) {
-    renderEngine = CanvasCoreRenderer;
-    // Temporary cast until CanvasTextRenderer is typed properly
-    fontEngines.push(CanvasTextRenderer as unknown as TextRenderer);
-    shaders = await import('@lightningjs/renderer/canvas/shaders');
-  } else {
-    renderEngine = WebGlCoreRenderer;
-    fontEngines.push(SdfTextRenderer);
-    shaders = await import('@lightningjs/renderer/webgl/shaders');
-
-    if (includeCanvasFontRenderer) {
-      // Temporary cast until CanvasTextRenderer is typed properly
-      fontEngines.push(CanvasTextRenderer as unknown as TextRenderer);
-    }
-  }
-
-  const renderer = new RendererMain(
-    {
-      ...finalOptions,
-      renderEngine,
-      fontEngines,
-      inspector: undefined,
-    },
-    target,
-  );
+  const { renderer, shaders } = (await backend.createRenderer(finalOptions, target)) as {
+    renderer: RendererMain;
+    shaders: Record<string, CoreShaderType>;
+  };
 
   for (const font of fonts) {
     const { type, ...options } = font;
@@ -179,10 +162,7 @@ export async function createRoot(
           );
         }
 
-        renderer.stage.shManager.registerShaderType(
-          shader as keyof typeof shaders,
-          shaders[shader as keyof typeof shaders],
-        );
+        renderer.stage.shManager.registerShaderType(shader, shaders[shader] as CoreShaderType);
       } else {
         for (const [key, value] of Object.entries(shader)) {
           renderer.stage.shManager.registerShaderType(key, value);
@@ -228,6 +208,7 @@ export async function createRoot(
     {
       renderer,
       plugins: finalOptions.plugins ?? [],
+      createElement: elementFactory?.createElement,
     },
     1, // ConcurrentRoot
     null,

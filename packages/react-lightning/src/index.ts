@@ -3,6 +3,7 @@ export type { CanvasProps } from './components/Canvas/CanvasProps';
 export { Freeze, type FreezeProps } from './components/Freeze';
 export { AllStyleProps } from './element/AllStyleProps';
 export { createLightningElement } from './element/createLightningElement';
+export { isTranslateSettled, MAX_UNSETTLED_LAYOUTS } from './element/isTranslateSettled';
 export { LightningImageElement } from './element/LightningImageElement';
 export { LightningTextElement } from './element/LightningTextElement';
 export { LightningViewElement } from './element/LightningViewElement';
@@ -37,6 +38,13 @@ export {
 } from './input/keyEventBus';
 export { createRoot, type LightningRoot, LightningRootContext, type RenderOptions } from './render';
 export type { Plugin } from './render/Plugin';
+export type {
+  ElementFactory,
+  ElementFactoryOptions,
+  RendererBackend,
+  RendererBackendSettings,
+} from './render/RendererBackend';
+export { getNodeResizeObserver, type NodeResizeObserver } from './observer/NodeResizeObserver';
 export * from './types';
 export { simpleDiff } from './utils/simpleDiff';
 export { CanvasRoot } from './components/Canvas/CanvasRoot';

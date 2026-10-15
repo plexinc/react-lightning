@@ -15,10 +15,13 @@ import { simpleDiff } from '../utils/simpleDiff';
 import { isPrimitiveTextContent } from './isValidTextChild';
 import { mapReactPropsToLightning } from './mapReactPropsToLightning';
 import type { Plugin } from './Plugin';
+import type { ElementFactory } from './RendererBackend';
 
 export type ReconcilerContainer = {
   renderer: RendererMain;
   plugins: Plugin<LightningElement>[];
+  /** From the backend's element factory; react-lightning's own classes when unset. */
+  createElement?: ElementFactory['createElement'];
 };
 
 export type LightningHostConfig = HostConfig<
@@ -136,7 +139,7 @@ export function createHostConfig(options?: LightningHostConfigOptions): Lightnin
 
     createInstance(type, props, _rootContainerInstance, container, fiber) {
       const lngProps = mapReactPropsToLightning(type, props);
-      const instance = createLightningElement(
+      const instance = (container.createElement ?? createLightningElement)(
         type,
         lngProps,
         container.renderer,
@@ -148,6 +151,16 @@ export function createHostConfig(options?: LightningHostConfigOptions): Lightnin
     },
 
     createTextInstance(text, _rootContainerInstance, container, fiber) {
+      if (container.createElement) {
+        return container.createElement(
+          LightningElementType.Text,
+          { text },
+          container.renderer,
+          container.plugins,
+          fiber,
+        ) as LightningTextElement;
+      }
+
       return new LightningTextElement({ text }, container.renderer, container.plugins, fiber);
     },
 

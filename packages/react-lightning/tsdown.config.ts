@@ -4,7 +4,7 @@ import baseConfig from '@repo/configs/tsdown.config';
 
 const config: UserConfig = defineConfig({
   ...baseConfig,
-  entry: ['src/index.ts', 'src/types/jsx.d.ts'],
+  entry: ['src/index.ts', 'src/render/lightningBackend.ts', 'src/types/jsx.d.ts'],
   exports: {
     devExports: true,
     customExports(exports, context) {
