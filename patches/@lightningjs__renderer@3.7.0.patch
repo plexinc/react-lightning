@@ -1,0 +1,240 @@
+diff --git a/dist/src/core/CoreNode.js b/dist/src/core/CoreNode.js
+index 0194fbfed66a8d1c65c70b5a72097409c0f6fb81..925bfcfc8d0ee2233d20470d4d185857926b001d 100644
+--- a/dist/src/core/CoreNode.js
++++ b/dist/src/core/CoreNode.js
+@@ -1142,8 +1142,11 @@ export class CoreNode extends EventEmitter {
+             const ownRadius = clippingRect.clipRadius;
+             intersectRect(parentClippingRect, clippingRect, clippingRect);
+             clippingRect.clipRadius = ownRadius;
++            // Empty intersection: keep the rect valid with zero area so the scissor rejects
++            // everything. valid=false would render the children unclipped.
+             if (clippingRect.w <= 0 || clippingRect.h <= 0) {
+-                clippingRect.valid = false;
++                clippingRect.w = 0;
++                clippingRect.h = 0;
+                 clippingRect.clipRadius = 0;
+             }
+         }
+@@ -1306,7 +1309,9 @@ export class CoreNode extends EventEmitter {
+             autosizeTarget.attach(node);
+         }
+         if (inRttCluster === true) {
+-            node.markChildrenWithRTT(this);
++            // Walk the new child's subtree: nodes attach bottom-up, so its descendants
++            // were stamped false before this attach.
++            node.markChildrenWithRTT();
+         }
+         children.push(node);
+         if (children.length === 1) {
+diff --git a/dist/src/core/animations/AnimationManager.js b/dist/src/core/animations/AnimationManager.js
+index 977825991a433dc29bb36d7ec29d3e31960193f0..3990f71d5a806052467873521d2b53029bf9205c 100644
+--- a/dist/src/core/animations/AnimationManager.js
++++ b/dist/src/core/animations/AnimationManager.js
+@@ -34,39 +34,58 @@ export class AnimationManager {
+     constructor(stage) {
+         this.stage = stage;
+     }
++    updating = false;
++    needsCompact = false;
++
+     registerAnimation(animation) {
+         animation.activeIndex = this.activeAnimations.length;
+         this.activeAnimations.push(animation);
+         this.stage.activeAnimationCount++;
+     }
++
++    // Removal keeps start order so the newest animation on a prop writes last and
++    // wins, as in 3.1. Removals during update() are compacted after the loop.
+     unregisterAnimation(animation) {
+         const index = animation.activeIndex;
+         if (index === -1) {
+             return;
+         }
+-        const animations = this.activeAnimations;
+-        const last = animations.length - 1;
+-        if (index !== last) {
+-            // Swap with the last element and update its index
+-            const swap = animations[last];
+-            animations[index] = swap;
+-            swap.activeIndex = index;
+-        }
+-        animations.pop();
+         animation.activeIndex = -1;
+         this.stage.activeAnimationCount--;
++        if (this.updating === true) {
++            this.needsCompact = true;
++            return;
++        }
++        const animations = this.activeAnimations;
++        animations.splice(index, 1);
++        for (let i = index; i < animations.length; i++) {
++            animations[i].activeIndex = i;
++        }
+     }
++
+     update(dt) {
+         const animations = this.activeAnimations;
+-        // Iterate backwards. With activeIndex tracking, if a sibling stop() during
+-        // a completion event swap-removes an already-visited element into index i,
+-        // we check activeIndex >= 0 before updating to avoid double-processing.
+-        for (let i = animations.length - 1; i >= 0; i--) {
++        const len = animations.length;
++        this.updating = true;
++        for (let i = 0; i < len; i++) {
+             const anim = animations[i];
+-            if (anim.activeIndex >= 0) {
++            if (anim.activeIndex === i) {
+                 anim.update(dt);
+             }
+         }
++        this.updating = false;
++        if (this.needsCompact === true) {
++            this.needsCompact = false;
++            let w = 0;
++            for (let i = 0; i < animations.length; i++) {
++                const anim = animations[i];
++                if (anim.activeIndex === i) {
++                    anim.activeIndex = w;
++                    animations[w++] = anim;
++                }
++            }
++            animations.length = w;
++        }
+     }
+     /**
+      * Create an animation controller, reusing pooled objects when available.
+diff --git a/dist/src/core/renderers/webgl/WebGlRenderer.js b/dist/src/core/renderers/webgl/WebGlRenderer.js
+index 9d388c3dec607f6e521a5be2097dd1406de5edbf..7e0b4fd28b3e3a5c448cdb92aa3f88ed3fc06005 100644
+--- a/dist/src/core/renderers/webgl/WebGlRenderer.js
++++ b/dist/src/core/renderers/webgl/WebGlRenderer.js
+@@ -1332,7 +1332,9 @@ export class WebGlRenderer extends CoreRenderer {
+         op.w = Math.round(cr.w * pixelRatio);
+         op.h = Math.round(cr.h * pixelRatio);
+         op.y = Math.round(canvas.height - op.h - cr.y * pixelRatio);
+-        op.clipRadius = cr.clipRadius * pixelRatio;
++        // Clamp to half the min side: a bigger radius (borderRadius 9999 for a circle)
++        // breaks the rounded-rect SDF and clips everything.
++        op.clipRadius = Math.min(cr.clipRadius * pixelRatio, op.w / 2, op.h / 2);
+         op.pixelRatio = pixelRatio;
+         op.canvasHeight = canvas.height;
+         op.parentHasRenderTexture = node.parentHasRenderTexture;
+diff --git a/src/core/CoreNode.ts b/src/core/CoreNode.ts
+index c43d6addec388ccdf2e15a7284629a71a6699940..302ff8c9b1bee7883b17b0bc9cc83155f1eb686a 100644
+--- a/src/core/CoreNode.ts
++++ b/src/core/CoreNode.ts
+@@ -1997,8 +1997,11 @@ export class CoreNode extends EventEmitter {
+       const ownRadius = clippingRect.clipRadius;
+       intersectRect(parentClippingRect, clippingRect, clippingRect);
+       clippingRect.clipRadius = ownRadius;
++      // Empty intersection: keep the rect valid with zero area so the scissor rejects
++      // everything. valid=false would render the children unclipped.
+       if (clippingRect.w <= 0 || clippingRect.h <= 0) {
+-        clippingRect.valid = false;
++        clippingRect.w = 0;
++        clippingRect.h = 0;
+         clippingRect.clipRadius = 0;
+       }
+     } else if (parentClippingRect.valid === true) {
+@@ -2192,7 +2195,9 @@ export class CoreNode extends EventEmitter {
+     }
+ 
+     if (inRttCluster === true) {
+-      node.markChildrenWithRTT(this);
++      // Walk the new child's subtree: nodes attach bottom-up, so its descendants
++      // were stamped false before this attach.
++      node.markChildrenWithRTT();
+     }
+ 
+     children.push(node);
+diff --git a/src/core/animations/AnimationManager.ts b/src/core/animations/AnimationManager.ts
+index cf9a363b99469b3893a9e79a40d4fbcdcb565276..dfa0ee6c7a296259fd7ca44ec58cb69c3c37327b 100644
+--- a/src/core/animations/AnimationManager.ts
++++ b/src/core/animations/AnimationManager.ts
+@@ -43,41 +43,58 @@ export class AnimationManager {
+     this.stage = stage;
+   }
+ 
++  private updating = false;
++  private needsCompact = false;
++
+   registerAnimation(animation: CoreAnimation) {
+     animation.activeIndex = this.activeAnimations.length;
+     this.activeAnimations.push(animation);
+     this.stage.activeAnimationCount++;
+   }
+ 
++  // Removal keeps start order so the newest animation on a prop writes last and
++  // wins, as in 3.1. Removals during update() are compacted after the loop.
+   unregisterAnimation(animation: CoreAnimation) {
+     const index = animation.activeIndex;
+     if (index === -1) {
+       return;
+     }
+-    const animations = this.activeAnimations;
+-    const last = animations.length - 1;
+-    if (index !== last) {
+-      // Swap with the last element and update its index
+-      const swap = animations[last]!;
+-      animations[index] = swap;
+-      swap.activeIndex = index;
+-    }
+-    animations.pop();
+     animation.activeIndex = -1;
+     this.stage.activeAnimationCount--;
++    if (this.updating === true) {
++      this.needsCompact = true;
++      return;
++    }
++    const animations = this.activeAnimations;
++    animations.splice(index, 1);
++    for (let i = index; i < animations.length; i++) {
++      animations[i]!.activeIndex = i;
++    }
+   }
+ 
+   update(dt: number) {
+     const animations = this.activeAnimations;
+-    // Iterate backwards. With activeIndex tracking, if a sibling stop() during
+-    // a completion event swap-removes an already-visited element into index i,
+-    // we check activeIndex >= 0 before updating to avoid double-processing.
+-    for (let i = animations.length - 1; i >= 0; i--) {
++    const len = animations.length;
++    this.updating = true;
++    for (let i = 0; i < len; i++) {
+       const anim = animations[i]!;
+-      if (anim.activeIndex >= 0) {
++      if (anim.activeIndex === i) {
+         anim.update(dt);
+       }
+     }
++    this.updating = false;
++    if (this.needsCompact === true) {
++      this.needsCompact = false;
++      let w = 0;
++      for (let i = 0; i < animations.length; i++) {
++        const anim = animations[i]!;
++        if (anim.activeIndex === i) {
++          anim.activeIndex = w;
++          animations[w++] = anim;
++        }
++      }
++      animations.length = w;
++    }
+   }
+ 
+   /**
+diff --git a/src/core/renderers/webgl/WebGlRenderer.ts b/src/core/renderers/webgl/WebGlRenderer.ts
+index 39c0a6940c43bae8d3b38458623fc59d70b5d694..73a82709bb3fbb48fd5f352dd7a363f64adb136e 100644
+--- a/src/core/renderers/webgl/WebGlRenderer.ts
++++ b/src/core/renderers/webgl/WebGlRenderer.ts
+@@ -1704,7 +1704,9 @@ export class WebGlRenderer extends CoreRenderer {
+     op.w = Math.round(cr.w * pixelRatio);
+     op.h = Math.round(cr.h * pixelRatio);
+     op.y = Math.round(canvas.height - op.h - cr.y * pixelRatio);
+-    op.clipRadius = cr.clipRadius * pixelRatio;
++    // Clamp to half the min side: a bigger radius (borderRadius 9999 for a circle)
++    // breaks the rounded-rect SDF and clips everything.
++    op.clipRadius = Math.min(cr.clipRadius * pixelRatio, op.w / 2, op.h / 2);
+     op.pixelRatio = pixelRatio;
+     op.canvasHeight = canvas.height;
+     op.parentHasRenderTexture = node.parentHasRenderTexture;

@@ -7,8 +7,8 @@ settings:
 catalogs:
   apps:
     '@lightningjs/renderer':
-      specifier: 3.1.1
-      version: 3.1.1
+      specifier: 3.7.0
+      version: 3.7.0
     react:
       specifier: 19.2.5
       version: 19.2.5
@@ -23,8 +23,8 @@ catalogs:
       version: 4.3.0
   default:
     '@lightningjs/renderer':
-      specifier: 3.1.1
-      version: 3.1.1
+      specifier: 3.7.0
+      version: 3.7.0
     '@rolldown/plugin-babel':
       specifier: ^0.2.3
       version: 0.2.3
@@ -66,9 +66,9 @@ catalogs:
       version: 8.0.8
 
 patchedDependencies:
-  '@lightningjs/renderer@3.1.1':
-    hash: 8a9b52055d19d3441ef640e67ba0f603d80233d87dcea76490db2810bb262623
-    path: patches/@lightningjs__renderer@3.1.1.patch
+  '@lightningjs/renderer@3.7.0':
+    hash: 9c235a3ecbdac17b10cd5b0afd66365e873289ba662910b87fb489c08821de34
+    path: patches/@lightningjs__renderer@3.7.0.patch
 
 importers:
 
@@ -139,7 +139,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: catalog:apps
-        version: 3.1.1(patch_hash=8a9b52055d19d3441ef640e67ba0f603d80233d87dcea76490db2810bb262623)
+        version: 3.7.0(patch_hash=9c235a3ecbdac17b10cd5b0afd66365e873289ba662910b87fb489c08821de34)
       '@plextv/react-lightning':
         specifier: workspace:*
         version: link:../../packages/react-lightning
@@ -194,7 +194,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: catalog:apps
-        version: 3.1.1(patch_hash=8a9b52055d19d3441ef640e67ba0f603d80233d87dcea76490db2810bb262623)
+        version: 3.7.0(patch_hash=9c235a3ecbdac17b10cd5b0afd66365e873289ba662910b87fb489c08821de34)
       '@plextv/react-lightning':
         specifier: workspace:*
         version: link:../../packages/react-lightning
@@ -273,7 +273,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: catalog:apps
-        version: 3.1.1(patch_hash=8a9b52055d19d3441ef640e67ba0f603d80233d87dcea76490db2810bb262623)
+        version: 3.7.0(patch_hash=9c235a3ecbdac17b10cd5b0afd66365e873289ba662910b87fb489c08821de34)
       '@plextv/react-lightning':
         specifier: workspace:*
         version: link:../../packages/react-lightning
@@ -364,7 +364,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: 'catalog:'
-        version: 3.1.1(patch_hash=8a9b52055d19d3441ef640e67ba0f603d80233d87dcea76490db2810bb262623)
+        version: 3.7.0(patch_hash=9c235a3ecbdac17b10cd5b0afd66365e873289ba662910b87fb489c08821de34)
       '@plextv/react-lightning':
         specifier: workspace:^
         version: link:../react-lightning
@@ -427,7 +427,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: 'catalog:'
-        version: 3.1.1(patch_hash=8a9b52055d19d3441ef640e67ba0f603d80233d87dcea76490db2810bb262623)
+        version: 3.7.0(patch_hash=9c235a3ecbdac17b10cd5b0afd66365e873289ba662910b87fb489c08821de34)
       '@plextv/react-lightning':
         specifier: workspace:^
         version: link:../react-lightning
@@ -464,7 +464,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: 'catalog:'
-        version: 3.1.1(patch_hash=8a9b52055d19d3441ef640e67ba0f603d80233d87dcea76490db2810bb262623)
+        version: 3.7.0(patch_hash=9c235a3ecbdac17b10cd5b0afd66365e873289ba662910b87fb489c08821de34)
       react:
         specifier: 'catalog:'
         version: 19.2.5
@@ -511,7 +511,7 @@ importers:
     dependencies:
       '@lightningjs/renderer':
         specifier: 'catalog:'
-        version: 3.1.1(patch_hash=8a9b52055d19d3441ef640e67ba0f603d80233d87dcea76490db2810bb262623)
+        version: 3.7.0(patch_hash=9c235a3ecbdac17b10cd5b0afd66365e873289ba662910b87fb489c08821de34)
       '@plextv/react-lightning':
         specifier: workspace:^
         version: link:../react-lightning
@@ -1660,9 +1660,9 @@ packages:
     resolution: {integrity: sha512-FHIgj5rkOQPd9/wDXaiR0GOoWDEj7BytIzvYq5K8/wAh3z2bbW8gTNN+0J5kc1KXtqPrbyg1i87ksUVLrLEr1g==}
     engines: {node: '>=18.0.0'}
 
-  '@lightningjs/renderer@3.1.1':
-    resolution: {integrity: sha512-L1+9ZN13+mH5vz7wQOF9+edghWA8N7ETi1d8cFC2SCp+7evmB7utz/NROfUCZyDhOLXlXREN2GPcELTBXeU0wg==}
-    engines: {node: '>= 18.0.0', npm: '>= 10.0.0', pnpm: '>= 10.17.0'}
+  '@lightningjs/renderer@3.7.0':
+    resolution: {integrity: sha512-cCwf1H/KuegS/6mDw0OnA9f+g2j++OLyX/U9sA4nvnUqYMqdEa9bbUy2UPB/CvXc7upsBN780rDKT/iSy1uxtA==}
+    engines: {node: '>= 22.13.0', npm: '>= 10.0.0', pnpm: '>= 10.17.0'}
 
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
@@ -6793,7 +6793,7 @@ snapshots:
       msdf-bmfont-xml: 2.8.0
       opentype.js: 1.3.4
 
-  '@lightningjs/renderer@3.1.1(patch_hash=8a9b52055d19d3441ef640e67ba0f603d80233d87dcea76490db2810bb262623)': {}
+  '@lightningjs/renderer@3.7.0(patch_hash=9c235a3ecbdac17b10cd5b0afd66365e873289ba662910b87fb489c08821de34)': {}
 
   '@manypkg/find-root@1.1.0':
     dependencies:
