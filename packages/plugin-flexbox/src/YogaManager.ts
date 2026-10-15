@@ -77,6 +77,13 @@ export class YogaManager {
   // Text leaves currently measured by Yoga, so we can re-dirty them when a
   // font finishes loading.
   private _textNodes: Set<number> = new Set();
+  // Roots added since the last pass. A node that becomes a root can be clean
+  // (its subtree didn't change) but still needs laying out as a root once.
+  private _newRoots: Set<ManagerNode> = new Set();
+  // Nodes with a percent translate. It resolves at readback and never dirties
+  // yoga, so these are read on every pass even where the walk is pruned.
+  private _percentNodes: Set<ManagerNode> = new Set();
+  private _passId = 0;
 
   public on: EventEmitter<YogaManagerEvents>['on'] = this._eventEmitter.on.bind(this._eventEmitter);
   public off: EventEmitter<YogaManagerEvents>['off'] = this._eventEmitter.off.bind(
@@ -288,6 +295,8 @@ export class YogaManager {
     const yogaNode = this._elementMap.get(elementId);
 
     if (yogaNode) {
+      this._percentNodes.delete(yogaNode);
+      this._newRoots.delete(yogaNode);
       // Detach from the parent's yoga node before freeing. Splicing only the
       // ManagerNode children array leaves the freed child in the parent's yoga
       // child list, so the parent keeps laying it out and a shrink-fit parent
@@ -361,6 +370,7 @@ export class YogaManager {
 
     if (node) {
       this._independentRoots.add(node);
+      this._newRoots.add(node);
     }
   }
 
@@ -369,6 +379,7 @@ export class YogaManager {
 
     if (node) {
       this._independentRoots.delete(node);
+      this._newRoots.delete(node);
     }
   }
 
@@ -457,7 +468,15 @@ export class YogaManager {
   private _runLayoutPass(force: boolean): void {
     this._initializeArrayBuffer();
 
+    const pass = ++this._passId;
+
     for (const independentRoot of this._independentRoots) {
+      // A clean root lays out to the same result, so skip it. Yoga dirties
+      // every ancestor of a changed node, so the root's flag covers its tree.
+      if (!force && !independentRoot.node.isDirty() && !this._newRoots.has(independentRoot)) {
+        continue;
+      }
+
       // undefined available size → yoga uses the root's own w/h (or
       // shrink-to-fit). Passing 1920×1080 would stretch any unset axis
       // and break measurement-driven roots like VirtualList cells.
@@ -467,10 +486,28 @@ export class YogaManager {
         // oxlint-disable-next-line typescript/no-non-null-assertion -- Already checked this._yoga above
         this._yoga!.DIRECTION_LTR,
       );
-      this._getUpdatedStyles(independentRoot, force);
+      this._getUpdatedStyles(independentRoot, force, pass);
+    }
+
+    this._newRoots.clear();
+
+    for (const yogaNode of this._percentNodes) {
+      if (yogaNode.readbackPass !== pass && this._isInLayoutTree(yogaNode)) {
+        this._readNode(yogaNode, false, pass);
+      }
     }
 
     this._flushArrayBuffer(this._dataView.buffer);
+  }
+
+  private _isInLayoutTree(yogaNode: ManagerNode): boolean {
+    let current = yogaNode;
+
+    while (current.parent) {
+      current = current.parent;
+    }
+
+    return this._independentRoots.has(current);
   }
 
   public applyStyles(
@@ -605,7 +642,12 @@ export class YogaManager {
           pixelTranslate.y = translateY != null;
         }
 
-        touchedPercent ||= yogaNode.translatePercent !== undefined;
+        if (yogaNode.translatePercent === undefined) {
+          this._percentNodes.delete(yogaNode);
+        } else {
+          this._percentNodes.add(yogaNode);
+          touchedPercent = true;
+        }
       }
     }
 
@@ -644,22 +686,38 @@ export class YogaManager {
     return yogaNode;
   }
 
-  // Recursion is unconditional — yoga's hasNewLayout is per-node, so a
-  // child's layout can change even when the parent's didn't (absolute
-  // children, just-attached subtrees from _reattachChildren).
-  private _getUpdatedStyles(yogaNode: ManagerNode, force = false) {
+  // A node without a new layout was served from yoga's cache and its subtree
+  // wasn't visited. Percent nodes under one are read in _runLayoutPass.
+  private _getUpdatedStyles(yogaNode: ManagerNode, force: boolean, pass: number) {
+    if (!this._readNode(yogaNode, force, pass)) {
+      return;
+    }
+
+    const children = yogaNode.children;
+
+    for (let i = 0, len = children.length; i < len; i++) {
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- length-bounded
+      this._getUpdatedStyles(children[i]!, force, pass);
+    }
+  }
+
+  /** Writes the node's layout to the buffer if it changed. Returns whether yoga laid it out. */
+  private _readNode(yogaNode: ManagerNode, force: boolean, pass: number): boolean {
     const skipHiddenNode =
       !this._yogaOptions.processHiddenNodes && this._hiddenElements.has(yogaNode.id);
     // A percent translate never dirties yoga (there's no edge to write), so a
-    // percent node is visited on every pass; the dedupe below keeps it from
+    // percent node is read on every pass; the dedupe below keeps it from
     // re-emitting while its resolved position holds.
     const translatePercent = yogaNode.translatePercent;
     const hasNewLayout = force || yogaNode.node.hasNewLayout();
 
+    if (translatePercent !== undefined) {
+      yogaNode.readbackPass = pass;
+    }
+
     if (!skipHiddenNode && (hasNewLayout || translatePercent !== undefined)) {
       // Individual getters instead of getComputedLayout() — that allocates
-      // a {left, top, width, height} object per node, and we recurse the
-      // entire yoga tree every layout pass.
+      // a {left, top, width, height} object per node.
       const node = yogaNode.node;
 
       let left = node.getComputedLeft();
@@ -720,11 +778,6 @@ export class YogaManager {
       }
     }
 
-    const children = yogaNode.children;
-
-    for (let i = 0, len = children.length; i < len; i++) {
-      // oxlint-disable-next-line typescript/no-non-null-assertion -- length-bounded
-      this._getUpdatedStyles(children[i]!, force);
-    }
+    return hasNewLayout;
   }
 }
