@@ -13,6 +13,8 @@ export const MODE_SPINNER = 1;
 export const MODE_AVATAR = 2;
 /** Texture * color with +/-0.5/255 noise, like UltraBlur's dither. */
 export const MODE_DITHER = 3;
+/** Canvas-rasterized text, its coverage raised to `p0` so it reads as light as SDF text. */
+export const MODE_TEXT = 4;
 
 const VS = `
 attribute vec2 aPos;
@@ -86,7 +88,11 @@ void main() {
       gl_FragColor = c * mask;
       return;
     }
-    c.rgb += (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5) / 255.0 * c.a;
+    if (mode < 3.5) {
+      c.rgb += (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5) / 255.0 * c.a;
+    } else {
+      c = vColor * pow(c.a / max(vColor.a, 0.0001), vMisc.w);
+    }
   }
   if (vRadii.x + vRadii.y + vRadii.z + vRadii.w > 0.0 || vMisc.z > 0.0) {
     vec2 halfSize = vSizeP.xy * 0.5;

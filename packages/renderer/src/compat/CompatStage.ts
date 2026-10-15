@@ -1,4 +1,4 @@
-import { MODE_AVATAR, MODE_DITHER, MODE_QUAD, MODE_SPINNER, QuadBatcher, type Rect as BaseRect } from '../QuadBatcher';
+import { MODE_AVATAR, MODE_DITHER, MODE_QUAD, MODE_SPINNER, MODE_TEXT, QuadBatcher, type Rect as BaseRect } from '../QuadBatcher';
 
 /** Screen-space clip; `r` > 0 when the innermost clipping node is rounded (screen px). */
 type Rect = BaseRect & { r: number; rx0: number; ry0: number; rx1: number; ry1: number };
@@ -93,6 +93,7 @@ export class CompatStage {
     textLayouts: 0,
   };
   public targetFrameTime = 0;
+  public textGamma = 1;
   public boundsMargin: number[];
   public readonly shManager: {
     registerShaderType: (name: string, type: ShaderType) => void;
@@ -659,7 +660,7 @@ export class CompatStage {
 
     const tint = withAlpha(node._color, node._worldAlpha);
 
-    this._quad(node, tex, cx, cy, cx + tex.w, cy + tex.h, 0, 0, 1, 1, tint, tint, tint, tint, cx, cy, tex.w, tex.h, 0, 0, 0, clip);
+    this._quad(node, tex, cx, cy, cx + tex.w, cy + tex.h, 0, 0, 1, 1, tint, tint, tint, tint, cx, cy, tex.w, tex.h, 0, 0, 0, clip, null, MODE_TEXT, this.textGamma);
   }
 
   private _draw(node: CoreNode, clip: Rect | null): void {

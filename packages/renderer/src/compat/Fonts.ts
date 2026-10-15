@@ -11,6 +11,7 @@ type SdfData = {
   advances: Map<number, number>;
   kernings: Map<number, number>;
   fallback: number;
+  distanceRange: number;
 };
 
 export type FontEntry = {
@@ -220,6 +221,7 @@ export class FontRegistry {
 type SdfJson = {
   info?: { size?: number };
   common?: { base?: number; lineHeight?: number };
+  distanceField?: { distanceRange?: number };
   chars?: { id: number; xadvance: number }[];
   kernings?: { first: number; second: number; amount: number }[];
 };
@@ -243,5 +245,6 @@ function parseSdf(json: SdfJson): SdfData {
     advances,
     kernings,
     fallback: advances.get(63) ?? advances.get(32) ?? 0,
+    distanceRange: json.distanceField?.distanceRange ?? 0,
   };
 }
