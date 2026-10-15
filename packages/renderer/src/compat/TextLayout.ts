@@ -139,11 +139,10 @@ export function rasterizeText(
   ctx.textAlign = 'left';
 
   const spacing = ctx as unknown as { letterSpacing?: string };
+  const hasSpacing = 'letterSpacing' in ctx;
 
-  if (letterSpacing && 'letterSpacing' in ctx) {
-    spacing.letterSpacing = `${letterSpacing}px`;
-  } else if ('letterSpacing' in ctx) {
-    spacing.letterSpacing = '0px';
+  if (hasSpacing) {
+    spacing.letterSpacing = `${letterSpacing || 0}px`;
   }
 
   for (let i = 0; i < layout.lines.length; i++) {
@@ -154,17 +153,28 @@ export function rasterizeText(
     }
 
     const y = layout.baseline + line.y;
-    const drawn = ctx.measureText(line.text).width;
+    const drawn = layout.hanging ? line.width : ctx.measureText(line.text).width;
+    const diff = line.width - drawn;
 
-    // The canvas font's advances can run a little wider than the SDF metrics the layout used.
-    if (drawn > line.width + 0.5 && line.width > 0) {
+    if (line.width <= 0 || (diff < 0.5 && diff > -0.5)) {
+      ctx.fillText(line.text, line.x, y);
+      continue;
+    }
+
+    // The TTF's hinted advances differ from the SDF advances the layout used: spread the
+    // difference over the gaps so glyphs land where Lightning puts them, or squeeze as a fallback.
+    const n = [...line.text].length;
+
+    if (hasSpacing && n > 1) {
+      spacing.letterSpacing = `${(letterSpacing || 0) + diff / (n - 1)}px`;
+      ctx.fillText(line.text, line.x, y);
+      spacing.letterSpacing = `${letterSpacing || 0}px`;
+    } else {
       ctx.save();
       ctx.translate(line.x, 0);
       ctx.scale(line.width / drawn, 1);
       ctx.fillText(line.text, 0, y);
       ctx.restore();
-    } else {
-      ctx.fillText(line.text, line.x, y);
     }
   }
 
