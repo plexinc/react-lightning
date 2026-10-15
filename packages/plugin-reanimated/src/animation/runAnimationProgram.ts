@@ -1,8 +1,7 @@
 import type { IAnimationController } from '@lightningjs/renderer';
-import type {
-  LightningElement,
-  LightningElementStyle,
-} from '@plextv/react-lightning';
+
+import type { LightningElement, LightningElementStyle } from '@plextv/react-lightning';
+
 import type { AnimationProgram, ProgramLeaf } from './animationProgram';
 
 export type CancelAnimation = () => void;
@@ -30,16 +29,19 @@ export function runAnimationProgram(
       // Call as a method: extracting animateStyle drops `this`, so it throws
       // and the catch below silently freezes the whole composed animation.
       const animatableView = view as unknown as {
-        animateStyle: (
-          key: keyof LightningElementStyle,
-          value: unknown,
-        ) => IAnimationController;
+        animateStyle: (key: keyof LightningElementStyle, value: unknown) => IAnimationController;
       };
       const controller = animatableView.animateStyle(prop, leaf.toValue);
 
       current = controller;
 
       await controller.waitUntilStopped();
+
+      // The renderer pools controllers: once stopped this one may already drive
+      // another animation, so cancel must not stop it.
+      if (current === controller) {
+        current = undefined;
+      }
     } catch {
       // node was destroyed or recycled mid-flight; stop quietly
       cancelled = true;

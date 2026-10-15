@@ -1,12 +1,12 @@
 import type { AnimationSettings } from '@lightningjs/renderer';
 import { describe, expect, it } from 'vitest';
+
 import type { LightningElement } from '@plextv/react-lightning';
+
 import { leafProgram, repeatProgram, sequenceProgram } from './animationProgram';
 import { runAnimationProgram } from './runAnimationProgram';
 
-const settings = (
-  over: Partial<AnimationSettings> = {},
-): AnimationSettings => ({
+const settings = (over: Partial<AnimationSettings> = {}): AnimationSettings => ({
   duration: 10,
   easing: 'linear',
   delay: 0,
@@ -94,6 +94,30 @@ describe('runAnimationProgram', () => {
 
     // Cancelled before the first leaf resolved, so no further steps run.
     expect(view.applied.length).toBeLessThanOrEqual(1);
+  });
+
+  it('cancel after the program finished does not stop the pooled controller', async () => {
+    const view = makeView();
+    let stops = 0;
+    view.animateStyle = function (key: PropertyKey, value: unknown) {
+      this.applied.push({ key, value });
+      return {
+        waitUntilStopped: () => Promise.resolve(),
+        stop() {
+          stops++;
+        },
+      };
+    };
+
+    const cancel = runAnimationProgram(
+      view as unknown as LightningElement,
+      'x',
+      leafProgram({ toValue: 1, lngAnimation: settings() }),
+    );
+    await flush();
+    cancel();
+
+    expect(stops).toBe(0);
   });
 
   it('repeats a finite positive count that many times', async () => {
