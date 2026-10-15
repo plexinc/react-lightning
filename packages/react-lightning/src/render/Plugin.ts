@@ -36,4 +36,13 @@ export type Plugin<T extends LightningElement = LightningElement> = {
    * needs to process.
    */
   handledStyleProps?: ReadonlySet<string>;
+
+  /**
+   * Instance-aware alternative to handledStyleProps for style-only updates.
+   * Return false when transformProps would leave this update unchanged for
+   * this instance, so it can take the fast path; true sends it through the
+   * full transform pipeline. When set, it replaces the handledStyleProps check
+   * for this plugin.
+   */
+  needsTransform?(instance: SetOptional<T, 'node'>, props: T['props']): boolean;
 };
