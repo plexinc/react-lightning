@@ -158,7 +158,7 @@ export class CompatStage {
 
     this.gl = gl;
     this.textures = new TextureManager(gl, () => this.requestRender(), {
-      memoryCap: options.textureMemoryCap ?? 96 * 1024 * 1024,
+      memoryCap: options.textureMemoryCap ?? 64 * 1024 * 1024,
     });
     this._batcher = new QuadBatcher(gl);
     this.animations = new AnimationManager(() => this.requestRender());
@@ -440,6 +440,12 @@ export class CompatStage {
 
       node.renderState = state;
       this._queue(node, STATE_EVENT[state], { previous, current: state });
+
+      // Like Lightning, mounted nodes beyond the bounds margin give their textures back; the cache keeps them until the memory cap.
+      if (state === CoreNodeRenderState.OutOfBounds) {
+        this.releaseTexture(node);
+        this.releaseText(node);
+      }
     }
 
     const tex = node._texture;

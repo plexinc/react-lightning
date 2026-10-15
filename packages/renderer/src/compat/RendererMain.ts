@@ -61,6 +61,7 @@ export class RendererMain extends EventEmitter {
       fpsUpdateInterval: settings.fpsUpdateInterval || 1000,
       deviceLogicalPixelRatio: settings.deviceLogicalPixelRatio ?? 1,
       devicePhysicalPixelRatio: settings.devicePhysicalPixelRatio ?? 1,
+      textureMemoryCap: settings.textureMemory?.criticalThreshold,
     });
     this.stage.emitter = this;
     this.root = this.stage.root;
