@@ -72,6 +72,46 @@ function createTexture(renderer: RendererMain, textureDef: TextureDef): Texture 
 
 let idCounter = 0;
 
+type OnArgs = Parameters<IEventEmitter<LightningElementEvents>['on']>;
+type OnceArgs = Parameters<IEventEmitter<LightningElementEvents>['once']>;
+
+type StyleRecord = Record<PropertyKey, unknown>;
+
+// Traps live on the prototype; the handler only carries the element.
+class StyleProxyHandler implements ProxyHandler<StyleRecord> {
+  public constructor(private readonly _element: LightningViewElement) {}
+
+  public get(target: StyleRecord, prop: PropertyKey): unknown {
+    if (prop === AllStyleProps) {
+      return target;
+    }
+
+    const staged = (this._element as unknown as { _stagedUpdates?: { style?: StyleRecord } })
+      ._stagedUpdates;
+
+    return staged?.style?.[prop] ?? target[prop];
+  }
+
+  public set(target: StyleRecord, prop: PropertyKey, value: unknown): boolean {
+    const element = this._element;
+
+    if ((element.style as StyleRecord)[prop] === value) {
+      return true;
+    }
+
+    target[prop] = value;
+
+    // Single-key imperative set: mark it partial so shader/flex processors
+    // keep the props this push omits.
+    const style: StyleRecord = { [prop]: value };
+    style[PARTIAL_STYLE] = true;
+
+    element.setProps({ style } as Partial<LightningViewElementProps>);
+
+    return true;
+  }
+}
+
 // Returned when a requested animation is a proven no-op; satisfies the
 // controller contract without registering anything with the renderer.
 const noopAnimationController = {
@@ -665,9 +705,18 @@ export class LightningViewElement<
   }
 
   public set deferTarget(value: LightningElement | null) {
-    this._deferTarget?.off('deferredDestroyComplete', this._destroyFinalize);
+    if (this._destroyFinalizeHandler) {
+      this._deferTarget?.off('deferredDestroyComplete', this._destroyFinalizeHandler);
+    }
+
     this._deferTarget = value;
-    this._deferTarget?.once('deferredDestroyComplete', this._destroyFinalize);
+
+    if (value) {
+      value.once(
+        'deferredDestroyComplete',
+        (this._destroyFinalizeHandler ??= () => this._destroyFinalize()),
+      );
+    }
 
     // Optimize child iteration
     for (let i = 0; i < this.children.length; i++) {
@@ -907,38 +956,45 @@ export class LightningViewElement<
     this._eventEmitter.emit('destroy');
   }
 
-  public on = (...args: Parameters<IEventEmitter<LightningElementEvents>['on']>): (() => void) => {
-    this._eventEmitter.on(...args);
+  public on(event: OnArgs[0], listener: OnArgs[1]): () => void {
+    this._eventEmitter.on(event, listener);
 
-    if (args[0] === 'resized') {
+    if (event === 'resized') {
       this._reconcileResizeObserving();
     }
 
-    return () => this.off(...args);
-  };
-  public once = (
-    ...args: Parameters<IEventEmitter<LightningElementEvents>['once']>
-  ): (() => void) => {
-    this._eventEmitter.once(...args);
+    return () => this.off(event, listener);
+  }
 
-    if (args[0] === 'resized') {
+  public once(event: OnceArgs[0], listener: OnceArgs[1]): () => void {
+    this._eventEmitter.once(event, listener);
+
+    if (event === 'resized') {
       this._reconcileResizeObserving();
     }
 
-    return () => this.off(...args);
-  };
+    return () => this.off(event, listener);
+  }
 
-  public off: IEventEmitter<LightningElementEvents>['off'] = (...args) => {
-    const result = this._eventEmitter.off(...args);
+  public off<EventKey extends keyof LightningElementEvents = string>(
+    event: EventKey,
+    listener: LightningElementEvents[EventKey],
+  ): IEventEmitter<LightningElementEvents> {
+    const result = this._eventEmitter.off(event, listener);
 
-    if (args[0] === 'resized') {
+    if (event === 'resized') {
       this._reconcileResizeObserving();
     }
 
     return result;
-  };
-  public emit: IEventEmitter<LightningElementEvents>['emit'] = (...args) =>
-    this._eventEmitter.emit(...args);
+  }
+
+  public emit<EventKey extends keyof LightningElementEvents>(
+    event: EventKey,
+    ...args: Parameters<LightningElementEvents[EventKey]>
+  ): boolean {
+    return this._eventEmitter.emit(event, ...args);
+  }
 
   public setLightningNode(node: RendererNode<LightningElement>): void {
     const oldNode = this.node;
@@ -1286,7 +1342,7 @@ export class LightningViewElement<
     this.props.onResize?.(dimensions);
   }
 
-  public recalculateVisibility = (): void => {
+  public recalculateVisibility(): void {
     const prevFocusable = this.focusable;
     const prevVisible = this._visible;
 
@@ -1306,7 +1362,7 @@ export class LightningViewElement<
     if (currentFocusable !== prevFocusable) {
       this._eventEmitter.emit('focusableChanged', this, currentFocusable);
     }
-  };
+  }
 
   public animateStyle<K extends keyof TStyleProps>(
     key: K,
@@ -1367,14 +1423,20 @@ export class LightningViewElement<
     return `${this._recycled ? '\u267B ' : ''}${this.constructor.name} id=${this.id}${this.focusable ? ' focusable' : ''}${this.visible ? ' visible' : ''}${expanded ? ` props=${JSON.stringify(this.props)}` : ''}`;
   }
 
-  private _destroyFinalize = () => {
-    this._deferTarget?.off('deferredDestroyComplete', this._destroyFinalize);
+  // Bound on first use: a deferred removal is rare, so most elements never need it.
+  private _destroyFinalizeHandler: (() => void) | null = null;
+
+  private _destroyFinalize(): void {
+    if (this._destroyFinalizeHandler) {
+      this._deferTarget?.off('deferredDestroyComplete', this._destroyFinalizeHandler);
+    }
+
     this.node.parent = null;
 
     if (!this._flattened) {
       this._renderer.destroyNode(this.node);
     }
-  };
+  }
 
   private _reconcileResizeObserving(): void {
     const shouldObserve = this.props.onResize != null || this._eventEmitter.hasListeners('resized');
@@ -1767,7 +1829,7 @@ export class LightningViewElement<
     this._eventEmitter.emit('textureFailed', ...args);
   };
 
-  private _onLayout = (dimensions: Rect) => {
+  private _onLayout(dimensions: Rect): void {
     this._hasLayout = true;
 
     // Reveal a withheld node at its now-correct geometry. A pixel translate
@@ -1794,7 +1856,7 @@ export class LightningViewElement<
     }
 
     this.props.onLayout?.(dimensions);
-  };
+  }
 
   private _createAnimation(
     props: Partial<INodeAnimateProps>,
@@ -2120,36 +2182,9 @@ export class LightningViewElement<
   }
 
   // Setting any styling applied to the style attribute on an element
-  private _styleProxyHandler: ProxyHandler<Partial<TStyleProps>> = {
-    get: (target, prop) => {
-      if (prop === AllStyleProps) {
-        return target;
-      }
-
-      return (
-        this._stagedUpdates?.style?.[prop as keyof LightningViewElementStyle] ??
-        target[prop as keyof TStyleProps]
-      );
-    },
-    set: (target, prop, value) => {
-      const key = prop as keyof TStyleProps;
-
-      if (this.style[key] === value) {
-        return true;
-      }
-
-      target[key] = value;
-
-      // Single-key imperative set: mark it partial so shader/flex processors
-      // keep the props this push omits.
-      const style = { [key]: value } as Partial<TStyleProps>;
-      (style as Record<PropertyKey, unknown>)[PARTIAL_STYLE] = true;
-
-      this.setProps({ style } as Partial<TProps>);
-
-      return true;
-    },
-  };
+  private _styleProxyHandler = new StyleProxyHandler(
+    this as unknown as LightningViewElement,
+  ) as unknown as ProxyHandler<Partial<TStyleProps>>;
 
   private _transformProps(props: Partial<TProps>) {
     let transformedProps = props;
