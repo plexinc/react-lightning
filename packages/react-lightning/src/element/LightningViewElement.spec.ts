@@ -139,6 +139,26 @@ describe('LightningViewElement paint withholding', () => {
     expect(el.node.alpha).toBe(0.25);
   });
 
+  it('keeps a withheld alpha and non-numeric sizes off the node on a full update', async () => {
+    const el = createElement({ w: 100, h: 50, alpha: 1 });
+
+    el.withholdPaintUntilLayout();
+    // A non-style prop sends the update through the full (plugin) path.
+    el.setProps({
+      focusable: true,
+      style: { w: '100%', h: '50%', alpha: 0.25, x: 7 },
+    } as unknown as Parameters<typeof el.setProps>[0]);
+    await flush();
+
+    expect(el.node.x).toBe(7);
+    expect(el.node.w).toBe(100);
+    expect(el.node.h).toBe(50);
+    expect(el.node.alpha).toBe(0);
+
+    el.emitLayoutEvent();
+    expect(el.node.alpha).toBe(0.25);
+  });
+
   it('reveals immediately when released before a layout (e.g. detached by a boundary)', () => {
     const el = createElement({ w: 100, h: 50, alpha: 1 });
 
