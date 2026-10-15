@@ -134,7 +134,7 @@ What it maps: CoreNode/CoreTextNode props as prototype accessors over underscore
 
 Not done or approximated: SpinnerArc and SocialProofAvatarMask (not drawn / unmasked), rounded clipping (innermost clip only, evaluated as the child quad's SDF, so it fails for children with their own radius), per-corner radii (max wins), RTT, device pixel ratio, Inspector (no-op, so no testID DOM mirror), context loss, freeing textures of mounted offscreen nodes. Text sits about 1-2 px lower than SDF text.
 
-Run it: `apps/renderer-bench/plex/dev-compat.mts` wraps the app's own `createViteConfig` and aliases `@lightningjs/renderer*` to the compat files, kept external from the dep prebundle so there's one copy and edits apply. No change to the app repo.
+Run it: from the app's `apps/plex/targets/lightning`, `LNG_DEV_PORT=3421 node_modules/.bin/tsx <this repo>/apps/renderer-bench/plex/dev-compat.mts` serves the app with a runtime renderer switch: `?renderer=own|stock` or F9 (stored in `localStorage["lng.renderer"]`, default stock, badge bottom-left). Every `@lightningjs/renderer*` import goes to `/__renderer/<entry>.js`, which the server redirects by cookie to a module re-exporting either the stock prebundle or the compat files; both stay out of the react-lightning prebundle. No change to the app repo.
 
 Home scroll (8 down, 8 up, 700 ms apart), headless Chrome 155, M1 Max, alternating runs, medians of 5 (`apps/renderer-bench/plex/measure.jsonl`):
 
