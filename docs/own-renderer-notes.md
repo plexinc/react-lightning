@@ -158,3 +158,191 @@ renderer nodes                              443.0 [442.0-446.0]       444.0 [444
 ```
 
 Load average was 8-27 on 10 cores during the runs (other agents), and rose through the campaign, so the main-thread and script totals are noisy; compat's grew with load while stock's sat near the wall-time cap. The renderer frame and draw-call numbers are stable. Same 444 renderer nodes in both once `zIndexLocked` stayed undefined (a 0 there made react-lightning materialize 250 flattened views).
+
+
+## 6. Direct elements: react-native-webtv
+
+The compat layer (section 5) still runs two objects per React element: react-lightning's `LightningViewElement` (tseep emitter, style Proxy, a dozen bound closures) and a compat `CoreNode` imitating Lightning's node, with props built into an object and `Object.assign`ed from one to the other. `@plextv/react-native-webtv` (`packages/react-native-webtv`) drops the second object.
+
+Design. react-lightning's `createRoot` takes a `backend` (`RendererBackend`, `render/RendererBackend.ts`): it builds the renderer and can bring an `elementFactory` for the host instances. The default is the stock renderer and react-lightning's own classes, moved to `render/lightningBackend.ts` and loaded on demand, so an app that passes nothing gets exactly today's behaviour (that's the only react-lightning change besides exporting `getNodeResizeObserver`, `isTranslateSettled` and `MAX_UNSETTLED_LAYOUTS`; a clean PR on its own). react-native-webtv has one entry with `createRoot(target, { renderer: 'lightning' | 'webtv', ...renderOptions })` (default `lightning`), and subpaths `/lightning` and `/webtv` exporting each backend, so an app that imports one directly never bundles the other.
+
+The `webtv` backend's elements are one class, `SceneElement` (`src/scene/SceneElement.ts`): the LightningViewElement/TextElement/ImageElement API (kind field instead of subclasses) on an object that is also the scene node `CompatStage` draws, with the same field names as compat's `CoreNode` (`_x`, `_flags`, `_wa`, `_tp`, `_texture`, ...). `element.node === element`. Lightning's node props are prototype accessors over those fields, so `el.node.x = v` (VirtualList scrolling), `node.animate()`, `node.texture`, `node.on('loaded')` (Plex's ImageComponent) and setNodeProp from plugin-flexbox all land on the one object. Prop updates are one pass of field writes, with the exact rules of `_toLightningNodeProps` + `Object.assign` (style after props, shader/texture/clipRadius, then x/y/w/h/alpha with the flattening offsets), no intermediate object. Events are a flat `[event, listener, once]` array created on the first listener, instead of a tseep emitter plus a Lightning emitter plus three forwarding listeners. The style Proxy is created on first `el.style` read (plugin-flexbox reads it for every tracked element, so mostly it still exists), with a handler object instead of two closures.
+
+Why not merge the classes the other way (make compat's CoreNode the element) or write elements from scratch on the core `SceneNode`: the plugins and react-native-lightning depend on `instanceof LightningViewElement` (ScrollView, useFocusHandler, the resize observer shim) and patch `LightningViewElement.prototype` (setProps wrapper for style arrays, `measure*`, `setNativeProps`, DOM accessors). `SceneElement.prototype`'s chain goes through `LightningViewElement.prototype` without running its constructor, and it deliberately doesn't define `setProps`, so the polyfill wrapper still runs. The core `Stage`/`SceneNode` lacks most of what Plex needs (shaders, msdf-matched text layout, resizeMode, Lightning animation semantics), all of which is in CompatStage, so the elements draw through CompatStage. The cost is one field-name contract between them.
+
+Renderer hooks (small, separable, overlap with the improvement branch noted): CompatStage reads render children from `node._kids` instead of `node.children` (an element's `children` are its element children, which differ from its render children for flattened views) and delivers stage events through `node._emitRender(name, data)`; compat's CoreNode keeps `children` as a getter over `_kids`, implements `_emitRender` and destroys children from a copy. New `compat/scene.ts` (`@plextv/react-lightning-renderer/compat/scene`) exports what the elements need. Those are 4 changed lines in CompatStage.ts, the rest is in CoreNode.ts (not touched on ruud/own-renderer-improve). `packages/renderer` stays where it is: react-native-webtv imports it from `@plextv/react-lightning-renderer`. Once the improvement branches are merged it can move in (renderer core + compat stage under react-native-webtv, the compat `@lightningjs/renderer` imitation dropped unless we want to keep the third option).
+
+Behaviour differences, all deliberate and covered by `src/scene/parity.spec.ts` where observable (it runs the same element scripts against both implementations on a WebGL-free compat stage, with and without flattening and with plugin-css-transform, and compares the drawn tree, element state and every event the plugins listen to):
+- Props that aren't Lightning node props (handlers, `testID`, `focusable`, ...) aren't copied onto the node. They were inert on a `CoreNode`; reading them back through `element.node` now gives `undefined`. `setNativeProps` writes node props only for the same reason (on the merged object an `Object.assign` would hit element setters).
+- `element.node.parent`, `.children`, `.id` and `.destroy()` are the element's, not a render node's: there is no render node. Nothing in react-lightning, the plugins, react-native-lightning or Plex reads those through `.node` (grepped).
+- The container root (CanvasRoot's FocusGroup view) can't swap its node for `renderer.root`; it takes renderer.root's values and becomes its only child, which draws the same.
+- Listeners get exactly the arguments emitted; tseep pads them with `undefined` to a fixed arity.
+- No dev-mode "reserved CoreNode prop" warnings (there's no CoreNode to protect).
+- Everything the compat stage doesn't draw yet (section 5: SDF text, nested rounded clipping, RTT, inspector, ...) is the same gap here.
+
+Run it: from the app's `apps/plex/targets/lightning`, `LNG_DEV_PORT=3491 node_modules/.bin/tsx <this repo>/apps/renderer-bench/plex/dev-compat.mts`, then `?renderer=stock|compat|direct` (`own` still works for compat) or F9 cycling stock -> compat -> direct, badge bottom-left (`renderer: direct`). The launcher now serves every `@plextv` package the app imports from this worktree's source in all three modes (the app's installed alpha.9 copies don't have the backend hook), so stock/compat/direct compare the same react-lightning code; numbers in section 5 were taken against the installed packages and aren't comparable with the ones below. In direct mode `@plextv/react-lightning`'s `createRoot` is routed through react-native-webtv with `renderer: 'webtv'` (`switch/react-lightning.ts`). `LNG_BUILD=stock|own|direct LNG_BUILD_OUT=<dir>` builds one mode for production and `LNG_PREVIEW_PORT=<port>` with the same variables serves it.
+
+
+### Results
+
+Same harness as section 5, extended to three modes (`apps/renderer-bench/plex/direct/`: bench.mjs, bench-load.mjs, campaign*.sh, summarize*.mjs, raw dev-*.jsonl): one headless Chrome 155 per mode with its own profile (the app falls back to Who's watching when its tab is hidden), bfcache off, screenshot ticker every 50 ms, M1 Max. Home Down/Up: reload, pick the profile, settle 3 s without a drawn frame or long task, throttle, Down, 3 s, Up, 3 s. Home load: from the Enter on the profile to 3 s without a drawn frame or long task, throttled from the Enter. 5 rotating rounds per throttle, runs repeated when the 1-min load average went over 20 (none did; it was 6-18). Medians, IQR in brackets. "Compat" is LightningViewElement on the compat CoreNode (section 5), "direct" is react-native-webtv's SceneElement; both draw through the same CompatStage.
+
+Dev server (what the launcher serves; React and the plugins run their dev builds):
+
+Home Down/Up, 1x
+
+| Metric | Stock | Compat | Direct |
+|---|---|---|---|
+| Renderer frame time, median (ms) | 0.90 [0.90-0.90] | 0.20 [0.20-0.30] | 0.20 [0.20-0.20] |
+| Renderer frame time, p95 (ms) | 1.40 [1.40-1.50] | 0.40 [0.40-0.40] | 0.30 [0.30-0.30] |
+| Frames drawn | 235 [235-236] | 220 [218-220] | 219 [219-220] |
+| Draw calls per frame, median | 204 [204-204] | 5.00 [5.00-5.00] | 5.00 [5.00-5.00] |
+| Texture uploads | 2.00 [2.00-22.0] | 11.0 [11.0-12.0] | 11.0 [11.0-11.0] |
+| Main-thread task time (s) | 0.55 [0.54-0.55] | 0.28 [0.28-0.28] | 0.27 [0.27-0.27] |
+| Script time (s) | 0.39 [0.39-0.40] | 0.21 [0.20-0.21] | 0.19 [0.19-0.19] |
+| Long tasks (count) | 0.00 [0.00-0.00] | 0.00 [0.00-0.00] | 0.00 [0.00-0.00] |
+| Long tasks (total ms) | 0.00 [0.00-0.00] | 0.00 [0.00-0.00] | 0.00 [0.00-0.00] |
+| Key-to-first-drawn-frame, Down (ms) | 54.2 [52.5-57.5] | 38.5 [38.2-39.2] | 36.9 [36.7-37.6] |
+| Key-to-first-drawn-frame, Up (ms) | 34.4 [27.3-43.8] | 9.10 [8.20-13.9] | 8.60 [8.00-9.80] |
+| JS heap after window, post-GC (MB) | 94.9 [94.8-95.0] | 92.2 [90.1-92.9] | 88.3 [88.3-88.4] |
+| Elements | 850 [850-850] | 850 [850-850] | 850 [850-850] |
+| Renderer nodes | 443 [443-443] | 445 [445-445] | 438 [438-440] |
+| Load avg 1-min (start/end max) | 15.1 [11.9-15.4] | 15.1 [10.8-16.0] | 14.1 [10.8-15.3] |
+
+Home Down/Up, 4x
+
+| Metric | Stock | Compat | Direct |
+|---|---|---|---|
+| Renderer frame time, median (ms) | 3.50 [3.50-3.70] | 0.90 [0.80-1.00] | 0.60 [0.60-0.70] |
+| Renderer frame time, p95 (ms) | 5.90 [5.80-5.90] | 1.60 [1.30-1.80] | 1.30 [1.20-1.30] |
+| Frames drawn | 222 [222-225] | 212 [211-212] | 212 [212-213] |
+| Draw calls per frame, median | 203 [203-203] | 5.00 [5.00-5.00] | 5.00 [5.00-5.00] |
+| Texture uploads | 2.00 [2.00-22.0] | 11.0 [11.0-11.0] | 11.0 [11.0-11.0] |
+| Main-thread task time (s) | 1.96 [1.92-2.06] | 0.94 [0.90-1.02] | 0.90 [0.90-0.91] |
+| Script time (s) | 1.42 [1.41-1.50] | 0.74 [0.71-0.81] | 0.69 [0.68-0.69] |
+| Long tasks (count) | 1.00 [1.00-2.00] | 1.00 [1.00-3.00] | 1.00 [1.00-1.00] |
+| Long tasks (total ms) | 159 [158-215] | 143 [143-256] | 141 [139-142] |
+| Key-to-first-drawn-frame, Down (ms) | 194 [190-241] | 184 [184-189] | 180 [178-181] |
+| Key-to-first-drawn-frame, Up (ms) | 65.5 [46.5-67.2] | 37.5 [36.9-44.1] | 36.5 [36.3-37.6] |
+| JS heap after window, post-GC (MB) | 94.8 [94.8-95.4] | 90.1 [90.0-90.1] | 88.4 [88.3-88.4] |
+| Elements | 850 [850-850] | 850 [850-850] | 850 [850-850] |
+| Renderer nodes | 443 [443-443] | 445 [445-445] | 438 [438-438] |
+| Load avg 1-min (start/end max) | 15.3 [10.8-16.0] | 14.8 [10.2-16.1] | 15.3 [10.2-16.1] |
+
+Home load, 1x
+
+| Metric | Stock | Compat | Direct |
+|---|---|---|---|
+| Main-thread task time (s) | 0.86 [0.83-1.03] | 0.71 [0.60-0.76] | 0.72 [0.71-0.73] |
+| Script time (s) | 0.64 [0.62-0.78] | 0.48 [0.47-0.59] | 0.58 [0.56-0.58] |
+| Long tasks (count) | 3.00 [3.00-5.00] | 2.00 [2.00-3.00] | 3.00 [3.00-3.00] |
+| Long tasks (total ms) | 410 [403-541] | 309 [305-373] | 366 [357-383] |
+| Frames drawn | 159 [157-159] | 137 [137-137] | 139 [139-140] |
+| Renderer rAF ms total | 102 [93.8-104] | 52.8 [49.3-54.2] | 47.1 [46.1-47.7] |
+| Texture uploads | 74.0 [74.0-94.0] | 63.0 [63.0-64.0] | 65.0 [65.0-65.0] |
+| JS heap post-GC (MB) | 94.6 [92.6-96.6] | 90.5 [89.4-92.3] | 90.6 [90.4-90.6] |
+| Load avg (max) | 7.08 [6.51-7.46] | 7.81 [7.08-8.05] | 7.26 [7.04-7.42] |
+
+Home load, 4x
+
+| Metric | Stock | Compat | Direct |
+|---|---|---|---|
+| Main-thread task time (s) | 3.03 [2.98-3.14] | 2.84 [2.23-2.97] | 2.10 [2.08-2.16] |
+| Script time (s) | 2.34 [2.33-2.46] | 2.44 [1.95-2.55] | 1.81 [1.79-1.82] |
+| Long tasks (count) | 6.00 [5.00-6.00] | 7.00 [4.00-7.00] | 4.00 [4.00-4.00] |
+| Long tasks (total ms) | 1832 [1741-1907] | 2078 [1661-2166] | 1520 [1473-1532] |
+| Frames drawn | 120 [120-122] | 99.0 [99.0-114] | 104 [101-118] |
+| Renderer rAF ms total | 319 [311-326] | 174 [165-176] | 151 [147-155] |
+| Texture uploads | 124 [74.0-124] | 64.0 [63.0-65.0] | 63.0 [63.0-63.0] |
+| JS heap post-GC (MB) | 94.2 [94.0-94.5] | 91.4 [89.4-91.9] | 87.8 [87.7-88.0] |
+| Load avg (max) | 6.61 [6.08-6.73] | 7.00 [6.52-7.23] | 6.31 [6.22-7.58] |
+
+Production builds (`LNG_BUILD=<mode>` per mode, served by `vite preview`, same harness; this is the closer one to a TV build):
+
+Home Down/Up, 1x
+
+| Metric | Stock | Compat | Direct |
+|---|---|---|---|
+| Renderer frame time, median (ms) | 0.50 [0.50-0.60] | 0.20 [0.20-0.20] | 0.20 [0.20-0.20] |
+| Renderer frame time, p95 (ms) | 0.90 [0.90-0.90] | 0.40 [0.40-0.40] | 0.30 [0.30-0.30] |
+| Frames drawn | 236 [234-238] | 220 [220-221] | 220 [220-221] |
+| Draw calls per frame, median | 201 [201-202] | 5.00 [5.00-5.00] | 5.00 [5.00-5.00] |
+| Texture uploads | 2.00 [2.00-22.0] | 11.0 [11.0-11.0] | 11.0 [11.0-11.0] |
+| Main-thread task time (s) | 0.32 [0.31-0.33] | 0.22 [0.22-0.23] | 0.21 [0.21-0.21] |
+| Script time (s) | 0.25 [0.24-0.25] | 0.15 [0.15-0.16] | 0.14 [0.14-0.14] |
+| Long tasks (count) | 0.00 [0.00-0.00] | 0.00 [0.00-0.00] | 0.00 [0.00-0.00] |
+| Long tasks (total ms) | 0.00 [0.00-0.00] | 0.00 [0.00-0.00] | 0.00 [0.00-0.00] |
+| Key-to-first-drawn-frame, Down (ms) | 43.7 [42.9-44.2] | 13.0 [12.9-13.9] | 12.2 [12.0-12.2] |
+| Key-to-first-drawn-frame, Up (ms) | 43.3 [28.7-45.3] | 9.20 [4.80-12.6] | 5.20 [4.50-8.80] |
+| JS heap after window, post-GC (MB) | 32.3 [32.3-33.6] | 30.6 [30.6-31.8] | 28.7 [28.7-28.7] |
+| Elements | 850 [850-850] | 850 [850-850] | 850 [850-850] |
+| Renderer nodes | 435 [435-435] | 437 [437-437] | 438 [438-438] |
+| Load avg 1-min (start/end max) | 5.41 [5.20-5.56] | 5.99 [5.75-6.90] | 5.57 [5.04-5.89] |
+
+Home Down/Up, 4x
+
+| Metric | Stock | Compat | Direct |
+|---|---|---|---|
+| Renderer frame time, median (ms) | 2.20 [2.10-2.30] | 0.70 [0.70-0.70] | 0.60 [0.60-0.60] |
+| Renderer frame time, p95 (ms) | 3.90 [3.70-4.00] | 1.40 [1.40-1.40] | 1.30 [1.20-1.30] |
+| Frames drawn | 236 [234-236] | 218 [218-219] | 218 [217-220] |
+| Draw calls per frame, median | 202 [202-249] | 5.00 [5.00-5.00] | 5.00 [5.00-5.00] |
+| Texture uploads | 2.00 [2.00-22.0] | 11.0 [11.0-11.0] | 11.0 [11.0-11.0] |
+| Main-thread task time (s) | 1.15 [1.13-1.35] | 0.72 [0.71-0.72] | 0.69 [0.68-0.73] |
+| Script time (s) | 0.96 [0.93-1.12] | 0.54 [0.53-0.55] | 0.50 [0.50-0.51] |
+| Long tasks (count) | 1.00 [1.00-3.00] | 1.00 [1.00-1.00] | 0.00 [0.00-1.00] |
+| Long tasks (total ms) | 55.0 [55.0-191] | 55.0 [54.0-55.0] | 0.00 [0.00-50.0] |
+| Key-to-first-drawn-frame, Down (ms) | 82.8 [60.2-85.9] | 61.9 [58.3-63.1] | 56.8 [53.5-57.4] |
+| Key-to-first-drawn-frame, Up (ms) | 42.5 [32.9-46.5] | 18.5 [18.4-19.1] | 17.8 [16.8-18.5] |
+| JS heap after window, post-GC (MB) | 32.3 [32.3-33.8] | 30.6 [30.6-30.6] | 28.7 [28.7-28.7] |
+| Elements | 850 [850-850] | 850 [850-850] | 850 [850-850] |
+| Renderer nodes | 435 [435-435] | 437 [437-437] | 438 [438-438] |
+| Load avg 1-min (start/end max) | 5.67 [5.47-6.30] | 5.69 [5.11-5.91] | 6.04 [5.66-6.17] |
+
+Home load, 1x
+
+| Metric | Stock | Compat | Direct |
+|---|---|---|---|
+| Main-thread task time (s) | 0.41 [0.41-0.42] | 0.35 [0.34-0.36] | 0.30 [0.30-0.31] |
+| Script time (s) | 0.30 [0.29-0.30] | 0.23 [0.23-0.23] | 0.21 [0.21-0.21] |
+| Long tasks (count) | 1.00 [1.00-2.00] | 1.00 [1.00-1.00] | 1.00 [1.00-1.00] |
+| Long tasks (total ms) | 88.0 [87.0-136] | 82.0 [78.0-84.0] | 74.0 [74.0-76.0] |
+| Frames drawn | 171 [160-173] | 148 [146-149] | 150 [148-150] |
+| Renderer rAF ms total | 81.5 [79.4-84.1] | 47.8 [47.6-47.8] | 43.5 [42.8-43.5] |
+| Texture uploads | 94.0 [74.0-124] | 63.0 [63.0-63.0] | 63.0 [63.0-63.0] |
+| JS heap post-GC (MB) | 31.8 [31.8-31.8] | 30.0 [28.9-30.1] | 28.2 [28.2-28.2] |
+| Load avg (max) | 5.42 [5.11-5.99] | 5.75 [5.66-6.46] | 5.20 [4.82-5.31] |
+
+Home load, 4x
+
+| Metric | Stock | Compat | Direct |
+|---|---|---|---|
+| Main-thread task time (s) | 1.48 [1.44-1.49] | 1.22 [1.21-1.22] | 1.14 [1.14-1.20] |
+| Script time (s) | 1.17 [1.15-1.18] | 0.94 [0.93-0.95] | 0.87 [0.85-0.88] |
+| Long tasks (count) | 3.00 [2.00-3.00] | 3.00 [3.00-3.00] | 3.00 [3.00-3.00] |
+| Long tasks (total ms) | 641 [610-657] | 618 [617-630] | 566 [561-583] |
+| Frames drawn | 142 [132-144] | 124 [124-125] | 126 [111-129] |
+| Renderer rAF ms total | 281 [263-286] | 159 [158-160] | 144 [142-147] |
+| Texture uploads | 124 [124-124] | 63.0 [63.0-63.0] | 63.0 [63.0-64.0] |
+| JS heap post-GC (MB) | 31.7 [31.7-31.7] | 30.0 [30.0-30.1] | 28.2 [28.1-28.2] |
+| Load avg (max) | 6.04 [5.84-6.25] | 5.41 [5.23-6.01] | 5.89 [5.13-5.90] |
+
+Enter-to-Home times are mostly the PMS and plex.tv requests (they're bimodal, cache warm or not), so they're left out.
+
+Element microbench (`ELEMENT_COST=1 NODE_OPTIONS=--expose-gc pnpm exec vitest run elementCost --pool=forks` in packages/react-native-webtv): 300 tiles of view > view > image + text with plugin-css-transform, flattening and rounded clipping on, both on the compat stage, Node 24, medians of 10 rounds:
+
+```
+compat  mount 5.8 us/el, restyle 0.88, layout writes 12.08, destroy 0.56; retained 2836 B/el, 48.4 heap objects/el
+direct  mount 2.58 us/el, restyle 0.61, layout writes 1.2, destroy 0.35; retained 1486 B/el, 18.1 heap objects/el
+```
+
+How to read it. Against stock, direct keeps everything section 5 found (renderer frame 0.6 vs 2.2 ms at 4x in production, 5 vs 202 draw calls, about 40% less main-thread time). Against compat, direct takes the element layer down: 2.3x cheaper mounts, 10x cheaper layout write-back, 18 vs 48 heap objects and 1.5 vs 2.8 KB per element in the microbench, which on Home shows as 4-14% less main-thread time than compat in the production runs (Down/Up 0.69 vs 0.72 s at 4x, load 1.14 vs 1.22 s at 4x and 0.30 vs 0.35 s at 1x; 2.10 vs 2.84 s on the dev-server load at 4x, no difference there at 1x), 2 MB less heap (28.2 vs 30.0 MB in production) and a slightly cheaper renderer frame (0.6 vs 0.7 ms at 4x, probably fewer object shapes in CompatStage's traversal). In the dev-server CPU profiles (100 us sampling, Home load and Down/Up at 4x), the element layer's self time went from 41 to 18 ms on load and from 57 to 34 ms on Down/Up, and GC on load from 30 to 17 ms. The rest of the frame didn't change, which is why the totals move less than the element numbers: the element layer was already the smaller part once the renderer was replaced.
+
+What's still slow, ranked by self time in the direct dev profile of Down/Up at 4x (823 ms busy in the 6 s window):
+1. Renderer frame, 208 ms: CompatStage `_visit` 72, `_draw` 26, texture uploads 15, `_drawText` 11, QuadBatcher vertex writes 10, `computeWorld` 9. That's the improvement branch's area (ruud/own-renderer-improve).
+2. Flexbox, 195 ms: yoga wasm about 70, `YogaManager._getUpdatedStyles` 32, `LightningManager._applyUpdates` 26 (it reads `el.style` through the Proxy several times per element per pass, which is most of the 7 ms the style trap costs).
+3. React, 190 ms, of which `jsxDEV` alone is 113: dev-build only. In production the whole Down/Up is 0.69 s of task time at 4x.
+4. App code and misc, 140 ms.
+5. GC, 36 ms.
+6. Element layer, 34 ms: style Proxy trap 7, event emits 3, the update slow path 3, setNodeProp 3.
+7. css-transform, reanimated and the RN polyfills, 20 ms.

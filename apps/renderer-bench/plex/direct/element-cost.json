@@ -1,0 +1,18 @@
+{
+  "stock (flatten)": {
+    "mount us/el": 5.798229166666715,
+    "restyle us/el": 0.8790283333333567,
+    "layout us/el": 12.07562500000004,
+    "destroy us/el": 0.5578474999999609,
+    "retained bytes/el": 2835.6036636136555,
+    "heap objects/el": 48.4421315570358
+  },
+  "direct (flatten)": {
+    "mount us/el": 2.5778124999999363,
+    "restyle us/el": 0.6117016666667041,
+    "layout us/el": 1.2020483333333232,
+    "destroy us/el": 0.35447916666669244,
+    "retained bytes/el": 1485.7685262281432,
+    "heap objects/el": 18.072439633638634
+  }
+}
