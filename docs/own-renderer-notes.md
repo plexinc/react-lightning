@@ -125,3 +125,34 @@ Recommendation: go on a subset, conditional on TV numbers. Not a full replacemen
 - In parallel, try the two cheap wins on the current stack, because the measurements say that's where most of the gain is: batch Rounded/Border/RoundedWithBorder in Lightning by moving radius/border into vertex attributes (132 to about 10 draws here) and stop re-binding vertex attributes per draw; and slim the element layer at mount (the 178 objects per element). Both are patches to a dependency we already patch, measurable with the same bench in days.
 - If after that the TV numbers still show the Lightning frame and node layer as the bottleneck, and Comcast confirms X1 doesn't need Lightning, the own renderer is a credible path: the MVP shows 3-4x less JS per step, 3.5x faster mount commit and about 8x fewer objects per element, in about 1,400 lines. Budget it as a 4-6 month project, keep react-lightning's element API as the boundary at first (SceneNode implements it) so plugins and Plex code don't all move at once, and decide SDF vs canvas text on device data.
 
+
+## 5. Compat layer: the real Plex app on the MVP renderer
+
+`packages/renderer/src/compat` (`@plextv/react-lightning-renderer/compat` plus `/webgl`, `/canvas`, `/inspector`, `/utils`, `/platforms`, `/webgl/shaders`) stands in for the slice of `@lightningjs/renderer` 3.1.1 that react-lightning 0.5.0-alpha.9 and the Plex app touch. Everything above it (react-lightning, react-native-lightning, plugin-flexbox, css-transform, reanimated, FocusManager, VirtualList, Plex code) runs unchanged. Only react-lightning imports the renderer at runtime (`RendererMain`, `WebGlCoreRenderer`, `SdfTextRenderer`, `CanvasTextRenderer`, `CanvasCoreRenderer`, the shader modules); Plex adds `Inspector` and type-only imports.
+
+What it maps: CoreNode/CoreTextNode props as prototype accessors over underscored fields (so react-lightning's dev "reserved prop" check stays quiet), `parent`/`children`/`sortChildren`, renderState + `inViewport`/`inBounds`/`outOfBounds` events (queued until the frame ends), image `src`/`texture` with `loaded`/`failed` payloads and `texture.state`/`dimensions`, resizeMode cover/contain, mountX/Y, `node.animate()` with Lightning's controller semantics (start values read at creation, `stop()` resets, `stopped`/`tick`/`animating`, cubic-bezier and named easings, loop, `stopMethod: 'reverse'`, shaderProps), `frameTick`/`fpsUpdate` on the renderer and `idle`/`active` on `stage.eventBus`, `targetFrameTime`. Shaders: Rounded, Border, RoundedWithBorder (numeric or string align, gap, per-side widths as extra quads), LinearGradient and UltraBlur as per-vertex-color quads, all in the same batch. Text: line breaking with the msdf JSON advances and kerning (so it agrees with plugin-flexbox's measurement), drawn by canvas from the original TTF, w/h setters on text nodes become maxWidth/maxHeight like Lightning's.
+
+Not done or approximated: SpinnerArc and SocialProofAvatarMask (not drawn / unmasked), rounded clipping (innermost clip only, evaluated as the child quad's SDF, so it fails for children with their own radius), per-corner radii (max wins), RTT, device pixel ratio, Inspector (no-op, so no testID DOM mirror), context loss, freeing textures of mounted offscreen nodes. Text sits about 1-2 px lower than SDF text.
+
+Run it: `apps/renderer-bench/plex/dev-compat.mts` wraps the app's own `createViteConfig` and aliases `@lightningjs/renderer*` to the compat files, kept external from the dep prebundle so there's one copy and edits apply. No change to the app repo.
+
+Home scroll (8 down, 8 up, 700 ms apart), headless Chrome 155, M1 Max, alternating runs, medians of 5 (`apps/renderer-bench/plex/measure.jsonl`):
+
+```
+metric                                      4x stock (n=5)            4x compat (n=5)           6x stock (n=5)            6x compat (n=5)           
+renderer frame median ms (drawing frames)   6.80 [6.4-6.9]            1.50 [1.4-1.5]            8.30 [8.3-8.5]            2.30 [1.9-2.4]            
+renderer frame p95 ms                       10.5 [10.1-11.9]          3.80 [3.6-4.9]            14.9 [14.7-15.3]          10.9 [6.3-11.3]           
+renderer rAF ms total (drawing frames)      2737.0 [2471.8-3017.6]    854.1 [839.2-883.0]       2441.0 [2368.3-2460.3]    958.7 [894.4-1035.5]      
+all rAF callbacks ms total                  2862.4 [2578.1-3161.2]    951.1 [929.0-974.6]       2551.1 [2477.9-2568.6]    1048.8 [963.4-1128.4]     
+frames drawn                                405.0 [365.0-457.0]       458.0 [422.0-480.0]       283.0 [263.0-288.0]       271.0 [200.0-315.0]       
+draw calls per frame median                 203.0 [203.0-209.0]       5.00 [5.0-5.0]            203.0 [202.0-203.0]       5.00 [5.0-5.0]            
+draw calls per frame p95                    270.0 [270.0-274.0]       5.00 [5.0-5.0]            266.0 [259.0-270.0]       5.00 [5.0-5.0]            
+texture uploads                             130.0 [130.0-132.0]       128.0 [127.0-128.0]       130.0 [130.0-154.0]       133.0 [128.0-141.0]       
+main-thread task s (TaskDuration)           10.8 [10.7-10.9]          7.67 [7.0-8.2]            10.9 [10.9-11.0]          10.3 [9.4-10.5]           
+script s (ScriptDuration)                   9.25 [9.1-9.3]            7.14 [6.5-7.6]            9.51 [9.5-9.6]            9.77 [8.8-10.0]           
+JS heap after GC MB (Home, before)          94.5 [93.6-95.3]          90.5 [90.2-92.2]          95.2 [94.9-95.6]          90.2 [90.2-90.3]          
+JS heap after GC MB (after scroll)          98.6 [98.5-99.9]          93.9 [93.7-95.3]          98.0 [98.0-98.6]          93.6 [93.4-93.6]          
+renderer nodes                              443.0 [442.0-446.0]       444.0 [444.0-445.0]       443.0 [442.0-443.0]       444.0 [444.0-444.0]       
+```
+
+Load average was 8-27 on 10 cores during the runs (other agents), and rose through the campaign, so the main-thread and script totals are noisy; compat's grew with load while stock's sat near the wall-time cap. The renderer frame and draw-call numbers are stable. Same 444 renderer nodes in both once `zIndexLocked` stayed undefined (a 0 there made react-lightning materialize 250 flattened views).
