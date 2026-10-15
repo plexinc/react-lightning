@@ -160,8 +160,8 @@ export class CompatStage {
 
     this.gl = gl;
     this.textures = new TextureManager(gl, () => this.requestRender(), {
-      // The text atlas keeps its two 4 MB pages outside this cap.
-      memoryCap: (options.textureMemoryCap ?? 64 * 1024 * 1024) - 8 * 1024 * 1024,
+      // The text atlas keeps its (up to) three 4 MB pages outside this cap.
+      memoryCap: (options.textureMemoryCap ?? 64 * 1024 * 1024) - 12 * 1024 * 1024,
     });
     this._batcher = new QuadBatcher(gl);
     this.textAtlas = new TextAtlas(gl);

@@ -152,6 +152,8 @@ export type TextEntry = {
   shelf: number;
   sx: number;
   sw: number;
+  /** Height of the shelf the slot sits on. */
+  sh: number;
 };
 
 type Page = { tex: Texture; packer: ShelfPacker };
@@ -189,7 +191,7 @@ export class TextAtlas {
   public constructor(gl: WebGLRenderingContext, opts: TextAtlasOptions = {}) {
     this._gl = gl;
     this._size = Math.min(opts.pageSize ?? 1024, gl.getParameter(gl.MAX_TEXTURE_SIZE) as number);
-    this._maxPages = opts.maxPages ?? 2;
+    this._maxPages = opts.maxPages ?? 3;
   }
 
   /** The entry for `key`, rasterizing with `draw` on a miss; null when the canvas couldn't be drawn. */
@@ -233,7 +235,7 @@ export class TextAtlas {
       tex.state = TEX_READY;
       this.bytes += tex.bytes;
       this.standalone++;
-      entry = { key, tex, u0: 0, v0: 0, u1: 1, v1: 1, w, h, refCount: 1, page: -1, shelf: 0, sx: 0, sw: 0 };
+      entry = { key, tex, u0: 0, v0: 0, u1: 1, v1: 1, w, h, refCount: 1, page: -1, shelf: 0, sx: 0, sw: 0, sh: 0 };
     } else {
       const p = this._pages[page];
       const slot = this._slot;
@@ -264,6 +266,7 @@ export class TextAtlas {
         shelf: slot.shelf,
         sx: slot.x,
         sw: slot.w,
+        sh: slot.h,
       };
     }
 
@@ -316,7 +319,12 @@ export class TextAtlas {
       return pages[pages.length - 1].packer.alloc(w, h, slot) ? pages.length - 1 : -1;
     }
 
+    // Only strings on shelves this one could use: anything else would be evicted for nothing.
     for (const old of this._lru.keys()) {
+      if (old.sh < h || old.sh - h >= 8) {
+        continue;
+      }
+
       this._lru.delete(old);
       this._entries.delete(old.key);
       this.evictions++;
