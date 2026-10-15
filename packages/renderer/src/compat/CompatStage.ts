@@ -967,12 +967,24 @@ export class CompatStage {
     const vertical = Math.abs(cos) < 1e-4;
 
     if (!horizontal && !vertical) {
-      const c0 = colorAt(distAt(0, 0));
-      const c1 = colorAt(distAt(w, 0));
-      const c2 = colorAt(distAt(0, h));
-      const c3 = colorAt(distAt(w, h));
+      // Any other angle: a grid with the exact color at every vertex, still one batch.
+      const N = 12;
 
-      this._quad(node, white, 0, 0, w, h, 0, 0, 1, 1, c0, c1, c2, c3, 0, 0, w, h, radius, 0, 0, clip, radii);
+      for (let j = 0; j < N; j++) {
+        const y0 = (j / N) * h;
+        const y1 = ((j + 1) / N) * h;
+
+        for (let i = 0; i < N; i++) {
+          const x0 = (i / N) * w;
+          const x1 = ((i + 1) / N) * w;
+
+          this._quad(
+            node, white, x0, y0, x1, y1, 0, 0, 1, 1,
+            colorAt(distAt(x0, y0)), colorAt(distAt(x1, y0)), colorAt(distAt(x0, y1)), colorAt(distAt(x1, y1)),
+            0, 0, w, h, radius, 0, 0, clip, radii,
+          );
+        }
+      }
 
       return;
     }
