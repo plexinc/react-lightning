@@ -93,7 +93,8 @@ export class CompatStage {
     textLayouts: 0,
   };
   public targetFrameTime = 0;
-  public textGamma = 1;
+  /** Canvas glyphs come out heavier than Lightning's SDF text; squaring coverage brings the weight close. */
+  public textGamma = 2;
   public boundsMargin: number[];
   public readonly shManager: {
     registerShaderType: (name: string, type: ShaderType) => void;
