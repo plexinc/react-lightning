@@ -295,6 +295,18 @@ export class TextAtlas {
     this._lru.set(entry, true);
   }
 
+  /** After a context restore: every page is gone, so start empty (callers acquire again). */
+  public restore(): void {
+    for (const entry of this._entries.values()) {
+      entry.tex.glTexture = null;
+    }
+
+    this._entries.clear();
+    this._lru.clear();
+    this._pages.length = 0;
+    this.bytes = 0;
+  }
+
   public get pageCount(): number {
     return this._pages.length;
   }

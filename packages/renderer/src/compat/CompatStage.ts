@@ -115,6 +115,7 @@ export class CompatStage {
   private readonly _w: number;
   private readonly _h: number;
   private _scheduled = false;
+  private _lost = false;
   private _active = false;
   private _lastFrame = 0;
   private readonly _clipStack: Rect[] = [];
@@ -191,6 +192,43 @@ export class CompatStage {
 
     window.addEventListener('resize', redraw);
     document.addEventListener('visibilitychange', redraw);
+
+    // TVs drop the context on suspend or memory pressure; preventDefault is what allows a restore.
+    canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      this._lost = true;
+    });
+    canvas.addEventListener('webglcontextrestored', () => this._restore());
+  }
+
+  private _restore(): void {
+    this._dropGpuState(this.root);
+    this.textures.restore();
+    this.textAtlas.restore();
+    this._batcher.restore();
+    this._lost = false;
+    this.requestRender();
+  }
+
+  /** Lets go of every texture a node holds so the next frame acquires (and uploads) it again. */
+  private _dropGpuState(node: CoreNode): void {
+    const t = node._texture;
+
+    if (t?.gl) {
+      this.textures.release(t.gl);
+      t.gl = null;
+    }
+
+    if (node._textEntry) {
+      this.textAtlas.release(node._textEntry);
+      node._textEntry = null;
+    }
+
+    node._textKey = '';
+
+    for (let i = 0; i < node.children.length; i++) {
+      this._dropGpuState(node.children[i]);
+    }
   }
 
   public warnOnce(key: string, msg: string): void {
@@ -268,6 +306,10 @@ export class CompatStage {
 
   private readonly _frame = (now: number): void => {
     this._scheduled = false;
+
+    if (this._lost) {
+      return;
+    }
 
     if (this.targetFrameTime > 0 && now - this._lastFrame < this.targetFrameTime - 2) {
       this.requestRender();

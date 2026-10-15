@@ -66,6 +66,34 @@ export class TextureManager {
     this._uploadsPerFrame = opts.uploadsPerFrame ?? 8;
 
     this.white = new Texture('__white');
+    this.white.refCount = 1;
+    this._createWhite();
+  }
+
+  /**
+   * After a context restore every GL texture is gone: drop what was uploaded
+   * (callers have released their references and acquire again), keep loads
+   * still in flight so they upload into the new context.
+   */
+  public restore(): void {
+    for (const [key, tex] of this._cache) {
+      if (tex.state === TEX_LOADING || tex.state === TEX_PENDING_UPLOAD) {
+        continue;
+      }
+
+      this._cache.delete(key);
+      this._lru.delete(tex);
+      tex.glTexture = null;
+      tex.state = TEX_FAILED;
+    }
+
+    this.memoryUsed = 0;
+    this._createWhite();
+  }
+
+  private _createWhite(): void {
+    const gl = this._gl;
+
     this.white.glTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.white.glTexture);
     gl.texImage2D(
@@ -83,7 +111,6 @@ export class TextureManager {
     this.white.w = 1;
     this.white.h = 1;
     this.white.state = TEX_READY;
-    this.white.refCount = 1;
   }
 
   public acquireImage(src: string): Texture {

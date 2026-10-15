@@ -133,14 +133,14 @@ export class QuadBatcher {
   public quads = 0;
 
   private readonly _gl: WebGLRenderingContext;
-  private readonly _program: WebGLProgram;
-  private readonly _vbo: WebGLBuffer;
-  private readonly _ibo: WebGLBuffer;
+  private _program!: WebGLProgram;
+  private _vbo!: WebGLBuffer;
+  private _ibo!: WebGLBuffer;
   private readonly _f32: Float32Array;
   private readonly _u32: Uint32Array;
   private readonly _units: number;
   private readonly _bound: (Texture | null)[];
-  private readonly _uRes: WebGLUniformLocation | null;
+  private _uRes: WebGLUniformLocation | null = null;
   private _count = 0;
   private _texCount = 0;
   private _batchStart = 0;
@@ -155,6 +155,18 @@ export class QuadBatcher {
     this._gl = gl;
     this._units = Math.max(1, Math.min(8, gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS) as number));
     this._bound = Array.from({ length: this._units }, () => null);
+
+    const buffer = new ArrayBuffer(MAX_QUADS * 4 * BYTES_PER_VERTEX);
+
+    this._f32 = new Float32Array(buffer);
+    this._u32 = new Uint32Array(buffer);
+    this.restore();
+  }
+
+  /** (Re)creates every GL object; also what a restored context needs. */
+  public restore(): void {
+    const gl = this._gl;
+
     this._program = createProgram(gl, VS, fragmentSource(this._units));
     gl.useProgram(this._program);
 
@@ -163,14 +175,9 @@ export class QuadBatcher {
     }
 
     this._uRes = gl.getUniformLocation(this._program, 'uRes');
-
-    const buffer = new ArrayBuffer(MAX_QUADS * 4 * BYTES_PER_VERTEX);
-
-    this._f32 = new Float32Array(buffer);
-    this._u32 = new Uint32Array(buffer);
     this._vbo = must(gl.createBuffer(), 'buffer');
     gl.bindBuffer(gl.ARRAY_BUFFER, this._vbo);
-    gl.bufferData(gl.ARRAY_BUFFER, buffer.byteLength, gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, this._f32.byteLength, gl.DYNAMIC_DRAW);
 
     const indices = new Uint16Array(MAX_QUADS * 6);
 
@@ -187,14 +194,9 @@ export class QuadBatcher {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._ibo);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
-    const attr = (
-      name: string,
-      size: number,
-      type: number,
-      normalized: boolean,
-      offset: number,
-    ) => {
-      const loc = gl.getAttribLocation(this._program, name);
+    const program = this._program;
+    const attr = (name: string, size: number, type: number, normalized: boolean, offset: number) => {
+      const loc = gl.getAttribLocation(program, name);
 
       if (loc < 0) {
         return;
@@ -216,6 +218,11 @@ export class QuadBatcher {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.disable(gl.DEPTH_TEST);
+    this._count = 0;
+    this._batchCount = 0;
+    this._batchStart = 0;
+    this._texCount = 0;
+    this.resetBindings();
   }
 
   public begin(width: number, height: number, clearColor: number): void {
