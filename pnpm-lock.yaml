@@ -608,15 +608,9 @@ importers:
 
   packages/react-native-webtv:
     dependencies:
-      '@plextv/react-lightning':
-        specifier: workspace:^
-        version: link:../react-lightning
       '@plextv/react-lightning-renderer':
         specifier: workspace:*
         version: link:../renderer
-      '@plextv/react-native-lightning':
-        specifier: workspace:^
-        version: link:../react-native-lightning
       react:
         specifier: 'catalog:'
         version: 19.2.5
@@ -624,6 +618,15 @@ importers:
       '@lightningjs/renderer':
         specifier: 'catalog:'
         version: 3.1.1(patch_hash=8a9b52055d19d3441ef640e67ba0f603d80233d87dcea76490db2810bb262623)
+      '@plextv/react-lightning':
+        specifier: workspace:*
+        version: link:../react-lightning
+      '@plextv/react-lightning-plugin-css-transform':
+        specifier: workspace:*
+        version: link:../plugin-css-transform
+      '@plextv/react-native-lightning':
+        specifier: workspace:*
+        version: link:../react-native-lightning
       '@repo/configs':
         specifier: workspace:*
         version: link:../configs
@@ -7269,9 +7272,7 @@ snapshots:
       metro-runtime: 0.84.3
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/metro-config@0.85.1(@babel/core@7.29.0)':
     dependencies:
@@ -7281,9 +7282,7 @@ snapshots:
       metro-runtime: 0.84.3
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 

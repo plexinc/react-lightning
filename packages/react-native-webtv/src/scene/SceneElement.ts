@@ -160,6 +160,30 @@ const TEXT_INITIAL_SKIP = new Set([
   'offsetY',
 ]);
 
+const ROOT_FIELDS = [
+  '_x',
+  '_y',
+  '_w',
+  '_h',
+  '_scaleX',
+  '_scaleY',
+  '_rotation',
+  '_pivotX',
+  '_pivotY',
+  '_mountX',
+  '_mountY',
+  '_alpha',
+  '_color',
+  '_zIndex',
+  '_zIndexLocked',
+  '_clipping',
+  '_clipRadius',
+  '_boundsMargin',
+  '_shader',
+  '_texture',
+  '_textureOptions',
+];
+
 function needsRealNode(key: string, value: unknown): boolean {
   if (value == null || !VISUAL_NODE_PROPS.has(key)) {
     return false;
@@ -902,12 +926,13 @@ export class SceneElement {
       }
     }
 
-    this._x = 0;
-    this._y = 0;
-    this._w = root._w;
-    this._h = root._h;
-    this._color = 0;
-    this._alpha = 1;
+    // What the stock element's node becomes: renderer.root's own values, its earlier props dropped.
+    for (let i = 0; i < ROOT_FIELDS.length; i++) {
+      const key = ROOT_FIELDS[i] as string;
+
+      (this as unknown as AnyRecord)[key] = (root as unknown as AnyRecord)[key];
+    }
+
     this._setRenderParent(root);
     this.recalculateVisibility();
   }
