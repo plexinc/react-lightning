@@ -1,39 +1,44 @@
 import type { Texture } from './TextureManager';
 
-// Per vertex: pos(2f) uv(2f) color(4ub) tex(1f) local(2f) size(2f) radius(1f) border(1f) borderColor(4ub)
-const FLOATS_PER_VERTEX = 13;
+// Per vertex: pos(2f) uv(2f) color(4ub) local(2f) size(2f) radii(4us, quarter px) misc(4f: slot + mode * 8, border, p0, p1) borderColor(4ub)
+const FLOATS_PER_VERTEX = 16;
 const BYTES_PER_VERTEX = FLOATS_PER_VERTEX * 4;
 const MAX_QUADS = 8000;
+
+/** Plain quad: texture * color, with the rounded-rect / border SDF. */
+export const MODE_QUAD = 0;
+/** Lightning SpinnerArc: an arc of `p0` thickness (fraction of radius) and `p1` sweep (0..1), color only. */
+export const MODE_SPINNER = 1;
+/** Chroma's SocialProofAvatarMask: texture clipped to a circle, minus the notch when `p0` = 1. */
+export const MODE_AVATAR = 2;
+/** Texture * color with +/-0.5/255 noise, like UltraBlur's dither. */
+export const MODE_DITHER = 3;
 
 const VS = `
 attribute vec2 aPos;
 attribute vec2 aUV;
 attribute vec4 aColor;
-attribute float aTex;
 attribute vec2 aLocal;
 attribute vec2 aSize;
-attribute float aRadius;
-attribute float aBorder;
+attribute vec4 aRadii;
+attribute vec4 aMisc;
 attribute vec4 aBorderColor;
 uniform vec2 uRes;
-varying vec2 vUV;
+varying vec4 vUVLocal;
 varying vec4 vColor;
-varying float vTex;
-varying vec2 vLocal;
-varying vec2 vSize;
-varying float vRadius;
-varying float vBorder;
+varying vec4 vSizeP;
+varying vec4 vRadii;
+varying vec4 vMisc;
 varying vec4 vBorderColor;
 void main() {
   vec2 p = aPos / uRes * 2.0 - 1.0;
   gl_Position = vec4(p.x, -p.y, 0.0, 1.0);
-  vUV = aUV;
+  float mode = floor(aMisc.x / 8.0 + 0.01);
+  vUVLocal = vec4(aUV, aLocal);
   vColor = vec4(aColor.rgb * aColor.a, aColor.a);
-  vTex = aTex;
-  vLocal = aLocal;
-  vSize = aSize;
-  vRadius = aRadius;
-  vBorder = aBorder;
+  vSizeP = vec4(aSize, aMisc.w, 0.0);
+  vRadii = aRadii * 0.25;
+  vMisc = vec4(aMisc.x - mode * 8.0, mode, aMisc.y, aMisc.z);
   vBorderColor = vec4(aBorderColor.rgb * aBorderColor.a, aBorderColor.a);
 }`;
 
@@ -43,7 +48,7 @@ function fragmentSource(units: number): string {
 
   for (let i = 0; i < units; i++) {
     samplers += `uniform sampler2D uT${i};\n`;
-    pick += `${i === 0 ? '' : 'else '}if (vTex < ${i}.5) c = texture2D(uT${i}, vUV);\n`;
+    pick += `${i === 0 ? '' : 'else '}if (vMisc.x < ${i}.5) c = texture2D(uT${i}, vUVLocal.xy);\n`;
   }
 
   return `
@@ -53,26 +58,45 @@ precision highp float;
 precision mediump float;
 #endif
 ${samplers}
-varying vec2 vUV;
+varying vec4 vUVLocal;
 varying vec4 vColor;
-varying float vTex;
-varying vec2 vLocal;
-varying vec2 vSize;
-varying float vRadius;
-varying float vBorder;
+varying vec4 vSizeP;
+varying vec4 vRadii;
+varying vec4 vMisc;
 varying vec4 vBorderColor;
 void main() {
   vec4 c = vec4(1.0);
   ${pick}
   c *= vColor;
-  if (vRadius > 0.0 || vBorder > 0.0) {
-    vec2 halfSize = vSize * 0.5;
-    vec2 p = vLocal - halfSize;
-    float r = min(vRadius, min(halfSize.x, halfSize.y));
+  float mode = vMisc.y;
+  if (mode > 0.5) {
+    vec2 uv = vUVLocal.zw / vSizeP.xy * 2.0 - 1.0;
+    if (mode < 1.5) {
+      float r = length(uv);
+      float halfBand = vMisc.w * 0.5;
+      float radial = 1.0 - smoothstep(halfBand - 0.02, halfBand + 0.02, abs(r - (1.0 - halfBand)));
+      float t = fract(atan(uv.x, -uv.y) / 6.28318530718 + 1.0);
+      float arc = smoothstep(0.0, 0.02, t) * (1.0 - smoothstep(vSizeP.z - 0.02, vSizeP.z + 0.02, t));
+      gl_FragColor = vColor * (radial * arc);
+      return;
+    }
+    if (mode < 2.5) {
+      float mask = 1.0 - smoothstep(0.98, 1.02, length(uv));
+      mask *= mix(1.0, smoothstep(1.105, 1.145, length(uv - vec2(-1.616, 0.0))), vMisc.w);
+      gl_FragColor = c * mask;
+      return;
+    }
+    c.rgb += (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5) / 255.0 * c.a;
+  }
+  if (vRadii.x + vRadii.y + vRadii.z + vRadii.w > 0.0 || vMisc.z > 0.0) {
+    vec2 halfSize = vSizeP.xy * 0.5;
+    vec2 p = vUVLocal.zw - halfSize;
+    vec2 rr = p.x > 0.0 ? vRadii.yz : vRadii.xw;
+    float r = min(p.y > 0.0 ? rr.y : rr.x, min(halfSize.x, halfSize.y));
     vec2 q = abs(p) - halfSize + r;
     float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
-    if (vBorder > 0.0) {
-      c = mix(c, vBorderColor, clamp(0.5 + d + vBorder, 0.0, 1.0));
+    if (vMisc.z > 0.0) {
+      c = mix(c, vBorderColor, clamp(0.5 + d + vMisc.z, 0.0, 1.0));
     }
     c *= clamp(0.5 - d, 0.0, 1.0);
   }
@@ -87,7 +111,9 @@ type Batch = {
   count: number;
   textures: (Texture | null)[];
   texCount: number;
+  /** Copied at flush: callers reuse their clip rects while the frame is still being built. */
   scissor: Rect | null;
+  hasScissor: boolean;
 };
 
 /**
@@ -173,12 +199,11 @@ export class QuadBatcher {
     attr('aPos', 2, gl.FLOAT, false, 0);
     attr('aUV', 2, gl.FLOAT, false, 8);
     attr('aColor', 4, gl.UNSIGNED_BYTE, true, 16);
-    attr('aTex', 1, gl.FLOAT, false, 20);
-    attr('aLocal', 2, gl.FLOAT, false, 24);
-    attr('aSize', 2, gl.FLOAT, false, 32);
-    attr('aRadius', 1, gl.FLOAT, false, 40);
-    attr('aBorder', 1, gl.FLOAT, false, 44);
-    attr('aBorderColor', 4, gl.UNSIGNED_BYTE, true, 48);
+    attr('aLocal', 2, gl.FLOAT, false, 20);
+    attr('aSize', 2, gl.FLOAT, false, 28);
+    attr('aRadii', 4, gl.UNSIGNED_SHORT, false, 36);
+    attr('aMisc', 4, gl.FLOAT, false, 44);
+    attr('aBorderColor', 4, gl.UNSIGNED_BYTE, true, 60);
 
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -280,6 +305,10 @@ export class QuadBatcher {
     radius: number,
     border: number,
     borderColor: number,
+    radii: ArrayLike<number> | null = null,
+    mode = MODE_QUAD,
+    p0 = 0,
+    p1 = 0,
   ): void {
     let slot = -1;
 
@@ -310,12 +339,26 @@ export class QuadBatcher {
     const f = this._f32;
     const u = this._u32;
     const bc = abgr(borderColor);
+    let ra: number;
+    let rb: number;
+
+    if (radii) {
+      ra = (quarter(radii[0]) | (quarter(radii[1]) << 16)) >>> 0;
+      rb = (quarter(radii[2]) | (quarter(radii[3]) << 16)) >>> 0;
+    } else {
+      const q = quarter(radius);
+
+      ra = (q | (q << 16)) >>> 0;
+      rb = ra;
+    }
+
+    const sm = slot + mode * 8;
     let o = this._count * 4 * FLOATS_PER_VERTEX;
 
-    o = vert(f, u, o, x0, y0, u0, v0, abgr(color0), slot, lx0, ly0, lw, lh, radius, border, bc);
-    o = vert(f, u, o, x1, y1, u1, v0, abgr(color1), slot, lx1, ly0, lw, lh, radius, border, bc);
-    o = vert(f, u, o, x2, y2, u0, v1, abgr(color2), slot, lx0, ly1, lw, lh, radius, border, bc);
-    vert(f, u, o, x3, y3, u1, v1, abgr(color3), slot, lx1, ly1, lw, lh, radius, border, bc);
+    o = vert(f, u, o, x0, y0, u0, v0, abgr(color0), lx0, ly0, lw, lh, ra, rb, sm, border, p0, p1, bc);
+    o = vert(f, u, o, x1, y1, u1, v0, abgr(color1), lx1, ly0, lw, lh, ra, rb, sm, border, p0, p1, bc);
+    o = vert(f, u, o, x2, y2, u0, v1, abgr(color2), lx0, ly1, lw, lh, ra, rb, sm, border, p0, p1, bc);
+    vert(f, u, o, x3, y3, u1, v1, abgr(color3), lx1, ly1, lw, lh, ra, rb, sm, border, p0, p1, bc);
     this._count++;
     this.quads++;
   }
@@ -334,6 +377,7 @@ export class QuadBatcher {
           textures: Array.from({ length: this._units }, () => null),
           texCount: 0,
           scissor: null,
+          hasScissor: false,
         };
         this._batches[this._batchCount] = b;
       }
@@ -341,7 +385,19 @@ export class QuadBatcher {
       b.start = this._batchStart;
       b.count = count;
       b.texCount = this._texCount;
-      b.scissor = this._scissor;
+
+      const sc = this._scissor;
+
+      if (sc) {
+        b.scissor ??= { x0: 0, y0: 0, x1: 0, y1: 0 };
+        b.scissor.x0 = Math.round(sc.x0);
+        b.scissor.y0 = Math.round(sc.y0);
+        b.scissor.x1 = Math.round(sc.x1);
+        b.scissor.y1 = Math.round(sc.y1);
+        b.hasScissor = true;
+      } else {
+        b.hasScissor = false;
+      }
 
       for (let i = 0; i < this._texCount; i++) {
         b.textures[i] = this._bound[i];
@@ -376,19 +432,20 @@ export class QuadBatcher {
 
     for (let i = 0; i < this._batchCount; i++) {
       const b = this._batches[i];
+      const next = b.hasScissor ? b.scissor : null;
 
-      if (b.scissor !== scissor) {
-        scissor = b.scissor;
+      if (!sameRect(next, scissor)) {
+        scissor = next;
 
         if (!scissor) {
           gl.disable(gl.SCISSOR_TEST);
         } else {
           gl.enable(gl.SCISSOR_TEST);
           gl.scissor(
-            Math.round(scissor.x0),
-            Math.round(this._height - scissor.y1),
-            Math.max(0, Math.round(scissor.x1 - scissor.x0)),
-            Math.max(0, Math.round(scissor.y1 - scissor.y0)),
+            scissor.x0,
+            this._height - scissor.y1,
+            Math.max(0, scissor.x1 - scissor.x0),
+            Math.max(0, scissor.y1 - scissor.y0),
           );
         }
       }
@@ -437,13 +494,16 @@ function vert(
   uu: number,
   vv: number,
   c: number,
-  slot: number,
   lx: number,
   ly: number,
   lw: number,
   lh: number,
-  radius: number,
+  ra: number,
+  rb: number,
+  slotMode: number,
   border: number,
+  p0: number,
+  p1: number,
   bc: number,
 ): number {
   f[o] = x;
@@ -451,16 +511,32 @@ function vert(
   f[o + 2] = uu;
   f[o + 3] = vv;
   u[o + 4] = c;
-  f[o + 5] = slot;
-  f[o + 6] = lx;
-  f[o + 7] = ly;
-  f[o + 8] = lw;
-  f[o + 9] = lh;
-  f[o + 10] = radius;
-  f[o + 11] = border;
-  u[o + 12] = bc;
+  f[o + 5] = lx;
+  f[o + 6] = ly;
+  f[o + 7] = lw;
+  f[o + 8] = lh;
+  u[o + 9] = ra;
+  u[o + 10] = rb;
+  f[o + 11] = slotMode;
+  f[o + 12] = border;
+  f[o + 13] = p0;
+  f[o + 14] = p1;
+  u[o + 15] = bc;
 
   return o + FLOATS_PER_VERTEX;
+}
+
+function sameRect(a: Rect | null, b: Rect | null): boolean {
+  if (a === null || b === null) {
+    return a === b;
+  }
+
+  return a.x0 === b.x0 && a.y0 === b.y0 && a.x1 === b.x1 && a.y1 === b.y1;
+}
+
+/** Radius in quarter pixels for the UNSIGNED_SHORT attribute. */
+function quarter(r: number): number {
+  return r > 0 ? (r >= 16383 ? 65535 : Math.round(r * 4)) : 0;
 }
 
 // 0xRRGGBBAA -> little-endian bytes R,G,B,A for a normalized UNSIGNED_BYTE attribute.

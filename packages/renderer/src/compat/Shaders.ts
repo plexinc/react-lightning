@@ -42,6 +42,8 @@ export const KIND_ROUNDED_BORDER = 3;
 export const KIND_GRADIENT = 4;
 export const KIND_UNSUPPORTED = 5;
 export const KIND_ULTRABLUR = 6;
+export const KIND_SPINNER = 7;
+export const KIND_AVATAR = 8;
 
 const KINDS: Record<string, number> = {
   Default: KIND_NONE,
@@ -50,6 +52,8 @@ const KINDS: Record<string, number> = {
   RoundedWithBorder: KIND_ROUNDED_BORDER,
   LinearGradient: KIND_GRADIENT,
   UltraBlur: KIND_ULTRABLUR,
+  SpinnerArc: KIND_SPINNER,
+  SocialProofAvatarMask: KIND_AVATAR,
 };
 
 export class CompatShader {

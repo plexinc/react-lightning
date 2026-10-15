@@ -1,4 +1,4 @@
-import { QuadBatcher, type Rect as BaseRect } from '../QuadBatcher';
+import { MODE_AVATAR, MODE_DITHER, MODE_QUAD, MODE_SPINNER, QuadBatcher, type Rect as BaseRect } from '../QuadBatcher';
 
 /** Screen-space clip; `r` > 0 when the innermost clipping node is rounded (screen px). */
 type Rect = BaseRect & { r: number; rx0: number; ry0: number; rx1: number; ry1: number };
@@ -23,7 +23,9 @@ import {
   KIND_GRADIENT,
   KIND_NONE,
   KIND_ROUNDED,
+  KIND_AVATAR,
   KIND_ROUNDED_BORDER,
+  KIND_SPINNER,
   KIND_ULTRABLUR,
   KIND_UNSUPPORTED,
   type ShaderType,
@@ -786,6 +788,28 @@ export class CompatStage {
       return;
     }
 
+    if (kind === KIND_SPINNER && props) {
+      const arc = withAlpha(typeof props.color === 'number' ? props.color >>> 0 : 0xffffffff, a);
+      const thickness = typeof props.thickness === 'number' ? props.thickness : 0.1;
+      const sweep = typeof props.sweep === 'number' ? props.sweep : 0.75;
+
+      if ((arc & 255) !== 0) {
+        this._quad(node, this.textures.white, 0, 0, w, h, 0, 0, 1, 1, arc, arc, arc, arc, 0, 0, w, h, 0, 0, 0, clip, null, MODE_SPINNER, thickness, sweep);
+      }
+
+      return;
+    }
+
+    if (kind === KIND_AVATAR && props) {
+      if (hasFill) {
+        const bite = typeof props.bite === 'number' ? props.bite : 0;
+
+        this._quad(node, tex, qx0, qy0, qx1, qy1, u0, v0, u1, v1, tint, tint, tint, tint, 0, 0, w, h, 0, 0, 0, clip, null, MODE_AVATAR, bite);
+      }
+
+      return;
+    }
+
     if (kind === KIND_GRADIENT && props) {
       this._drawGradient(node, props, radius, clip, axisAligned);
 
@@ -1016,7 +1040,7 @@ export class CompatStage {
         const y0 = (j / N) * h;
         const y1 = ((j + 1) / N) * h;
 
-        this._quad(node, white, x0, y0, x1, y1, 0, 0, 1, 1, c0, c1, c2, c3, 0, 0, w, h, 0, 0, 0, clip);
+        this._quad(node, white, x0, y0, x1, y1, 0, 0, 1, 1, c0, c1, c2, c3, 0, 0, w, h, 0, 0, 0, clip, null, MODE_DITHER);
       }
     }
   }
@@ -1049,6 +1073,10 @@ export class CompatStage {
     border: number,
     borderColor: number,
     clip: Rect | null,
+    radii: ArrayLike<number> | null = null,
+    mode = MODE_QUAD,
+    p0 = 0,
+    p1 = 0,
   ): void {
     const wa = node._wa;
     const wb = node._wb;
@@ -1057,7 +1085,7 @@ export class CompatStage {
     const wx = node._wx;
     const wy = node._wy;
 
-    if (clip && clip.r > 0 && radius === 0 && border === 0 && wb === 0 && wc === 0 && wa > 0 && wd > 0) {
+    if (clip && clip.r > 0 && radius === 0 && radii === null && border === 0 && mode === MODE_QUAD && wb === 0 && wc === 0 && wa > 0 && wd > 0) {
       // Rounded clipping without a stencil: evaluate the clip's rounded rect as this quad's SDF.
       sx = (clip.rx0 - wx) / wa;
       sy = (clip.ry0 - wy) / wd;
@@ -1162,6 +1190,10 @@ export class CompatStage {
         radius,
         border,
         borderColor,
+        radii,
+        mode,
+        p0,
+        p1,
       );
 
       return;
@@ -1195,6 +1227,10 @@ export class CompatStage {
       radius,
       border,
       borderColor,
+      radii,
+      mode,
+      p0,
+      p1,
     );
     this._batcher.setScissor(null);
   }
