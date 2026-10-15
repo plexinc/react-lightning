@@ -506,6 +506,12 @@ importers:
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.14
+      '@types/react-reconciler':
+        specifier: 'catalog:'
+        version: 0.33.0(@types/react@19.2.14)
+      react-reconciler:
+        specifier: 0.33.0
+        version: 0.33.0(react@19.2.5)
 
   packages/react-native-lightning:
     dependencies:

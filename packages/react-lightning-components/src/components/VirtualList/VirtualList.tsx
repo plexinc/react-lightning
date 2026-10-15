@@ -41,6 +41,7 @@ import { resolveContentReport } from './resolveContentReport';
 import { resolveRevealBoundary } from './resolveRevealBoundary';
 import { resolveSectionSize } from './resolveSectionSize';
 import { resolveVisibleMainSpan } from './resolveVisibleMainSpan';
+import { useContentCross } from './useContentCross';
 import { useScrollHandler } from './useScrollHandler';
 import { useViewability } from './useViewability';
 
@@ -193,13 +194,8 @@ function VirtualListInner<T>(
   const measuredHeaderSizeRef = useRef(0);
   const [measuredFooterSize, setMeasuredFooterSize] = useState(0);
   const measuredFooterSizeRef = useRef(0);
-  // Monotonic per-dataset: once a cell reports cross=N, stays at N or
-  // larger until data/extraData identity changes.
-  const [maxContentCross, setMaxContentCross] = useState(0);
-  const maxContentCrossRef = useRef(0);
-  // Bumped whenever the cross measurement is reset, to make mounted cells
-  // re-push their current cross so it climbs back (see the reset effect).
-  const [crossGeneration, setCrossGeneration] = useState(0);
+  const { maxContentCross, crossGeneration, handleContentCrossLayout } =
+    useContentCross(data, extraData);
   // A row measures bottom-up and async: it reports a placeholder size, then
   // grows to its real height. `revealGate` tracks how long each cell's size has
   // held steady so the list can keep a cell hidden until it settles, then paint
@@ -392,13 +388,6 @@ function VirtualListInner<T>(
     if (size > 0 && Math.abs(size - separatorSizeRef.current) >= 1) {
       separatorSizeRef.current = size;
       setSeparatorSize(size);
-    }
-  };
-
-  const handleContentCrossLayout = (size: number) => {
-    if (size > maxContentCrossRef.current) {
-      maxContentCrossRef.current = size;
-      setMaxContentCross(size);
     }
   };
 
@@ -689,19 +678,6 @@ function VirtualListInner<T>(
   // tab switches re-create the array even when userKeys are identical, and
   // re-measuring from estimate would shift rows visibly. Callers can call
   // `layoutManager.clearMeasurements()` imperatively when they need it.
-  // A data-identity change can be a recycle to a shorter row (cross must
-  // shrink) or an in-place refresh keeping the same items (cross must NOT
-  // collapse). Zero it, then bump the generation so every mounted cell
-  // re-pushes its current cross: recycled cells report the new height,
-  // refreshed cells report the same one, and grow-only settles on the real
-  // max either way. Without the re-push a same-key refresh (mergeData) left
-  // cross stuck at 0 and clipped taller-than-default content.
-  useLayoutEffect(() => {
-    maxContentCrossRef.current = 0;
-    setMaxContentCross(0);
-    setCrossGeneration((g) => g + 1);
-    // oxlint-disable-next-line react-hooks/exhaustive-deps -- intentional reset on data identity change
-  }, [data, extraData]);
 
   const handleViewportResize = (event: { w: number; h: number }) => {
     setMeasuredSize((prev) =>
