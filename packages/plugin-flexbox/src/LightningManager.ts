@@ -584,15 +584,15 @@ export class LightningManager {
 
       const isText = el.isTextElement;
 
-      if (el.parent?.style.display !== 'flex') {
-        skipX =
-          el.style.x !== undefined &&
-          el.rawProps.style?.x !== undefined &&
-          el.style.transform?.translateX === undefined;
-        skipY =
-          el.style.y !== undefined &&
-          el.rawProps.style?.y !== undefined &&
-          el.style.transform?.translateY === undefined;
+      // The raw style check goes first: it's a plain read, and when it fails
+      // (almost always) none of the style proxy reads below are needed.
+      const rawStyle = el.rawProps.style;
+      const rawX = rawStyle?.x !== undefined;
+      const rawY = rawStyle?.y !== undefined;
+
+      if ((rawX || rawY) && el.parent?.style.display !== 'flex') {
+        skipX = rawX && el.style.x !== undefined && el.style.transform?.translateX === undefined;
+        skipY = rawY && el.style.y !== undefined && el.style.transform?.translateY === undefined;
       }
 
       if (!skipX) {
