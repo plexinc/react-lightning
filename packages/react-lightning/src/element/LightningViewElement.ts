@@ -1401,6 +1401,7 @@ export class LightningViewElement<
     };
 
     this.emit('layout', dimensions);
+    this._notifyObservers('layout', dimensions);
     this._onLayout(dimensions);
   }
 

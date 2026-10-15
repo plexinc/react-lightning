@@ -251,6 +251,17 @@ describe('LightningViewElement observers', () => {
     ]);
   });
 
+  it('calls the layout observer after the layout listeners', () => {
+    const el = createElement({ w: 4, h: 5 });
+    const calls: string[] = [];
+
+    el.on('layout', () => calls.push('listener'));
+    el.observe({ layout: (_e, dimensions) => calls.push(`observer ${dimensions.w}`) });
+    el.emitLayoutEvent();
+
+    expect(calls).toEqual(['listener', 'observer 4']);
+  });
+
   it('lets an observer unobserve while it is being notified', () => {
     const el = createElement();
     const calls: string[] = [];
