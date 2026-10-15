@@ -2,6 +2,8 @@ import type { DependencyList } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import type { Mutable } from 'react-native-reanimated/lib/typescript/commonTypes';
 
+import { scheduleMicrotask } from '@plextv/react-lightning';
+
 import { collectSharedValueReads, nextTrackingListenerId } from '../utils/sharedValueTracking';
 
 type TrackedState<T> = {
@@ -33,7 +35,7 @@ export function useTrackedReaction<T>(
 
     pendingRef.current = true;
 
-    queueMicrotask(() => {
+    scheduleMicrotask(() => {
       pendingRef.current = false;
 
       const { compute: currentCompute, apply: currentApply } = stateRef.current;

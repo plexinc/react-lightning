@@ -4,7 +4,7 @@ import type { useAnimatedStyle as useAnimatedStyleRN } from 'react-native-reanim
 import type { Mutable } from 'react-native-reanimated/lib/typescript/commonTypes';
 import type { DefaultStyle } from 'react-native-reanimated/lib/typescript/hook/commonTypes';
 
-import { PARTIAL_STYLE } from '@plextv/react-lightning';
+import { PARTIAL_STYLE, scheduleMicrotask } from '@plextv/react-lightning';
 import type { LightningElement, LightningElementStyle } from '@plextv/react-lightning';
 
 import { type RunningProgram, reconcileRunners } from '../animation/reconcileRunners';
@@ -102,7 +102,7 @@ export const useAnimatedStyle: UseAnimatedStyleFn = (updater, dependencies) => {
 
     pendingRef.current = true;
 
-    queueMicrotask(() => {
+    scheduleMicrotask(() => {
       pendingRef.current = false;
       applyComputedStyle(updater(), views, lastApplied, runners);
     });
