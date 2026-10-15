@@ -100,6 +100,70 @@ const CONVERTED_KEYS: ReadonlySet<string> = new Set([
   'borderBottomEndRadius',
 ]);
 
+function applyTransform(finalStyle: LightningElementStyle, transform: AllStyles['transform']) {
+  const { scaleX, scaleY, rotation, ...translateTransforms } = parseTransform(
+    transform as Parameters<typeof parseTransform>[0],
+  );
+
+  if (scaleX != null) {
+    finalStyle.scaleX = scaleX;
+  }
+
+  if (scaleY != null) {
+    finalStyle.scaleY = scaleY;
+  }
+
+  if (rotation != null) {
+    finalStyle.rotation = rotation;
+  }
+
+  finalStyle.transform = translateTransforms;
+}
+
+/**
+ * The common animated update (reanimated pushes a lone transform or opacity)
+ * converted without the full pass. Returns the same style as
+ * convertCSSStyleToLightning, or null when the style has any other key that
+ * function converts, so the caller falls back to it.
+ */
+export function convertTransformAndOpacity(
+  style: Record<string, unknown>,
+): LightningElementStyle | null {
+  const finalStyle = {} as LightningElementStyle;
+  let opacity: unknown;
+  let transform: unknown;
+
+  for (const key in style) {
+    const value = style[key];
+
+    if (key === 'opacity') {
+      opacity = value;
+    } else if (key === 'transform') {
+      transform = value;
+    } else if (CONVERTED_KEYS.has(key) || key === 'display' || key === 'left' || key === 'top') {
+      return null;
+    } else if (value !== undefined) {
+      (finalStyle as Record<string, unknown>)[key] = value;
+    }
+  }
+
+  const partial = (style as Record<PropertyKey, unknown>)[PARTIAL_STYLE];
+
+  if (partial !== undefined) {
+    (finalStyle as Record<PropertyKey, unknown>)[PARTIAL_STYLE] = partial;
+  }
+
+  if (typeof opacity === 'number') {
+    finalStyle.alpha = opacity;
+  }
+
+  if (transform != null) {
+    applyTransform(finalStyle, transform as AllStyles['transform']);
+  }
+
+  return finalStyle;
+}
+
 export function convertCSSStyleToLightning(
   style: AllStyleProps,
 ): LightningElementStyle | undefined {
@@ -292,21 +356,7 @@ export function convertCSSStyleToLightning(
   }
 
   if (transform != null) {
-    const { scaleX, scaleY, rotation, ...translateTransforms } = parseTransform(transform);
-
-    if (scaleX != null) {
-      finalStyle.scaleX = scaleX;
-    }
-
-    if (scaleY != null) {
-      finalStyle.scaleY = scaleY;
-    }
-
-    if (rotation != null) {
-      finalStyle.rotation = rotation;
-    }
-
-    finalStyle.transform = translateTransforms;
+    applyTransform(finalStyle, transform);
   }
 
   // Disabled for now as some components set overflow to hidden while not having their size correctly calculated

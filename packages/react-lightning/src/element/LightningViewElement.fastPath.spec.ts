@@ -137,4 +137,67 @@ describe('LightningViewElement style fast path', () => {
 
     expect(transformProps).toHaveBeenCalledTimes(1);
   });
+
+  it('applies the style transformStyle converts without running transformProps', async () => {
+    const transformStyle = vi.fn((_instance: unknown, style: object) => {
+      const { opacity, ...rest } = style as { opacity?: number };
+
+      return { ...rest, alpha: opacity };
+    });
+    const { plugin, transformProps } = spyPlugin({
+      handledStyleProps: new Set(['opacity']),
+      transformStyle,
+    });
+    const el = createElement([plugin]);
+
+    transformProps.mockClear();
+    el.setProps({ style: { opacity: 0.25 } } as never);
+    await flush();
+
+    expect(transformStyle).toHaveBeenCalledTimes(1);
+    expect(transformProps).not.toHaveBeenCalled();
+    expect(el.node.alpha).toBe(0.25);
+  });
+
+  it('falls back to transformProps when transformStyle declines', async () => {
+    const { plugin, transformProps } = spyPlugin({
+      handledStyleProps: new Set(['opacity']),
+      transformStyle: () => null,
+    });
+    const el = createElement([plugin]);
+
+    transformProps.mockClear();
+    el.setProps({ style: { opacity: 0.25 } } as never);
+    await flush();
+
+    expect(transformProps).toHaveBeenCalledTimes(1);
+  });
+
+  it('checks later plugins against the converted style', async () => {
+    const converts = spyPlugin({
+      handledStyleProps: new Set(['width']),
+      transformStyle: () => ({ w: 20 }),
+    });
+    const keyed = spyPlugin({ handledStyleProps: new Set(['w']) });
+    const el = createElement([converts.plugin, keyed.plugin]);
+
+    converts.transformProps.mockClear();
+    keyed.transformProps.mockClear();
+    el.setProps({ style: { width: 20 } } as never);
+    await flush();
+
+    expect(converts.transformProps).toHaveBeenCalledTimes(1);
+    expect(keyed.transformProps).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps style arrays on the slow path', async () => {
+    const { plugin, transformProps } = spyPlugin({ needsTransform: () => false });
+    const el = createElement([plugin]);
+
+    transformProps.mockClear();
+    el.setProps({ style: [{ alpha: 0.5 }] } as never);
+    await flush();
+
+    expect(transformProps).toHaveBeenCalledTimes(1);
+  });
 });

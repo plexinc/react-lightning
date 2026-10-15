@@ -1585,8 +1585,10 @@ export class LightningViewElement<
     }
 
     // Fast path: style-only updates where no plugin handles the changed properties
-    if (this._canFastPathStyle(payload)) {
-      return this._applyStyleFastPath(payload);
+    const fastPathStyle = this._getFastPathStyle(payload);
+
+    if (fastPathStyle !== null) {
+      return this._applyStyleFastPath(payload, fastPathStyle);
     }
 
     const transformedProps = this._transformProps(payload) ?? ({} as TProps);
@@ -1743,12 +1745,15 @@ export class LightningViewElement<
 
   /**
    * Checks whether a staged update can skip the plugin transform pipeline.
-   * Returns true when the payload only contains style properties that no
-   * plugin declares as handled and that don't require shader creation.
+   * Returns the style to apply when the payload only contains style
+   * properties that no plugin needs the full transform for and that don't
+   * require shader creation, or null for the slow path. A plugin that
+   * implements `transformStyle` can convert the keys it handles in place.
    */
-  private _canFastPathStyle(payload: Partial<TProps>): boolean {
-    if (!('style' in payload) || !payload.style) {
-      return false;
+  private _getFastPathStyle(payload: Partial<TProps>): Partial<TStyleProps> | null {
+    // Style arrays and strings only become keyed styles in the plugins.
+    if (!payload.style || typeof payload.style !== 'object' || Array.isArray(payload.style)) {
+      return null;
     }
 
     // A node that currently has a shader must take the slow path: the update
@@ -1756,22 +1761,24 @@ export class LightningViewElement<
     // recomputes (or clears) the shader. The fast path assigns style keys to
     // the node verbatim and would leave a stale shader painting.
     if (this._shaderDef) {
-      return false;
+      return null;
     }
 
     for (const key in payload) {
       if (key !== 'style') {
-        return false;
+        return null;
       }
     }
 
-    const style = payload.style;
+    let style = payload.style as Partial<TStyleProps>;
 
     for (const key in style) {
       if (LightningViewElement._shaderStyleProps.has(key)) {
-        return false;
+        return null;
       }
     }
+
+    let current = payload;
 
     for (const plugin of this._plugins) {
       if (!plugin.transformProps) {
@@ -1779,8 +1786,8 @@ export class LightningViewElement<
       }
 
       if (plugin.needsTransform) {
-        if (plugin.needsTransform(this, payload as TProps)) {
-          return false;
+        if (plugin.needsTransform(this, current as TProps)) {
+          return null;
         }
 
         continue;
@@ -1789,31 +1796,43 @@ export class LightningViewElement<
       const handled = plugin.handledStyleProps;
 
       if (!handled) {
-        return false;
+        return null;
       }
 
       for (const key in style) {
         if (handled.has(key)) {
-          return false;
+          const converted = plugin.transformStyle?.(this, style) as Partial<TStyleProps> | null;
+
+          if (converted == null) {
+            return null;
+          }
+
+          style = converted;
+          current = { style } as Partial<TProps>;
+          break;
         }
       }
     }
 
-    return true;
+    return style;
   }
 
   /**
    * Applies a style-only update directly to the Lightning node, bypassing
    * the plugin transform pipeline and full props-merge iteration.
    */
-  private _applyStyleFastPath(payload: Partial<TProps>): boolean {
-    const style = payload.style as Partial<TStyleProps>;
-
+  private _applyStyleFastPath(payload: Partial<TProps>, style: Partial<TStyleProps>): boolean {
     if (LightningViewElement.flattenLayoutViewsEnabled && this._flattened) {
-      for (const key in style) {
-        if (LightningViewElement._needsRealNode(key, style[key as keyof TStyleProps])) {
-          this._materialize();
-          break;
+      // Same rule as the slow path: any transition (reanimated sets one with
+      // every push) needs a real node to animate.
+      if (this.props.transition !== undefined) {
+        this._materialize();
+      } else {
+        for (const key in style) {
+          if (LightningViewElement._needsRealNode(key, style[key as keyof TStyleProps])) {
+            this._materialize();
+            break;
+          }
         }
       }
     }

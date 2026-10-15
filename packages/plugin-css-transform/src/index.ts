@@ -1,6 +1,9 @@
 import type { Plugin } from '@plextv/react-lightning';
 
-import { convertCSSStyleToLightning } from './convertCSSStyleToLightning';
+import {
+  convertCSSStyleToLightning,
+  convertTransformAndOpacity,
+} from './convertCSSStyleToLightning';
 import type { AllStyleProps } from './types/ReactStyle';
 
 export { convertCSSStyleToLightning };
@@ -40,6 +43,10 @@ const CSS_HANDLED_STYLE_PROPS: ReadonlySet<string> = new Set([
 export function plugin(): Plugin {
   return {
     handledStyleProps: CSS_HANDLED_STYLE_PROPS,
+
+    transformStyle(_instance, style) {
+      return convertTransformAndOpacity(style as Record<string, unknown>);
+    },
 
     transformProps(_instance, props) {
       if (!('style' in props)) {
