@@ -1,5 +1,14 @@
-import type { LightningElement, Plugin } from '@plextv/react-lightning';
+import type { RendererMain } from '@lightningjs/renderer';
+import type { Fiber } from 'react-reconciler';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+
+import {
+  type LightningElement,
+  type LightningViewElementProps,
+  LightningViewElement,
+  type Plugin,
+} from '@plextv/react-lightning';
+import { plugin as cssPlugin } from '@plextv/react-lightning-plugin-css-transform';
 
 import { cssClassNameTransformPlugin } from './cssClassNameTransformPlugin';
 
@@ -93,5 +102,144 @@ describe('cssClassNameTransformPlugin', () => {
     const out = transform(plugin, instance, props);
 
     expect(out).toBe(props);
+  });
+});
+
+const makeNode = (props: Record<string, unknown>) => ({
+  ...props,
+  on() {},
+  off() {},
+  emit() {},
+  animate: () => ({ once() {}, start() {} }),
+  destroy() {},
+});
+
+const renderer = {
+  createNode: makeNode,
+  createTextNode: makeNode,
+  createShader: () => ({ props: {} }),
+  createTexture: () => ({}),
+  destroyNode() {},
+} as unknown as RendererMain;
+
+// Records the styles that reach the transform pipeline. Claims no style keys
+// itself, so a style-only update only goes slow when another plugin asks.
+function recorder() {
+  const styles: Array<Record<string, unknown>> = [];
+  const plugin: Plugin<LightningElement> = {
+    handledStyleProps: new Set(),
+    transformProps(_instance, props) {
+      const style = (props as { style?: Record<string, unknown> }).style;
+
+      if (style) {
+        styles.push({ ...style });
+      }
+
+      return props;
+    },
+  };
+
+  return { plugin, styles };
+}
+
+function createElement(props: Record<string, unknown>, plugins: Plugin<LightningElement>[]) {
+  return new LightningViewElement(
+    props as unknown as LightningViewElementProps,
+    renderer,
+    plugins,
+    {} as Fiber,
+  );
+}
+
+const flush = () => Promise.resolve();
+
+describe('cssClassNameTransformPlugin style fast path', () => {
+  it('lets style-only updates skip the pipeline when the element has no className', async () => {
+    const rec = recorder();
+    const el = createElement({ style: { w: 10 } }, [cssClassNameTransformPlugin(), rec.plugin]);
+
+    rec.styles.length = 0;
+    el.setProps({ style: { alpha: 0.5 } });
+    await flush();
+
+    expect(rec.styles).toEqual([]);
+    expect(el.node.alpha).toBe(0.5);
+  });
+
+  it('keeps merging remembered class styles into style-only updates', async () => {
+    const rec = recorder();
+    const el = createElement({ className: 'r-col', style: { w: 10 } }, [
+      cssClassNameTransformPlugin(),
+      rec.plugin,
+    ]);
+
+    rec.styles.length = 0;
+    el.setProps({ style: { alpha: 0.5 } });
+    await flush();
+
+    expect(rec.styles).toEqual([{ flexDirection: 'column', alignItems: 'stretch', alpha: 0.5 }]);
+    expect(el.props.style).toMatchObject({ flexDirection: 'column', alpha: 0.5 });
+  });
+
+  it('starts merging once a className is added later', async () => {
+    const rec = recorder();
+    const el = createElement({ style: { w: 10 } }, [cssClassNameTransformPlugin(), rec.plugin]);
+
+    el.setProps({ className: 'r-row' } as never);
+    await flush();
+
+    rec.styles.length = 0;
+    el.setProps({ style: { alpha: 0.5 } });
+    await flush();
+
+    expect(rec.styles).toEqual([{ flexDirection: 'row', alpha: 0.5 }]);
+  });
+
+  it('goes back to the fast path once the className resolves to nothing', async () => {
+    const rec = recorder();
+    const el = createElement({ className: 'r-col', style: { w: 10 } }, [
+      cssClassNameTransformPlugin(),
+      rec.plugin,
+    ]);
+
+    el.setProps({ className: '' } as never);
+    await flush();
+
+    rec.styles.length = 0;
+    el.setProps({ style: { alpha: 0.5 } });
+    await flush();
+
+    expect(rec.styles).toEqual([]);
+    expect(el.node.alpha).toBe(0.5);
+  });
+
+  it('runs the pipeline for an update that carries className and style together', async () => {
+    const rec = recorder();
+    const el = createElement({ style: { w: 10 } }, [cssClassNameTransformPlugin(), rec.plugin]);
+
+    rec.styles.length = 0;
+    el.setProps({ className: 'r-row', style: { alpha: 0.5 } } as never);
+    await flush();
+
+    expect(rec.styles).toEqual([{ flexDirection: 'row', alpha: 0.5 }]);
+  });
+
+  it('leaves css-transform keys on the slow path', async () => {
+    const rec = recorder();
+    const el = createElement({ style: { w: 10 } }, [
+      cssClassNameTransformPlugin(),
+      cssPlugin(),
+      rec.plugin,
+    ]);
+
+    rec.styles.length = 0;
+    el.setProps({ style: { alpha: 0.5 } });
+    await flush();
+    expect(rec.styles).toEqual([]);
+
+    el.setProps({ style: { opacity: 0.25 } } as never);
+    await flush();
+    expect(rec.styles).toHaveLength(1);
+    expect(el.node.alpha).toBe(0.25);
   });
 });

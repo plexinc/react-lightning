@@ -36,6 +36,12 @@ export const cssClassNameTransformPlugin = (): Plugin => {
   }
 
   return {
+    // Only updates that carry className, or land on an instance with resolved class styles to
+    // merge back in, need the transform. Everything else can take the style fast path.
+    needsTransform(instance, props) {
+      return 'className' in props || resolvedClassStyles.has(instance);
+    },
+
     transformProps(instance, props) {
       if (!('className' in props)) {
         const remembered = resolvedClassStyles.get(instance);
@@ -73,7 +79,19 @@ export const cssClassNameTransformPlugin = (): Plugin => {
         }
       }
 
-      resolvedClassStyles.set(instance, finalStyle as Record<string, string>);
+      // Nothing to merge back for an empty resolution, so later style-only updates stay fast.
+      let hasClassStyles = false;
+
+      for (const _ in finalStyle) {
+        hasClassStyles = true;
+        break;
+      }
+
+      if (hasClassStyles) {
+        resolvedClassStyles.set(instance, finalStyle as Record<string, string>);
+      } else {
+        resolvedClassStyles.delete(instance);
+      }
 
       return {
         ...otherProps,

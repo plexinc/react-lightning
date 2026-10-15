@@ -1771,15 +1771,29 @@ export class LightningViewElement<
       if (LightningViewElement._shaderStyleProps.has(key)) {
         return false;
       }
+    }
 
-      for (const plugin of this._plugins) {
-        if (!plugin.transformProps) {
-          continue;
+    for (const plugin of this._plugins) {
+      if (!plugin.transformProps) {
+        continue;
+      }
+
+      if (plugin.needsTransform) {
+        if (plugin.needsTransform(this, payload as TProps)) {
+          return false;
         }
 
-        const handled = plugin.handledStyleProps;
+        continue;
+      }
 
-        if (!handled || handled.has(key)) {
+      const handled = plugin.handledStyleProps;
+
+      if (!handled) {
+        return false;
+      }
+
+      for (const key in style) {
+        if (handled.has(key)) {
           return false;
         }
       }
