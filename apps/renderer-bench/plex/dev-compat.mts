@@ -281,7 +281,7 @@ const final = vite.mergeConfig(config, {
       ],
     },
   },
-  cacheDir: join(lightningDir, 'node_modules/.vite-renderer-switch-direct'),
+  cacheDir: process.env.VITE_CACHE_DIR ?? join(lightningDir, 'node_modules/.vite-renderer-switch-direct'),
 });
 
 // First, so the reanimated and react-native aliases of the app's plugins resolve to source too.
