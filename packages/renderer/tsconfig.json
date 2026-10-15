@@ -1,0 +1,11 @@
+{
+  "extends": "@repo/configs/tsconfig.react-library.json",
+  "compilerOptions": {
+    "isolatedDeclarations": false,
+    "noUncheckedIndexedAccess": false,
+    "declaration": false,
+    "declarationMap": false
+  },
+  "include": ["src", "../../types/*.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}

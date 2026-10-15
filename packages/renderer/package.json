@@ -1,0 +1,29 @@
+{
+  "name": "@plextv/react-lightning-renderer",
+  "version": "0.0.0-spike",
+  "private": true,
+  "description": "Spike: a minimal WebGL1 renderer used directly as the React host instance",
+  "license": "MIT",
+  "author": "Plex Inc.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./react": "./src/react/index.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "check:types": "tsc --noEmit",
+    "test:unit": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "react-reconciler": "0.33.0"
+  },
+  "devDependencies": {
+    "@repo/configs": "workspace:*",
+    "@types/react": "catalog:",
+    "@types/react-reconciler": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "catalog:"
+  }
+}

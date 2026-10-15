@@ -1,0 +1,81 @@
+
+CPU throttle 1x (n=7/7)
+metric                                     current                    mvp                        ratio
+mount: commit ms                           26.0 [25.3-26.5]           7.4 [7.1-8.1]              3.51
+mount: first frame ms                      37.4 [36.5-39.9]           18.0 [17.7-20.3]           2.08
+mount: settled ms                          72.5 [71.8-76.9]           66.0 [60.1-67.1]           1.10
+mount: main-thread task ms                 55.8 [54.4-58.1]           30.2 [29.6-33.9]           1.85
+mount: script ms                           38.7 [37.2-39.9]           20.2 [19.5-22.4]           1.92
+mount: texture uploads                     28 [28-28]                 42 [42-42]                 0.67
+heap delta after mount KB                  6336 [6332-6395]           1443 [1426-1446]           4.39
+texture bytes MB                           33.3 [33.3-33.3]           8.6 [8.6-8.6]              3.85
+steps: renderer frame (rAF) median ms      2.20 [1.70-2.40]           0.40 [0.40-0.55]           5.50
+steps: renderer frame (rAF) p95 ms         14.10 [12.70-24.95]        5.00 [3.60-30.00]          2.82
+steps: rAF total ms per step               30.86 [28.42-43.44]        17.63 [16.55-55.61]        1.75
+steps: script ms per step                  35.4 [31.6-49.4]           20.2 [19.1-75.7]           1.75
+steps: task ms per step                    54.6 [44.4-69.3]           39.3 [33.3-121.3]          1.39
+steps: drawing frames                      165 [155-169]              254 [205-254]              0.65
+steps: rAF callbacks                       219 [209-221]              254 [205-254]              0.86
+steps: draw calls per frame                132 [132-132]              9 [9-9]                    14.67
+steps: texture uploads total               62 [62-62]                 69 [69-69]                 0.90
+steps: key->frame latency median ms        32.2 [23.5-71.9]           2.9 [2.8-19.5]             11.10
+steps: key->frame latency p95 ms           309.4 [302.8-328.5]        302.6 [297.9-307.5]        1.02
+burst: rAF median ms                       3.00 [2.05-4.60]           0.40 [0.40-0.55]           7.50
+burst: rAF p95 ms                          17.40 [7.30-24.50]         3.10 [2.45-4.25]           5.61
+burst: script ms per step                  26.5 [18.9-39.7]           9.0 [7.7-10.3]             2.94
+burst: key->frame latency median ms        28.7 [25.9-35.5]           25.7 [24.7-27.6]           1.12
+burst: key->frame latency p95 ms           79.2 [72.9-126.5]          42.1 [33.6-51.5]           1.88
+
+CPU throttle 4x (n=7/7)
+metric                                     current                    mvp                        ratio
+mount: commit ms                           104.8 [100.1-113.2]        28.9 [27.9-29.5]           3.63
+mount: first frame ms                      156.6 [138.5-163.7]        78.2 [74.0-83.2]           2.00
+mount: settled ms                          217.1 [190.4-226.5]        162.8 [156.0-167.8]        1.33
+mount: main-thread task ms                 205.7 [196.0-226.7]        117.2 [110.0-120.3]        1.75
+mount: script ms                           157.3 [144.2-170.3]        83.8 [82.2-91.2]           1.88
+mount: texture uploads                     28 [28-28]                 42 [42-42]                 0.67
+heap delta after mount KB                  6396 [6396-6406]           1429 [1426-1429]           4.48
+texture bytes MB                           33.3 [33.3-33.3]           8.6 [8.6-8.6]              3.85
+steps: renderer frame (rAF) median ms      4.60 [2.65-5.95]           0.50 [0.50-0.80]           9.20
+steps: renderer frame (rAF) p95 ms         20.20 [15.35-33.35]        7.50 [5.85-30.20]          2.69
+steps: rAF total ms per step               88.44 [59.00-111.52]       23.02 [19.41-61.29]        3.84
+steps: script ms per step                  95.4 [65.3-138.4]          25.7 [22.6-82.5]           3.71
+steps: task ms per step                    126.4 [96.2-203.3]         88.0 [48.9-218.0]          1.44
+steps: drawing frames                      213 [177-216]              249 [163-250]              0.86
+steps: rAF callbacks                       331 [250-335]              249 [163-250]              1.33
+steps: draw calls per frame                132 [132-132]              9 [8-9]                    14.67
+steps: texture uploads total               62 [60-62]                 69 [69-69]                 0.90
+steps: key->frame latency median ms        25.6 [22.3-43.5]           8.0 [6.4-53.1]             3.20
+steps: key->frame latency p95 ms           326.4 [318.5-394.1]        319.8 [312.0-1067.8]       1.02
+burst: rAF median ms                       9.70 [4.35-34.80]          0.50 [0.40-1.00]           19.40
+burst: rAF p95 ms                          35.20 [22.10-134.10]       17.00 [4.30-53.25]         2.07
+burst: script ms per step                  60.2 [41.0-68.4]           13.6 [8.6-34.0]            4.41
+burst: key->frame latency median ms        42.4 [35.3-153.1]          27.1 [25.5-85.4]           1.56
+burst: key->frame latency p95 ms           137.8 [65.9-260.3]         33.4 [31.9-179.3]          4.13
+
+CPU throttle 6x (n=7/7)
+metric                                     current                    mvp                        ratio
+mount: commit ms                           153.2 [144.3-175.8]        44.1 [43.3-47.5]           3.47
+mount: first frame ms                      226.6 [211.5-261.4]        130.0 [123.9-136.2]        1.74
+mount: settled ms                          316.9 [298.1-369.2]        258.9 [253.6-274.1]        1.22
+mount: main-thread task ms                 309.1 [292.3-353.6]        189.9 [181.6-199.9]        1.63
+mount: script ms                           230.7 [216.8-267.6]        140.7 [139.4-150.1]        1.64
+mount: texture uploads                     28 [28-28]                 42 [42-42]                 0.67
+heap delta after mount KB                  6396 [6396-6397]           1447 [1429-1447]           4.42
+texture bytes MB                           33.3 [33.3-33.3]           8.6 [8.6-8.6]              3.85
+steps: renderer frame (rAF) median ms      5.80 [3.55-11.75]          0.50 [0.50-0.60]           11.60
+steps: renderer frame (rAF) p95 ms         41.90 [29.70-83.40]        9.20 [8.80-10.90]          4.55
+steps: rAF total ms per step               98.57 [84.47-110.43]       33.30 [26.91-43.29]        2.96
+steps: script ms per step                  107.9 [96.1-135.7]         40.5 [32.6-63.6]           2.66
+steps: task ms per step                    160.3 [138.0-242.2]        74.6 [65.1-128.8]          2.15
+steps: drawing frames                      159 [100-183]              238 [194-243]              0.67
+steps: rAF callbacks                       240 [125-278]              238 [194-243]              1.01
+steps: draw calls per frame                132 [129-132]              9 [9-9]                    14.67
+steps: texture uploads total               62 [59-62]                 69 [69-69]                 0.90
+steps: key->frame latency median ms        38.3 [35.6-103.7]          14.3 [11.3-16.5]           2.68
+steps: key->frame latency p95 ms           398.8 [311.5-1244.7]       393.1 [319.1-743.3]        1.01
+burst: rAF median ms                       5.60 [3.85-21.25]          0.50 [0.50-0.60]           11.20
+burst: rAF p95 ms                          34.30 [25.05-66.00]        9.50 [7.10-11.25]          3.61
+burst: script ms per step                  46.6 [44.8-67.8]           15.3 [13.0-18.6]           3.04
+burst: key->frame latency median ms        41.2 [33.7-117.1]          24.7 [21.5-26.3]           1.67
+burst: key->frame latency p95 ms           176.8 [71.6-263.8]         34.7 [31.8-37.5]           5.10
