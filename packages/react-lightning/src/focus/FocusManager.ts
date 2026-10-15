@@ -2,6 +2,7 @@ import { EventEmitter, type IEventEmitter } from 'tseep';
 
 import type { Focusable } from '../types';
 import type { EventNotifier } from '../types/EventNotifier';
+import { scheduleMicrotask } from '../utils/scheduleMicrotask';
 import type { Traps } from './Traps';
 
 type RootNode<T> = {
@@ -280,9 +281,8 @@ export class FocusManager<
         // their hooks are run before getting attached to the tree. This causes
         // the component to get added to the old layer before the new layer's
         // created.
-        const parentNodeInPreviousLayer: RootNode<T> | FocusNode<T> | undefined = this._focusStack
-          .at(-2)
-          ?.elements?.get?.(parent);
+        const parentNodeInPreviousLayer: RootNode<T> | FocusNode<T> | undefined =
+          this._focusStack[this._focusStack.length - 2]?.elements?.get?.(parent);
 
         if (parentNodeInPreviousLayer && !isRootNode(parentNodeInPreviousLayer)) {
           parentNode = this._addMissingParentsToCurrentLayer(parentNodeInPreviousLayer);
@@ -2122,7 +2122,7 @@ export class FocusManager<
     }
 
     this._initialFocusPending = true;
-    queueMicrotask(() => {
+    scheduleMicrotask(() => {
       this._initialFocusPending = false;
       this._settleRepicks();
       this._recalculateFocusPath();

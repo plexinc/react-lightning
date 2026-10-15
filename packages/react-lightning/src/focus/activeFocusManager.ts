@@ -24,7 +24,7 @@ export function registerFocusManager(focusManager: Manager): () => void {
 }
 
 export function getFocusManager(): Manager | null {
-  return registered.at(-1) ?? null;
+  return registered[registered.length - 1] ?? null;
 }
 
 export function containsFocus(key: string): boolean {

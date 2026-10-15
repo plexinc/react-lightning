@@ -18,7 +18,8 @@ export const KeyPressHandler: FC<{ children: ReactNode }> = ({ children }) => {
 
     const createKeyHandler = (handler: 'onKeyDown' | 'onKeyUp') => {
       return (event: KeyboardEvent) => {
-        const element = focusManager.focusPath.at(-1);
+        const { focusPath } = focusManager;
+        const element = focusPath[focusPath.length - 1];
 
         if (!element || !(event instanceof KeyboardEvent)) {
           return;

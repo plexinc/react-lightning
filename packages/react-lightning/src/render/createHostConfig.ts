@@ -11,6 +11,7 @@ import {
   LightningElementType,
   type RendererNode,
 } from '../types';
+import { scheduleMicrotask } from '../utils/scheduleMicrotask';
 import { simpleDiff } from '../utils/simpleDiff';
 import { isPrimitiveTextContent } from './isValidTextChild';
 import { mapReactPropsToLightning } from './mapReactPropsToLightning';
@@ -75,7 +76,7 @@ export function createHostConfig(options?: LightningHostConfigOptions): Lightnin
     supportsPersistence: false,
     supportsHydration: false,
     supportsMicrotasks: true,
-    scheduleMicrotask: queueMicrotask,
+    scheduleMicrotask,
     scheduleTimeout: setTimeout,
     cancelTimeout: clearTimeout,
     noTimeout: -1,

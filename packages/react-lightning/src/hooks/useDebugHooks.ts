@@ -5,7 +5,7 @@ type DebuggableHook = (...args: any[]) => any;
 
 function wrapHook<T extends DebuggableHook>(hook: T, name: string): T {
   return ((...args) => {
-    const dependencies = args.at(-1) as DependencyList;
+    const dependencies = args[args.length - 1] as DependencyList;
     const prevValue = useRef<DependencyList>([]);
 
     const changedDeps = dependencies.reduce<Record<number, { old: unknown; new: unknown }>>(
