@@ -23,7 +23,7 @@ permissions:
 jobs:
   snapshot:
     name: Snapshot Release
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2604
     # Org membership (MEMBER/OWNER is set by GitHub for org-owned repos, private
     # members included) gates the job before anything runs.
     if: >-

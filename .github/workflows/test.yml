@@ -16,7 +16,7 @@ concurrency:
 jobs:
   test:
     name: Run tests
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2604
     steps:
       - uses: actions/checkout@v4
         with:
